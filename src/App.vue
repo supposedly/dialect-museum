@@ -1,22 +1,25 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <p>
+    Under constructɩon.
+  </p>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue';
-
 export default {
   name: 'App',
-  components: {
-    HelloWorld,
-  },
 };
 </script>
 
 <style lang="scss">
+// Dunno if putting this here makes it flicker-prone or what
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter.var.woff2') format('woff2'),
+       url('./assets/fonts/Inter.var.ttf') format('truetype');
+}
+
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: Inter, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
