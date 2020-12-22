@@ -1,7 +1,7 @@
 <template>
-  <p>
+  <h1>
     Under constructɩon.
-  </p>
+  </h1>
 </template>
 
 <script>
@@ -10,12 +10,20 @@ export default {
 };
 </script>
 
-<style lang="scss">
-// Dunno if putting this here makes it flicker-prone or what
+<style scoped lang="scss">
+// Dunno if putting this here makes the page flicker-prone or anything
 @font-face {
   font-family: 'Inter';
   src: url('./assets/fonts/Inter.var.woff2') format('woff2'),
        url('./assets/fonts/Inter.var.ttf') format('truetype');
+}
+
+h1 {
+  font-variation-settings: 'wght' 100;
+
+  @supports not (font-variation-settings: 'wght' 100) {
+    font-weight: 100;
+  }
 }
 
 #app {
