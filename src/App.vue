@@ -19,19 +19,19 @@ export default {
 }
 
 h1 {
-  font-variation-settings: 'wght' 100;
-
-  @supports not (font-variation-settings: 'wght' 100) {
-    font-weight: 100;
-  }
-}
-
-#app {
-  font-family: Inter, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+  font-size: 4vw;
+  font-weight: 100;
+  font-variation-settings: 'wght' 250;
+}
+</style>
+
+<style>
+#app {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   margin-top: 60px;
 }
 </style>
