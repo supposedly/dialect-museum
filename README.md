@@ -1,9 +1,7 @@
-# Orthography-teaching tool thing
+# Orthography walkthrough
+This is a quick web walkthrough of my (WIP) proposed Lebanese writing system.
 
-This is a quick web walkthrough of our proposed Lebanese writing system. This orthography business is only peripheral
-to the dictionary project itself, but the dictionary will still be optionally available in it, so an accessible
-introduction to it seems good to have on hand.
+## Development info
+`npm run build` to build for production (builds to `/docs` for GitHub Pages' use) and `npm run serve` to develop.
 
-## Usage
-
-`npm run build` to build for production (builds to `/docs` for GitHub Pages' use) and `npm run serve` to develop
+Note that the two `Inter` files included are modified to better support the glyph U+0269 LATIN SMALL LETTER IOTA.
