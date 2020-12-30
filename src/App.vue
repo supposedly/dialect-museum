@@ -24,10 +24,11 @@ h1 {
   font-size: 4vw;
   font-weight: 100;
   font-variation-settings: 'wght' 250;
+  // text-transform: uppercase;
 }
 </style>
 
-<style>
+<style> /* 360 no scope */
 #app {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
