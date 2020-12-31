@@ -8,36 +8,39 @@ word ->
   | INITIAL_SYLLABLE MEDIAL_SYLLABLE:* FINAL_SYLLABLE  {% ([a, b, c]) => [a, ...b, c] %}
 
 MONOSYLLABLE ->
-    S T FINAL_SYLLABLE  {% ([s, t, value]) => ({ type: `syllable`, meta: value.meta, value: [s, t, ...value.value] }) %}
+    ST FINAL_SYLLABLE  {% ([st, value]) => ({ type: `syllable`, meta: value.meta, value: [...st, ...value.value] }) %}
   | CONSONANT FINAL_SYLLABLE  {% ([c, value]) => ({ type: `syllable`, meta: value.meta, value: [c, ...value.value] }) %}
   | FINAL_SYLLABLE  {% id %}
+  
 INITIAL_SYLLABLE ->
-    S T MEDIAL_SYLLABLE  {% ([s, t, value]) => ({ type: `syllable`, meta: value.meta, value: [s, t, ...value.value] }) %}
+    ST MEDIAL_SYLLABLE  {% ([st, value]) => ({ type: `syllable`, meta: value.meta, value: [...st, ...value.value] }) %}
   | CONSONANT MEDIAL_SYLLABLE  {% ([c, value]) => ({ type: `syllable`, meta: value.meta, value: [c, ...value.value] }) %}
   | MEDIAL_SYLLABLE  {% id %}
+
 MEDIAL_SYLLABLE ->
     LIGHT_SYLLABLE  {% id %}
   | HEAVY_SYLLABLE  {% id %}
   | SUPERHEAVY_SYLLABLE  {% id %}
+
 FINAL_SYLLABLE ->
     FINAL_LIGHT_SYLLABLE  {% id %}
   | FINAL_HEAVY_SYLLABLE  {% id %}
   | FINAL_SPECIAL_SYLLABLE  {% id %}
   | FINAL_SUPERHEAVY_SYLLABLE  {% id %}
 
-FINAL_LIGHT_SYLLABLE -> CONSONANT FINAL_LIGHT_RIME  {% ([a, b]) => ({ type: `syllable`, meta: 0, value: [a, ...b] }) %}
-FINAL_HEAVY_SYLLABLE -> CONSONANT FINAL_HEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: 10, value: [a, ...b] }) %}
-FINAL_SPECIAL_SYLLABLE -> CONSONANT FINAL_SPECIAL_RIME  {% ([a, b]) => ({ type: `syllable`, meta: 15, value: [a, ...b] }) %}
-FINAL_SUPERHEAVY_SYLLABLE -> CONSONANT FINAL_SUPERHEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: 20, value: [a, ...b] }) %}
+FINAL_LIGHT_SYLLABLE -> CONSONANT FINAL_LIGHT_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `light`, value: [a, ...b] }) %}
+FINAL_HEAVY_SYLLABLE -> CONSONANT FINAL_HEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `heavy`, value: [a, ...b] }) %}
+FINAL_SPECIAL_SYLLABLE -> CONSONANT FINAL_SPECIAL_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `special`, value: [a, ...b] }) %}
+FINAL_SUPERHEAVY_SYLLABLE -> CONSONANT FINAL_SUPERHEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `superheavy`, value: [a, ...b] }) %}
 
 FINAL_LIGHT_RIME -> FINAL_SHORT_VOWEL
 FINAL_HEAVY_RIME -> SHORT_VOWEL CONSONANT
 FINAL_SPECIAL_RIME -> (LONG_VOWEL | A | E | O) STRESSED
 FINAL_SUPERHEAVY_RIME -> SUPERHEAVY_RIME  {% id %}  # wanna keep original array without adding a nesting level
 
-LIGHT_SYLLABLE -> CONSONANT LIGHT_RIME  {% ([a, b]) => ({ type: `syllable`, meta: 0, value: [a, ...b] }) %}
-HEAVY_SYLLABLE -> CONSONANT HEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: 10, value: [a, ...b] }) %}
-SUPERHEAVY_SYLLABLE -> CONSONANT SUPERHEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: 20, value: [a, ...b] }) %}
+LIGHT_SYLLABLE -> CONSONANT LIGHT_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `light`, value: [a, ...b] }) %}
+HEAVY_SYLLABLE -> CONSONANT HEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `heavy`, value: [a, ...b] }) %}
+SUPERHEAVY_SYLLABLE -> CONSONANT SUPERHEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `superheavy`, value: [a, ...b] }) %}
 
 LIGHT_RIME -> SHORT_VOWEL
 HEAVY_RIME -> (LONG_VOWEL | SHORT_VOWEL CONSONANT)  {% id %}  # i guess the %id% is needed because the parens add an array level or something?
@@ -57,6 +60,7 @@ SHORT_VOWEL -> (A|I_TENSE|I_LAX|U|E|O)  {% ([[value]]) => ({ type: `vowel`, meta
 LONG_VOWEL -> (AA|AA_LOWERED|AE|II|UU|EE|OO|AY|AW)  {% ([[value]]) => ({ type: `vowel`, meta: `long`, value }) %}
 
 CONSONANT -> (PLAIN_CONSONANT | EMPHATIC_CONSONANT)  {% ([[value]]) => value %}
+ST -> S T {% () => [{ type: `consonant`, meta: `plain`, value: `s` }, { type: `consonant`, meta: `plain`, value: `t` }]%}
 EMPHATIC_CONSONANT -> PLAIN_CONSONANT EMPHATIC  {% ([{ value: [value] }]) => ({ type: `consonant`, meta: `emphatic`, value }) %}  # XXX: could be [value] not [{ value: [value] }] for more nesting idk
 PLAIN_CONSONANT -> (2|3|B|D|F|G|GH|H|7|5|J|K|Q|L|M|N|P|R|S|SH|T|V|W|Y|Z|TH|DH)  {% ([[value]]) => ({ type: `consonant`, meta: `plain`, value }) %}
 
@@ -99,7 +103,7 @@ AA_LOWERED -> "@"  {% () => `lowered alif` %}  # sh@y شاي
 AE -> "&"  {% () => `ae` %} # n&n نان, f&d! فادي (versus fAdi, pronounced "fede" or with whatever the speaker's A and i# are)
 
 I_TENSE -> "!"  {% () => `tense i` %}  # 2!d`Afc
-I_LAX -> "i"  # default value of kasra
+I_LAX -> "i"  {% id %} # default value of kasra
 II -> "I"  {% () => `long i` %}
 
 U -> "u"  {% id %}
