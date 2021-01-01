@@ -13,7 +13,7 @@ word ->
     monosyllable  {% id %}
   | disyllable  {% id %}
   | trisyllable {% id %}
-  | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, c]) => [a, ...b, c] %}
+  | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, c]) => [a, ...b, ...c] %}
 
 monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => { syllable.meta.stressed = true; return syllable; } %}
 
@@ -28,7 +28,9 @@ final_stress_disyllable ->
     initial_syllable final_superheavy_syllable  {% ([b, c]) => { c.meta.stressed = true; return [b, c] } %}
   | initial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
 
-initial_heavier_syllable -> initial_heavy_syllable | initial_superheavy_syllable
+initial_heavier_syllable ->
+    initial_heavy_syllable  {% id %}
+  | initial_superheavy_syllable  {% id %}
 
 trisyllable ->
     antepenult_stress_trisyllable {% id %}
@@ -58,8 +60,12 @@ stressed_final ->
   | medial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
     
 
-heavier_syllable -> heavy_syllable | superheavy_syllable
-final_lighter_syllable -> final_light_syllable | final_heavy_syllable
+heavier_syllable ->
+    heavy_syllable  {% id %}
+  | superheavy_syllable  {% id %}
+final_lighter_syllable ->
+    final_light_syllable  {% id %}
+  | final_heavy_syllable  {% id %}
 
 initial_syllable ->
     initial_light_syllable  {% id %}
