@@ -38,10 +38,16 @@
     },
     "rules": {
       "linebreak-style": "off",
-      "max-classes-per-file": ["warn", 1],
-      "quotes": ["warn", {
-        "allowTemplateLiterals": true
-      }]
+      "max-classes-per-file": [
+        "warn",
+        1
+      ],
+      "quotes": [
+        "warn",
+        {
+          "allowTemplateLiterals": true
+        }
+      ]
     }
   },
   "browserslist": [

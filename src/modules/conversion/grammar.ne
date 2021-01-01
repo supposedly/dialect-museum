@@ -3,66 +3,126 @@
 # type: vowel, meta: length (short = short, long = long)
 # type: consonant, meta: emphaticness (emphatic = emphatic, plain = plain)
 
+# zero clue why this needs the [value] to be unpacked one level, nearley is annoying
+makeInitial[Syllable] ->
+    ST $Syllable  {% ([st, [value]]) => ({ type: `syllable`, meta: value.meta, value: [...st, ...value.value] }) %}
+  | consonant $Syllable  {% ([c, [value]]) => ({ type: `syllable`, meta: value.meta, value: [c, ...value.value] }) %}
+  | $Syllable  {% ([[value]]) => value %}
+
 word -> 
-    MONOSYLLABLE  {% id %}
-  | INITIAL_SYLLABLE MEDIAL_SYLLABLE:* FINAL_SYLLABLE  {% ([a, b, c]) => [a, ...b, c] %}
+    monosyllable  {% id %}
+  | disyllable  {% id %}
+  | trisyllable {% id %}
+  | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, c]) => [a, ...b, c] %}
 
-MONOSYLLABLE ->
-    ST FINAL_SYLLABLE  {% ([st, value]) => ({ type: `syllable`, meta: value.meta, value: [...st, ...value.value] }) %}
-  | CONSONANT FINAL_SYLLABLE  {% ([c, value]) => ({ type: `syllable`, meta: value.meta, value: [c, ...value.value] }) %}
-  | FINAL_SYLLABLE  {% id %}
-  
-INITIAL_SYLLABLE ->
-    ST MEDIAL_SYLLABLE  {% ([st, value]) => ({ type: `syllable`, meta: value.meta, value: [...st, ...value.value] }) %}
-  | CONSONANT MEDIAL_SYLLABLE  {% ([c, value]) => ({ type: `syllable`, meta: value.meta, value: [c, ...value.value] }) %}
-  | MEDIAL_SYLLABLE  {% id %}
+monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => { syllable.meta.stressed = true; return syllable; } %}
 
-MEDIAL_SYLLABLE ->
-    LIGHT_SYLLABLE  {% id %}
-  | HEAVY_SYLLABLE  {% id %}
-  | SUPERHEAVY_SYLLABLE  {% id %}
+disyllable ->
+    penult_stress_disyllable  {% id %}
+  | final_stress_disyllable  {% id %}
 
-FINAL_SYLLABLE ->
-    FINAL_LIGHT_SYLLABLE  {% id %}
-  | FINAL_HEAVY_SYLLABLE  {% id %}
-  | FINAL_SPECIAL_SYLLABLE  {% id %}
-  | FINAL_SUPERHEAVY_SYLLABLE  {% id %}
+penult_stress_disyllable ->
+    initial_heavier_syllable final_lighter_syllable  {% ([b, c]) => { b.meta.stressed = true; return [b, c] } %}
+  | initial_syllable STRESSED final_syllable  {% ([b, _, c]) => { b.meta.stressed = true; [b, c]; } %}
+final_stress_disyllable ->
+    initial_syllable final_superheavy_syllable  {% ([b, c]) => { c.meta.stressed = true; return [b, c] } %}
+  | initial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
 
-FINAL_LIGHT_SYLLABLE -> CONSONANT FINAL_LIGHT_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `light`, value: [a, ...b] }) %}
-FINAL_HEAVY_SYLLABLE -> CONSONANT FINAL_HEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `heavy`, value: [a, ...b] }) %}
-FINAL_SPECIAL_SYLLABLE -> CONSONANT FINAL_SPECIAL_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `special`, value: [a, ...b] }) %}
-FINAL_SUPERHEAVY_SYLLABLE -> CONSONANT FINAL_SUPERHEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `superheavy`, value: [a, ...b] }) %}
+initial_heavier_syllable -> initial_heavy_syllable | initial_superheavy_syllable
 
-FINAL_LIGHT_RIME -> FINAL_SHORT_VOWEL
-FINAL_HEAVY_RIME -> SHORT_VOWEL CONSONANT
-FINAL_SPECIAL_RIME -> (LONG_VOWEL | A | E | O) STRESSED
-FINAL_SUPERHEAVY_RIME -> SUPERHEAVY_RIME  {% id %}  # wanna keep original array without adding a nesting level
+trisyllable ->
+    antepenult_stress_trisyllable {% id %}
+  | initial_syllable stressed_penult  {% ([a, b]) => [a, ...b] %}
+  | initial_syllable stressed_final  {% ([a, b]) => [a, ...b] %}
 
-LIGHT_SYLLABLE -> CONSONANT LIGHT_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `light`, value: [a, ...b] }) %}
-HEAVY_SYLLABLE -> CONSONANT HEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `heavy`, value: [a, ...b] }) %}
-SUPERHEAVY_SYLLABLE -> CONSONANT SUPERHEAVY_RIME  {% ([a, b]) => ({ type: `syllable`, meta: `superheavy`, value: [a, ...b] }) %}
+antepenult_stress_trisyllable ->
+    initial_syllable unstressed_last_2 {% ([a, b]) => { a.meta.stressed = true; return [a, ...b]; } %}
+  | initial_syllable STRESSED medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => { a.meta.stressed = true; return [a, b, c]; } %}
 
-LIGHT_RIME -> SHORT_VOWEL
-HEAVY_RIME -> (LONG_VOWEL | SHORT_VOWEL CONSONANT)  {% id %}  # i guess the %id% is needed because the parens add an array level or something?
-SUPERHEAVY_RIME ->
-    LONG_VOWEL CONSONANT
-  | SHORT_VOWEL CONSONANT NO_SCHWA CONSONANT
-  | SHORT_VOWEL CONSONANT CONSONANT
+last_three_syllables ->
+    antepenult_stress_triplet {% id %}
+  | medial_syllable stressed_penult  {% ([a, b]) => [a, ...b] %}
+  | medial_syllable stressed_final  {% ([a, b]) => [a, ...b] %}
+
+antepenult_stress_triplet ->
+    medial_syllable unstressed_last_2 {% ([a, b]) => { a.meta.stressed = true; return [a, ...b]; } %}
+  | medial_syllable STRESSED medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => { a.meta.stressed = true; return [a, b, c]; } %}
+
+unstressed_last_2 -> light_syllable final_lighter_syllable  #{% ([a, b, c]) => { a.meta.stressed = true; return [a, b, c] } %}
+#  | medial_syllable STRESSED medial_syllable final_syllable  {% ([a, _, b, c]) => [a, b, c] %}
+stressed_penult ->
+    heavier_syllable final_lighter_syllable  {% ([b, c]) => { b.meta.stressed = true; return [b, c] } %}
+  | medial_syllable STRESSED final_syllable  {% ([b, _, c]) => { b.meta.stressed = true; [b, c]; } %}
+stressed_final ->
+    medial_syllable final_superheavy_syllable  {% ([b, c]) => { c.meta.stressed = true; return [b, c] } %}
+  | medial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
+    
+
+heavier_syllable -> heavy_syllable | superheavy_syllable
+final_lighter_syllable -> final_light_syllable | final_heavy_syllable
+
+initial_syllable ->
+    initial_light_syllable  {% id %}
+  | initial_heavy_syllable  {% id %}
+  | initial_superheavy_syllable  {% id %}
+
+# TODO: make an inheritance relationship thing from final_syllable -> final_unstressed_syllable (aka lessen duplication)
+final_unstressed_syllable ->
+    final_light_syllable  {% id %}
+  | final_heavy_syllable  {% id %}
+  | final_superheavy_syllable  {% id %}
+
+final_syllable ->
+    final_light_syllable  {% id %}
+  | final_heavy_syllable  {% id %}
+  | final_stressed_syllable  {% id %}
+  | final_superheavy_syllable  {% id %}
+
+medial_syllable ->
+    light_syllable  {% id %}
+  | heavy_syllable  {% id %}
+  | superheavy_syllable  {% id %}
+
+initial_light_syllable -> makeInitial[light_syllable]  {% id %}
+initial_heavy_syllable -> makeInitial[heavy_syllable]  {% id %}
+initial_superheavy_syllable -> makeInitial[superheavy_syllable]  {% id %}
+
+final_light_syllable -> consonant final_light_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `light`, stressed: null }, value: [a, ...b] }) %}
+final_heavy_syllable -> consonant final_heavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `heavy`, stressed: null }, value: [a, ...b] }) %}
+final_stressed_syllable -> consonant final_stressed_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `special`, stressed: true }, value: [a, ...b] }) %}
+final_superheavy_syllable -> consonant final_superheavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `superheavy`, stressed: null }, value: [a, ...b] }) %}
+
+final_light_rime -> final_short_vowel
+final_heavy_rime -> short_vowel consonant
+final_stressed_rime -> (long_vowel | A | E | O) STRESSED
+final_superheavy_rime -> superheavy_rime | PLURAL | DUAL
+
+light_syllable -> consonant light_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `light`, stressed: null }, value: [a, ...b] }) %}
+heavy_syllable -> consonant heavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `heavy`, stressed: null }, value: [a, ...b] }) %}
+superheavy_syllable -> consonant superheavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `superheavy`, stressed: null }, value: [a, ...b] }) %}
+
+light_rime -> short_vowel
+heavy_rime -> (long_vowel | short_vowel consonant)  {% id %}  # i guess the %id% is needed because the parens add an array level or something?
+superheavy_rime ->
+    long_vowel consonant
+  | short_vowel consonant NO_SCHWA consonant
+  | short_vowel consonant consonant
      {% ([a, b, c]) => (
       b === c ? [a, b, c] : [a, b, { type: `epenthetic`, meta: `+`, value: `schwa` }, c]
     )%}
-  | LONG_VOWEL CONSONANT CONSONANT # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
-  | LONG_VOWEL CONSONANT NO_SCHWA CONSONANT # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
+  | long_vowel consonant consonant # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
+  | long_vowel consonant NO_SCHWA consonant # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
 
-VOWEL -> (LONG_VOWEL | SHORT_VOWEL)  {% ([[value]]) => value %}
-FINAL_SHORT_VOWEL -> (A | I_TENSE | I_LAX | E | FEM)  {% ([[value]]) => ({ type: `vowel`, meta: `short`, value }) %}
-SHORT_VOWEL -> (A|I_TENSE|I_LAX|U|E|O)  {% ([[value]]) => ({ type: `vowel`, meta: `short`, value }) %}
-LONG_VOWEL -> (AA|AA_LOWERED|AE|II|UU|EE|OO|AY|AW)  {% ([[value]]) => ({ type: `vowel`, meta: `long`, value }) %}
+vowel -> (long_vowel | short_vowel)  {% ([[value]]) => value %}
+final_short_vowel -> (A | I_TENSE | I_LAX | E | FEM)  {% ([[value]]) => ({ type: `vowel`, meta: `short`, value }) %}
+short_vowel -> (A|I_TENSE|I_LAX|U|E|O)  {% ([[value]]) => ({ type: `vowel`, meta: `short`, value }) %}
+long_vowel -> (AA|AA_LOWERED|AE|II|UU|EE|OO|AY|AW)  {% ([[value]]) => ({ type: `vowel`, meta: `long`, value }) %}
 
-CONSONANT -> (PLAIN_CONSONANT | EMPHATIC_CONSONANT)  {% ([[value]]) => value %}
-ST -> S T {% () => [{ type: `consonant`, meta: `plain`, value: `s` }, { type: `consonant`, meta: `plain`, value: `t` }]%}
-EMPHATIC_CONSONANT -> PLAIN_CONSONANT EMPHATIC  {% ([{ value: [value] }]) => ({ type: `consonant`, meta: `emphatic`, value }) %}  # XXX: could be [value] not [{ value: [value] }] for more nesting idk
-PLAIN_CONSONANT -> (2|3|B|D|F|G|GH|H|7|5|J|K|Q|L|M|N|P|R|S|SH|T|V|W|Y|Z|TH|DH)  {% ([[value]]) => ({ type: `consonant`, meta: `plain`, value }) %}
+consonant -> (plain_consonant | emphatic_consonant)  {% ([[value]]) => value %}
+emphatic_consonant -> plain_consonant EMPHATIC  {% ([{ value: [value] }]) => ({ type: `consonant`, meta: `emphatic`, value }) %}  # XXX: could be [value] not [{ value: [value] }] for more nesting idk
+plain_consonant -> (2|3|B|D|F|G|GH|H|7|5|J|K|Q|L|M|N|P|R|S|SH|T|V|W|Y|Z|TH|DH)  {% ([[value]]) => ({ type: `consonant`, meta: `plain`, value }) %}
+
+ST -> S T  {% () => [{ type: `consonant`, meta: `plain`, value: `s` }, { type: `consonant`, meta: `plain`, value: `t` }]%}
 
 2 -> "2"  {% id %}  # loaned hamze
 3 -> "3"  {% id %}
@@ -91,6 +151,7 @@ Y -> "y"  {% id %}
 Z -> "z"  {% id %}
 TH -> "8"  {% () => `th` %} # looks like theta
 DH -> "6"  {% () => `dh` %} # looks like eth
+NULL -> "0"  {% () => `null` %}
 
 # LL -> "L"  # the phoneme /ḷː/ in Allah and derived or related words
 
