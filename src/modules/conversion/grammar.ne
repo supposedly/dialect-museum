@@ -15,7 +15,7 @@ term ->
 
 # `bruh (\ -- ) what (\?)` gives `bruh -- what?` (aka whitespace only matters inside the literal)
 literal ->
-    "(\\" [^)]:+ ")"  {% ([a, value, b]) => ({ type: `literal`, value }) %}
+    "(\\" [^)]:+ ")"  {% ([a, value, b]) => ({ type: `literal`, value: value.join('') }) %}
   | "(\\))"  {% () => ({ type: `literal`, value: `)` }) %}  # just in case
 
 word ->
