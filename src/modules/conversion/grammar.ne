@@ -1,25 +1,80 @@
-# type: syllable, meta: weight (0 = light, 10 = heavy, 20 = superheavy)
-# type: epenthetic, meta: priority (+ = priority, - = antipriority)
-# type: vowel, meta: length (short = short, long = long)
-# type: consonant, meta: emphaticness (emphatic = emphatic, plain = plain)
-
 # zero clue why this needs the [value] to be unpacked one level, nearley is annoying
 makeInitial[Syllable] ->
     ST $Syllable  {% ([st, [value]]) => ({ type: `syllable`, meta: value.meta, value: [...st, ...value.value] }) %}
   | consonant $Syllable  {% ([c, [value]]) => ({ type: `syllable`, meta: value.meta, value: [c, ...value.value] }) %}
   | $Syllable  {% ([[value]]) => value %}
 
+sentence ->
+    term {% id %}
+  | term (__ term {% ([a, b]) => b %}):+ {% ([a, b]) => [a, ...b] %}
+
+term ->
+    word augmentation pronoun {% ([word, meta, value]) => ({ type: `term`, meta: { augmented: true }, value: [word, { type: `augmentation`, meta, value }] }) %}
+  | word {% ([value]) => ({ type: `term`, meta: { augmented: false }, value }) %}
+  | literal {% id %}
+
+# `bruh (\ -- ) what (\?)` gives `bruh -- what?` (aka whitespace only matters inside the literal)
+literal -> "(\\" [.]:+ ")"  {% ([a, value, b]) => ({ type: `literal`, value }) %}
+
 word ->
-    stem augmentation pronoun {% ([stem, meta, value]) => ({ type: `word`, meta: { augmented: true }, value: [...stem, { type: `augmentation`, meta, value }] }) %}
-  | stem {% ([value]) => ({ type: `word`, meta: { augmented: false }, value }) %}
+    stem  {% id %}
+  | idafe  {% id %}
+  | pp  {% id %}
+  | verb  {% id %}
+  | m  {% id %}
+  | l  {% id %}
+
+idafe ->
+  "(idafe"
+    __ (stem | m | idafe)
+    __ (stem | m | l | idafe)
+  ")"  {% ([a, b, [possessee], c, [possessor], d]) => ({ type: `idafe`, meta: { definite: possessor.type === `def` }, value: { possessee, possessor }}) %}
+
+l -> "(l" __ (stem | m) ")"  {% ([a, b, [value], c]) => ({ type: `def`, value }) %}
+
+# the m- prefix can vary, dunno if this is the best way to represent that tho
+m ->
+  "(m"
+    ("a" | "i" | "u")
+    __ stem
+  ")"  {% ([a, [vowel], b, value, c]) => ({ type: `m`, meta: { vowel }, value }) %}
+
+# pp needs to be a thing because -c behaves funny in participles (fe3la and fe3ilt-/fe3lit-/fe3liit-),
+# A is more likely to raise to /e:/ in fe3il participles,
+# and a~i for the first vowel in fa3len participles
+pp -> "(pp"
+    __ ("m" | "f")
+    __ ("active" | "passive")
+    __ verb
+    # ugliness coming up (basically to be able to handle both the null case and the not-null case the same way)
+    (__ ("fa3len"  {% id %} | "fe3il"  {% id %}) {% ([a, b]) => b %}):?  # just as a hint for form-1 active participles
+  ")"  {%
+    ([a, b, [gender], c, [voice], d, verb, hint, f]) => (
+      { type: `pp`, meta: { gender, voice, verb, hint }}
+    )
+  %}
+
+# verb needs to be a thing because verb conjugations can differ wildly (7akyit/7ikyit vs 7akit vs 7ikit... rti7t vs rta7t, seme3ne vs etc)
+verb ->
+  "(verb"
+    __ pronoun
+    __ verb_form
+    __ ("pst" | "ind" | "sbjv" | "imp")  # could do {% id %} on each one of these but [tam] works below
+    __ consonant
+    consonant
+    consonant
+    consonant:?
+  ")"  {% ([a, b, conjugation, c, form, d, [tam], e, root1, root2, root3, root4, f]) => (
+         { type: `verb`, meta: { form, tam, conjugation }, value: [root1, root2, root3, root4] }
+       ) %}
 
 stem -> 
-    monosyllable
-  | disyllable
-  | trisyllable
+    monosyllable  # don't need to {% id %} because it's already going to be [Object] instead of [[Object...]]
+  | disyllable  {% id %}
+  | trisyllable  {% id %}
   | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, c]) => [a, ...b, ...c] %}
 
-monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => ({ ...syllable, meta: { ...syllable.meta, stressed: true } }) %}
+monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => ({ ...syllable, meta: { ...syllable.meta, stressed: true }}) %}
 
 disyllable ->
     penult_stress_disyllable  {% id %}
@@ -105,8 +160,8 @@ final_heavy_rime -> short_vowel consonant
 final_stressed_rime -> (long_vowel  {% id %} | A  {% id %} | E  {% id %} | O  {% id %}) STRESSED
 final_superheavy_rime ->
     superheavy_rime  {% id %}
-  | PLURAL  {% id %}
-  | DUAL  {% id %}
+  | PLURAL  # gets unpacked into "p", "l", "u", "r", "a", "l" if {% id %}
+  | DUAL
 
 light_syllable -> consonant light_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `light`, stressed: null }, value: [a, ...b] }) %}
 heavy_syllable -> consonant heavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `heavy`, stressed: null }, value: [a, ...b] }) %}
@@ -119,21 +174,21 @@ superheavy_rime ->
   | short_vowel consonant NO_SCHWA consonant
   | short_vowel consonant consonant
      {% ([a, b, c]) => (
-      b === c ? [a, b, c] : [a, b, { type: `epenthetic`, meta: `+`, value: `schwa` }, c]
+      b === c ? [a, b, c] : [a, b, { type: `epenthetic`, meta: { priority: true }, value: `schwa` }, c]
     )%}
   | long_vowel consonant consonant # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
   | long_vowel consonant NO_SCHWA consonant # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
 
 vowel -> (long_vowel | short_vowel)  {% ([[value]]) => value %}
-final_short_vowel -> (A | I_TENSE | I_LAX | E | FEM)  {% ([[value]]) => ({ type: `vowel`, meta: `short`, value }) %}
-short_vowel -> (A|I_TENSE|I_LAX|U|E|O)  {% ([[value]]) => ({ type: `vowel`, meta: `short`, value }) %}
-long_vowel -> (AA|AA_LOWERED|AE|II|UU|EE|OO|AY|AW)  {% ([[value]]) => ({ type: `vowel`, meta: `long`, value }) %}
+final_short_vowel -> (A | I_TENSE | I_LAX | E | FEM)  {% ([[value]]) => ({ type: `vowel`, meta: { length: 1 }, value }) %}
+short_vowel -> (A|I_TENSE|I_LAX|U|E|O)  {% ([[value]]) => ({ type: `vowel`, meta: { length: 1 }, value }) %}
+long_vowel -> (AA|AA_LOWERED|AE|II|UU|EE|OO|AY|AW)  {% ([[value]]) => ({ type: `vowel`, meta: { length: 2 }, value }) %}
 
 consonant -> (plain_consonant | emphatic_consonant)  {% ([[value]]) => value %}
-emphatic_consonant -> plain_consonant EMPHATIC  {% ([{ value: [value] }]) => ({ type: `consonant`, meta: `emphatic`, value }) %}  # XXX: could be [value] not [{ value: [value] }] for more nesting idk
-plain_consonant -> (2|3|B|D|F|G|GH|H|7|5|J|K|Q|L|M|N|P|R|S|SH|T|V|W|Y|Z|TH|DH)  {% ([[value]]) => ({ type: `consonant`, meta: `plain`, value }) %}
+emphatic_consonant -> plain_consonant EMPHATIC  {% ([{ value: value }]) => ({ type: `consonant`, meta: { emphatic: true }, value }) %}  # XXX: could be [value] not [{ value: [value] }] for more nesting idk
+plain_consonant -> (2|3|B|D|F|G|GH|H|7|5|J|K|Q|L|M|N|P|R|S|SH|T|V|W|Y|Z|TH|DH)  {% ([[value]]) => ({ type: `consonant`, meta: { emphatic: false }, value }) %}
 
-ST -> S T  {% () => [{ type: `consonant`, meta: `plain`, value: `s` }, { type: `consonant`, meta: `plain`, value: `t` }]%}
+ST -> S T  {% () => [{ type: `consonant`, meta: { emphatic: false }, value: `s` }, { type: `consonant`, meta: { emphatic: false }, value: `t` }]%}
 
 2 -> "2"  {% id %}  # loaned hamze
 3 -> "3"  {% id %}
@@ -201,7 +256,7 @@ DUAL -> "="  {% () => `dual` %} # xa9lc= شغلتين
 # plural suffix is its own thing bc -iin-l- vs -in-l- variation, or stuff like meshteryiin vs meshtriyyiin vs meshtriin
 PLURAL -> "+"  {% () => `plural` %}  # (pp d`Ar!b+) ضاربين
 
-NO_SCHWA -> "'"  {% () => ({ type: `epenthetic`, meta: `-`, value: `schwa` }) %} # 3in'd عند, karaf's كرفس, and 2in't إنت -- the idea's that the schwa is still a thing there but the default pron is without it
+NO_SCHWA -> "'"  {% () => ({ type: `epenthetic`, meta: { priority: false }, value: `schwa` }) %} # 3in'd عند, karaf's كرفس, and 2in't إنت -- the idea's that the schwa is still a thing there but the default pron is without it
 EMPHATIC -> "`"  {% () => null %}  # goes after the emphatic letter i guess
 STRESSED ->  "*"  {% () => `stressed` %}  # goes after the stressed vowel. only use this if the word's stress is not automatic
 
@@ -252,7 +307,7 @@ pronoun ->
 augmentation ->
     "-"  {% () => `possessive` %}  # introduces idafe pronouns
   | "."  {% () => `object` %}  # introduces verbs and active participles
-  | ","  {% () => `dative` %}  # this stands for the dative L
+  | "|"  {% () => `dative` %}  # this stands for the dative L
 
 NEGATIVE -> "X"
 
