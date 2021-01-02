@@ -9,10 +9,14 @@ makeInitial[Syllable] ->
   | consonant $Syllable  {% ([c, [value]]) => ({ type: `syllable`, meta: value.meta, value: [c, ...value.value] }) %}
   | $Syllable  {% ([[value]]) => value %}
 
-word -> 
-    monosyllable  {% id %}
-  | disyllable  {% id %}
-  | trisyllable {% id %}
+word ->
+    stem augmentation pronoun {% ([stem, meta, value]) => ({ type: `word`, meta: { augmented: true }, value: [...stem, { type: `augmentation`, meta, value }] }) %}
+  | stem {% ([value]) => ({ type: `word`, meta: { augmented: false }, value }) %}
+
+stem -> 
+    monosyllable
+  | disyllable
+  | trisyllable
   | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, c]) => [a, ...b, ...c] %}
 
 monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => ({ ...syllable, meta: { ...syllable.meta, stressed: true } }) %}
@@ -57,7 +61,6 @@ stressed_penult ->
 stressed_final ->
     medial_syllable final_superheavy_syllable  {% ([b, c]) => [b, { ...c, meta: { ...c.meta, stressed: true }}] %}
   | medial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
-    
 
 heavier_syllable ->
     heavy_syllable  {% id %}
@@ -199,12 +202,60 @@ DUAL -> "="  {% () => `dual` %} # xa9lc= شغلتين
 PLURAL -> "+"  {% () => `plural` %}  # (pp d`Ar!b+) ضاربين
 
 NO_SCHWA -> "'"  {% () => ({ type: `epenthetic`, meta: `-`, value: `schwa` }) %} # 3in'd عند, karaf's كرفس, and 2in't إنت -- the idea's that the schwa is still a thing there but the default pron is without it
-EMPHATIC -> "`"  {% id %}  # goes after the emphatic letter i guess
+EMPHATIC -> "`"  {% () => null %}  # goes after the emphatic letter i guess
 STRESSED ->  "*"  {% () => `stressed` %}  # goes after the stressed vowel. only use this if the word's stress is not automatic
 
 POSSESSIVE -> "-"  {% id %}  # for idafe pronouns
 OBJECT -> "."  {% id %}  # for verbs and active participles
 CLITIC -> ","  {% id %}  # usable before -l- and -x
 ANYPRON -> ";"  {% id %}  # i guess this is usable after -l- and with prepositions...
+
+verb_form ->
+    "aa"  {% id %}
+  | "ai"  {% id %}
+  | "au"  {% id %}
+  | "ia"  {% id %}
+  | "ii"  {% id %}
+  | "iu"  {% id %}
+  | "fa33al"  {% id %}
+  | "tfa33al"  {% id %}
+  | "stfa33al"  {% id %}
+  | "fe3al"  {% id %}
+  | "tfe3al"  {% id %}
+  | "stfe3al"  {% id %}
+  | "nfa3al"  {% id %}
+  | "fta3al"  {% id %}
+  | "staf3al"  {% id %}
+  | "stAf3al"  {% id %}  # for stafazz (not stfazz), sta2aal (not st2aal)
+  | "f3all"  {% id %}
+  | "fa3la2"  {% id %}
+  | "tfa3la2" {% id %}
+  | "stfa3la2" {% id %}  # probably only theoretically exists lol
+
+pronoun ->
+    "1ms"i  {% id %}  # -e according to loun
+  | "1fs"i  {% id %}  # -i according to loun
+  | "1ns"i  {% id %}  # the normal neutral one idk
+  | "1np"i  {% id %}
+  | "2ms"i  {% id %}
+  | "2fs"i  {% id %}
+  | "2ns"i  {% id %}  # maybe someday
+  | "2mp"i  {% id %}  # -kVm in case it exists in some southern dialect
+  | "2fp"i  {% id %}  # ditto but -kVn
+  | "2np"i  {% id %}
+  | "3ms"i  {% id %}
+  | "3fs"i  {% id %}
+  | "3mp"i  {% id %}  # ditto but -(h)Vm
+  | "3fp"i  {% id %}  # ditto but -(h)Vn
+  | "3np"i  {% id %}
+
+augmentation ->
+    "-"  {% () => `possessive` %}  # introduces idafe pronouns
+  | "."  {% () => `object` %}  # introduces verbs and active participles
+  | ","  {% () => `dative` %}  # this stands for the dative L
+
+NEGATIVE -> "X"
+
+__ -> [\s]:+ {% () => null %}
 
 # a good example of <e> and <*>: heXXa* for donkeys
