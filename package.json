@@ -46,7 +46,7 @@
       ],
       "quotes": [
         "warn",
-        "backticks",
+        "backtick",
         {
           "avoidEscape": true
         }

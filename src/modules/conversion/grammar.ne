@@ -14,7 +14,9 @@ term ->
   | literal {% id %}
 
 # `bruh (\ -- ) what (\?)` gives `bruh -- what?` (aka whitespace only matters inside the literal)
-literal -> "(\\" [.]:+ ")"  {% ([a, value, b]) => ({ type: `literal`, value }) %}
+literal ->
+    "(\\" [^)]:+ ")"  {% ([a, value, b]) => ({ type: `literal`, value }) %}
+  | "(\\))"  {% () => ({ type: `literal`, value: `)` }) %}  # just in case
 
 word ->
     stem  {% id %}
@@ -313,4 +315,4 @@ NEGATIVE -> "X"
 
 __ -> [\s]:+ {% () => null %}
 
-# a good example of <e> and <*>: heXXa* for donkeys
+# a good example of <e> and <*>: hexxa* for donkeys
