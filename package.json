@@ -46,8 +46,9 @@
       ],
       "quotes": [
         "warn",
+        "backticks",
         {
-          "allowTemplateLiterals": true
+          "avoidEscape": true
         }
       ]
     }
