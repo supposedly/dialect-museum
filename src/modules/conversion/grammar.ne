@@ -15,17 +15,17 @@ word ->
   | trisyllable {% id %}
   | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, c]) => [a, ...b, ...c] %}
 
-monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => { syllable.meta.stressed = true; return syllable; } %}
+monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => ({ ...syllable, meta: { ...syllable.meta, stressed: true } }) %}
 
 disyllable ->
     penult_stress_disyllable  {% id %}
   | final_stress_disyllable  {% id %}
 
 penult_stress_disyllable ->
-    initial_heavier_syllable final_lighter_syllable  {% ([b, c]) => { b.meta.stressed = true; return [b, c] } %}
-  | initial_syllable STRESSED final_syllable  {% ([b, _, c]) => { b.meta.stressed = true; [b, c]; } %}
+    initial_heavier_syllable final_lighter_syllable  {% ([b, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
+  | initial_syllable STRESSED final_syllable  {% ([b, _, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
 final_stress_disyllable ->
-    initial_syllable final_superheavy_syllable  {% ([b, c]) => { c.meta.stressed = true; return [b, c] } %}
+    initial_syllable final_superheavy_syllable  {% ([b, c]) => [b, { ...c, meta: { ...c.meta, stressed: true }}] %}
   | initial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
 
 initial_heavier_syllable ->
@@ -38,8 +38,8 @@ trisyllable ->
   | initial_syllable stressed_final  {% ([a, b]) => [a, ...b] %}
 
 antepenult_stress_trisyllable ->
-    initial_syllable unstressed_last_2 {% ([a, b]) => { a.meta.stressed = true; return [a, ...b]; } %}
-  | initial_syllable STRESSED medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => { a.meta.stressed = true; return [a, b, c]; } %}
+    initial_syllable unstressed_last_2 {% ([a, b]) => [{ ...a, meta: { ...a.meta, stressed: true }}, ...b] %}
+  | initial_syllable STRESSED medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => [{ ...a, meta: { ...a.meta, stressed: true }}, b, c] %}
 
 last_three_syllables ->
     antepenult_stress_triplet {% id %}
@@ -47,16 +47,15 @@ last_three_syllables ->
   | medial_syllable stressed_final  {% ([a, b]) => [a, ...b] %}
 
 antepenult_stress_triplet ->
-    medial_syllable unstressed_last_2 {% ([a, b]) => { a.meta.stressed = true; return [a, ...b]; } %}
-  | medial_syllable STRESSED medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => { a.meta.stressed = true; return [a, b, c]; } %}
+    medial_syllable unstressed_last_2 {% ([a, b]) => [{ ...a, meta: { ...a.meta, stressed: true }}, ...b] %}
+  | medial_syllable STRESSED medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => [{ ...a, meta: { ...a.meta, stressed: true }}, b, c] %}
 
-unstressed_last_2 -> light_syllable final_lighter_syllable  #{% ([a, b, c]) => { a.meta.stressed = true; return [a, b, c] } %}
-#  | medial_syllable STRESSED medial_syllable final_syllable  {% ([a, _, b, c]) => [a, b, c] %}
+unstressed_last_2 -> light_syllable final_lighter_syllable
 stressed_penult ->
-    heavier_syllable final_lighter_syllable  {% ([b, c]) => { b.meta.stressed = true; return [b, c] } %}
-  | medial_syllable STRESSED final_syllable  {% ([b, _, c]) => { b.meta.stressed = true; [b, c]; } %}
+    heavier_syllable final_lighter_syllable  {% ([b, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
+  | medial_syllable STRESSED final_syllable  {% ([b, _, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
 stressed_final ->
-    medial_syllable final_superheavy_syllable  {% ([b, c]) => { c.meta.stressed = true; return [b, c] } %}
+    medial_syllable final_superheavy_syllable  {% ([b, c]) => [b, { ...c, meta: { ...c.meta, stressed: true }}] %}
   | medial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
     
 
@@ -100,15 +99,18 @@ final_superheavy_syllable -> consonant final_superheavy_rime  {% ([a, b]) => ({ 
 
 final_light_rime -> final_short_vowel
 final_heavy_rime -> short_vowel consonant
-final_stressed_rime -> (long_vowel | A | E | O) STRESSED
-final_superheavy_rime -> superheavy_rime | PLURAL | DUAL
+final_stressed_rime -> (long_vowel  {% id %} | A  {% id %} | E  {% id %} | O  {% id %}) STRESSED
+final_superheavy_rime ->
+    superheavy_rime  {% id %}
+  | PLURAL  {% id %}
+  | DUAL  {% id %}
 
 light_syllable -> consonant light_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `light`, stressed: null }, value: [a, ...b] }) %}
 heavy_syllable -> consonant heavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `heavy`, stressed: null }, value: [a, ...b] }) %}
 superheavy_syllable -> consonant superheavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `superheavy`, stressed: null }, value: [a, ...b] }) %}
 
 light_rime -> short_vowel
-heavy_rime -> (long_vowel | short_vowel consonant)  {% id %}  # i guess the %id% is needed because the parens add an array level or something?
+heavy_rime -> (long_vowel | short_vowel consonant) {% id %} # i guess the %id% is needed because the parens add an array level or something?
 superheavy_rime ->
     long_vowel consonant
   | short_vowel consonant NO_SCHWA consonant
