@@ -35,6 +35,7 @@ idafe ->
 l -> "(l" __ (stem | m) ")"  {% ([a, b, [value], c]) => ({ type: `def`, value }) %}
 
 # the m- prefix can vary, dunno if this is the best way to represent that tho
+# my idea is to do like (ma mYbar) or (mu mujarr!b) so the calling code can just extract that initial mV-
 m ->
   "(m"
     ("a" | "i" | "u")
@@ -43,20 +44,19 @@ m ->
 
 # pp needs to be a thing because -c behaves funny in participles (fe3la and fe3ilt-/fe3lit-/fe3liit-),
 # A is more likely to raise to /e:/ in fe3il participles,
-# and a~i for the first vowel in fa3len participles
+# and the first vowel in fa3len participles is a~i
 pp -> "(pp"
-    __ ("m" | "f")
+    __ pronoun
     __ ("active" | "passive")
-    __ verb
-    # ugliness coming up (basically to be able to handle both the null case and the not-null case the same way)
-    (__ ("fa3len"  {% id %} | "fe3il"  {% id %}) {% ([a, b]) => b %}):?  # just as a hint for form-1 active participles
+    __ pp_form
   ")"  {%
-    ([a, b, [gender], c, [voice], d, verb, hint, f]) => (
-      { type: `pp`, meta: { gender, voice, verb, hint }}
+    ([a, b, [conjugation], c, [voice], d, verb, hint, f]) => (
+      { type: `pp`, meta: { conjugation, voice, verb, hint }}
     )
   %}
 
-# verb needs to be a thing because verb conjugations can differ wildly (7akyit/7ikyit vs 7akit vs 7ikit... rti7t vs rta7t, seme3ne vs etc)
+# verb needs to be a thing because verb conjugations can differ wildly
+# (7aky!t/7iky!t vs 7ak!t vs 7ik!t (and -at too)... rt!7t vs rt!7t, seme3kon vs sme3kon etc)
 verb ->
   "(verb"
     __ pronoun
@@ -70,20 +70,22 @@ verb ->
          { type: `verb`, meta: { form, tam, conjugation }, value: [root1, root2, root3, root4] }
        ) %}
 
-stem -> 
-    monosyllable  # don't need to {% id %} because it's already going to be [Object] instead of [[Object...]]
-  | disyllable  {% id %}
-  | trisyllable  {% id %}
-  | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, c]) => [a, ...b, ...c] %}
+stem -> (
+    consonant  # don't need to {% id %} because it's already going to be [Object] instead of [[Object...]]
+    | monosyllable  # ditto
+    | disyllable  {% id %}
+    | trisyllable  {% id %}
+    | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, c]) => [a, ...b, ...c] %}
+  )  {% ([value]) => ({ type: `stem`, meta: { consonant: value.length === 1 && value[0].type === `consonant` }, value }) %}
 
 monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => ({ ...syllable, meta: { ...syllable.meta, stressed: true }}) %}
 
 disyllable ->
-    penult_stress_disyllable  {% id %}
+  | penult_stress_disyllable  {% id %}
   | final_stress_disyllable  {% id %}
 
 penult_stress_disyllable ->
-    initial_heavier_syllable final_lighter_syllable  {% ([b, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
+    initial_syllable final_lighter_syllable  {% ([b, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
   | initial_syllable STRESSED final_syllable  {% ([b, _, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
 final_stress_disyllable ->
     initial_syllable final_superheavy_syllable  {% ([b, c]) => [b, { ...c, meta: { ...c.meta, stressed: true }}] %}
@@ -152,10 +154,10 @@ initial_light_syllable -> makeInitial[light_syllable]  {% id %}
 initial_heavy_syllable -> makeInitial[heavy_syllable]  {% id %}
 initial_superheavy_syllable -> makeInitial[superheavy_syllable]  {% id %}
 
-final_light_syllable -> consonant final_light_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `light`, stressed: null }, value: [a, ...b] }) %}
-final_heavy_syllable -> consonant final_heavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `heavy`, stressed: null }, value: [a, ...b] }) %}
+final_light_syllable -> consonant final_light_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `light`, stressed: false }, value: [a, ...b] }) %}
+final_heavy_syllable -> consonant final_heavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `heavy`, stressed: false }, value: [a, ...b] }) %}
 final_stressed_syllable -> consonant final_stressed_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `special`, stressed: true }, value: [a, ...b] }) %}
-final_superheavy_syllable -> consonant final_superheavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `superheavy`, stressed: null }, value: [a, ...b] }) %}
+final_superheavy_syllable -> consonant final_superheavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `superheavy`, stressed: false }, value: [a, ...b] }) %}
 
 final_light_rime -> final_short_vowel
 final_heavy_rime -> short_vowel consonant
@@ -165,9 +167,9 @@ final_superheavy_rime ->
   | PLURAL  # gets unpacked into "p", "l", "u", "r", "a", "l" if {% id %}
   | DUAL
 
-light_syllable -> consonant light_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `light`, stressed: null }, value: [a, ...b] }) %}
-heavy_syllable -> consonant heavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `heavy`, stressed: null }, value: [a, ...b] }) %}
-superheavy_syllable -> consonant superheavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `superheavy`, stressed: null }, value: [a, ...b] }) %}
+light_syllable -> consonant light_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `light`, stressed: false }, value: [a, ...b] }) %}
+heavy_syllable -> consonant heavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `heavy`, stressed: false }, value: [a, ...b] }) %}
+superheavy_syllable -> consonant superheavy_rime  {% ([a, b]) => ({ type: `syllable`, meta: { weight: `superheavy`, stressed: false }, value: [a, ...b] }) %}
 
 light_rime -> short_vowel
 heavy_rime -> (long_vowel | short_vowel consonant) {% id %} # i guess the %id% is needed because the parens add an array level or something?
@@ -178,8 +180,8 @@ superheavy_rime ->
      {% ([a, b, c]) => (
       b === c ? [a, b, c] : [a, b, { type: `epenthetic`, meta: { priority: true }, value: `schwa` }, c]
     )%}
-  | long_vowel consonant consonant # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
-  | long_vowel consonant NO_SCHWA consonant # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
+  | long_vowel consonant consonant # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc2
+  | long_vowel consonant NO_SCHWA consonant # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc2
 
 vowel -> (long_vowel | short_vowel)  {% ([[value]]) => value %}
 final_short_vowel -> (A | I_TENSE | I_LAX | E | FEM)  {% ([[value]]) => ({ type: `vowel`, meta: { length: 1 }, value }) %}
@@ -192,7 +194,8 @@ plain_consonant -> (2|3|B|D|F|G|GH|H|7|5|J|K|Q|L|M|N|P|R|S|SH|T|V|W|Y|Z|TH|DH)  
 
 ST -> S T  {% () => [{ type: `consonant`, meta: { emphatic: false }, value: `s` }, { type: `consonant`, meta: { emphatic: false }, value: `t` }]%}
 
-2 -> "2"  {% id %}  # loaned hamze
+# BEGIN LETTERS #
+2 -> "?"  {% id %}  # loaned/word-initially-preserved hamze
 3 -> "3"  {% id %}
 B -> "b"  {% id %}
 D -> "d"  {% id %}
@@ -239,10 +242,10 @@ U -> "u"  {% id %}
 UU -> "U"  {% () => `long u` %}
 
 E -> "e"  {% id %}  # word-final for *-a, like hYdIke
-                   # also undecided whether to do e.g. hEdIk or hedIk (or even just hYdIk) هيديك
-                   # also-also for loans like fetta فتا or elI إيلي
-                   # also-also-also for 0<e<a when still in the medial stage, like for ppl who have ketIr كتير
-                   # aaaand for stuff like mexYk or mexEke or whatever, + mexAn (when they're not something like mxYk and mxAn) 
+                    # also undecided whether to do e.g. hEdIk or hedIk (or even just hYdIk) هيديك
+                    # also-also for loans like fetta فتا or elI إيلي
+                    # also-also-also for 0<e<a when still in the medial stage, like for ppl who have ketIr كتير
+                    # aaaand for stuff like mexYk or mexEke or whatever, + mexAn (when they're not something like mxYk and mxAn) 
 EE -> "E"  {% () => `long e` %}  # for demonstratives and loanwords; hEda هيدا, motEr موتير
 
 O -> "o"  {% id %} # for loans like motEr... also undecided whether to do e.g. hOnIk or honIk (or even just hWnIk) هونيك
@@ -250,11 +253,12 @@ OO -> "O"  {% () => `long o` %} # for demonstratives and loanwords; hOl(e) هو�
 
 AY -> "Y"  {% () => `ay` %}
 AW -> "W"  {% () => `aw` %}
+# END LETTERS #
 
 # fem suffix is its own thing bc -a vs -e vs -i variation
 FEM -> "c"  {% () => `fem` %} # (pp d`Ar!bc) ضاربة
 # dual suffix is its own thing bc -ayn/-een vs -aan variation (per Mekki 1984)
-DUAL -> "="  {% () => `dual` %} # xa9lc= شغلتين
+DUAL -> "2"  {% () => `dual` %} # xa9lc2 شغلتين
 # plural suffix is its own thing bc -iin-l- vs -in-l- variation, or stuff like meshteryiin vs meshtriyyiin vs meshtriin
 PLURAL -> "+"  {% () => `plural` %}  # (pp d`Ar!b+) ضاربين
 
@@ -283,35 +287,55 @@ verb_form ->
   | "nfa3al"  {% id %}
   | "fta3al"  {% id %}
   | "staf3al"  {% id %}
-  | "stAf3al"  {% id %}  # for stafazz (not stfazz), sta2aal (not st2aal)
+  | "stAf3al"  {% id %}  # for stafazz (not stfazz), sta2aal (not st2aal), etc
+  | "f3all"  {% id %}
+  | "fa3la2"  {% id %}
+  | "tfa3la2" {% id %}
+  | "stfa3la2" {% id %}  # probably only theoretically exists lol
+
+pp_form ->
+    "1/both"  {% id %}
+  | "1/fa3len"  {% id %}
+  | "1/fe3il"  {% id %}
+  | "fa33al"  {% id %}
+  | "tfa33al"  {% id %}
+  | "stfa33al"  {% id %}
+  | "fe3al"  {% id %}
+  | "tfe3al"  {% id %}
+  | "stfe3al"  {% id %}
+  | "nfa3al"  {% id %}
+  | "fta3al"  {% id %}
+  | "staf3al"  {% id %}
+  | "stAf3al"  {% id %}  # for stafazz (not stfazz), sta2aal (not st2aal), etc
   | "f3all"  {% id %}
   | "fa3la2"  {% id %}
   | "tfa3la2" {% id %}
   | "stfa3la2" {% id %}  # probably only theoretically exists lol
 
 pronoun ->
-    "1ms"i  {% id %}  # -e according to loun
-  | "1fs"i  {% id %}  # -i according to loun
-  | "1ns"i  {% id %}  # the normal neutral one idk
-  | "1np"i  {% id %}
-  | "2ms"i  {% id %}
-  | "2fs"i  {% id %}
-  | "2ns"i  {% id %}  # maybe someday
-  | "2mp"i  {% id %}  # -kVm in case it exists in some southern dialect
-  | "2fp"i  {% id %}  # ditto but -kVn
-  | "2np"i  {% id %}
-  | "3ms"i  {% id %}
-  | "3fs"i  {% id %}
-  | "3mp"i  {% id %}  # ditto but -(h)Vm
-  | "3fp"i  {% id %}  # ditto but -(h)Vn
-  | "3np"i  {% id %}
+    "1ms"i  {% () => ({ type: `pronoun`, meta: { person: 1, gender: `m`, number: `sg` }}) %}  # -e according to loun
+  | "1fs"i  {% () => ({ type: `pronoun`, meta: { person: 1, gender: `f`, number: `sg` }}) %}  # -i according to loun
+  | "1ns"i  {% () => ({ type: `pronoun`, meta: { person: 1, gender: `n`, number: `sg` }}) %}  # the normal neutral one idk
+  | "1np"i  {% () => ({ type: `pronoun`, meta: { person: 1, gender: `n`, number: `pl` }}) %}
+  | "2ms"i  {% () => ({ type: `pronoun`, meta: { person: 2, gender: `m`, number: `sg` }}) %}
+  | "2fs"i  {% () => ({ type: `pronoun`, meta: { person: 2, gender: `f`, number: `sg` }}) %}
+  | "2ns"i  {% () => ({ type: `pronoun`, meta: { person: 2, gender: `n`, number: `sg` }}) %}  # maybe someday
+  | "2mp"i  {% () => ({ type: `pronoun`, meta: { person: 2, gender: `m`, number: `pl` }}) %}  # -kVm in case it exists in some southern dialect
+  | "2fp"i  {% () => ({ type: `pronoun`, meta: { person: 2, gender: `f`, number: `pl` }}) %}  # ditto but -kVn
+  | "2np"i  {% () => ({ type: `pronoun`, meta: { person: 2, gender: `n`, number: `pl` }}) %}
+  | "3ms"i  {% () => ({ type: `pronoun`, meta: { person: 3, gender: `m`, number: `sg` }}) %}
+  | "3fs"i  {% () => ({ type: `pronoun`, meta: { person: 3, gender: `f`, number: `sg` }}) %}
+  | "3mp"i  {% () => ({ type: `pronoun`, meta: { person: 3, gender: `m`, number: `pl` }}) %}  # ditto but -(h)Vm
+  | "3fp"i  {% () => ({ type: `pronoun`, meta: { person: 3, gender: `f`, number: `pl` }}) %}  # ditto but -(h)Vn
+  | "3np"i  {% () => ({ type: `pronoun`, meta: { person: 3, gender: `n`, number: `pl` }}) %}
 
 augmentation ->
     "-"  {% () => `possessive` %}  # introduces idafe pronouns
   | "."  {% () => `object` %}  # introduces verbs and active participles
+  | "~"  {% () => `pseudo-subject` %}  # s`arr~3ms/s`all~3ms, badd~3ms/bidd~3ms, etc
   | "|"  {% () => `dative` %}  # this stands for the dative L
 
-NEGATIVE -> "X"
+NEGATIVE -> "X"  # dunno how to implement this
 
 __ -> [\s]:+ {% () => null %}
 
