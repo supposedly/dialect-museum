@@ -9,8 +9,12 @@ sentence ->
   | term (__ term {% ([a, b]) => b %}):+ {% ([a, b]) => [a, ...b] %}
 
 term ->
-    word augmentation pronoun {% ([word, meta, value]) => ({ type: `term`, meta: { augmented: true }, value: [word, { type: `augmentation`, meta, value }] }) %}
-  | word {% ([value]) => ({ type: `term`, meta: { augmented: false }, value }) %}
+    word  {% id %}
+  | idafe  {% id %}
+  | pp  {% id %}
+  | verb  {% id %}
+  | m  {% id %}
+  | l  {% id %}
   | literal {% id %}
 
 # `bruh (\ -- ) what (\?)` gives `bruh -- what?` (aka whitespace only matters inside the literal)
@@ -18,28 +22,22 @@ literal ->
     "(\\" [^)]:+ ")"  {% ([a, value, b]) => ({ type: `literal`, value: value.join('') }) %}
   | "(\\))"  {% () => ({ type: `literal`, value: `)` }) %}  # just in case
 
-word ->
-    stem  {% id %}
-  | idafe  {% id %}
-  | pp  {% id %}
-  | verb  {% id %}
-  | m  {% id %}
-  | l  {% id %}
-
 idafe ->
   "(idafe"
-    __ (stem | m | idafe)
-    __ (stem | m | l | idafe)
-  ")"  {% ([a, b, [possessee], c, [possessor], d]) => ({ type: `idafe`, meta: { definite: possessor.type === `def` }, value: { possessee, possessor }}) %}
+    __ (word | m | idafe)
+    __ (word | m | l | idafe)
+  ")"  {% ([a, b, [possessee], c, [possessor], d]) => (
+         { type: `idafe`, value: { possessee, possessor }}
+       ) %}
 
-l -> "(l" __ (stem | m) ")"  {% ([a, b, [value], c]) => ({ type: `def`, value }) %}
+l -> "(l" __ (word | m) ")"  {% ([a, b, [value], c]) => ({ type: `def`, value }) %}
 
 # the m- prefix can vary, dunno if this is the best way to represent that tho
 # my idea is to do like (ma mYbar) or (mu mujarr!b) so the calling code can just extract that initial mV-
 m ->
   "(m"
     ("a" | "i" | "u")
-    __ stem
+    __ word
   ")"  {% ([a, [vowel], b, value, c]) => ({ type: `m`, meta: { vowel }, value }) %}
 
 # pp needs to be a thing because -c behaves funny in participles (fe3la and fe3ilt-/fe3lit-/fe3liit-),
@@ -47,11 +45,18 @@ m ->
 # and the first vowel in fa3len participles is a~i
 pp -> "(pp"
     __ pronoun
-    __ ("active" | "passive")
     __ pp_form
+    __ ("active" | "passive")
+    __ (
+      consonant
+      consonant
+      consonant
+      consonant:?
+    )
+    augmentation:?
   ")"  {%
-    ([a, b, [conjugation], c, [voice], d, verb, hint, f]) => (
-      { type: `pp`, meta: { conjugation, voice, verb, hint }}
+    ([a, b, conjugation, c, form, d, [voice], e, root, augmentation, f]) => (
+      { type: `pp`, meta: { conjugation, form, voice }, value: { root, augmentation }}
     )
   %}
 
@@ -62,13 +67,20 @@ verb ->
     __ pronoun
     __ verb_form
     __ ("pst" | "ind" | "sbjv" | "imp")  # could do {% id %} on each one of these but [tam] works below
-    __ consonant
-    consonant
-    consonant
-    consonant:?
-  ")"  {% ([a, b, conjugation, c, form, d, [tam], e, root1, root2, root3, root4, f]) => (
-         { type: `verb`, meta: { form, tam, conjugation }, value: [root1, root2, root3, root4] }
+    __ (
+      consonant
+      consonant
+      consonant
+      consonant:?
+    )
+    augmentation:?
+  ")"  {% ([a, b, conjugation, c, form, d, [tam], e, root, augmentation, f]) => (
+         { type: `verb`, meta: { form, tam, conjugation }, value: { root, augmentation } }
        ) %}
+
+word ->
+    stem  {% ([stem]) => ({ type: `word`, value: { stem, augmentation: null }}) %}
+  | stem augmentation  {% ([stem, augmentation]) => ({ type: `word`, value: { stem, augmentation }}) %}
 
 stem -> (
     consonant  # don't need to {% id %} because it's already going to be [Object] instead of [[Object...]]
@@ -81,7 +93,7 @@ stem -> (
 monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => ({ ...syllable, meta: { ...syllable.meta, stressed: true }}) %}
 
 disyllable ->
-  | penult_stress_disyllable  {% id %}
+   penult_stress_disyllable  {% id %}
   | final_stress_disyllable  {% id %}
 
 penult_stress_disyllable ->
@@ -312,6 +324,14 @@ pp_form ->
   | "tfa3la2" {% id %}
   | "stfa3la2" {% id %}  # probably only theoretically exists lol
 
+augmentation -> delimiter pronoun {% ([kind, value]) => ({ type: `augmentation`, meta: { kind }, value }) %}
+
+delimiter ->
+    "-"  {% () => `possessive` %}  # introduces idafe pronouns
+  | "."  {% () => `object` %}  # introduces verbs and active participles
+  | "~"  {% () => `pseudo-subject` %}  # s`arr~3ms/s`all~3ms, badd~3ms/bidd~3ms, etc
+  | "|"  {% () => `dative` %}  # this stands for the dative L
+
 pronoun ->
     "1ms"i  {% () => ({ type: `pronoun`, meta: { person: 1, gender: `m`, number: `sg` }}) %}  # -e according to loun
   | "1fs"i  {% () => ({ type: `pronoun`, meta: { person: 1, gender: `f`, number: `sg` }}) %}  # -i according to loun
@@ -328,12 +348,6 @@ pronoun ->
   | "3mp"i  {% () => ({ type: `pronoun`, meta: { person: 3, gender: `m`, number: `pl` }}) %}  # ditto but -(h)Vm
   | "3fp"i  {% () => ({ type: `pronoun`, meta: { person: 3, gender: `f`, number: `pl` }}) %}  # ditto but -(h)Vn
   | "3np"i  {% () => ({ type: `pronoun`, meta: { person: 3, gender: `n`, number: `pl` }}) %}
-
-augmentation ->
-    "-"  {% () => `possessive` %}  # introduces idafe pronouns
-  | "."  {% () => `object` %}  # introduces verbs and active participles
-  | "~"  {% () => `pseudo-subject` %}  # s`arr~3ms/s`all~3ms, badd~3ms/bidd~3ms, etc
-  | "|"  {% () => `dative` %}  # this stands for the dative L
 
 NEGATIVE -> "X"  # dunno how to implement this
 
