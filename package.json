@@ -53,7 +53,9 @@
         {
           "avoidEscape": true
         }
-      ]
+      ],
+      "prefer-destructuring": "off",
+      "arrow-parens": ["warn", "as-needed", { "requireForBlockBody": false }]
     }
   },
   "browserslist": [
