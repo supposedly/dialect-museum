@@ -1,0 +1,349 @@
+// Generated automatically by nearley, version 2.20.1
+// http://github.com/Hardmath123/nearley
+(function () {
+function id(x) { return x[0]; }
+
+  const _ = require(`./processors`);
+
+  const moo = require(`moo`);
+  const sym = require(`./symbols`);
+  const abc = sym.alphabet;
+
+  // // generate regex
+  // const r = (strings, ...interp) => new RegExp(
+  //   // easiest way i could think of to just zip them lol
+  //   [strings[0], ...interp.map(
+  //     (v, i) => `${v}${strings[i + 1]}`
+  //   )].join(``)
+  // );
+
+  // generate with emphatic
+  const c = ([s]) => ({
+    match: new RegExp(
+      `${abc[s].symbol}\\${abc.emphatic}?`
+    ),
+    // since i'm currently including emphatics as their own k-v entries
+    // in symbols.alphabet, this will work fine
+    // if i ever change that decision, then will switch to the commented
+    // version of this function below
+    value: match => abc[match]
+    // value: match => (
+    //   match.endsWith(abc.emphatic) ?
+    //     { ...abc[s], meta: { ...abc[s].meta, emphatic: true }}
+    //   :
+    //     abc[s]
+    // )
+  });
+
+  // generate everything else
+  const $ = ([s]) => ({
+    match: abc[s].symbol,
+    value: () => abc[s]
+  });
+
+const lexer = moo.states({
+  main: {
+    verbForm: new RegExp(sym.verbForms.join(`|`)),
+    ppForm: new RegExp(sym.ppForms.join(`|`)),
+
+    openFilter: /\((?:\w+|\\\)?)/,
+    tam: /\b(?:pst|ind|sbjv|imp)\b/,
+    voice: /\bactive\b|\bpassive\b/,
+    closeFilter: /\)/,
+
+    2: c`2`,
+    3: c`3`,
+    b: c`b`,
+    d: c`d`,
+    f: c`f`,
+    g: c`g`,
+    gh: c`gh`,
+    h: c`h`,
+    7: c`7`,
+    5: c`5`,
+    j: c`j`,
+    k: c`k`,
+    q: c`q`,
+    l: c`l`,
+    m: c`m`,
+    n: c`n`,
+    p: c`p`,
+    r: c`r`,
+    s: c`s`,
+    sh: c`sh`,
+    t: c`t`,
+    v: c`v`,
+    w: c`w`,
+    y: c`y`,
+    z: c`z`,
+    th: c`th`,
+    dh: c`dh`,
+    nullConsonant: c`null`,
+
+    a: $`a`,
+    aa: $`aa`,
+    aaLowered: $`AA`,
+    ae: $`ae`,
+    iTense: $`I`,
+    i: $`i`,
+    ii: $`ii`,
+    u: $`u`,
+    uu: $`uu`,
+    e: $`e`,
+    ee: $`ee`,
+    o: $`o`,
+    oo: $`oo`,
+    ay: $`ay`,
+    aw: $`aw`,
+
+    noSchwa: $`_`,
+
+    fem: $`Fem`,
+    dual: $`Dual`,
+    plural: $`Plural`,
+
+    stressed: $`Stressed`,
+
+    genitiveDelimiter: {
+      ...$`Of`,
+      push: `augmentation`
+    },
+    objectDelimiter: {
+      ...$`Object`,
+      push: `augmentation`
+    },
+    pseudoSubjectDelimiter: {
+      ...$`PseudoSubject`,
+      push: `augmentation`
+    },
+    dativeDelimiter: {
+      ...$`Dative`,
+      push: `augmentation`
+    },
+
+    ws: / +/
+  },
+  augmentation: {
+    pronoun: {
+      match: new RegExp(sym.pronouns.join(`|`)),
+      pop: 1
+    }
+  }
+});
+
+  // gives an already-created object a resolver
+  function processObj(o) {
+    return _.obj(o.type, o.meta, o.value);
+  }
+var grammar = {
+    Lexer: lexer,
+    ParserRules: [
+    {"name": "sentence", "symbols": ["term"], "postprocess": id},
+    {"name": "sentence$ebnf$1$subexpression$1", "symbols": ["__", "term"], "postprocess": ([ , term]) => term},
+    {"name": "sentence$ebnf$1", "symbols": ["sentence$ebnf$1$subexpression$1"]},
+    {"name": "sentence$ebnf$1$subexpression$2", "symbols": ["__", "term"], "postprocess": ([ , term]) => term},
+    {"name": "sentence$ebnf$1", "symbols": ["sentence$ebnf$1", "sentence$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "sentence", "symbols": ["term", "sentence$ebnf$1"], "postprocess": ([a, b]) => [a, ...b]},
+    {"name": "term", "symbols": ["word"], "postprocess": id},
+    {"name": "term", "symbols": ["idafe"], "postprocess": id},
+    {"name": "term", "symbols": ["pp"], "postprocess": id},
+    {"name": "term", "symbols": ["verb"], "postprocess": id},
+    {"name": "term", "symbols": ["l"], "postprocess": id},
+    {"name": "term", "symbols": ["literal"], "postprocess": id},
+    {"name": "literal$ebnf$1", "symbols": [/[^)]/]},
+    {"name": "literal$ebnf$1", "symbols": ["literal$ebnf$1", /[^)]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "literal", "symbols": [{"literal":"(\\"}, "literal$ebnf$1", {"literal":")"}], "postprocess": ([ , value]) => _.obj(`literal`, value.join(''))},
+    {"name": "literal", "symbols": [{"literal":"(\\)"}, {"literal":")"}], "postprocess": () => _.obj(`literal`, `)`)},
+    {"name": "idafe$subexpression$1", "symbols": ["word"]},
+    {"name": "idafe$subexpression$1", "symbols": ["idafe"]},
+    {"name": "idafe$subexpression$2", "symbols": ["word"]},
+    {"name": "idafe$subexpression$2", "symbols": ["l"]},
+    {"name": "idafe$subexpression$2", "symbols": ["idafe"]},
+    {"name": "idafe", "symbols": [{"literal":"(idafe"}, "__", "idafe$subexpression$1", "__", "idafe$subexpression$2", {"literal":")"}], "postprocess":  ([ ,, [possessee] ,, [possessor], d]) => _.idafe(
+          _.obj(`idafe`, { possessee, possessor })
+        ) },
+    {"name": "l", "symbols": [{"literal":"(l"}, "__", "word", {"literal":")"}], "postprocess": ([ ,, value]) => _.l({ type: `def`, value })},
+    {"name": "pp$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "pp$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "pp", "symbols": [{"literal":"(pp"}, "__", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun), "__", (lexer.has("ppForm") ? {type: "ppForm"} : ppForm), "__", (lexer.has("voice") ? {type: "voice"} : voice), "__", "root", "pp$ebnf$1", {"literal":")"}], "postprocess": 
+        ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => _.pp(
+          _.obj(`pp`, { conjugation, form, voice }, { root, augmentation })
+        )
+          },
+    {"name": "verb$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "verb$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "verb", "symbols": [{"literal":"(verb"}, "__", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun), "__", (lexer.has("verbForm") ? {type: "verbForm"} : verbForm), "__", (lexer.has("tam") ? {type: "tam"} : tam), "__", "root", "verb$ebnf$1", {"literal":")"}], "postprocess":  ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => _.verb(
+          _.obj(`verb`, { form, tam, conjugation }, { root, augmentation })
+        ) },
+    {"name": "word", "symbols": ["stem"], "postprocess": ([stem]) => (_.obj(`word`, { stem, augmentation: null }))},
+    {"name": "word", "symbols": ["stem", "augmentation"], "postprocess": ([stem, augmentation]) => _.obj(`word`, { stem, augmentation })},
+    {"name": "stem$subexpression$1", "symbols": ["consonant"]},
+    {"name": "stem$subexpression$1", "symbols": ["monosyllable"]},
+    {"name": "stem$subexpression$1", "symbols": ["disyllable"], "postprocess": id},
+    {"name": "stem$subexpression$1", "symbols": ["trisyllable"], "postprocess": id},
+    {"name": "stem$subexpression$1$ebnf$1", "symbols": []},
+    {"name": "stem$subexpression$1$ebnf$1", "symbols": ["stem$subexpression$1$ebnf$1", "medial_syllable"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "stem$subexpression$1", "symbols": ["initial_syllable", "stem$subexpression$1$ebnf$1", "last_three_syllables"], "postprocess": ([a, b, c]) => [a, ...b, ...c]},
+    {"name": "stem", "symbols": ["stem$subexpression$1"], "postprocess": ([value]) => _.obj(`stem`, { consonant: value.length === 1 && value[0].type === `consonant` }, value)},
+    {"name": "monosyllable$macrocall$2", "symbols": ["final_syllable"]},
+    {"name": "monosyllable$macrocall$1", "symbols": ["ST", "monosyllable$macrocall$2"], "postprocess": ([st, [value]]) => _.obj(`syllable`, value.meta, [...st, ...value.value])},
+    {"name": "monosyllable$macrocall$1", "symbols": ["consonant", "monosyllable$macrocall$2"], "postprocess": ([c, [value]]) => _.obj(`syllable`, value.meta, [c, ...value.value])},
+    {"name": "monosyllable$macrocall$1", "symbols": ["monosyllable$macrocall$2"], "postprocess": ([[value]]) => value},
+    {"name": "monosyllable", "symbols": ["monosyllable$macrocall$1"], "postprocess": ([syllable]) => ({ ...syllable, meta: { ...syllable.meta, stressed: true }})},
+    {"name": "disyllable", "symbols": ["penult_stress_disyllable"], "postprocess": id},
+    {"name": "disyllable", "symbols": ["final_stress_disyllable"], "postprocess": id},
+    {"name": "penult_stress_disyllable", "symbols": ["initial_syllable", "final_lighter_syllable"], "postprocess": ([b, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c]},
+    {"name": "penult_stress_disyllable", "symbols": ["initial_syllable", (lexer.has("stressed") ? {type: "stressed"} : stressed), "final_syllable"], "postprocess": ([b ,, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c]},
+    {"name": "final_stress_disyllable", "symbols": ["initial_syllable", "final_superheavy_syllable"], "postprocess": ([b, c]) => [b, { ...c, meta: { ...c.meta, stressed: true }}]},
+    {"name": "final_stress_disyllable", "symbols": ["initial_syllable", "final_stressed_syllable"]},
+    {"name": "initial_heavier_syllable", "symbols": ["initial_heavy_syllable"], "postprocess": id},
+    {"name": "initial_heavier_syllable", "symbols": ["initial_superheavy_syllable"], "postprocess": id},
+    {"name": "trisyllable", "symbols": ["antepenult_stress_trisyllable"], "postprocess": id},
+    {"name": "trisyllable", "symbols": ["initial_syllable", "stressed_penult"], "postprocess": ([a, b]) => [a, ...b]},
+    {"name": "trisyllable", "symbols": ["initial_syllable", "stressed_final"], "postprocess": ([a, b]) => [a, ...b]},
+    {"name": "antepenult_stress_trisyllable", "symbols": ["initial_syllable", "unstressed_last_2"], "postprocess": ([a, b]) => [{ ...a, meta: { ...a.meta, stressed: true }}, ...b]},
+    {"name": "antepenult_stress_trisyllable", "symbols": ["initial_syllable", (lexer.has("stressed") ? {type: "stressed"} : stressed), "medial_syllable", "final_unstressed_syllable"], "postprocess": ([a, _, b, c]) => [{ ...a, meta: { ...a.meta, stressed: true }}, b, c]},
+    {"name": "last_three_syllables", "symbols": ["antepenult_stress_triplet"], "postprocess": id},
+    {"name": "last_three_syllables", "symbols": ["medial_syllable", "stressed_penult"], "postprocess": ([a, b]) => [a, ...b]},
+    {"name": "last_three_syllables", "symbols": ["medial_syllable", "stressed_final"], "postprocess": ([a, b]) => [a, ...b]},
+    {"name": "antepenult_stress_triplet", "symbols": ["medial_syllable", "unstressed_last_2"], "postprocess": ([a, b]) => [{ ...a, meta: { ...a.meta, stressed: true }}, ...b]},
+    {"name": "antepenult_stress_triplet", "symbols": ["medial_syllable", (lexer.has("stressed") ? {type: "stressed"} : stressed), "medial_syllable", "final_unstressed_syllable"], "postprocess": ([a ,, b, c]) => [{ ...a, meta: { ...a.meta, stressed: true }}, b, c]},
+    {"name": "unstressed_last_2", "symbols": ["light_syllable", "final_lighter_syllable"]},
+    {"name": "stressed_penult", "symbols": ["heavier_syllable", "final_lighter_syllable"], "postprocess": ([b, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c]},
+    {"name": "stressed_penult", "symbols": ["medial_syllable", (lexer.has("stressed") ? {type: "stressed"} : stressed), "final_syllable"], "postprocess": ([b ,, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c]},
+    {"name": "stressed_final", "symbols": ["medial_syllable", "final_superheavy_syllable"], "postprocess": ([b, c]) => [b, { ...c, meta: { ...c.meta, stressed: true }}]},
+    {"name": "stressed_final", "symbols": ["medial_syllable", "final_stressed_syllable"]},
+    {"name": "heavier_syllable", "symbols": ["heavy_syllable"], "postprocess": id},
+    {"name": "heavier_syllable", "symbols": ["superheavy_syllable"], "postprocess": id},
+    {"name": "final_lighter_syllable", "symbols": ["final_light_syllable"], "postprocess": id},
+    {"name": "final_lighter_syllable", "symbols": ["final_heavy_syllable"], "postprocess": id},
+    {"name": "initial_syllable", "symbols": ["initial_light_syllable"], "postprocess": id},
+    {"name": "initial_syllable", "symbols": ["initial_heavy_syllable"], "postprocess": id},
+    {"name": "initial_syllable", "symbols": ["initial_superheavy_syllable"], "postprocess": id},
+    {"name": "final_unstressed_syllable", "symbols": ["final_light_syllable"], "postprocess": id},
+    {"name": "final_unstressed_syllable", "symbols": ["final_heavy_syllable"], "postprocess": id},
+    {"name": "final_unstressed_syllable", "symbols": ["final_superheavy_syllable"], "postprocess": id},
+    {"name": "final_syllable", "symbols": ["final_light_syllable"], "postprocess": id},
+    {"name": "final_syllable", "symbols": ["final_heavy_syllable"], "postprocess": id},
+    {"name": "final_syllable", "symbols": ["final_stressed_syllable"], "postprocess": id},
+    {"name": "final_syllable", "symbols": ["final_superheavy_syllable"], "postprocess": id},
+    {"name": "medial_syllable", "symbols": ["light_syllable"], "postprocess": id},
+    {"name": "medial_syllable", "symbols": ["heavy_syllable"], "postprocess": id},
+    {"name": "medial_syllable", "symbols": ["superheavy_syllable"], "postprocess": id},
+    {"name": "initial_light_syllable$macrocall$2", "symbols": ["light_syllable"]},
+    {"name": "initial_light_syllable$macrocall$1", "symbols": ["ST", "initial_light_syllable$macrocall$2"], "postprocess": ([st, [value]]) => _.obj(`syllable`, value.meta, [...st, ...value.value])},
+    {"name": "initial_light_syllable$macrocall$1", "symbols": ["consonant", "initial_light_syllable$macrocall$2"], "postprocess": ([c, [value]]) => _.obj(`syllable`, value.meta, [c, ...value.value])},
+    {"name": "initial_light_syllable$macrocall$1", "symbols": ["initial_light_syllable$macrocall$2"], "postprocess": ([[value]]) => value},
+    {"name": "initial_light_syllable", "symbols": ["initial_light_syllable$macrocall$1"], "postprocess": id},
+    {"name": "initial_heavy_syllable$macrocall$2", "symbols": ["heavy_syllable"]},
+    {"name": "initial_heavy_syllable$macrocall$1", "symbols": ["ST", "initial_heavy_syllable$macrocall$2"], "postprocess": ([st, [value]]) => _.obj(`syllable`, value.meta, [...st, ...value.value])},
+    {"name": "initial_heavy_syllable$macrocall$1", "symbols": ["consonant", "initial_heavy_syllable$macrocall$2"], "postprocess": ([c, [value]]) => _.obj(`syllable`, value.meta, [c, ...value.value])},
+    {"name": "initial_heavy_syllable$macrocall$1", "symbols": ["initial_heavy_syllable$macrocall$2"], "postprocess": ([[value]]) => value},
+    {"name": "initial_heavy_syllable", "symbols": ["initial_heavy_syllable$macrocall$1"], "postprocess": id},
+    {"name": "initial_superheavy_syllable$macrocall$2", "symbols": ["superheavy_syllable"]},
+    {"name": "initial_superheavy_syllable$macrocall$1", "symbols": ["ST", "initial_superheavy_syllable$macrocall$2"], "postprocess": ([st, [value]]) => _.obj(`syllable`, value.meta, [...st, ...value.value])},
+    {"name": "initial_superheavy_syllable$macrocall$1", "symbols": ["consonant", "initial_superheavy_syllable$macrocall$2"], "postprocess": ([c, [value]]) => _.obj(`syllable`, value.meta, [c, ...value.value])},
+    {"name": "initial_superheavy_syllable$macrocall$1", "symbols": ["initial_superheavy_syllable$macrocall$2"], "postprocess": ([[value]]) => value},
+    {"name": "initial_superheavy_syllable", "symbols": ["initial_superheavy_syllable$macrocall$1"], "postprocess": id},
+    {"name": "final_light_syllable", "symbols": ["consonant", "final_light_rime"], "postprocess": ([a, b]) => _.obj(`syllable`, { weight: `light`, stressed: false }, [a, ...b])},
+    {"name": "final_heavy_syllable", "symbols": ["consonant", "final_heavy_rime"], "postprocess": ([a, b]) => _.obj(`syllable`, { weight: `heavy`, stressed: false }, [a, ...b])},
+    {"name": "final_stressed_syllable", "symbols": ["consonant", "final_stressed_rime"], "postprocess": ([a, b]) => _.obj(`syllable`, { weight: `special`, stressed: true }, [a, ...b])},
+    {"name": "final_superheavy_syllable", "symbols": ["consonant", "final_superheavy_rime"], "postprocess": ([a, b]) => _.obj(`syllable`, { weight: `superheavy`, stressed: false }, [a, ...b])},
+    {"name": "final_light_rime", "symbols": ["final_short_vowel"]},
+    {"name": "final_heavy_rime", "symbols": ["short_vowel", "consonant"]},
+    {"name": "final_stressed_rime$subexpression$1", "symbols": ["long_vowel"], "postprocess": id},
+    {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("aa") ? {type: "aa"} : aa)], "postprocess": id},
+    {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("ee") ? {type: "ee"} : ee)], "postprocess": id},
+    {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("oo") ? {type: "oo"} : oo)], "postprocess": id},
+    {"name": "final_stressed_rime", "symbols": ["final_stressed_rime$subexpression$1", (lexer.has("stressed") ? {type: "stressed"} : stressed)]},
+    {"name": "final_superheavy_rime", "symbols": ["superheavy_rime"], "postprocess": id},
+    {"name": "final_superheavy_rime", "symbols": [(lexer.has("plural") ? {type: "plural"} : plural)]},
+    {"name": "final_superheavy_rime", "symbols": [(lexer.has("dual") ? {type: "dual"} : dual)]},
+    {"name": "light_syllable", "symbols": ["consonant", "light_rime"], "postprocess": ([a, b]) => _.obj(`syllable`, { weight: `light`, stressed: false }, [a, ...b])},
+    {"name": "heavy_syllable", "symbols": ["consonant", "heavy_rime"], "postprocess": ([a, b]) => _.obj(`syllable`, { weight: `heavy`, stressed: false }, [a, ...b])},
+    {"name": "superheavy_syllable", "symbols": ["consonant", "superheavy_rime"], "postprocess": ([a, b]) => _.obj(`syllable`, { weight: `superheavy`, stressed: false }, [a, ...b])},
+    {"name": "light_rime", "symbols": ["short_vowel"]},
+    {"name": "heavy_rime$subexpression$1", "symbols": ["long_vowel"]},
+    {"name": "heavy_rime$subexpression$1", "symbols": ["short_vowel", "consonant"]},
+    {"name": "heavy_rime", "symbols": ["heavy_rime$subexpression$1"], "postprocess": id},
+    {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant"]},
+    {"name": "superheavy_rime", "symbols": ["short_vowel", "consonant", (lexer.has("noSchwa") ? {type: "noSchwa"} : noSchwa), "consonant"]},
+    {"name": "superheavy_rime", "symbols": ["short_vowel", "consonant", "consonant"], "postprocess":  ([a, b, c]) => (
+          b === c ? [a, b, c] : [a, b, _.obj(`epenthetic`, { priority: true }, `schwa`), c]
+        ) },
+    {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant", "consonant"]},
+    {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant", (lexer.has("noSchwa") ? {type: "noSchwa"} : noSchwa), "consonant"]},
+    {"name": "vowel$subexpression$1", "symbols": ["long_vowel"]},
+    {"name": "vowel$subexpression$1", "symbols": ["short_vowel"]},
+    {"name": "vowel", "symbols": ["vowel$subexpression$1"], "postprocess": ([[o]]) => processObj(o)},
+    {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("a") ? {type: "a"} : a)]},
+    {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("iTense") ? {type: "iTense"} : iTense)]},
+    {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("i") ? {type: "i"} : i)]},
+    {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("e") ? {type: "e"} : e)]},
+    {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("fem") ? {type: "fem"} : fem)]},
+    {"name": "final_short_vowel", "symbols": ["final_short_vowel$subexpression$1"], "postprocess": ([[o]]) => processObj(o)},
+    {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("a") ? {type: "a"} : a)]},
+    {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("iTense") ? {type: "iTense"} : iTense)]},
+    {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("i") ? {type: "i"} : i)]},
+    {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("u") ? {type: "u"} : u)]},
+    {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("e") ? {type: "e"} : e)]},
+    {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("o") ? {type: "o"} : o)]},
+    {"name": "short_vowel", "symbols": ["short_vowel$subexpression$1"], "postprocess": ([[o]]) => processObj(o)},
+    {"name": "long_vowel$subexpression$1", "symbols": [(lexer.has("aa") ? {type: "aa"} : aa)]},
+    {"name": "long_vowel$subexpression$1", "symbols": [(lexer.has("aaLowered") ? {type: "aaLowered"} : aaLowered)]},
+    {"name": "long_vowel$subexpression$1", "symbols": [(lexer.has("ae") ? {type: "ae"} : ae)]},
+    {"name": "long_vowel$subexpression$1", "symbols": [(lexer.has("ii") ? {type: "ii"} : ii)]},
+    {"name": "long_vowel$subexpression$1", "symbols": [(lexer.has("uu") ? {type: "uu"} : uu)]},
+    {"name": "long_vowel$subexpression$1", "symbols": [(lexer.has("ee") ? {type: "ee"} : ee)]},
+    {"name": "long_vowel$subexpression$1", "symbols": [(lexer.has("oo") ? {type: "oo"} : oo)]},
+    {"name": "long_vowel$subexpression$1", "symbols": [(lexer.has("ay") ? {type: "ay"} : ay)]},
+    {"name": "long_vowel$subexpression$1", "symbols": [(lexer.has("aw") ? {type: "aw"} : aw)]},
+    {"name": "long_vowel", "symbols": ["long_vowel$subexpression$1"], "postprocess": ([[o]]) => processObj(o)},
+    {"name": "root$ebnf$1", "symbols": ["consonant"], "postprocess": id},
+    {"name": "root$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "root", "symbols": ["consonant", "consonant", "consonant", "root$ebnf$1"]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("2") ? {type: "2"} : 2)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("3") ? {type: "3"} : 3)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("b") ? {type: "b"} : b)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("d") ? {type: "d"} : d)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("f") ? {type: "f"} : f)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("g") ? {type: "g"} : g)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("gh") ? {type: "gh"} : gh)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("h") ? {type: "h"} : h)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("7") ? {type: "7"} : 7)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("5") ? {type: "5"} : 5)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("j") ? {type: "j"} : j)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("k") ? {type: "k"} : k)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("q") ? {type: "q"} : q)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("l") ? {type: "l"} : l)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("m") ? {type: "m"} : m)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("n") ? {type: "n"} : n)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("p") ? {type: "p"} : p)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("r") ? {type: "r"} : r)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("s") ? {type: "s"} : s)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("sh") ? {type: "sh"} : sh)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("t") ? {type: "t"} : t)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("v") ? {type: "v"} : v)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("z") ? {type: "z"} : z)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("th") ? {type: "th"} : th)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("dh") ? {type: "dh"} : dh)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("w") ? {type: "w"} : w)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("y") ? {type: "y"} : y)]},
+    {"name": "consonant$subexpression$1", "symbols": [(lexer.has("nullConsonant") ? {type: "nullConsonant"} : nullConsonant)]},
+    {"name": "consonant", "symbols": ["consonant$subexpression$1"], "postprocess": ([[o]]) => processObj(o)},
+    {"name": "augmentation", "symbols": ["delimiter", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun)]},
+    {"name": "delimiter", "symbols": [(lexer.has("objectDelimiter") ? {type: "objectDelimiter"} : objectDelimiter)], "postprocess": id},
+    {"name": "delimiter", "symbols": [(lexer.has("genitiveDelimiter") ? {type: "genitiveDelimiter"} : genitiveDelimiter)], "postprocess": id},
+    {"name": "delimiter", "symbols": [(lexer.has("pseudoSubjectDelimiter") ? {type: "pseudoSubjectDelimiter"} : pseudoSubjectDelimiter)], "postprocess": id},
+    {"name": "delimiter", "symbols": [(lexer.has("dativeDelimiter") ? {type: "dativeDelimiter"} : dativeDelimiter)], "postprocess": id},
+    {"name": "ST", "symbols": [(lexer.has("s") ? {type: "s"} : s), (lexer.has("t") ? {type: "t"} : t)]},
+    {"name": "__", "symbols": [(lexer.has("ws") ? {type: "ws"} : ws)]}
+]
+  , ParserStart: "sentence"
+}
+if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
+   module.exports = grammar;
+} else {
+   window.grammar = grammar;
+}
+})();

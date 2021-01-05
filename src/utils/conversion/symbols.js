@@ -15,9 +15,9 @@ function c(map, createEmphatics = true) {
     const obj = {
       type: `consonant`,
       meta: {
-        symbol,
         emphatic: false
       },
+      symbol,
       value: name
     };
     names.forEach(n => { map[n] = obj; });
@@ -33,14 +33,19 @@ function c(map, createEmphatics = true) {
 }
 
 function v(map) {
-  function createVowel(name, symbol, long) {
+  function createVowel(name, symbol) {
     if (name === null) {
       // terminate chain
       return map;
     }
     map[name] = {
       type: `vowel`,
-      meta: { long, symbol },
+      meta: {
+        // if we ever develop overlong vowels i'll see if
+        // i wanna just add a length param to this function lol
+        length: name.length,
+      },
+      symbol,
       value: name
     };
     return createVowel;
@@ -49,7 +54,7 @@ function v(map) {
 }
 
 // anything that isn't a letter is capitalized
-export const alphabet = {
+module.exports.alphabet = {
   ...c({
     emphatic: `*`  // goes after the emphatic letter
   })
@@ -89,10 +94,10 @@ export const alphabet = {
   (`AA`, `@`)  // lowered aa, like in شاي
   (`ae`, `&`)  // 'foreign' ae, like in نان or فادي
 
-  (`i2`, `!`)  // e.g. 2!d`Afc; also word-final as in فادي
+  (`I`, `!`)  // e.g. 2!d`Afc; also word-final as in the name فادي
   (`i`, `i`)  /* default value of kasra
-                   * also for 0<i<a when still in the medial stage, like for ppl with kitIr كتير
-                   */
+               * also for 0<i<a when still in the medial stage, like for ppl with kitIr كتير
+               */
   (`ii`, `I`)
 
   (`u`, `u`)
@@ -100,7 +105,7 @@ export const alphabet = {
 
   (`e`, `e`)  /* word-final for *-a, like hYdIke
                * plus undecided whether to do e.g. hEdIk or hedIk (or even just hYdIk) هيديك
-               * also for loans like fetta فتا or elI إيلي
+               * also for loans like fetta فتا or elI" إيلي
                * aaand for stuff like mexYk/mexEke and mexAn (when not something like mxYk and mxAn)
                */
   (`ee`, `E`)
@@ -151,7 +156,7 @@ export const alphabet = {
     symbol: `-`,
     value: `genitive`
   },
-  Obj: {  // introduces verbs and active participles
+  Object: {  // introduces verbs and active participles
     type: `delimiter`,
     symbol: `.`,
     value: `object`
@@ -185,7 +190,7 @@ const higherVerbForms = [
   `stfa3la2`  // probably only theoretically exists lol
 ];
 
-export const verbForms = [
+module.exports.verbForms = [
   `aa`,
   `ai`,
   `au`,
@@ -195,14 +200,14 @@ export const verbForms = [
   ...higherVerbForms
 ];
 
-export const ppForms = [
+module.exports.ppForms = [
   `1/both,`,
   `1/fa3len`,
   `1/fe3il`,
   ...higherVerbForms
 ];
 
-export const pronouns = [
+module.exports.pronouns = [
   `1ms`,  // -e according to loun
   `1fs`,  // -i according to loun
   `1ns`,  // the normal neutral one idk
@@ -220,4 +225,4 @@ export const pronouns = [
   `3np`
 ]
 
-export const negative = `X`;  // dunno how to implement this
+module.exports.negative = `X`;  // dunno how to implement this

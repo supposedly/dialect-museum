@@ -6,8 +6,9 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "grammar": "nearleyc src/utils/conversion/grammar.ne -o src/utils/conversion/grammar.js",
-    "testgrammar": "npm run grammar && nearley-test src/utils/conversion/grammar.js -i",
+    "build-grammar": "nearleyc src/utils/conversion/grammar.ne -o src/utils/conversion/grammar.js",
+    "test-grammar": "npm run build-grammar && nearley-test src/utils/conversion/grammar.js -i",
+    "commit": "npm run build-grammar && git commit",
     "alphabet": "node src/utils/build/alphabet.js"
   },
   "dependencies": {
