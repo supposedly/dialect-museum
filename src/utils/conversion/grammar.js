@@ -152,30 +152,34 @@ var grammar = {
     {"name": "term", "symbols": ["literal"], "postprocess": id},
     {"name": "literal$ebnf$1", "symbols": [/[^)]/]},
     {"name": "literal$ebnf$1", "symbols": ["literal$ebnf$1", /[^)]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "literal", "symbols": [{"literal":"(\\"}, "literal$ebnf$1", {"literal":")"}], "postprocess": ([ , value]) => _.obj(`literal`, value.join(''))},
-    {"name": "literal", "symbols": [{"literal":"(\\)"}, {"literal":")"}], "postprocess": () => _.obj(`literal`, `)`)},
+    {"name": "literal", "symbols": [{"literal":"(\\"}, "literal$ebnf$1", {"literal":")"}], "postprocess": ([ , value]) => _.obj(`literal`, {}, value.join(''))},
+    {"name": "literal", "symbols": [{"literal":"(\\)"}, {"literal":")"}], "postprocess": () => _.obj(`literal`, {}, `)`)},
     {"name": "idafe$subexpression$1", "symbols": ["word"]},
     {"name": "idafe$subexpression$1", "symbols": ["idafe"]},
     {"name": "idafe$subexpression$2", "symbols": ["word"]},
     {"name": "idafe$subexpression$2", "symbols": ["l"]},
     {"name": "idafe$subexpression$2", "symbols": ["idafe"]},
-    {"name": "idafe", "symbols": [{"literal":"(idafe"}, "__", "idafe$subexpression$1", "__", "idafe$subexpression$2", {"literal":")"}], "postprocess":  ([ ,, [possessee] ,, [possessor], d]) => _.idafe(
-          _.obj(`idafe`, { possessee, possessor })
-        ) },
-    {"name": "l", "symbols": [{"literal":"(l"}, "__", "word", {"literal":")"}], "postprocess": ([ ,, value]) => _.l({ type: `def`, value })},
+    {"name": "idafe", "symbols": [{"literal":"(idafe"}, "__", "idafe$subexpression$1", "__", "idafe$subexpression$2", {"literal":")"}], "postprocess": 
+        ([ ,, [possessee] ,, [possessor], d]) => _.obj(
+          `idafe`, {}, { possessee, possessor }
+        )
+          },
+    {"name": "l", "symbols": [{"literal":"(l"}, "__", "word", {"literal":")"}], "postprocess": ([ ,, value]) => _.obj(`def`, {}, value)},
     {"name": "pp$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
     {"name": "pp$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "pp", "symbols": [{"literal":"(pp"}, "__", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun), "__", (lexer.has("ppForm") ? {type: "ppForm"} : ppForm), "__", (lexer.has("voice") ? {type: "voice"} : voice), "__", "root", "pp$ebnf$1", {"literal":")"}], "postprocess": 
-        ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => _.pp(
-          _.obj(`pp`, { conjugation, form, voice }, { root, augmentation })
+        ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => _.obj(
+          `pp`, { conjugation, form, voice }, { root, augmentation }
         )
           },
     {"name": "verb$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
     {"name": "verb$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "verb", "symbols": [{"literal":"(verb"}, "__", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun), "__", (lexer.has("verbForm") ? {type: "verbForm"} : verbForm), "__", (lexer.has("tam") ? {type: "tam"} : tam), "__", "root", "verb$ebnf$1", {"literal":")"}], "postprocess":  ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => _.verb(
-          _.obj(`verb`, { form, tam, conjugation }, { root, augmentation })
-        ) },
-    {"name": "word", "symbols": ["stem"], "postprocess": ([stem]) => (_.obj(`word`, { stem, augmentation: null }))},
+    {"name": "verb", "symbols": [{"literal":"(verb"}, "__", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun), "__", (lexer.has("verbForm") ? {type: "verbForm"} : verbForm), "__", (lexer.has("tam") ? {type: "tam"} : tam), "__", "root", "verb$ebnf$1", {"literal":")"}], "postprocess": 
+        ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => _.obj(
+          `verb`, { form, tam, conjugation }, { root, augmentation }
+        )
+          },
+    {"name": "word", "symbols": ["stem"], "postprocess": ([stem]) => _.obj(`word`, { stem, augmentation: null })},
     {"name": "word", "symbols": ["stem", "augmentation"], "postprocess": ([stem, augmentation]) => _.obj(`word`, { stem, augmentation })},
     {"name": "stem$subexpression$1", "symbols": ["consonant"]},
     {"name": "stem$subexpression$1", "symbols": ["monosyllable"]},

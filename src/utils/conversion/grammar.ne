@@ -156,18 +156,20 @@ term ->
 
 # `bruh (\ -- ) what (\?)` gives `bruh -- what?` (aka whitespace only matters inside the literal)
 literal ->
-    "(\\" [^)]:+ ")"  {% ([ , value]) => _.obj(`literal`, value.join('')) %}
-  | "(\\)" ")"  {% () => _.obj(`literal`, `)`) %}  # just in case
+    "(\\" [^)]:+ ")"  {% ([ , value]) => _.obj(`literal`, {}, value.join('')) %}
+  | "(\\)" ")"  {% () => _.obj(`literal`, {}, `)`) %}  # just in case
 
 idafe ->
   "(idafe"
     __ (word | idafe)
     __ (word | l | idafe)
-  ")"  {% ([ ,, [possessee] ,, [possessor], d]) => _.idafe(
-         _.obj(`idafe`, { possessee, possessor })
-       ) %}
+  ")"  {%
+    ([ ,, [possessee] ,, [possessor], d]) => _.obj(
+      `idafe`, {}, { possessee, possessor }
+    )
+  %}
 
-l -> "(l" __ word ")"  {% ([ ,, value]) => _.l({ type: `def`, value }) %}
+l -> "(l" __ word ")"  {% ([ ,, value]) => _.obj(`def`, {}, value) %}
 
 # pp needs to be a thing because -c behaves funny in participles (fe3la and fe3ilt-/fe3lit-/fe3liit-),
 # A is more likely to raise to /e:/ in fe3il participles,
@@ -179,8 +181,8 @@ pp -> "(pp"
     __ root
     augmentation:?
   ")"  {%
-    ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => _.pp(
-      _.obj(`pp`, { conjugation, form, voice }, { root, augmentation })
+    ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => _.obj(
+      `pp`, { conjugation, form, voice }, { root, augmentation }
     )
   %}
 
@@ -193,12 +195,14 @@ verb ->
     __ %tam
     __ root
     augmentation:?
-  ")"  {% ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => _.verb(
-         _.obj(`verb`, { form, tam, conjugation }, { root, augmentation })
-       ) %}
+  ")"  {%
+    ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => _.obj(
+      `verb`, { form, tam, conjugation }, { root, augmentation }
+    )
+  %}
 
 word ->
-    stem  {% ([stem]) => (_.obj(`word`, { stem, augmentation: null })) %}
+    stem  {% ([stem]) => _.obj(`word`, { stem, augmentation: null }) %}
   | stem augmentation  {% ([stem, augmentation]) => _.obj(`word`, { stem, augmentation }) %}
 
 stem -> (
