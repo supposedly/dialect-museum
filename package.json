@@ -84,6 +84,7 @@
       ],
       "no-param-reassign": "off",
       "object-curly-spacing": [
+        "error",
         "always",
         {
           "objectsInObjects": false
