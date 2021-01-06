@@ -1,3 +1,4 @@
+// DSL-ish stuff
 /* eslint-disable no-unexpected-multiline */
 /* eslint-disable func-call-spacing */
 /* eslint-disable no-spaced-func */
@@ -43,7 +44,7 @@ function v(map) {
       meta: {
         // if we ever develop overlong vowels i'll see if
         // i wanna just add a length param to this function lol
-        length: name.length,
+        length: name.length
       },
       symbol,
       value: name
@@ -223,6 +224,6 @@ module.exports.pronouns = [
   `3mp`,  // ditto but -(h)Vm
   `3fp`,  // ditto but -(h)Vn
   `3np`
-]
+];
 
 module.exports.negative = `X`;  // dunno how to implement this

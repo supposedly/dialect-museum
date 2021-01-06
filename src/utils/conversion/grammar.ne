@@ -1,5 +1,5 @@
 @{%
-  const _ = require(`./processors`);
+  const _ = require(`./grammar-helpers`);
 
   const moo = require(`moo`);
   const sym = require(`./symbols`);
@@ -37,112 +37,107 @@
     value: () => abc[s]
   });
 
-const lexer = moo.states({
-  main: {
-    openFilter: /\((?:\w+|\\\)?)/,
-    closeFilter: /\)/,
+  const lexer = moo.states({
+    main: {
+      openFilter: /\((?:\w+|\\\)?)/,
+      closeFilter: /\)/,
 
-    openMeta: { match: /\[/, push: `tag` },
+      openMeta: { match: /\[/, push: `tag` },
 
-    2: c`2`,
-    3: c`3`,
-    b: c`b`,
-    d: c`d`,
-    f: c`f`,
-    g: c`g`,
-    gh: c`gh`,
-    h: c`h`,
-    7: c`7`,
-    5: c`5`,
-    j: c`j`,
-    k: c`k`,
-    q: c`q`,
-    l: c`l`,
-    m: c`m`,
-    n: c`n`,
-    p: c`p`,
-    r: c`r`,
-    s: c`s`,
-    sh: c`sh`,
-    t: c`t`,
-    v: c`v`,
-    w: c`w`,
-    y: c`y`,
-    z: c`z`,
-    th: c`th`,
-    dh: c`dh`,
-    nullConsonant: c`null`,
+      2: c`2`,
+      3: c`3`,
+      b: c`b`,
+      d: c`d`,
+      f: c`f`,
+      g: c`g`,
+      gh: c`gh`,
+      h: c`h`,
+      7: c`7`,
+      5: c`5`,
+      j: c`j`,
+      k: c`k`,
+      q: c`q`,
+      l: c`l`,
+      m: c`m`,
+      n: c`n`,
+      p: c`p`,
+      r: c`r`,
+      s: c`s`,
+      sh: c`sh`,
+      t: c`t`,
+      v: c`v`,
+      w: c`w`,
+      y: c`y`,
+      z: c`z`,
+      th: c`th`,
+      dh: c`dh`,
+      nullConsonant: c`null`,
 
-    a: $`a`,
-    aa: $`aa`,
-    aaLowered: $`AA`,
-    ae: $`ae`,
-    iTense: $`I`,
-    i: $`i`,
-    ii: $`ii`,
-    u: $`u`,
-    uu: $`uu`,
-    e: $`e`,
-    ee: $`ee`,
-    o: $`o`,
-    oo: $`oo`,
-    ay: $`ay`,
-    aw: $`aw`,
+      a: $`a`,
+      aa: $`aa`,
+      aaLowered: $`AA`,
+      ae: $`ae`,
+      iTense: $`I`,
+      i: $`i`,
+      ii: $`ii`,
+      u: $`u`,
+      uu: $`uu`,
+      e: $`e`,
+      ee: $`ee`,
+      o: $`o`,
+      oo: $`oo`,
+      ay: $`ay`,
+      aw: $`aw`,
 
-    noSchwa: $`_`,
+      noSchwa: $`_`,
 
-    fem: $`Fem`,
-    dual: $`Dual`,
-    plural: $`Plural`,
+      fem: $`Fem`,
+      dual: $`Dual`,
+      plural: $`Plural`,
 
-    stressed: $`Stressed`,
+      stressed: $`Stressed`,
 
-    genitiveDelimiter: {
-      ...$`Of`,
-      push: `augmentation`
+      genitiveDelimiter: {
+        ...$`Of`,
+        push: `augmentation`
+      },
+      objectDelimiter: {
+        ...$`Object`,
+        push: `augmentation`
+      },
+      pseudoSubjectDelimiter: {
+        ...$`PseudoSubject`,
+        push: `augmentation`
+      },
+      dativeDelimiter: {
+        ...$`Dative`,
+        push: `augmentation`
+      },
+
+      ws: / +/
     },
-    objectDelimiter: {
-      ...$`Object`,
-      push: `augmentation`
+    augmentation: {
+      pronoun: {
+        match: new RegExp(sym.pronouns.join(`|`)),
+        pop: 1
+      }
     },
-    pseudoSubjectDelimiter: {
-      ...$`PseudoSubject`,
-      push: `augmentation`
-    },
-    dativeDelimiter: {
-      ...$`Dative`,
-      push: `augmentation`
-    },
-
-    ws: / +/
-  },
-  augmentation: {
-    pronoun: {
-      match: new RegExp(sym.pronouns.join(`|`)),
-      pop: 1
+    tag: {
+      higherForm: new RegExp(sym.higherVerbForms.join(`|`)),
+      verbForm1: new RegExp(sym.verbForm1.join(`|`)),
+      ppForm1: new RegExp(sym.ppForm1.join(`|`)),
+      pronoun: new RegExp(sym.pronouns.join(`|`)),
+      tam: /\b(?:pst|ind|sbjv|imp)\b/,
+      voice: /\bactive\b|\bpassive\b/,
+      closeMeta: { match: /]/, pop: 1 }
     }
-  },
-  tag: {
-    higherForm: new RegExp(sym.higherVerbForms.join(`|`)),
-    verbForm1: new RegExp(sym.verbForm1.join(`|`)),
-    ppForm1: new RegExp(sym.ppForm1.join(`|`)),
-    pronoun: new RegExp(sym.pronouns.join(`|`)),
-    tam: /\b(?:pst|ind|sbjv|imp)\b/,
-    voice: /\bactive\b|\bpassive\b/,
-    closeMeta: { match: /]/, pop: 1 }
-  }
-});
-
-  // gives an already-created object a resolver
-  function processObj(o) {
-    return _.obj(o.type, o.meta, o.value);
-  }
+  });
 %}
 
 @lexer lexer
 
 # [value] needs to be unpacked one level bc i'm not doing {% id %} when calling this macro
-# (macro parameters are rules themselves)
+# (bc macro parameters are rules themselves)
 makeInitial[Syllable] ->
     ST $Syllable  {% ([st, [value]]) => _.obj(`syllable`, value.meta, [...st, ...value.value]) %}
   | consonant $Syllable  {% ([c, [value]]) => _.obj(`syllable`, value.meta, [c, ...value.value]) %}
@@ -207,29 +202,30 @@ verb ->
     )
   %}
 
+# TODO 
 word ->
-    stem  {% ([stem]) => _.obj(`word`, { stem, augmentation: null }) %}
-  | stem augmentation  {% ([stem, augmentation]) => _.obj(`word`, { stem, augmentation }) %}
+    stem  {% ([value]) => _.obj(`word`, { augmentation: null }, value) %}
+  | stem augmentation  {% ([value, augmentation]) => _.obj(`word`, { augmentation }, value) %}
 
 stem -> (
-    consonant  # don't need to {% id %} because it's already going to be [Object] instead of [[Object...]]
-    | monosyllable  # ditto
+    consonant  {% ([value]) => [_.obj(`syllable`, { stressed: null, weight: 0 }, value)] %}
+    | monosyllable  # don't need to {% id %} because it's already going to be [Object] instead of [[Object...]]
     | disyllable  {% id %}
     | trisyllable  {% id %}
     | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, c]) => [a, ...b, ...c] %}
-  )  {% ([value]) => _.obj(`stem`, { consonant: value.length === 1 && value[0].type === `consonant` }, value) %}
+  )  {% ([value]) => _.obj(`stem`, {}, value) %}
 
-monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => ({ ...syllable, meta: { ...syllable.meta, stressed: true }}) %}
+monosyllable -> makeInitial[final_syllable]  {% ([syllable]) => _.edit(syllable, { meta: { stressed: true }}) %}
 
 disyllable ->
    penult_stress_disyllable  {% id %}
   | final_stress_disyllable  {% id %}
 
 penult_stress_disyllable ->
-    initial_syllable final_lighter_syllable  {% ([b, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
-  | initial_syllable %stressed final_syllable  {% ([b ,, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
+    initial_syllable final_lighter_syllable  {% ([b, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
+  | initial_syllable %stressed final_syllable  {% ([b ,, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
 final_stress_disyllable ->
-    initial_syllable final_superheavy_syllable  {% ([b, c]) => [b, { ...c, meta: { ...c.meta, stressed: true }}] %}
+    initial_syllable final_superheavy_syllable  {% ([b, c]) => [b, _.edit(c, { meta: { stressed: true }})] %}
   | initial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
 
 initial_heavier_syllable ->
@@ -242,8 +238,8 @@ trisyllable ->
   | initial_syllable stressed_final  {% ([a, b]) => [a, ...b] %}
 
 antepenult_stress_trisyllable ->
-    initial_syllable unstressed_last_2 {% ([a, b]) => [{ ...a, meta: { ...a.meta, stressed: true }}, ...b] %}
-  | initial_syllable %stressed medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => [{ ...a, meta: { ...a.meta, stressed: true }}, b, c] %}
+    initial_syllable unstressed_last_2 {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
+  | initial_syllable %stressed medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => [_.edit(a, { meta: { stressed: true }}), b, c] %}
 
 last_three_syllables ->
     antepenult_stress_triplet {% id %}
@@ -251,15 +247,15 @@ last_three_syllables ->
   | medial_syllable stressed_final  {% ([a, b]) => [a, ...b] %}
 
 antepenult_stress_triplet ->
-    medial_syllable unstressed_last_2 {% ([a, b]) => [{ ...a, meta: { ...a.meta, stressed: true }}, ...b] %}
-  | medial_syllable %stressed medial_syllable final_unstressed_syllable  {% ([a ,, b, c]) => [{ ...a, meta: { ...a.meta, stressed: true }}, b, c] %}
+    medial_syllable unstressed_last_2 {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
+  | medial_syllable %stressed medial_syllable final_unstressed_syllable  {% ([a ,, b, c]) => [_.edit(a, { meta: { stressed: true }}), b, c] %}
 
 unstressed_last_2 -> light_syllable final_lighter_syllable
 stressed_penult ->
-    heavier_syllable final_lighter_syllable  {% ([b, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
-  | medial_syllable %stressed final_syllable  {% ([b ,, c]) => [{ ...b, meta: { ...b.meta, stressed: true }}, c] %}
+    heavier_syllable final_lighter_syllable  {% ([b, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
+  | medial_syllable %stressed final_syllable  {% ([b ,, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
 stressed_final ->
-    medial_syllable final_superheavy_syllable  {% ([b, c]) => [b, { ...c, meta: { ...c.meta, stressed: true }}] %}
+    medial_syllable final_superheavy_syllable  {% ([b, c]) => [b, _.edit(c, { meta: { stressed: true }})] %}
   | medial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
 
 heavier_syllable ->
@@ -295,10 +291,10 @@ initial_light_syllable -> makeInitial[light_syllable]  {% id %}
 initial_heavy_syllable -> makeInitial[heavy_syllable]  {% id %}
 initial_superheavy_syllable -> makeInitial[superheavy_syllable]  {% id %}
 
-final_light_syllable -> consonant final_light_rime  {% ([a, b]) => _.obj(`syllable`, { weight: `light`, stressed: false }, [a, ...b]) %}
-final_heavy_syllable -> consonant final_heavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: `heavy`, stressed: false }, [a, ...b]) %}
-final_stressed_syllable -> consonant final_stressed_rime  {% ([a, b]) => _.obj(`syllable`, { weight: `special`, stressed: true }, [a, ...b]) %}
-final_superheavy_syllable -> consonant final_superheavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: `superheavy`, stressed: false }, [a, ...b]) %}
+final_light_syllable -> consonant final_light_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 1, stressed: false }, [a, ...b]) %}
+final_heavy_syllable -> consonant final_heavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 2, stressed: false }, [a, ...b]) %}
+final_stressed_syllable -> consonant final_stressed_rime  {% ([a, b]) => _.obj(`syllable`, { weight: null, stressed: true }, [a, ...b]) %}
+final_superheavy_syllable -> consonant final_superheavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 3, stressed: false }, [a, ...b]) %}
 
 final_light_rime -> final_short_vowel
 final_heavy_rime -> short_vowel consonant
@@ -308,9 +304,9 @@ final_superheavy_rime ->
   | %plural  # gets unpacked into "p", "l", "u", "r", "a", "l" if {% id %}
   | %dual
 
-light_syllable -> consonant light_rime  {% ([a, b]) => _.obj(`syllable`, { weight: `light`, stressed: false }, [a, ...b]) %}
-heavy_syllable -> consonant heavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: `heavy`, stressed: false }, [a, ...b]) %}
-superheavy_syllable -> consonant superheavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: `superheavy`, stressed: false }, [a, ...b]) %}
+light_syllable -> consonant light_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 1, stressed: false }, [a, ...b]) %}
+heavy_syllable -> consonant heavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 2, stressed: false }, [a, ...b]) %}
+superheavy_syllable -> consonant superheavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 3, stressed: false }, [a, ...b]) %}
 
 light_rime -> short_vowel
 heavy_rime -> (long_vowel | short_vowel consonant)  {% id %}
@@ -324,30 +320,35 @@ superheavy_rime ->
   | long_vowel consonant consonant  # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc2
   | long_vowel consonant %noSchwa consonant  # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc2
 
-vowel -> (long_vowel | short_vowel)  {% ([[o]]) => processObj(o) %}
-final_short_vowel -> (%a | %iTense | %i | %e | %fem)  {% ([[o]]) => processObj(o) %}
-short_vowel -> (%a | %iTense | %i | %u | %e | %o)  {% ([[o]]) => processObj(o) %}
-long_vowel -> (%aa | %aaLowered | %ae | %ii | %uu | %ee | %oo | %ay | %aw)  {% ([[o]]) => processObj(o) %}
+# the {value} here ISN'T the {value} from my own schema -- it's instead from moo,
+# which provides us our own object as the {value} of its own lex-result object
+vowel -> (long_vowel | short_vowel)  {% ([[o]]) => o %}
+final_short_vowel -> (%a | %iTense | %i | %e | %fem)  {% ([[{ value: o }]]) => _.process(o) %}
+short_vowel -> (%a | %iTense | %i | %u | %e | %o)  {% ([[{ value: o }]]) => _.process(o) %}
+long_vowel -> (%aa | %aaLowered | %ae | %ii | %uu | %ee | %oo | %ay | %aw)  {% ([[{ value: o }]]) => _.process(o) %}
 
 root -> consonant consonant consonant consonant:?
+# ditto above re {value}
 consonant -> (
   %2 | %3 | %b | %d | %f | %g | %gh | %h | %7 | %5 | %j | %k | %q | %l | %m |
   %n | %p | %r | %s | %sh | %t | %v | %z | %th | %dh | %w | %y | %nullConsonant
-) {% ([[o]]) => processObj(o) %}
+) {% ([[{ value: o }]]) => console.log(o) || _.process(o) %}
 
 augmentation -> delimiter %pronoun
 
+# ditto
 pronoun -> "[" %pronoun "]"  {% ([ , value]) => value %}
 tam -> "[" %tam "]"  {% ([ , value]) => value %}
 voice -> "[" %voice "]"  {% ([ , value]) => value %}
 pp_form -> "[" (%higherForm | %ppForm1) "]"  {% ([ , [value]]) => value %}
 verb_form -> "[" (%higherForm | %verbForm1) "]"  {% ([ , [value]]) => value %}
 
+# ditto
 delimiter ->
-    %objectDelimiter {% id %}
-  | %genitiveDelimiter {% id %}
-  | %pseudoSubjectDelimiter {% id %}
-  | %dativeDelimiter {% id %}
+    %objectDelimiter {% ([{ value }]) => value %}
+  | %genitiveDelimiter {% ([{ value }]) => value %}
+  | %pseudoSubjectDelimiter {% ([{ value }]) => value %}
+  | %dativeDelimiter {% ([{ value }]) => value %}
 
 ST -> %s %t
 __ -> %ws
