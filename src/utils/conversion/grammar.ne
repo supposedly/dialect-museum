@@ -39,13 +39,10 @@
 
 const lexer = moo.states({
   main: {
-    verbForm: new RegExp(sym.verbForms.join(`|`)),
-    ppForm: new RegExp(sym.ppForms.join(`|`)),
-
     openFilter: /\((?:\w+|\\\)?)/,
-    tam: /\b(?:pst|ind|sbjv|imp)\b/,
-    voice: /\bactive\b|\bpassive\b/,
     closeFilter: /\)/,
+
+    openMeta: { match: /\[/, push: `tag` },
 
     2: c`2`,
     3: c`3`,
@@ -124,6 +121,15 @@ const lexer = moo.states({
       match: new RegExp(sym.pronouns.join(`|`)),
       pop: 1
     }
+  },
+  tag: {
+    higherForm: new RegExp(sym.higherVerbForms.join(`|`)),
+    verbForm1: new RegExp(sym.verbForm1.join(`|`)),
+    ppForm1: new RegExp(sym.ppForm1.join(`|`)),
+    pronoun: new RegExp(sym.pronouns.join(`|`)),
+    tam: /\b(?:pst|ind|sbjv|imp)\b/,
+    voice: /\bactive\b|\bpassive\b/,
+    closeMeta: { match: /]/, pop: 1 }
   }
 });
 
@@ -175,9 +181,9 @@ l -> "(l" __ word ")"  {% ([ ,, value]) => _.obj(`def`, {}, value) %}
 # A is more likely to raise to /e:/ in fe3il participles,
 # and the first vowel in fa3len participles is a~i
 pp -> "(pp"
-    __ %pronoun
-    __ %ppForm
-    __ %voice
+    __ pronoun
+    __ pp_form
+    __ voice
     __ root
     augmentation:?
   ")"  {%
@@ -187,12 +193,12 @@ pp -> "(pp"
   %}
 
 # verb needs to be a thing because verb conjugations can differ wildly
-# (7aky!t/7iky!t vs 7ak!t vs 7ik!t (and -at too)... rt!7t vs rt!7t, seme3kon vs sme3kon etc)
+# (7aky!t/7iky!t vs 7ak!t vs 7ik!t (and -at too)... rta7t vs rti7t, seme3kon vs sme3kon etc)
 verb ->
   "(verb"
-    __ %pronoun
-    __ %verbForm
-    __ %tam
+    __ pronoun
+    __ verb_form
+    __ tam
     __ root
     augmentation:?
   ")"  {%
@@ -330,6 +336,12 @@ consonant -> (
 ) {% ([[o]]) => processObj(o) %}
 
 augmentation -> delimiter %pronoun
+
+pronoun -> "[" %pronoun "]"  {% ([ , value]) => value %}
+tam -> "[" %tam "]"  {% ([ , value]) => value %}
+voice -> "[" %voice "]"  {% ([ , value]) => value %}
+pp_form -> "[" (%higherForm | %ppForm1) "]"  {% ([ , [value]]) => value %}
+verb_form -> "[" (%higherForm | %verbForm1) "]"  {% ([ , [value]]) => value %}
 
 delimiter ->
     %objectDelimiter {% id %}

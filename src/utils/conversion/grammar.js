@@ -43,13 +43,10 @@ function id(x) { return x[0]; }
 
 const lexer = moo.states({
   main: {
-    verbForm: new RegExp(sym.verbForms.join(`|`)),
-    ppForm: new RegExp(sym.ppForms.join(`|`)),
-
     openFilter: /\((?:\w+|\\\)?)/,
-    tam: /\b(?:pst|ind|sbjv|imp)\b/,
-    voice: /\bactive\b|\bpassive\b/,
     closeFilter: /\)/,
+
+    openMeta: { match: /\[/, push: `tag` },
 
     2: c`2`,
     3: c`3`,
@@ -128,6 +125,15 @@ const lexer = moo.states({
       match: new RegExp(sym.pronouns.join(`|`)),
       pop: 1
     }
+  },
+  tag: {
+    higherForm: new RegExp(sym.higherVerbForms.join(`|`)),
+    verbForm1: new RegExp(sym.verbForm1.join(`|`)),
+    ppForm1: new RegExp(sym.ppForm1.join(`|`)),
+    pronoun: new RegExp(sym.pronouns.join(`|`)),
+    tam: /\b(?:pst|ind|sbjv|imp)\b/,
+    voice: /\bactive\b|\bpassive\b/,
+    closeMeta: { match: /]/, pop: 1 }
   }
 });
 
@@ -167,14 +173,14 @@ var grammar = {
     {"name": "l", "symbols": [{"literal":"(l"}, "__", "word", {"literal":")"}], "postprocess": ([ ,, value]) => _.obj(`def`, {}, value)},
     {"name": "pp$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
     {"name": "pp$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "pp", "symbols": [{"literal":"(pp"}, "__", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun), "__", (lexer.has("ppForm") ? {type: "ppForm"} : ppForm), "__", (lexer.has("voice") ? {type: "voice"} : voice), "__", "root", "pp$ebnf$1", {"literal":")"}], "postprocess": 
+    {"name": "pp", "symbols": [{"literal":"(pp"}, "__", "pronoun", "__", "pp_form", "__", "voice", "__", "root", "pp$ebnf$1", {"literal":")"}], "postprocess": 
         ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => _.obj(
           `pp`, { conjugation, form, voice }, { root, augmentation }
         )
           },
     {"name": "verb$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
     {"name": "verb$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "verb", "symbols": [{"literal":"(verb"}, "__", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun), "__", (lexer.has("verbForm") ? {type: "verbForm"} : verbForm), "__", (lexer.has("tam") ? {type: "tam"} : tam), "__", "root", "verb$ebnf$1", {"literal":")"}], "postprocess": 
+    {"name": "verb", "symbols": [{"literal":"(verb"}, "__", "pronoun", "__", "verb_form", "__", "tam", "__", "root", "verb$ebnf$1", {"literal":")"}], "postprocess": 
         ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => _.obj(
           `verb`, { form, tam, conjugation }, { root, augmentation }
         )
@@ -336,6 +342,15 @@ var grammar = {
     {"name": "consonant$subexpression$1", "symbols": [(lexer.has("nullConsonant") ? {type: "nullConsonant"} : nullConsonant)]},
     {"name": "consonant", "symbols": ["consonant$subexpression$1"], "postprocess": ([[o]]) => processObj(o)},
     {"name": "augmentation", "symbols": ["delimiter", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun)]},
+    {"name": "pronoun", "symbols": [{"literal":"["}, (lexer.has("pronoun") ? {type: "pronoun"} : pronoun), {"literal":"]"}], "postprocess": ([ , value]) => value},
+    {"name": "tam", "symbols": [{"literal":"["}, (lexer.has("tam") ? {type: "tam"} : tam), {"literal":"]"}], "postprocess": ([ , value]) => value},
+    {"name": "voice", "symbols": [{"literal":"["}, (lexer.has("voice") ? {type: "voice"} : voice), {"literal":"]"}], "postprocess": ([ , value]) => value},
+    {"name": "pp_form$subexpression$1", "symbols": [(lexer.has("higherForm") ? {type: "higherForm"} : higherForm)]},
+    {"name": "pp_form$subexpression$1", "symbols": [(lexer.has("ppForm1") ? {type: "ppForm1"} : ppForm1)]},
+    {"name": "pp_form", "symbols": [{"literal":"["}, "pp_form$subexpression$1", {"literal":"]"}], "postprocess": ([ , [value]]) => value},
+    {"name": "verb_form$subexpression$1", "symbols": [(lexer.has("higherForm") ? {type: "higherForm"} : higherForm)]},
+    {"name": "verb_form$subexpression$1", "symbols": [(lexer.has("verbForm1") ? {type: "verbForm1"} : verbForm1)]},
+    {"name": "verb_form", "symbols": [{"literal":"["}, "verb_form$subexpression$1", {"literal":"]"}], "postprocess": ([ , [value]]) => value},
     {"name": "delimiter", "symbols": [(lexer.has("objectDelimiter") ? {type: "objectDelimiter"} : objectDelimiter)], "postprocess": id},
     {"name": "delimiter", "symbols": [(lexer.has("genitiveDelimiter") ? {type: "genitiveDelimiter"} : genitiveDelimiter)], "postprocess": id},
     {"name": "delimiter", "symbols": [(lexer.has("pseudoSubjectDelimiter") ? {type: "pseudoSubjectDelimiter"} : pseudoSubjectDelimiter)], "postprocess": id},

@@ -173,7 +173,7 @@ module.exports.alphabet = {
   }
 };
 
-const higherVerbForms = [
+module.exports.higherVerbForms = [
   `fa33al`,
   `tfa33al`,
   `stfa33al`,
@@ -190,21 +190,21 @@ const higherVerbForms = [
   `stfa3la2`  // probably only theoretically exists lol
 ];
 
-module.exports.verbForms = [
+module.exports.verbForm1 = [
   `aa`,
   `ai`,
   `au`,
   `ia`,
   `ii`,
-  `iu`,
-  ...higherVerbForms
+  `iu`
+  // ...higherVerbForms
 ];
 
-module.exports.ppForms = [
+module.exports.ppForm1 = [
   `1/both,`,
   `1/fa3len`,
-  `1/fe3il`,
-  ...higherVerbForms
+  `1/fe3il`
+  // ...higherVerbForms
 ];
 
 module.exports.pronouns = [
