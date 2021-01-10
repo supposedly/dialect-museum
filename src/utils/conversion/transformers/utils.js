@@ -73,8 +73,11 @@ function syllabify({ suffix = null, automaticStress = null } = {}) {
           rimeLength += s.value[i].meta.length;
           break;
         }
-        // else it's a consonant, which just adds 1
-        rimeLength += 1;
+        if (s.value[i].type === `consonant`) {
+          // consonants just add 1
+          rimeLength += 1;
+        }
+        // the remaining type is epenthetic, which adds 0
       }
       s.meta.weight = rimeLength;
     });
@@ -144,7 +147,10 @@ function syllabify({ suffix = null, automaticStress = null } = {}) {
             lastOf(s.value).type === `consonant`
             && lastOf(s.value, 1).type === `consonant`
           ) {
-            s.value.push(obj.process(abc.Schwa), s.value.pop());
+            s.value.push(
+              obj.process(abc.Schwa),
+              s.value.pop()
+            );
           }
         }
       });
