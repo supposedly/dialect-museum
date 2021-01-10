@@ -1,8 +1,13 @@
-const { syllabify: $ } = require(`./utils`);
+const { syllabify } = require(`./utils`);
 
 function pp(o) {
   const { conjugation, form, voice } = o.meta;
   const { root, augmentation } = o.value;
+
+  const $ = syllabify({
+    suffix: conjugation.suffix,
+    eraseStress: !!conjugation.suffix
+  });
 
   const pick = (active, passive) => (voice === `active` ? active : passive);
 
@@ -61,7 +66,7 @@ function pp(o) {
       return pick(
         [
           $`-m.u.n +${$F}.i -${$3}.i.${$L}`,
-          $`m.a.${$F} ${$3}.uu.l`
+          $`m.a.${$F} ${$3}.uu.${$L}`
         ]
       );
     default:

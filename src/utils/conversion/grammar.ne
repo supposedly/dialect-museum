@@ -1,5 +1,5 @@
 @{%
-  const _ = require(`./grammar-helpers`);
+  const _ = require(`./objects`);
 
   const moo = require(`moo`);
   const sym = require(`./symbols`);
@@ -90,10 +90,12 @@
       aw: $`aw`,
 
       noSchwa: $`_`,
+      schwa: $`$`,
 
       fem: $`Fem`,
       dual: $`Dual`,
       plural: $`Plural`,
+      femPlural: $`FemPlural`
 
       stressed: $`Stressed`,
 
@@ -136,12 +138,10 @@
 
 @lexer lexer
 
-# [value] needs to be unpacked one level bc i'm not doing {% id %} when calling this macro
-# (bc macro parameters are rules themselves)
 makeInitial[Syllable] ->
-    ST $Syllable  {% ([st, [value]]) => _.obj(`syllable`, value.meta, [...st, ...value.value]) %}
-  | consonant $Syllable  {% ([c, [value]]) => _.obj(`syllable`, value.meta, [c, ...value.value]) %}
-  | $Syllable  {% ([[value]]) => value %}
+    ST $Syllable  {% ([st, value]) => _.obj(`syllable`, value.meta, [...st, ...value.value]) %}
+  | consonant $Syllable  {% ([c, value]) => _.obj(`syllable`, value.meta, [c, ...value.value]) %}
+  | $Syllable  {% ([value]) => value %}
 
 sentence ->
     term {% id %}
@@ -234,27 +234,27 @@ initial_heavier_syllable ->
 
 trisyllable ->
     antepenult_stress_trisyllable {% id %}
-  | initial_syllable stressed_penult  {% ([a, b]) => [a, ...b] %}
-  | initial_syllable stressed_final  {% ([a, b]) => [a, ...b] %}
+  | initial_syllable stressed_penult_last_two  {% ([a, b]) => [a, ...b] %}
+  | initial_syllable stressed_final_last_two  {% ([a, b]) => [a, ...b] %}
 
 antepenult_stress_trisyllable ->
-    initial_syllable unstressed_last_2 {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
+    initial_syllable unstressed_last_two {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
   | initial_syllable %stressed medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => [_.edit(a, { meta: { stressed: true }}), b, c] %}
 
 last_three_syllables ->
     antepenult_stress_triplet {% id %}
-  | medial_syllable stressed_penult  {% ([a, b]) => [a, ...b] %}
-  | medial_syllable stressed_final  {% ([a, b]) => [a, ...b] %}
+  | medial_syllable stressed_penult_last_two  {% ([a, b]) => [a, ...b] %}
+  | medial_syllable stressed_final_last_two  {% ([a, b]) => [a, ...b] %}
 
 antepenult_stress_triplet ->
-    medial_syllable unstressed_last_2 {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
+    medial_syllable unstressed_last_two {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
   | medial_syllable %stressed medial_syllable final_unstressed_syllable  {% ([a ,, b, c]) => [_.edit(a, { meta: { stressed: true }}), b, c] %}
 
-unstressed_last_2 -> light_syllable final_lighter_syllable
-stressed_penult ->
+unstressed_last_two -> light_syllable final_lighter_syllable
+stressed_penult_last_two ->
     heavier_syllable final_lighter_syllable  {% ([b, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
   | medial_syllable %stressed final_syllable  {% ([b ,, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
-stressed_final ->
+stressed_final_last_two ->
     medial_syllable final_superheavy_syllable  {% ([b, c]) => [b, _.edit(c, { meta: { stressed: true }})] %}
   | medial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
 
@@ -270,16 +270,13 @@ initial_syllable ->
   | initial_heavy_syllable  {% id %}
   | initial_superheavy_syllable  {% id %}
 
-# TODO: make an inheritance relationship thing from final_syllable -> final_unstressed_syllable (aka lessen duplication)
+final_syllable ->
+    final_unstressed_syllable  {% id %}
+  | final_stressed_syllable  {% id %}
+
 final_unstressed_syllable ->
     final_light_syllable  {% id %}
   | final_heavy_syllable  {% id %}
-  | final_superheavy_syllable  {% id %}
-
-final_syllable ->
-    final_light_syllable  {% id %}
-  | final_heavy_syllable  {% id %}
-  | final_stressed_syllable  {% id %}
   | final_superheavy_syllable  {% id %}
 
 medial_syllable ->
@@ -287,14 +284,17 @@ medial_syllable ->
   | heavy_syllable  {% id %}
   | superheavy_syllable  {% id %}
 
-initial_light_syllable -> makeInitial[light_syllable]  {% id %}
-initial_heavy_syllable -> makeInitial[heavy_syllable]  {% id %}
-initial_superheavy_syllable -> makeInitial[superheavy_syllable]  {% id %}
+initial_light_syllable -> makeInitial[light_syllable {% id %}]  {% id %}
+initial_heavy_syllable -> makeInitial[heavy_syllable {% id %}]  {% id %}
+initial_superheavy_syllable -> makeInitial[superheavy_syllable {% id %}]  {% id %}
 
 final_light_syllable -> consonant final_light_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 1, stressed: false }, [a, ...b]) %}
 final_heavy_syllable -> consonant final_heavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 2, stressed: false }, [a, ...b]) %}
 final_stressed_syllable -> consonant final_stressed_rime  {% ([a, b]) => _.obj(`syllable`, { weight: null, stressed: true }, [a, ...b]) %}
-final_superheavy_syllable -> consonant final_superheavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 3, stressed: false }, [a, ...b]) %}
+final_superheavy_syllable ->
+    consonant final_superheavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 3, stressed: false }, [a, ...b]) %}
+  # this will allow this sequence to be word-initial (bc monosyllables) but w/e probably not worth fixing lol
+  | %fem %dual  {% ([a, b]) => _.obj(`syllable`, { weight: 3, stressed: false }, [a, b]) %}
 
 final_light_rime -> final_short_vowel
 final_heavy_rime -> short_vowel consonant
@@ -302,6 +302,7 @@ final_stressed_rime -> (long_vowel  {% id %} | %aa  {% id %} | %ee  {% id %} | %
 final_superheavy_rime ->
     superheavy_rime  {% id %}
   | %plural  # gets unpacked into "p", "l", "u", "r", "a", "l" if {% id %}
+  | %femPlural
   | %dual
 
 light_syllable -> consonant light_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 1, stressed: false }, [a, ...b]) %}

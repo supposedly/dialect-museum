@@ -1,6 +1,3 @@
-const resolvers = require(`./resolvers`);
-const transformers = require(`./transformers`);
-
 // as in, like, a parse-tree node
 class Node {
   constructor(type, meta, value) {
@@ -9,11 +6,11 @@ class Node {
     this.value = value;
   }
 
-  transform() {
+  transform(transformers) {
     return transformers[this.type](this);
   }
 
-  resolve() {
+  resolve(resolvers) {
     return resolvers[this.type](this);
   }
 }

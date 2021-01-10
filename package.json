@@ -89,7 +89,8 @@
         {
           "objectsInObjects": false
         }
-      ]
+      ],
+      "no-underscore-dangle": "off"
     }
   },
   "browserslist": [

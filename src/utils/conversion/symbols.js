@@ -3,6 +3,21 @@
 /* eslint-disable func-call-spacing */
 /* eslint-disable no-spaced-func */
 
+// // cursed
+// function isValidPropName(name) {
+//   // eslint-disable-next-line no-unused-vars
+//   const _ = {};
+//   try {
+//     // eslint-disable-next-line no-eval
+//     eval(`_.name`);
+//   } catch (e) {
+//     if (e instanceof SyntaxError) {
+//       return false;
+//     }
+//   }
+//   return true;
+// }
+
 function c(map, createEmphatics = true) {
   function createConsonant(name, symbol, createEmphatic = createEmphatics) {
     if (name === null) {
@@ -125,12 +140,25 @@ module.exports.alphabet = {
     },
     symbol: `_`
   },
+  Schwa: {
+    type: `epenthetic`,
+    meta: {
+      priority: true
+    },
+    symbol: `'`
+  },
 
   // fem suffix is its own thing bc -a vs -e vs -i variation
   Fem: {
     type: `suffix`,
     symbol: `c`,
     value: `fem`
+  },
+  // i guess easiest way to handle fem + dual is to separate it
+  FemPlural: {
+    type: `suffix`,
+    symbol: `C`,
+    value: `fplural`
   },
   // dual suffix is its own thing bc -ayn/-een vs -aan variation (per Mekki 1984)
   Dual: {
