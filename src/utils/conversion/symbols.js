@@ -19,7 +19,7 @@
 // }
 
 function c(map, createEmphatics = true) {
-  function createConsonant(name, symbol, createEmphatic = createEmphatics) {
+  function createConsonant(name, symbol, { createEmphatic = createEmphatics } = {}) {
     if (name === null) {
       // terminate chain
       return map;
@@ -31,7 +31,9 @@ function c(map, createEmphatics = true) {
     const obj = {
       type: `consonant`,
       meta: {
-        emphatic: false
+        emphatic: false,
+        weak: false,
+        null: name === `null`
       },
       symbol,
       value: name
@@ -101,7 +103,7 @@ module.exports.alphabet = {
   (`z`, `z`)
   (`th`, `8`)
   (`dh`, `6`)
-  (`null`, `0`, false)
+  (`null`, `0`, { createEmphatic: false })
   (null),
 
   ...v({})
