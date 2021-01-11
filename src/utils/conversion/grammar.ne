@@ -210,19 +210,22 @@ word ->
     stem  {% ([value]) => _.obj(`word`, { augmentation: null }, value) %}
   | stem augmentation  {% ([value, augmentation]) => _.obj(`word`, { augmentation }, value) %}
 
-stem -> (
-    consonant  {% ([value]) => [_.obj(`syllable`, { stressed: null, weight: 0 }, value)] %}
-    | monosyllable  # don't need to {% id %} because it's already going to be [Object] instead of [[Object...]]
-    | disyllable  {% id %}
-    | trisyllable  {% id %}
-    | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, c]) => [a, ...b, ...c] %}
-  )  {% ([value]) => _.obj(`stem`, {}, value) %}
+# messy because of stressedOn :(
+stem ->
+    consonant  {% ([value]) => _.obj(`stem`, { stressedOn: null }, [_.obj(`syllable`, { stressed: null, weight: 0 }, value)]) %}
+  | monosyllable  {% ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value) %}
+  | disyllable  {% ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value) %}
+  | trisyllable  {% ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value) %}
+  | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, { stressedOn, value: c }]) => _.obj(`stem`, { stressedOn }, [a, ...b, ...c]) %}
 
-monosyllable -> makeInitial[final_syllable  {% id %}]  {% ([syllable]) => _.edit(syllable, { meta: { stressed: true }}) %}
+monosyllable -> makeInitial[final_syllable  {% id %}]  {% ([syllable]) => ({
+  stressedOn: -1,
+  value: [_.edit(syllable, { meta: { stressed: true }})]
+}) %}
 
 disyllable ->
-   penult_stress_disyllable  {% id %}
-  | final_stress_disyllable  {% id %}
+   penult_stress_disyllable  {% ([value]) => ({ stressedOn: -2, value }) %}
+  | final_stress_disyllable  {% ([value]) => ({ stressedOn: -1, value }) %}
 
 penult_stress_disyllable ->
     initial_syllable final_lighter_syllable  {% ([b, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
@@ -236,18 +239,18 @@ initial_heavier_syllable ->
   | initial_superheavy_syllable  {% id %}
 
 trisyllable ->
-    antepenult_stress_trisyllable {% id %}
-  | initial_syllable stressed_penult_last_two  {% ([a, b]) => [a, ...b] %}
-  | initial_syllable stressed_final_last_two  {% ([a, b]) => [a, ...b] %}
+    antepenult_stress_trisyllable  {% ([value]) => ({ stressedOn: -3, value }) %}
+  | initial_syllable stressed_penult_last_two  {% ([a, b]) => ({ stressedOn: -2, value: [a, ...b] }) %}
+  | initial_syllable stressed_final_last_two  {% ([a, b]) => ({ stressedOn: -1, value: [a, ...b] }) %}
 
 antepenult_stress_trisyllable ->
     initial_syllable unstressed_last_two {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
   | initial_syllable STRESSED medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => [_.edit(a, { meta: { stressed: true }}), b, c] %}
 
 last_three_syllables ->
-    antepenult_stress_triplet {% id %}
-  | medial_syllable stressed_penult_last_two  {% ([a, b]) => [a, ...b] %}
-  | medial_syllable stressed_final_last_two  {% ([a, b]) => [a, ...b] %}
+    antepenult_stress_triplet  {% ([value]) => ({ stressedOn: -3, value }) %}
+  | medial_syllable stressed_penult_last_two  {% ([a, b]) => ({ stressedOn: -2, value: [a, ...b] }) %}
+  | medial_syllable stressed_final_last_two  {% ([a, b]) => ({ stressedOn: -1, value: [a, ...b] }) %}
 
 antepenult_stress_triplet ->
     medial_syllable unstressed_last_two {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
