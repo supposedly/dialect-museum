@@ -11,15 +11,15 @@ const newSyllable = () => obj.obj(
 
 // split a template string written using the keys of ./symbols.js's alphabet object
 // into syllable objects + consonant objects, incl. analyzing stress
-// string format: syllabify`c.v c.v.c c.v` or syllabify`-c.v +c.v.c -c.v`, aka
+// string format: wordify`c.v c.v.c c.v` or wordify`-c.v +c.v.c -c.v`, aka
 // 1. syllables are separated manually (not worth it to do algorithmically lol) with
 //    spaces, and individual orthographic segments are separated with periods
 // 2. syllables can be optionally prefixed (preferably all at once) with - or +
 //    to indicate stress, esp. useful when stress in a given word isn't automatic
-// can optionally be called as syllabify({ extraStuff: etc })`...` to pass variables
+// can optionally be called as wordify({ extraStuff: etc })`...` to pass variables
 // (just suffixes for now) that aren't root consonants & this can't be interpolated
-// in particular: syllabify({ suffix: [{ suffix object }] })`...`
-function syllabify({ suffix = null, automaticStress = null } = {}) {
+// in particular: wordify({ suffix: [{ suffix object }] })`...`
+function wordify({ suffix = null, automaticStress = null, augmentation = null } = {}) {
   return (strings, ...rootConsonants) => {
     // by convention i'm gonna do all-or-nothing
     // ie either stress is automatic or EVERY syllable is marked for it
@@ -48,7 +48,7 @@ function syllabify({ suffix = null, automaticStress = null } = {}) {
         }
         lastSyllable.value.push(
           ...chunk.split(`.`)  // m.u.s._.t > [m, u, s, _, t, ...]
-            .filter(c => abc[c])
+            .filter(c => abc[c])  // to avoid undefined later
             .map(c => obj.process(abc[c]))  // -> corresponding objects
         );
       });
@@ -155,18 +155,18 @@ function syllabify({ suffix = null, automaticStress = null } = {}) {
         }
       });
     }
-    return syllables;
+    return obj.obj(`word`, { augmentation }, syllables);
   };
 }
 
 module.exports = {
-  syllabify(first, ...rest) {
+  wordify(first, ...rest) {
     if (Array.isArray(first)) {
       // this means the caller just wants the template tag
-      return syllabify()(first, ...rest);
+      return wordify()(first, ...rest);
     }
     // this means the caller wants to pass a suffix to the tag
     // (should be an actual suffix object)
-    return syllabify(first);
+    return wordify(first);
   }
 };

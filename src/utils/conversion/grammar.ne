@@ -205,7 +205,7 @@ verb ->
     )
   %}
 
-# TODO 
+# TODO figure out a better way of including the augmentation
 word ->
     stem  {% ([value]) => _.obj(`word`, { augmentation: null }, value) %}
   | stem augmentation  {% ([value, augmentation]) => _.obj(`word`, { augmentation }, value) %}
