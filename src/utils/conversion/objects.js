@@ -9,10 +9,6 @@ class Node {
   transform(transformers) {
     return transformers[this.type](this);
   }
-
-  resolve(resolvers) {
-    return resolvers[this.type](this);
-  }
 }
 
 module.exports.obj = (type, meta, value) => new Node(type, meta, value);

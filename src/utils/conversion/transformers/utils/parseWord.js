@@ -1,5 +1,5 @@
-const { alphabet: abc } = require(`../symbols`);
-const obj = require(`../objects`);
+const { alphabet: abc } = require(`../../symbols`);
+const obj = require(`../../objects`);
 
 const lastOf = (seq, index = 0) => seq[seq.length - 1 - index];
 
@@ -19,7 +19,12 @@ const newSyllable = () => obj.obj(
 // can optionally be called as wordify({ extraStuff: etc })`...` to pass variables
 // (just suffixes for now) that aren't root consonants & this can't be interpolated
 // in particular: wordify({ suffix: [{ suffix object }] })`...`
-function wordify({ suffix = null, automaticStress = null, augmentation = null } = {}) {
+function parseWord({
+  suffix = null,
+  prefix = null,
+  automaticStress = null,
+  augmentation = null
+} = {}) {
   return (strings, ...rootConsonants) => {
     // by convention i'm gonna do all-or-nothing
     // ie either stress is automatic or EVERY syllable is marked for it
@@ -57,6 +62,11 @@ function wordify({ suffix = null, automaticStress = null, augmentation = null } 
       }
     });
 
+    // add prefix & resyllabify if necessary
+    if (prefix !== null) {
+
+    }
+
     // set weight of each syllable
     syllables.forEach(s => {
       // 0 segments in syllable = weight of -1
@@ -68,12 +78,13 @@ function wordify({ suffix = null, automaticStress = null, augmentation = null } 
       // otherwise just count sound units
       let rimeLength = 0;
       for (let i = s.value.length - 1; i > 0; i -= 1) {
+        const segment = s.value[i];
         // long vowels add 2, short vowels add 1
-        if (s.value[i].type === `vowel`) {
-          rimeLength += s.value[i].meta.length;
+        if (segment.type === `vowel`) {
+          rimeLength += segment.meta.length;
           break;
         }
-        if (s.value[i].type === `consonant`) {
+        if (segment.type === `consonant`) {
           // consonants just add 1
           rimeLength += 1;
         }
@@ -82,6 +93,8 @@ function wordify({ suffix = null, automaticStress = null, augmentation = null } 
       s.meta.weight = rimeLength;
     });
 
+    // add suffix & reassign stress to it if superheavy
+    // (this is after stress bc suffixes are special symbols)
     if (suffix !== null) {
       if (
         suffix.length === 2
@@ -100,6 +113,7 @@ function wordify({ suffix = null, automaticStress = null, augmentation = null } 
           {
             stressed: null,
             // superheavy if dual or m/f plural, light if fsg
+            // (should handle this less-hackily but w/e)
             weight: suffix[0].value === `fem` ? 1 : 3
           },
           [lastOf(syllables).value.pop(), ...suffix]
@@ -159,14 +173,25 @@ function wordify({ suffix = null, automaticStress = null, augmentation = null } 
   };
 }
 
-module.exports = {
-  wordify(first, ...rest) {
+function createWordParserTag(postprocess = null) {
+  return (first, ...rest) => {
     if (Array.isArray(first)) {
       // this means the caller just wants the template tag
-      return wordify()(first, ...rest);
+      const ret = parseWord()(first, ...rest);
+      return postprocess ? postprocess(ret) : ret;
     }
     // this means the caller wants to pass a suffix to the tag
     // (should be an actual suffix object)
-    return wordify(first);
-  }
+    const ret = parseWord(first);
+    return postprocess ? (...args) => postprocess(ret(...args)) : ret;
+  };
+}
+
+module.exports = {
+  parseWord: createWordParserTag(),
+  parseSyllable: createWordParserTag(word => {
+    word.value[0].meta.stressed = null;
+    return word.value[0];
+  }),
+  parseLetter: createWordParserTag(word => word.value[0].value[0])
 };

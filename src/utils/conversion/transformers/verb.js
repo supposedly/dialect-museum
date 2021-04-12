@@ -1,11 +1,9 @@
 const { parseWord } = require(`./utils/parseWord`);
 
-function pp({
-  meta: { conjugation, form, voice },
+function verb({
+  meta: { conjugation, form, tam },
   value: { root, augmentation }
 }) {
-  const isActiveVoice = voice === `active`;
-
   const $ = parseWord({
     // TODO: implement suffix on conjugation
     suffix: conjugation.suffix,
@@ -13,9 +11,20 @@ function pp({
     augmentation
   });
 
-  const pickVoice = (active, passive) => (isActiveVoice ? active : passive);
-
   const [$F, $3, $L, $Q] = root;
+
+  // hack to check if form is aa, ai, au, ia, ii, or iu
+  if (form.length === 2) {
+    if (tam === `pst`) {
+      if (form[0] === `a`) {
+
+      } else if (form[0] === `i`) {
+        
+      }
+    } else {
+
+    }
+  }
 
   switch (form) {
     case `1/both`:
@@ -259,5 +268,5 @@ function pp({
 }
 
 module.exports = {
-  pp
+  pp: verb
 };
