@@ -6,6 +6,17 @@ class Node {
     this.value = value;
   }
 
+  // Initialization is the process that'll turn e.g. (verb ...) into a set of
+  // variants like [3aTit, 3aTyit]
+  init(initializers) {
+    return initializers[this.type](this);
+  }
+
+  // Transformation is a progressive/iterative process of turning initialized
+  // nodes into whatever final orthography is desired; the difference btwn
+  // it and initialization is that this will result in per-segment variants
+  // like *[3aTyit] -> [[3] [a, o], [T], [y], [i, I], [t]]
+  // (or something idk i'm on ramadan brain rn)
   transform(transformers) {
     return transformers[this.type](this);
   }

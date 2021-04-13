@@ -115,6 +115,7 @@ module.exports.alphabet = {
   (`I`, `!`)  // e.g. 2!d`Afc; also word-final as in the name فادي
   (`i`, `i`)  /* default value of kasra
                * also for 0<i<a when still in the medial stage, like for ppl with kitIr كتير
+               * aaand for stuff like mixYk/mixEke and mixAn (when not something like mxYk and mxAn)
                */
   (`ii`, `I`)
 
@@ -124,7 +125,6 @@ module.exports.alphabet = {
   (`e`, `e`)  /* word-final for *-a, like hYdIke
                * plus undecided whether to do e.g. hEdIk or hedIk (or even just hYdIk) هيديك
                * also for loans like fetta فتا or elI" إيلي
-               * aaand for stuff like mexYk/mexEke and mexAn (when not something like mxYk and mxAn)
                */
   (`ee`, `E`)
 
@@ -192,7 +192,7 @@ module.exports.alphabet = {
     symbol: `.`,
     value: `object`
   },
-  PseudoSubject: {  // s`arr~3ms/s`all~3ms, badd~3ms/bidd~3ms, etc
+  PseudoSubject: {  // s`arr~3ms/s`all~3ms, badd~3ms/bidd~3ms, أوعك أصحك etc
     type: `delimiter`,
     symbol: `~`,
     value: `pseudo-subject`

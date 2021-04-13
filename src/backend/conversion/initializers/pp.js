@@ -49,8 +49,7 @@ function pp({
         return variants;
       }
       if ($L.meta.weak) {
-        // not sure whether to do `i` or `ii.y` or what
-        return [$`m.u.${$F} ${$3}.i.y`];
+        return [$`m.u.${$F} ${$3}.ii.y`];
       }
       // default
       return [$`m.a.${$F} ${$3}.uu.${$L}`];
