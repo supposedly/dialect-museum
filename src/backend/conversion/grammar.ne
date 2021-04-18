@@ -96,6 +96,7 @@
       fem: $`Fem`,
       dual: $`Dual`,
       plural: $`Plural`,
+      // femDual: $`FemDual`,  # not sure if good idea?
       femPlural: $`FemPlural`,
 
       stressed: $`Stressed`,
@@ -257,7 +258,7 @@ final_dactyl ->
     medial_syllable final_dibrach {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
   | medial_syllable STRESSED medial_syllable final_unstressed_syllable  {% ([a ,, b, c]) => [_.edit(a, { meta: { stressed: true }}), b, c] %}
 
-final_dibrach -> light_syllable final_lighter_syllable  # dibrach better than pyrrhic bc (1) quantitative and (2) 
+final_dibrach -> light_syllable final_lighter_syllable  # dibrach better than pyrrhic bc (1) quantitative and (2) more specific
 final_trochee ->
     heavier_syllable final_lighter_syllable  {% ([b, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
   | medial_syllable STRESSED final_syllable  {% ([b ,, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
@@ -349,7 +350,7 @@ strong_consonant -> (
 )  {% ([[{ value }]]) => _.process(value) %}
 
 # ditto
-pronoun -> %openTag %pronoun %closeTag  {% ([ , value]) => _.process(value) %}  # not sure why the one below can't be process()
+pronoun -> %openTag %pronoun %closeTag  {% ([ , value]) => _.process(value) %}  # (1/2) this one has to be `process()`
 tam -> %openTag %tam %closeTag  {% ([ , value]) => value %}
 voice -> %openTag %voice %closeTag  {% ([ , value]) => value %}
 pp_form -> %openTag (%higherForm | %ppForm1) %closeTag  {% ([ , [value]]) => value %}
