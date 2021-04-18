@@ -17,9 +17,6 @@ const suffixPrefix = (suffix, [cc, cv], indicative = $l`b`) => ({
 });
 
 function ppSuffix(person, gender, number) {
-  if (!person.third) {
-    return null;  // error?
-  }
   if (gender.fem) {
     if (number.singular) { return $l`Fem`; }
     if (number.dual) { return $l`FemDual`; }
@@ -28,7 +25,7 @@ function ppSuffix(person, gender, number) {
   }
   // masc and "commmon" gender are the same for now
   if (number.singular) { return $l``; }
-  if (number.dual) { return $l`=`; }
+  if (number.dual) { return $l`=`; }  // merging verbal and nominal participles here
   if (number.plural) { return $l`+`; }
   return null;  // error?
 }
