@@ -22,7 +22,7 @@ class Node {
   }
 }
 
-module.exports.obj = (type, meta, value) => new Node(type, meta, value);
+module.exports.obj = (type, meta = {}, value) => new Node(type, meta, value);
 
 // gives an already-created object a resolver+transformer
 module.exports.process = ({ type, meta, value }) => this.obj(type, meta, value);

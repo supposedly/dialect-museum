@@ -216,7 +216,7 @@ stem ->
   | monosyllable  {% ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value) %}
   | disyllable  {% ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value) %}
   | trisyllable  {% ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value) %}
-  | initial_syllable medial_syllable:* last_three_syllables  {% ([a, b, { stressedOn, value: c }]) => _.obj(`stem`, { stressedOn }, [a, ...b, ...c]) %}
+  | initial_syllable medial_syllable:* final_three_syllables  {% ([a, b, { stressedOn, value: c }]) => _.obj(`stem`, { stressedOn }, [a, ...b, ...c]) %}
 
 monosyllable -> makeInitial[final_syllable  {% id %}]  {% ([syllable]) => ({
   stressedOn: -1,
@@ -224,43 +224,44 @@ monosyllable -> makeInitial[final_syllable  {% id %}]  {% ([syllable]) => ({
 }) %}
 
 disyllable ->
-   penult_stress_disyllable  {% ([value]) => ({ stressedOn: -2, value }) %}
-  | final_stress_disyllable  {% ([value]) => ({ stressedOn: -1, value }) %}
+   trochee  {% ([value]) => ({ stressedOn: -2, value }) %}
+  | iamb  {% ([value]) => ({ stressedOn: -1, value }) %}
 
-penult_stress_disyllable ->
+trochee ->
     initial_syllable final_lighter_syllable  {% ([b, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
   | initial_syllable STRESSED final_syllable  {% ([b ,, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
-final_stress_disyllable ->
+iamb ->
     initial_syllable final_superheavy_syllable  {% ([b, c]) => [b, _.edit(c, { meta: { stressed: true }})] %}
   | initial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
 
-initial_heavier_syllable ->
-    initial_heavy_syllable  {% id %}
-  | initial_superheavy_syllable  {% id %}
+# dunno why i made this if i'm not using it
+# initial_heavier_syllable ->
+#     initial_heavy_syllable  {% id %}
+#   | initial_superheavy_syllable  {% id %}
 
 trisyllable ->
-    antepenult_stress_trisyllable  {% ([value]) => ({ stressedOn: -3, value }) %}
-  | initial_syllable stressed_penult_last_two  {% ([a, b]) => ({ stressedOn: -2, value: [a, ...b] }) %}
-  | initial_syllable stressed_final_last_two  {% ([a, b]) => ({ stressedOn: -1, value: [a, ...b] }) %}
+    dactyl  {% ([value]) => ({ stressedOn: -3, value }) %}
+  | initial_syllable final_trochee  {% ([a, b]) => ({ stressedOn: -2, value: [a, ...b] }) %}  # thank god i don't have to use the word amphibrach
+  | initial_syllable final_iamb  {% ([a, b]) => ({ stressedOn: -1, value: [a, ...b] }) %}  # or decide which spelling of anap(a)est is cooler
 
-antepenult_stress_trisyllable ->
-    initial_syllable unstressed_last_two {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
+dactyl ->
+    initial_syllable final_dibrach {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
   | initial_syllable STRESSED medial_syllable final_unstressed_syllable  {% ([a, _, b, c]) => [_.edit(a, { meta: { stressed: true }}), b, c] %}
 
-last_three_syllables ->
-    antepenult_stress_triplet  {% ([value]) => ({ stressedOn: -3, value }) %}
-  | medial_syllable stressed_penult_last_two  {% ([a, b]) => ({ stressedOn: -2, value: [a, ...b] }) %}
-  | medial_syllable stressed_final_last_two  {% ([a, b]) => ({ stressedOn: -1, value: [a, ...b] }) %}
+final_three_syllables ->
+    final_dactyl  {% ([value]) => ({ stressedOn: -3, value }) %}
+  | medial_syllable final_trochee  {% ([a, b]) => ({ stressedOn: -2, value: [a, ...b] }) %}  # see ^
+  | medial_syllable final_iamb  {% ([a, b]) => ({ stressedOn: -1, value: [a, ...b] }) %}  # ^^
 
-antepenult_stress_triplet ->
-    medial_syllable unstressed_last_two {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
+final_dactyl ->
+    medial_syllable final_dibrach {% ([a, b]) => [_.edit(a, { meta: { stressed: true }}), ...b] %}
   | medial_syllable STRESSED medial_syllable final_unstressed_syllable  {% ([a ,, b, c]) => [_.edit(a, { meta: { stressed: true }}), b, c] %}
 
-unstressed_last_two -> light_syllable final_lighter_syllable
-stressed_penult_last_two ->
+final_dibrach -> light_syllable final_lighter_syllable  # dibrach better than pyrrhic bc (1) quantitative and (2) 
+final_trochee ->
     heavier_syllable final_lighter_syllable  {% ([b, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
   | medial_syllable STRESSED final_syllable  {% ([b ,, c]) => [_.edit(b, { meta: { stressed: true }}), c] %}
-stressed_final_last_two ->
+final_iamb ->
     medial_syllable final_superheavy_syllable  {% ([b, c]) => [b, _.edit(c, { meta: { stressed: true }})] %}
   | medial_syllable final_stressed_syllable  # this one could probably be handled more consistently/elegantly lol
 
@@ -348,13 +349,13 @@ strong_consonant -> (
 )  {% ([[{ value }]]) => _.process(value) %}
 
 # ditto
-pronoun -> %openTag %pronoun %closeTag  {% ([ , value]) => _.obj(`pronoun`, {}, value) %}
+pronoun -> %openTag %pronoun %closeTag  {% ([ , value]) => _.process(value) %}  # not sure why the one below can't be process()
 tam -> %openTag %tam %closeTag  {% ([ , value]) => value %}
 voice -> %openTag %voice %closeTag  {% ([ , value]) => value %}
 pp_form -> %openTag (%higherForm | %ppForm1) %closeTag  {% ([ , [value]]) => value %}
 verb_form -> %openTag (%higherForm | %verbForm1) %closeTag  {% ([ , [value]]) => value %}
 
-augmentation -> delimiter %pronoun  {% ([a, { value }]) => [a, _.process(value)] %}
+augmentation -> delimiter %pronoun  {% ([a, { value }]) => [a, _.obj(`pronoun`, {}, value)] %}
 
 # ditto
 delimiter ->
