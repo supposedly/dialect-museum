@@ -13,7 +13,7 @@ class Node {
   }
 
   // Transformation is a progressive/iterative process of turning initialized
-  // nodes into whatever final orthography is desired; the difference btwn
+  // nodes into, uh, other nodes that may then be turned into plain text; the difference btwn
   // it and initialization is that this will result in per-segment variants
   // like *[3aTyit] -> [[3] [a, o], [T], [y], [i, I], [t]]
   // (or something idk i'm on ramadan brain rn)

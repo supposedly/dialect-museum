@@ -1,3 +1,4 @@
+/* eslint-disable no-multi-spaces */
 // DSL-ish stuff
 /* eslint-disable no-unexpected-multiline */
 /* eslint-disable func-call-spacing */
@@ -156,7 +157,12 @@ module.exports.alphabet = {
     symbol: `c`,
     value: `fem`
   },
-  // i guess easiest way to handle fem + dual is to separate it
+  // not sure if this should instead be separated... hmph
+  FemDual: {
+    type: `suffix`,
+    symbol: `<`,
+    value: `fdual`
+  },
   FemPlural: {
     type: `suffix`,
     symbol: `C`,
@@ -238,22 +244,42 @@ module.exports.ppForm1 = [
   // ...higherVerbForms
 ];
 
+module.exports.PERSONS = {
+  first: `1`,
+  second: `2`,
+  third: `3`
+};
+
+module.exports.GENDERS = {
+  masc: `m`,
+  fem: `f`,
+  common: `c`
+};
+
+module.exports.NUMBERS = {
+  singular: `s`,
+  dual: `d`,
+  plural: `p`
+};
+
+const [P, G, N] = [this.PERSONS, this.GENDERS, this.NUMBERS];
+
 module.exports.pronouns = [
-  `1ms`,  // -e according to loun
-  `1fs`,  // -i according to loun
-  `1ns`,  // the normal neutral one idk
-  `1np`,
-  `2ms`,
-  `2fs`,
-  `2ns`,  // maybe someday
-  `2mp`,  // -kVm in case it exists in some southern dialect
-  `2fp`,  // ditto but -kVn
-  `2np`,
-  `3ms`,
-  `3fs`,
-  `3mp`,  // ditto but -(h)Vm
-  `3fp`,  // ditto but -(h)Vn
-  `3np`
+  P.first  + G.masc   + N.singular,   // -e according to loun
+  P.first  + G.fem    + N.singular,   // -i according to loun
+  P.first  + G.common + N.singular,   // the normal neutral one idk
+  P.first  + G.common + N.plural,
+  P.second + G.masc   + N.singular,
+  P.second + G.fem    + N.singular,
+  P.second + G.common + N.singular,   // maybe someday
+  P.second + G.masc   + N.plural,     // -kVm in case it exists in some southern dialect
+  P.second + G.fem    + N.plural,     // ditto but -kVn
+  P.second + G.common + N.plural,
+  P.third  + G.masc   + N.singular,
+  P.third  + G.fem    + N.singular,
+  P.third  + G.masc   + N.plural,     // ditto but -(h)Vm
+  P.third  + G.fem    + N.plural,     // ditto but -(h)Vn
+  P.third  + G.common + N.plural
 ];
 
 module.exports.negative = `X`;  // dunno how to implement this

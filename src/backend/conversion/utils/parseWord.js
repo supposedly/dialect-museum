@@ -1,5 +1,5 @@
-const { alphabet: abc } = require(`../../symbols`);
-const obj = require(`../../objects`);
+const { alphabet: abc } = require(`../symbols`);
+const obj = require(`../objects`);
 
 const lastOf = (seq, index = 0) => seq[seq.length - 1 - index];
 
@@ -21,7 +21,7 @@ const newSyllable = () => obj.obj(
 // in particular: wordify({ suffix: [{ suffix object }] })`...`
 function parseWord({
   suffix = null,
-  prefix = null,
+  // prefix = null,
   automaticStress = null,
   augmentation = null
 } = {}) {
@@ -63,9 +63,9 @@ function parseWord({
     });
 
     // add prefix & resyllabify if necessary
-    if (prefix !== null) {
+    // if (prefix !== null) {
 
-    }
+    // }
 
     // set weight of each syllable
     syllables.forEach(s => {

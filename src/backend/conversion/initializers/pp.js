@@ -1,4 +1,4 @@
-const { parseWord } = require(`./utils/parseWord`);
+const { parseWord } = require(`../utils/parseWord`);
 
 function pp({
   meta: { conjugation, form, voice },
@@ -28,8 +28,10 @@ function pp({
         if ($F.value === `n`) {
           if ($L.meta.weak) {
             variants.push(
-              $`-m.u.${$F} +t.i -${$3}.i.y`,
-              $`m.u.${$F}.t ${$3}.i.y`
+              $`-m.u.${$F} +t.i -${$3}.I.y`,
+              $`m.u.${$F}.t ${$3}.I.y`,
+              $`-m.u.${$F} +t.i -${$3}.ii.y`,
+              $`m.u.${$F}.t ${$3}.ii.y`
             );
           } else {
             variants.push($`m.u.${$F} t.aa.${$L}`);
@@ -38,18 +40,22 @@ function pp({
         if ($L.meta.weak) {
           // doesn't exist B)
           variants.push(
-            $`m.u.${$F} y.i.y`
+            $`m.i.${$F} y.I.y`,
+            $`m.i.${$F} y.ii.y`
           );
         } else {
           variants.push(
-            $`m.u.n ${$F}.aa.${$L}`,
+            $`m.i.n ${$F}.aa.${$L}`,
             $`m.a.${$F} y.uu.${$L}`
           );
         }
         return variants;
       }
       if ($L.meta.weak) {
-        return [$`m.u.${$F} ${$3}.ii.y`];
+        return [
+          $`m.i.${$F} ${$3}.I.y`,
+          $`m.i.${$F} ${$3}.ii.y`
+        ];
       }
       // default
       return [$`m.a.${$F} ${$3}.uu.${$L}`];

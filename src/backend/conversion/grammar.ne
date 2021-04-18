@@ -348,7 +348,7 @@ strong_consonant -> (
 )  {% ([[{ value }]]) => _.process(value) %}
 
 # ditto
-pronoun -> %openTag %pronoun %closeTag  {% ([ , value]) => value %}
+pronoun -> %openTag %pronoun %closeTag  {% ([ , value]) => _.obj(`pronoun`, {}, value) %}
 tam -> %openTag %tam %closeTag  {% ([ , value]) => value %}
 voice -> %openTag %voice %closeTag  {% ([ , value]) => value %}
 pp_form -> %openTag (%higherForm | %ppForm1) %closeTag  {% ([ , [value]]) => value %}
