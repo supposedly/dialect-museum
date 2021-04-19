@@ -3,11 +3,18 @@ const obj = require(`../objects`);
 
 const lastOf = (seq, index = 0) => seq[seq.length - 1 - index];
 
-const newSyllable = () => obj.obj(
+const newSyllable = (string = []) => obj.obj(
   `syllable`,
   { stressed: null, weight: null },
-  []
+  string
 );
+
+function initialSyllables(prefix) {
+  if (!prefix) {  // null or empty
+    return [newSyllable()];
+  }
+  return [...prefix.syllables.map(newSyllable), newSyllable(prefix.rest)];
+}
 
 // split a template string written using the keys of ./symbols.js's alphabet object
 // into syllable objects + consonant objects, incl. analyzing stress
@@ -21,7 +28,7 @@ const newSyllable = () => obj.obj(
 // in particular: wordify({ suffix: [{ suffix object }] })`...`
 function parseWord({
   suffix = null,
-  // prefix = null,
+  prefix = null,
   automaticStress = null,
   augmentation = null
 } = {}) {
@@ -33,7 +40,7 @@ function parseWord({
     let alreadyStressed = strings[0].startsWith(`-`) || strings[0].startsWith(`+`);
 
     // normalize individual orthographic segments
-    const syllables = [newSyllable()];
+    const syllables = [...initialSyllables(prefix)];
     strings.forEach(s => {
       let lastSyllable = lastOf(syllables);
       // iterate thru syllable chunks
@@ -62,11 +69,6 @@ function parseWord({
       }
     });
 
-    // add prefix & resyllabify if necessary
-    // if (prefix !== null) {
-
-    // }
-
     // set weight of each syllable
     syllables.forEach(s => {
       // 0 segments in syllable = weight of -1
@@ -77,6 +79,7 @@ function parseWord({
       }
       // otherwise just count sound units
       let rimeLength = 0;
+      // go backwards so we can break when we reach the nucleus (aka before the onset)
       for (let i = s.value.length - 1; i > 0; i -= 1) {
         const segment = s.value[i];
         // long vowels add 2, short vowels add 1
@@ -94,8 +97,8 @@ function parseWord({
     });
 
     // add suffix & reassign stress to it if superheavy
-    // (this is after stress bc suffixes are special symbols)
-    if (suffix !== null) {
+    // (this is after normal stress-assignment bc suffixes are special symbols)
+    if (suffix) {  // not triggered if suffix is either null or []
       if (
         suffix.length === 2
         && suffix[0].value === `fem`
@@ -180,8 +183,7 @@ function createWordParserTag(postprocess = null) {
       const ret = parseWord()(first, ...rest);
       return postprocess ? postprocess(ret) : ret;
     }
-    // this means the caller wants to pass a suffix to the tag
-    // (should be an actual suffix object)
+    // this means the caller wants to pass config params to the tag
     const ret = parseWord(first);
     return postprocess ? (...args) => postprocess(ret(...args)) : ret;
   };
@@ -193,5 +195,6 @@ module.exports = {
     word.value[0].meta.stressed = null;
     return word.value[0];
   }),
+  parseString: createWordParserTag(word => word.value[0].value),
   parseLetter: createWordParserTag(word => word.value[0].value[0])
 };

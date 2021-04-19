@@ -157,12 +157,12 @@ module.exports.alphabet = {
     symbol: `c`,
     value: `fem`
   },
-  // not sure if this should instead be separated... hmph
-  FemDual: {
-    type: `suffix`,
-    symbol: `<`,
-    value: `fdual`
-  },
+  // not sure if this is a good idea?
+  // FemDual: {
+  //   type: `suffix`,
+  //   symbol: `<`,
+  //   value: `fdual`
+  // },
   FemPlural: {
     type: `suffix`,
     symbol: `C`,
@@ -227,18 +227,12 @@ module.exports.higherVerbForms = [
   `stfa3la2`  // probably only theoretically exists lol
 ];
 
-module.exports.verbForm1 = [
-  `aa`,
-  `ai`,
-  `au`,
-  `ia`,
-  `ii`,
-  `iu`
-  // ...higherVerbForms
-];
+// technically this should be aa, ai, au, ia, ii, iu
+// but since verbs can only show up in one tense here fina nokhtser
+module.exports.verbForm1 = [`a`, `i`, `u`];
 
 module.exports.ppForm1 = [
-  `1/both,`,
+  `1/both`,
   `1/fa3len`,
   `1/fe3il`
   // ...higherVerbForms
