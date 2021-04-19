@@ -1,43 +1,120 @@
-const { parseWord } = require(`../utils/parseWord`);
+const { parseWord, parseLetter } = require(`../utils/parseWord`);
+
+const LAX_I = Object.freeze(parseLetter`i`);
+const I = Object.freeze(parseLetter`I`);
 
 function verb({
   meta: { conjugation, form, tam },
   value: { root, augmentation }
 }) {
-  const $ = parseWord({
-    // TODO: implement suffix on conjugation
-    suffix: conjugation.suffix,
-    eraseStress: !!conjugation.suffix,
-    augmentation
-  });
-
   const [$F, $3, $L, $Q] = root;
 
-  // hack to check if form is aa, ai, au, ia, ii, or iu
-  if (form.length === 2) {
-    if (tam === `pst`) {
-      if (form[0] === `a`) {
+  // either the 2nd segment of the form is a vowel
+  // or the verb is form-1 with a weak medial consonant
+  const isCV = `aeiou`.includes(form[1]) || (`aiu`.includes(form) && $3.meta.weak);
 
-      } else if (form[0] === `i`) {
-        
+  let prefixes;
+  let suffix;
+  switch (tam) {
+    case `sbjv`:
+      if (isCV) {
+        prefixes = [
+          // tkuun
+          { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cv },
+          // tikuun
+          { syllables: [[...conjugation.nonpast.prefix.subjunctive.cv, LAX_I]], rest: [] }
+        ];
+      } else {
+        // tiktub
+        prefixes = [
+          { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cc }
+        ];
       }
-    } else {
-
-    }
+      suffix = conjugation.nonpast.suffix;
+      break;
+    case `ind`:
+      if (isCV) {
+        prefixes = [
+          // bitkuun
+          {
+            syllables: [[
+              ...conjugation.nonpast.prefix.indicative,
+              I,
+              ...conjugation.nonpast.prefix.subjunctive.cv
+            ]],
+            rest: []
+          },
+          // btikuun (idk lol found it more than once online)
+          {
+            syllables: [[
+              ...conjugation.nonpast.prefix.indicative,
+              ...conjugation.nonpast.prefix.subjunctive.cv,
+              LAX_I
+            ]],
+            rest: []
+          }
+        ];
+      } else {
+        const cc = conjugation.nonpast.prefix.subjunctive.cc;
+        if (cc[0].value === `2`) {
+          // b + 2 + ktub = biktub, not b2iktub
+          // the sbjv prefix in this case starts with 2 so the .slice(1) gets rid of it
+          prefixes = [
+            { syllables: [], rest: [...conjugation.nonpast.prefix.indicative, ...cc.slice(1)] }
+          ];
+        } else {
+          prefixes = [
+            // btiktub
+            { syllables: [], rest: [...conjugation.nonpast.prefix.indicative, ...cc] },
+            // bitiktub (again idk found it online more than once lul)
+            {
+              syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I]],
+              rest: [[...cc, LAX_I]]
+            }
+          ];
+        }
+      }
+      suffix = conjugation.nonpast.suffix;
+      break;
+    case `imp`:
+      prefixes = [];
+      suffix = conjugation.nonpast.suffix;
+      break;
+    case `pst`:
+      prefixes = [];
+      suffix = conjugation.past.suffix;
+      break;
+    default:  // error?
+      prefixes = undefined;
+      suffix = undefined;
   }
 
+  /* eslint-disable indent */  // (for the second branch of the conditional)
+  const parsers = (
+    prefixes
+      ? prefixes.map(prefix => parseWord({
+        prefix,
+        suffix,
+        eraseStress: !!suffix,
+        augmentation
+      }))
+      : [parseWord({
+          prefix: null,
+          suffix,
+          eraseStress: !!suffix,
+          augmentation
+        })]
+  );
+  /* eslint-enable indent */
+
+  const $ = (...args) => parsers.map(f => f(...args));
+
   switch (form) {
-    case `aa`:
+    case `a`:
       return [];
-    case `ai`:
+    case `i`:
       return [];
-    case `au`:
-      return [];
-    case `ia`:
-      return [];
-    case `ii`:
-      return [];
-    case `iu`:
+    case `u`:
       return [];
     case `fa33al`:
       return (
@@ -175,10 +252,7 @@ function verb({
       }
       throw new Error(`Can't use stAf3al except with final-geminate and second-weak verbs`);
     case `f3all`:
-      if (isActiveVoice) {
-        return $`m.u.${$F} ${$3}.a.${$L}.${$L}`;
-      }
-      throw new Error(`Can't use passive voice with f3all`);
+      return $`m.u.${$F} ${$3}.a.${$L}.${$L}`;
     case `fa3la2`:
       return (
         [

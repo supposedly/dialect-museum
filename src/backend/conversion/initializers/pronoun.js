@@ -1,15 +1,14 @@
-const { parseLetter, parseSyllable: $s } = require(`../utils/parseWord`);
+const { parseString: $, parseLetter } = require(`../utils/parseWord`);
 const { PERSONS: P, GENDERS: G, NUMBERS: N } = require(`../symbols`);
 
-// this param list is fine because i'm not using these as actual template strings for now
-const $l = ([s]) => (s ? [parseLetter(s)] : []);
+const I = Object.freeze(parseLetter`I`);
 
 // circumfix-generator for verbCircumfix()
-const suffixPrefix = (suffix, [cc, cv], indicative = $l`b`) => ({
+const suffixPrefix = (suffix, [cc, cv], indicative = $`b`) => ({
   prefix: {
     indicative,
     subjunctive: {
-      cc,
+      cc: [...cc, I],
       cv: cv !== undefined ? cv : cc
     }
   },
@@ -17,38 +16,39 @@ const suffixPrefix = (suffix, [cc, cv], indicative = $l`b`) => ({
 });
 
 function ppSuffix(person, gender, number) {
+  // person only matters when clitics are added so we ignore it here
   if (gender.fem) {
-    if (number.singular) { return $l`Fem`; }
-    if (number.dual) { return $l`FemDual`; }
-    if (number.plural) { return $l`FemPlural`; }
+    if (number.singular) { return $`Fem`; }
+    if (number.dual) { return $`Fem.Dual`; }
+    if (number.plural) { return $`FemPlural`; }
     return null;  // error?
   }
   // masc and "commmon" gender are the same for now
-  if (number.singular) { return $l``; }
-  if (number.dual) { return $l`=`; }  // merging verbal and nominal participles here
-  if (number.plural) { return $l`+`; }
+  if (number.singular) { return $``; }
+  if (number.dual) { return $`=`; }  // merging verbal and nominal participles here
+  if (number.plural) { return $`+`; }
   return null;  // error?
 }
 
 // past-tense verbs
 function verbSuffix(person, gender, number) {
   if (person.first) {
-    if (number.singular) { return $s`Schwa.t`; }
-    return $s`n.aa`;
+    if (number.singular) { return $`Schwa.t`; }
+    return $`n.aa`;
   }
   if (person.second) {
     if (number.singular) {
-      if (gender.fem) { return $s`t.ii`; }
-      return $s`Schwa.t`;
+      if (gender.fem) { return $`t.ii`; }
+      return $`Schwa.t`;
     }
-    return $s`t.uu`;
+    return $`t.uu`;
   }
   if (person.third) {
     if (number.singular) {
-      if (gender.fem) { return $l`Fem`; }  // -it/-at
-      return $l``;
+      if (gender.fem) { return $`Fem`; }  // -it/-at
+      return $``;
     }
-    return $l`uu`;
+    return $`uu`;
   }
   return null;  // error?
 }
@@ -58,57 +58,52 @@ function verbCircumfix(person, gender, number) {
   if (person.first) {
     if (number.singular) {
       // 1cs
-      return suffixPrefix($l``, [$l`2`, $l``]);
+      return suffixPrefix($``, [$`2`, $``]);
     }
     // "1cd", 1cp
-    return suffixPrefix($l``, [$l`n`]);
+    return suffixPrefix($``, [$`n`]);
   }
   if (person.second) {
     if (number.singular) {
       if (gender.feminine) {
         // 2fs
-        return suffixPrefix($l`ii`, [$l`t`]);
+        return suffixPrefix($`ii`, [$`t`]);
       }
       // 2ms, 2cs
-      return suffixPrefix($l``, [$l`t`]);
+      return suffixPrefix($``, [$`t`]);
     }
     // 2cd, 2cp
-    return suffixPrefix($l`uu`, [$l`t`]);
+    return suffixPrefix($`uu`, [$`t`]);
   }
   if (person.third) {
     if (number.singular) {
       if (gender.feminine) {
         // 3fs
-        return suffixPrefix($l``, [$l`t`]);
+        return suffixPrefix($``, [$`t`]);
       }
       // 3ms, 3cs
-      return suffixPrefix($l``, [$l`y`]);
+      return suffixPrefix($``, [$`y`]);
     }
     // 3cp
-    return suffixPrefix($l`uu`, [$l`y`]);
+    return suffixPrefix($`uu`, [$`y`]);
   }
   return null;  // error?
 }
 
-function pronoun({ value }) {
-  let person = value[0];
-  let gender = value[1];
-  let number = value[2];
-
+// value is a string but we can still destructure it
+function pronoun({ value: [person, gender, number] }) {
   person = {
     value: person,
     first: person === P.first,
     second: person === P.second,
     third: person === P.third
   };
-
   gender = {
     value: gender,
     masc: gender === G.masc,
     fem: gender === G.fem,
     common: gender === G.common
   };
-
   number = {
     value: number,
     singular: number === N.singular,
@@ -120,9 +115,11 @@ function pronoun({ value }) {
     person,
     gender,
     number,
-    ppSuffix: ppSuffix(person, gender, number),
-    verbSuffix: verbSuffix(person, gender, number),
-    verbCircumfix: verbCircumfix(person, gender, number)
+    participle: {
+      suffix: ppSuffix(person, gender, number)
+    },
+    past: verbSuffix(person, gender, number),
+    nonpast: verbCircumfix(person, gender, number)
   };
 }
 

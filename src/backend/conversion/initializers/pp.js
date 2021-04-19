@@ -7,9 +7,8 @@ function pp({
   const isActiveVoice = voice === `active`;
 
   const $ = parseWord({
-    // TODO: implement suffix on conjugation
-    suffix: conjugation.suffix,
-    eraseStress: !!conjugation.suffix,
+    suffix: conjugation.participle.suffix,
+    eraseStress: !!conjugation.participle.suffix,
     augmentation
   });
 
