@@ -120,6 +120,7 @@ module.exports.alphabet = {
                */
   (`ii`, `I`)
 
+  (`U`, `V`)  // there's definitely a tense U but its distribution is weird compared to i/I... still, including it for symmetry
   (`u`, `u`)
   (`uu`, `U`)
 

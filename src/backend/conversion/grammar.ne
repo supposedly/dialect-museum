@@ -81,6 +81,7 @@
       iTense: $`I`,
       i: $`i`,
       ii: $`ii`,
+      uTense: $`U`,
       u: $`u`,
       uu: $`uu`,
       e: $`e`,
@@ -334,8 +335,8 @@ superheavy_rime ->
 # the {value} here ISN'T the {value} from my own schema -- it's instead from moo,
 # which provides us our own object as the {value} of its own lex-result object
 vowel -> (long_vowel | short_vowel)  {% ([[value]]) => value %}
-final_short_vowel -> (%a | %iTense | %i | %e | %fem)  {% ([[{ value }]]) => _.process(value) %}
-short_vowel -> (%a | %iTense | %i | %u | %e | %o)  {% ([[{ value }]]) => _.process(value) %}
+final_short_vowel -> (%a | %iTense | %uTense | %e | %o | %fem)  {% ([[{ value }]]) => _.process(value) %}
+short_vowel -> (%a | %iTense | %i | %uTense | %u | %e | %o)  {% ([[{ value }]]) => _.process(value) %}
 long_vowel -> (%aa | %aaLowered | %ae | %ii | %uu | %ee | %oo | %ay | %aw)  {% ([[{ value }]]) => _.process(value) %}
 
 root -> consonant consonant consonant consonant:?
