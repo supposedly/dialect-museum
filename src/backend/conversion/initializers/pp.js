@@ -2,7 +2,10 @@ const { parseWord } = require(`../utils/parseWord`);
 
 function pp({
   meta: { conjugation, form, voice },
-  value: { root, augmentation }
+  value: {
+    root: [$F, $3, $L, $Q],
+    augmentation
+  }
 }) {
   const isActiveVoice = voice === `active`;
 
@@ -13,8 +16,6 @@ function pp({
   });
 
   const pickVoice = (active, passive) => (isActiveVoice ? active : passive);
-
-  const [$F, $3, $L, $Q] = root;
 
   switch (form) {
     case `1/both`:
@@ -69,6 +70,9 @@ function pp({
               : $`m.aa ${$3}.I.${$L}`
           );
         }
+        if ($3.value === $L.value) {
+          variants.push($`${$F}.aa.${$3}${$L}`);
+        }
         return [
           ...variants,
           $3.meta.weak ? $`${$F}.aa y.I.${$L}` : $`${$F}.aa ${$3}.I.${$L}`
@@ -87,17 +91,17 @@ function pp({
       return pickVoice(
         [
           $`m.u ${$F}.a.${$3} ${$3}.I.${$L}`,
-          $`m.u ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`
+          $L.meta.weak ? $`m.u ${$F}.a.${$3} ${$3}.aa` : $`m.u ${$F}.a.${$3} ${$3}.a.${$L}`
         ],
-        [$`m.u ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`]
+        [$L.meta.weak ? $`m.u ${$F}.a.${$3} ${$3}.aa` : $`m.u ${$F}.a.${$3} ${$3}.a.${$L}`]
       );
     case `tfa33al`:
       return pickVoice(
         [
-          $`m.u ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`,
+          $L.meta.weak ? $`m.u ${$F}.a.${$3} ${$3}.aa` : $`m.u ${$F}.a.${$3} ${$3}.a.${$L}`,
           $`m.u.t ${$F}.a.${$3} ${$3}.I.${$L}`
         ],
-        [$`m.u.t ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`]
+        [$L.meta.weak ? $`m.u.t ${$F}.a.${$3} ${$3}.aa` : $`m.u.t ${$F}.a.${$3} ${$3}.a.${$L}`]
       );
     case `stfa33al`:
       // stanna-yestanna
@@ -105,33 +109,33 @@ function pp({
         return pickVoice(
           [
             $`m.u.s t.a.${$3} ${$3}.I.${$L}`,
-            $`m.u.s t.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`
+            $L.meta.weak ? $`m.u.s t.a.${$3} ${$3}.aa` : $`m.u.s t.a.${$3} ${$3}.a.${$L}`
           ],
-          [$`m.u.s t.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`]
+          [$L.meta.weak ? $`m.u.s t.a.${$3} ${$3}.aa` : $`m.u.s t.a.${$3} ${$3}.a.${$L}`]
         );
       }
       return pickVoice(
         [
           $`m.u.s._.t ${$F}.a.${$3} ${$3}.I.${$L}`,
-          $`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`
+          $L.meta.weak ? $`m.u.s._.t ${$F}.a.${$3} ${$3}.aa` : $`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`
         ],
-        [$`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`]
+        [$L.meta.weak ? $`m.u.s._.t ${$F}.a.${$3} ${$3}.aa` : $`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`]
       );
     case `fe3al`:
       return pickVoice(
         [
           $`m.u ${$F}.aa ${$3}.I.${$L}`,
-          $`m.u ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`
+          $L.meta.weak ? $`m.u ${$F}.aa ${$3}.aa` : $`m.u ${$F}.aa ${$3}.a.${$L}`
         ],
-        [$`m.u ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`]
+        [$L.meta.weak ? $`m.u ${$F}.aa ${$3}.aa` : $`m.u ${$F}.aa ${$3}.a.${$L}`]
       );
     case `tfe3al`:
       return pickVoice(
         [
           $`m.u ${$F}.aa ${$3}.I.${$L}`,
-          $`m.u ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`
+          $L.meta.weak ? $`m.u ${$F}.aa ${$3}.aa` : $`m.u ${$F}.aa ${$3}.a.${$L}`
         ],
-        [$`m.u ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`]
+        [$L.meta.weak ? $`m.u ${$F}.aa ${$3}.aa` : $`m.u ${$F}.aa ${$3}.a.${$L}`]
       );
     case `stfe3al`:
       // stehal-yestehal
@@ -139,21 +143,30 @@ function pp({
         return pickVoice(
           [
             $`m.u.s t.aa ${$3}.I.${$L}`,
-            $`m.u.s t.aa ${$3}.a.${$L.meta.weak ? `` : $L}`
+            $L.meta.weak ? $`m.u.s t.aa ${$3}.aa` : $`m.u.s t.aa ${$3}.a.${$L}`
           ],
-          [$`m.u.s t.aa ${$3}.a.${$L.meta.weak ? `` : $L}`]
+          [$L.meta.weak ? $`m.u.s t.aa ${$3}.aa` : $`m.u.s t.aa ${$3}.a.${$L}`]
         );
       }
       return pickVoice(
         [
           $`m.u.s._.t ${$F}.aa ${$3}.I.${$L}`,
-          $`m.u.s._.t ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`
+          $L.meta.weak ? $`m.u.s._.t ${$F}.aa ${$3}.aa` : $`m.u.s._.t ${$F}.aa ${$3}.a.${$L}`
         ],
-        [$`m.u.s._.t ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`]
+        [$L.meta.weak ? $`m.u.s._.t ${$F}.aa ${$3}.aa` : $`m.u.s._.t ${$F}.aa ${$3}.a.${$L}`]
       );
     case `nfa3al`:
       if ($3.meta.weak) {
         return [$`m.u.n ${$F}.aa.${$L}`];
+      }
+      if ($3.value === $L.value) {
+        return pickVoice(
+          [
+            $`m.a.${$F} ${$3}.uu.${$L}`,
+            $`m.u.n ${$F}.a.${$3}.${$L}`
+          ],
+          [$`m.u.n ${$F}.a.${$3}.${$L}`]
+        );
       }
       return pickVoice(
         [
@@ -164,13 +177,19 @@ function pp({
           $`m.u.n ${$F}.a ${$3}.I.${$L}`
         ],
         [
-          $`-m.u.n +${$F}.a -${$3}.a.${$L.meta.weak ? `` : $L}`,
-          $`m.u.n ${$F}.a ${$3}.a.${$L.meta.weak ? `` : $L}`
+          $L.meta.weak ? $`-m.u.n +${$F}.a -${$3}.aa` : $`-m.u.n +${$F}.a -${$3}.a.${$L}`,
+          $L.meta.weak ? $`m.u.n ${$F}.a ${$3}.aa` : $`m.u.n ${$F}.a ${$3}.a.${$L}`
         ]
       );
     case `fta3al`:
       if ($3.meta.weak) {
         return [$`m.u.${$F} t.aa.${$L}`];
+      }
+      if ($3.value === $L.value) {
+        return pickVoice(
+          [$`m.u.${$F} t.a.${$3}.${$L}`],
+          [$`m.u.${$F} t.a.${$3}.${$L}`]
+        );
       }
       return pickVoice(
         [
@@ -181,8 +200,8 @@ function pp({
           $`m.a.${$F} ${$3}.uu.${$L}`
         ],
         [
-          $`-m.u.${$F} +t.a -${$3}.a.${$L.meta.weak ? `` : $L}`,
-          $`m.u.${$F} t.a ${$3}.a.${$L.meta.weak ? `` : $L}`
+          $L.meta.weak ? $`-m.u.${$F} +t.a -${$3}.aa` : $`-m.u.${$F} +t.a -${$3}.a.${$L}`,
+          $L.meta.weak ? $`m.u.${$F} t.a ${$3}.aa` : $`m.u.${$F} t.a ${$3}.a.${$L}`
         ]
       );
     case `staf3al`:
@@ -201,7 +220,7 @@ function pp({
       }
       return pickVoice(
         [$`m.u.s t.a.${$F} ${$3}.I.${$L}`],
-        [$`m.u.s t.a.${$F} ${$3}.a.${$L.meta.weak ? `` : $L}`]
+        [$L.meta.weak ? $`m.u.s t.a.${$F} ${$3}.aa` : $`m.u.s t.a.${$F} ${$3}.a.${$L}`]
       );
     case `stAf3al`:
       if ($3.meta.weak) {
@@ -227,17 +246,17 @@ function pp({
       return pickVoice(
         [
           $`m.u ${$F}.a.${$3} ${$L}.I.${$Q}`,
-          $`m.u ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`
+          $Q.meta.weak ? $`m.u ${$F}.a.${$3} ${$L}.aa` : $`m.u ${$F}.a.${$3} ${$L}.a.${$Q}`
         ],
-        [$`m.u ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`]
+        [$Q.meta.weak ? $`m.u ${$F}.a.${$3} ${$L}.aa` : $`m.u ${$F}.a.${$3} ${$L}.a.${$Q}`]
       );
     case `tfa3la2`:
       return pickVoice(
         [
-          $`m.u ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`,
+          $Q.meta.weak ? $`m.u ${$F}.a.${$3} ${$L}.aa` : $`m.u ${$F}.a.${$3} ${$L}.a.${$Q}`,
           $`m.u.t ${$F}.a.${$3} ${$L}.I.${$Q}`
         ],
-        [$`m.u.t ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`]
+        [$Q.meta.weak ? $`m.u.t ${$F}.a.${$3} ${$L}.aa` : $`m.u.t ${$F}.a.${$3} ${$L}.a.${$Q}`]
       );
     case `stfa3la2`:
       if ($F.value === `2` && $F.weak) {
@@ -245,17 +264,17 @@ function pp({
         return pickVoice(
           [
             $`m.u.s t.a.${$3} ${$L}.I.${$Q}`,
-            $`m.u.s t.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`
+            $Q.meta.weak ? $`m.u.s t.a.${$3} ${$L}.aa` : $`m.u.s t.a.${$3} ${$L}.a.${$Q}`
           ],
-          [$`m.u.s t.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`]
+          [$Q.meta.weak ? $`m.u.s t.a.${$3} ${$L}.aa` : $`m.u.s t.a.${$3} ${$L}.a.${$Q}`]
         );
       }
       return pickVoice(
         [
           $`m.u.s._.t ${$F}.a.${$3} ${$L}.I.${$Q}`,
-          $`m.u.s._.t ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`
+          $Q.meta.weak ? $`m.u.s._.t ${$F}.a.${$3} ${$L}.aa` : $`m.u.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`
         ],
-        [$`m.u.s._.t ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`]
+        [$Q.meta.weak ? $`m.u.s._.t ${$F}.a.${$3} ${$L}.aa` : $`m.u.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`]
       );
     default:
       return null;
