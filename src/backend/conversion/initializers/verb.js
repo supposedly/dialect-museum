@@ -2,13 +2,12 @@ const { parseWord, parseLetter } = require(`../utils/parseWord`);
 
 const LAX_I = Object.freeze(parseLetter`i`);
 const I = Object.freeze(parseLetter`I`);
+const Y = Object.freeze({ ...parseLetter`y`, meta: { ...parseLetter`y`.meta, weak: true }});
 
 function verb({
   meta: { conjugation, form, tam },
-  value: { root, augmentation }
+  value: { root: [$F, $3, $L, $Q], augmentation }
 }) {
-  const [$F, $3, $L, $Q] = root;
-
   // either the 2nd segment of the form is a vowel
   // or the verb is form-1 with a weak medial consonant
   const isCV = `aeiou`.includes(form[1]) || (`aiu`.includes(form) && $3.meta.weak);
@@ -21,6 +20,8 @@ function verb({
         prefixes = [
           // tkuun
           { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cv },
+          // t.kuun
+          { syllables: [conjugation.nonpast.prefix.subjunctive.cv], rest: [] },
           // tikuun
           { syllables: [[...conjugation.nonpast.prefix.subjunctive.cv, LAX_I]], rest: [] }
         ];
@@ -89,118 +90,142 @@ function verb({
       suffix = undefined;
   }
 
-  /* eslint-disable indent */  // (for the second branch of the conditional)
-  const parsers = (
-    prefixes
-      ? prefixes.map(prefix => parseWord({
-        prefix,
+  /* eslint-disable indent, semi-style */
+  const parsers = prefixes
+    ? prefixes.map(prefix => parseWord({
+      prefix,
+      suffix,
+      eraseStress: !!suffix,
+      augmentation
+    }))
+    : [parseWord({
+        prefix: null,
         suffix,
         eraseStress: !!suffix,
         augmentation
-      }))
-      : [parseWord({
-          prefix: null,
-          suffix,
-          eraseStress: !!suffix,
-          augmentation
-        })]
-  );
-  /* eslint-enable indent */
+      })]
+  ;
+  /* eslint-enable indent, semi-style */
 
+  // theo ther two are just so i can see more-easily which ones add affixes and which don't
   const $ = (...args) => parsers.map(f => f(...args));
+  const $_ = $;
+  const _$_ = $;
+
+  const weakAA = $L.meta.weak && conjugation.person.first && conjugation.gender.masc;
+  // const $originalL = $L;
+  if ($L.meta.weak) {
+    $L = Y;
+  }
+
+  // if (`aiu`.includes(form) && )  // 3atyit
 
   switch (form) {
     case `a`:
-      return [];
+      if (tam === `pst`) {
+        return $_`${$F}.a ${$3}.a.${$L}`;
+      }
+      if (tam === `imp`) {
+        if ($L.meta.weak) {
+          return [
+            ...$_`2.i.${$F} ${$3}.aa`,
+            ...$_`${$F}.${$3}.aa`
+          ];
+        }
+        return [
+          ...(conjugation.gender.masc ? $`${$F}.${$3}.aa.${$L}` : $_`${$F}.${$3}.a.${$L}`),
+          $_`2.i.${$F} ${$3}.a.${$L}`
+        ];
+      }
+      return _$_`${$F} ${$3}.a.${$L}`;
     case `i`:
-      return [];
+      if (tam === `pst`) {
+        return $_`${$F}.i ${$3}.I.${$L}`;
+      }
+      if (tam === `imp`) {
+        return $_`2.i.${$F} ${$3}.I.${$L}`;
+      }
+      return _$_`${$F} ${$3}.I.${$L}`;
     case `u`:
-      return [];
+      if (tam === `pst`) {
+        throw new Error(`No past-tense conjugation in /u/ exists`);
+      }
+      if (tam === `imp`) {
+        return [
+          ...(conjugation.gender.masc ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.U.${$L}`),
+          $_`2.i.${$F} ${$3}.U.${$L}`
+        ];
+      }
+      return _$_`${$F} ${$3}.U.${$L}`;
     case `fa33al`:
-      return (
-        [
-          $`m.u ${$F}.a.${$3} ${$3}.I.${$L}`,
-          $`m.u ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`
-        ],
-        [$`m.u ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`]
-      );
+      if (tam === `pst`) {
+        return weakAA
+          ? [...$`${$F}.a.${$3} ${$3}.aa`, ...$`${$F}.i.${$3} ${$3}.aa`]
+          : [...$_`${$F}.a.${$3} ${$3}.a.${$L}`, ...$_`${$F}.i.${$3} ${$3}.a.${$L}`];
+      }
+      // no need for "if imp" case bc this handles imperative too (right?)
+      return $L.meta.weak
+        ? [..._$_`${$F}.a.${$3} ${$3}.ii`, ..._$_`${$F}.i.${$3} ${$3}.ii`]
+        : [..._$_`${$F}.a.${$3} ${$3}.I.${$L}`, ..._$_`${$F}.i.${$3} ${$3}.I.${$L}`];
     case `tfa33al`:
-      return (
-        [
-          $`m.u ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`,
-          $`m.u.t ${$F}.a.${$3} ${$3}.I.${$L}`
-        ],
-        [$`m.u.t ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`]
-      );
+      if (tam === `pst`) {
+        return weakAA
+          ? [...$`t.${$F}.a.${$3} ${$3}.aa`, ...$`t.${$F}.i.${$3} ${$3}.aa`]
+          : [...$_`t.${$F}.a.${$3} ${$3}.a.${$L}`, ...$_`t.${$F}.i.${$3} ${$3}.a.${$L}`];
+      }
+      return $L.meta.weak
+        ? [..._$_`t.${$F}.a.${$3} ${$3}.ii`, ..._$_`t.${$F}.i.${$3} ${$3}.ii`]
+        : [..._$_`t.${$F}.a.${$3} ${$3}.I.${$L}`, ..._$_`t.${$F}.i.${$3} ${$3}.I.${$L}`];
     case `stfa33al`:
-      // stanna-yestanna
+      // stanna-yistanna
       if ($F.value === `2` && $F.weak) {
-        return (
-          [
-            $`m.u.s t.a.${$3} ${$3}.I.${$L}`,
-            $`m.u.s t.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`
-          ],
-          [$`m.u.s t.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`]
-        );
+        if (tam === `pst`) {
+          return weakAA
+            ? [...$`s.t.a.${$3} ${$3}.aa`, ...$`s.t.i.${$3} ${$3}.aa`]
+            : [...$_`s.t.a.${$3} ${$3}.a.${$L}`, ...$_`s.t.i.${$3} ${$3}.a.${$L}`];
+        }
+        return $L.meta.weak
+          ? [..._$_`s.t.a.${$3} ${$3}.ii`, ..._$_`s.t.i.${$3} ${$3}.ii`]
+          : [..._$_`s.t.a.${$3} ${$3}.I.${$L}`, ..._$_`s.t.i.${$3} ${$3}.I.${$L}`];
       }
-      return (
-        [
-          $`m.u.s._.t ${$F}.a.${$3} ${$3}.I.${$L}`,
-          $`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`
-        ],
-        [$`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L.meta.weak ? `` : $L}`]
-      );
+      if (tam === `pst`) {
+        return weakAA
+          ? [...$`s.t.${$F}.a.${$3} ${$3}.aa`, ...$`s.t.${$F}.i.${$3} ${$3}.aa`]
+          : [...$_`s.t.${$F}.a.${$3} ${$3}.a.${$L}`, ...$_`s.t.${$F}.i.${$3} ${$3}.a.${$L}`];
+      }
+      return $L.meta.weak
+        ? [..._$_`s.t.${$F}.a.${$3} ${$3}.ii`, ..._$_`s.t.${$F}.i.${$3} ${$3}.ii`]
+        : [..._$_`s.t.${$F}.a.${$3} ${$3}.I.${$L}`, ..._$_`s.t.${$F}.i.${$3} ${$3}.I.${$L}`];
     case `fe3al`:
-      return (
-        [
-          $`m.u ${$F}.aa ${$3}.I.${$L}`,
-          $`m.u ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`
-        ],
-        [$`m.u ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`]
-      );
-    case `tfe3al`:
-      return (
-        [
-          $`m.u ${$F}.aa ${$3}.I.${$L}`,
-          $`m.u ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`
-        ],
-        [$`m.u ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`]
-      );
-    case `stfe3al`:
-      // stehal-yestehal
-      if ($F.value === `2` && $F.weak) {
-        return (
-          [
-            $`m.u.s t.aa ${$3}.I.${$L}`,
-            $`m.u.s t.aa ${$3}.a.${$L.meta.weak ? `` : $L}`
-          ],
-          [$`m.u.s t.aa ${$3}.a.${$L.meta.weak ? `` : $L}`]
-        );
+      if (tam === `pst`) {
+        return weakAA ? $`${$F}.aa ${$3}.aa` : $_`${$F}.aa ${$3}.a.${$L}`;
       }
-      return (
-        [
-          $`m.u.s._.t ${$F}.aa ${$3}.I.${$L}`,
-          $`m.u.s._.t ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`
-        ],
-        [$`m.u.s._.t ${$F}.aa ${$3}.a.${$L.meta.weak ? `` : $L}`]
-      );
+      return $L.meta.weak ? _$_`${$F}.aa ${$3}.ii` : _$_`${$F}.aa ${$3}.I.${$L}`;
+    case `tfe3al`:
+      if (tam === `pst`) {
+        return weakAA ? $`t.${$F}.aa ${$3}.aa` : $_`t.${$F}.aa ${$3}.a.${$L}`;
+      }
+      return $L.meta.weak ? _$_`t.${$F}.aa ${$3}.ii` : _$_`t.${$F}.aa ${$3}.I.${$L}`;
+    case `stfe3al`:
+      // stehal-yistehal
+      if ($F.value === `2` && $F.weak) {
+        if (tam === `pst`) {
+          return weakAA ? $`s.t.aa ${$3}.aa` : $_`s.t.aa ${$3}.a.${$L}`;
+        }
+        return $L.meta.weak ? _$_`s.t.aa ${$3}.ii` : _$_`s.t.aa ${$3}.I.${$L}`;
+      }
+      if (tam === `pst`) {
+        return weakAA ? $`s.t.${$F}.aa ${$3}.aa` : $_`s.t.${$F}.aa ${$3}.a.${$L}`;
+      }
+      return $L.meta.weak ? _$_`s.t.${$F}.aa ${$3}.ii` : _$_`s.t.${$F}.aa ${$3}.I.${$L}`;
     case `nfa3al`:
       if ($3.meta.weak) {
-        return [$`m.u.n ${$F}.aa.${$L}`];
+        return _$_`n.${$F}.aa.${$L}`;
       }
-      return (
-        [
-          $`m.a.${$F} ${$3}.uu.${$L}`,
-          $`-m.u.n +${$F}.i -${$3}.I.${$L}`,
-          $`-m.u.n +${$F}.a -${$3}.I.${$L}`,
-          $`m.u.n ${$F}.i ${$3}.I.${$L}`,
-          $`m.u.n ${$F}.a ${$3}.I.${$L}`
-        ],
-        [
-          $`-m.u.n +${$F}.a -${$3}.a.${$L.meta.weak ? `` : $L}`,
-          $`m.u.n ${$F}.a ${$3}.a.${$L.meta.weak ? `` : $L}`
-        ]
-      );
+      if (tam === `pst`) {
+        return weakAA ? $`n.${$F}.a ${$3}.aa` : $_`n.${$F}.a ${$3}.a.${$L}`;
+      }
+      return;  // yinfa3al, yinfi3il, yinf3il
     case `fta3al`:
       if ($3.meta.weak) {
         return [$`m.u.${$F} t.aa.${$L}`];

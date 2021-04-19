@@ -18,17 +18,17 @@ function initialSyllables(prefix) {
 
 // split a template string written using the keys of ./symbols.js's alphabet object
 // into syllable objects + consonant objects, incl. analyzing stress
-// string format: wordify`c.v c.v.c c.v` or wordify`-c.v +c.v.c -c.v`, aka
+// string format: parseWord`c.v c.v.c c.v` or parseWord`-c.v +c.v.c -c.v`, aka
 // 1. syllables are separated manually (not worth it to do algorithmically lol) with
 //    spaces, and individual orthographic segments are separated with periods
 // 2. syllables can be optionally prefixed (preferably all at once) with - or +
 //    to indicate stress, esp. useful when stress in a given word isn't automatic
-// can optionally be called as wordify({ extraStuff: etc })`...` to pass variables
+// can optionally be called as parseWord({ extraStuff: etc })`...` to pass variables
 // (just suffixes for now) that aren't root consonants & this can't be interpolated
-// in particular: wordify({ suffix: [{ suffix object }] })`...`
+// in particular: parseWord({ suffix: [{ suffix object }] })`...`
 function parseWord({
-  suffix = null,
   prefix = null,
+  suffix = null,
   automaticStress = null,
   augmentation = null
 } = {}) {
@@ -40,7 +40,7 @@ function parseWord({
     let alreadyStressed = strings[0].startsWith(`-`) || strings[0].startsWith(`+`);
 
     // normalize individual orthographic segments
-    const syllables = [...initialSyllables(prefix)];
+    const syllables = initialSyllables(prefix);
     strings.forEach(s => {
       let lastSyllable = lastOf(syllables);
       // iterate thru syllable chunks
@@ -124,8 +124,8 @@ function parseWord({
       }
     }
 
-    // set stressed syllable (if meant to be automatically assigned)
-    if (!alreadyStressed || automaticStress) {
+    // set stressed syllable (if meant to be automatically assigned and/or must be)
+    if (!alreadyStressed || automaticStress || prefix) {
       if (syllables.length === 1) {
         syllables[0].meta.stressed = true;
       }
