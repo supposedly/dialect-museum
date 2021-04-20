@@ -9,13 +9,6 @@ const newSyllable = (string = []) => obj.obj(
   string
 );
 
-function initialSyllables(prefix) {
-  if (!prefix) {  // null or empty
-    return [newSyllable()];
-  }
-  return [...prefix.syllables.map(newSyllable), newSyllable(prefix.rest)];
-}
-
 // split a template string written using the keys of ./symbols.js's alphabet object
 // into syllable objects + consonant objects, incl. analyzing stress
 // string format: parseWord`c.v c.v.c c.v` or parseWord`-c.v +c.v.c -c.v`, aka
@@ -26,8 +19,10 @@ function initialSyllables(prefix) {
 // can optionally be called as parseWord({ extraStuff: etc })`...` to pass variables
 // (just suffixes for now) that aren't root consonants & this can't be interpolated
 // in particular: parseWord({ suffix: [{ suffix object }] })`...`
+// As for `prefixer`, that's a function that'll mutate the prefixless parse result
+// to add a prefix to it
 function parseWord({
-  prefix = null,
+  prefixer = null,
   suffix = null,
   automaticStress = null,
   augmentation = null
@@ -40,7 +35,7 @@ function parseWord({
     let alreadyStressed = strings[0].startsWith(`-`) || strings[0].startsWith(`+`);
 
     // normalize individual orthographic segments
-    const syllables = initialSyllables(prefix);
+    const syllables = [newSyllable()];
     strings.forEach(s => {
       let lastSyllable = lastOf(syllables);
       // iterate thru syllable chunks
@@ -68,6 +63,10 @@ function parseWord({
         lastSyllable.value.push(rootConsonants.shift());
       }
     });
+
+    if (prefixer !== null) {
+      prefixer(syllables);
+    }
 
     // set weight of each syllable
     syllables.forEach(s => {
@@ -125,7 +124,7 @@ function parseWord({
     }
 
     // set stressed syllable (if meant to be automatically assigned and/or must be)
-    if (!alreadyStressed || automaticStress || prefix) {
+    if (!alreadyStressed || automaticStress || prefixer) {
       if (syllables.length === 1) {
         syllables[0].meta.stressed = true;
       }
@@ -190,6 +189,7 @@ function createWordParserTag(postprocess = null) {
 }
 
 module.exports = {
+  newSyllable,
   parseWord: createWordParserTag(),
   parseSyllable: createWordParserTag(word => {
     word.value[0].meta.stressed = null;
