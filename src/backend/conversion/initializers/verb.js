@@ -233,7 +233,7 @@ function verb({
           // lta2u, lta2yu
           // XXX TODO: stuff like that ${$3}.${$Y}# prob means that parseWord
           // should do suffixes before weight-assignment...
-          return [...$_`n.${$F}.a ${$3}.aa`, ...$_`n.${$F}.a ${$3}.${Y}`];
+          return [...$_`n.${$F}.a ${$3}.aa`, ...$_`n.${$F}.a ${$3}.y`];
         }
         return weakAA ? $`n.${$F}.a ${$3}.aa` : $_`n.${$F}.a ${$3}.a.${$L}`;
       }
@@ -285,7 +285,7 @@ function verb({
           // lta2u, lta2yu
           // XXX TODO: stuff like this ${$3}.${$Y}# prob means that parseWord
           // should do suffixes before weight-assignment...
-          return [...$_`${$F}.t.a ${$3}.aa`, ...$_`${$F}.t.a ${$3}.${Y}`];
+          return [...$_`${$F}.t.a ${$3}.aa`, ...$_`${$F}.t.a ${$3}.y`];
         }
         return weakAA ? $`${$F}.t.a ${$3}.aa` : $_`${$F}.t.a ${$3}.a.${$L}`;
       }
@@ -328,72 +328,54 @@ function verb({
         return $L.meta.weak ? _$_`s.t.aa ${$3}.ii` : _$_`s.t.aa ${$3}.I.${$L}`;
       }
       if ($3.meta.weak) {
-        return (
-          [$`m.u.s._.t ${$F}.ii.${$L}`],
-          [$`m.u.s._.t ${$F}.aa.${$L}`]
-        );
+        return tam === `pst` ? $_`s.t.${$F}.aa.${$L}` : _$_`s.t.${$F}.ii.${$L}`;
       }
       if ($3.value === $L.value) {
-        return (
-          [$`m.u.s._.t ${$F}.i.${$3}.${$L}`],
-          [$`m.u.s._.t ${$F}.a.${$3}.${$L}`]
-        );
+        return tam === `pst` ? $_`s.t.${$F}.a.${$3}.${$L}` : $_`s.t.${$F}.i.${$3}.${$L}`;
       }
-      return (
-        [$`m.u.s t.a.${$F} ${$3}.I.${$L}`],
-        [$`m.u.s t.a.${$F} ${$3}.a.${$L.meta.weak ? `` : $L}`]
-      );
+      if (tam === `pst`) {
+        return weakAA ? $`s.t.a.${$F} ${$3}.aa` : $`s.t.a.${$F} ${$3}.a.${$L}`;
+      }
+      if ($3.meta.weak) {
+        // stuff like "yistarjyo" exists albeit apparently very rarely
+        return [_$_`s.t.a.${$F} ${$3}.ii`, _$_`s.t.a.${$F} ${$3}.I.y`];
+      }
+      // yista3mil, *yista3mul* (spelled yesta3mol)
+      return [_$_`s.t.a.${$F} ${$3}.I.${$L}`, _$_`s.t.a.${$F} ${$3}.U.${$L}`];
     case `stAf3al`:
       if ($3.meta.weak) {
-        return (
-          [$`m.u.s t.a ${$F}.ii.${$L}`],
-          [$`m.u.s t.a ${$F}.aa.${$L}`]
-        );
+        return tam === `pst` ? $_`s.t.a ${$F}.aa.${$L}` : _$_`s.t.a ${$F}.ii.${$L}`;
       }
-      // geminate root
       if ($3.value === $L.value) {
-        return (
-          [$`m.u.s t.a ${$F}.i.${$3}.${$L}`],
-          [$`m.u.s t.a ${$F}.a.${$3}.${$L}`]
-        );
+        return tam === `pst` ? $_`s.t.a ${$F}.a.${$3}.${$L}` : $_`s.t.a ${$F}.i.${$3}.${$L}`;
       }
       throw new Error(`Can't use stAf3al except with final-geminate and second-weak verbs`);
     case `f3all`:
-      return $`m.u.${$F} ${$3}.a.${$L}.${$L}`;
+      return _$_`${$F}.${$3}.a.${$L}.${$L}`;
     case `fa3la2`:
-      return (
-        [
-          $`m.u ${$F}.a.${$3} ${$L}.I.${$Q}`,
-          $`m.u ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`
-        ],
-        [$`m.u ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`]
-      );
-    case `tfa3la2`:
-      return (
-        [
-          $`m.u ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`,
-          $`m.u.t ${$F}.a.${$3} ${$L}.I.${$Q}`
-        ],
-        [$`m.u.t ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`]
-      );
-    case `stfa3la2`:
-      if ($F.value === `2` && $F.weak) {
-        // doesn't exist B)
-        return (
-          [
-            $`m.u.s t.a.${$3} ${$L}.I.${$Q}`,
-            $`m.u.s t.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`
-          ],
-          [$`m.u.s t.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`]
-        );
+      if (tam === `pst`) {
+        return weakAA
+          ? [...$`${$F}.a.${$3} ${$L}.aa`, ...$`${$F}.i.${$3} ${$L}.aa`]
+          : [...$_`${$F}.a.${$3} ${$L}.a.${$Q}`, ...$_`${$F}.i.${$3} ${$L}.a.${$Q}`];
       }
-      return (
-        [
-          $`m.u.s._.t ${$F}.a.${$3} ${$L}.I.${$Q}`,
-          $`m.u.s._.t ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`
-        ],
-        [$`m.u.s._.t ${$F}.a.${$3} ${$L}.a.${$Q.meta.weak ? `` : $Q}`]
-      );
+      return $Q.meta.weak
+        ? [..._$_`${$F}.a.${$3} ${$L}.ii`, ..._$_`${$F}.i.${$3} ${$L}.ii`]
+        : [..._$_`${$F}.a.${$3} ${$L}.I.${$Q}`, ..._$_`${$F}.i.${$3} ${$L}.I.${$Q}`];
+    case `tfa3la2`:
+      return $Q.meta.weak
+        ? [..._$_`s.t.${$F}.a.${$3} ${$L}.aa`, ..._$_`s.t.${$F}.i.${$3} ${$L}.aa`]
+        : [..._$_`s.t.${$F}.a.${$3} ${$L}.a.${$Q}`, ..._$_`s.t.${$F}.i.${$3} ${$L}.a.${$Q}`];
+    case `stfa3la2`:
+      // doesn't exist B)
+      // XXX: idunno about these /a/ variants btw
+      if ($F.meta.weak) {
+        return $Q.meta.weak
+          ? [..._$_`s.t.a.${$3} ${$L}.aa`, ..._$_`s.t.i.${$3} ${$L}.aa`]
+          : [..._$_`s.t.a.${$3} ${$L}.a.${$Q}`, ..._$_`s.t.i.${$3} ${$L}.a.${$Q}`];
+      }
+      return $Q.meta.weak
+        ? [..._$_`s.t.${$F}.a.${$3} ${$L}.aa`, ..._$_`s.t.${$F}.i.${$3} ${$L}.aa`]
+        : [..._$_`s.t.${$F}.a.${$3} ${$L}.a.${$Q}`, ..._$_`s.t.${$F}.i.${$3} ${$L}.a.${$Q}`];
     default:
       return null;
   }
