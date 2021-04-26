@@ -155,7 +155,7 @@ function verb({
         }
         return [
           ...(conjugation.gender.masc ? $`${$F}.${$3}.aa.${$L}` : $_`${$F}.${$3}.a.${$L}`),
-          $_`2.i.${$F} ${$3}.a.${$L}`
+          ...$_`2.i.${$F} ${$3}.a.${$L}`
         ];
       }
       return _$_`${$F}.${$3}.a.${$L}`;
@@ -174,7 +174,7 @@ function verb({
       if (tam === `imp`) {
         return [
           ...(conjugation.gender.masc ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.U.${$L}`),
-          $_`2.i.${$F} ${$3}.U.${$L}`
+          ...$_`2.i.${$F} ${$3}.U.${$L}`
         ];
       }
       return _$_`${$F}.${$3}.U.${$L}`;
@@ -240,14 +240,14 @@ function verb({
       if (tam === `imp`) {
         return $L.meta.weak
           ? [
-            _$_`+n.${$F}.i -${3}.ii`,
-            $_`2.i.n ${$F}.i ${3}.ii`,
-            $_`2.i.n ${$F}.${3}.ii`
+            ..._$_`+n.${$F}.i -${3}.ii`,
+            ...$_`2.i.n ${$F}.i ${3}.ii`,
+            ...$_`2.i.n ${$F}.${3}.ii`
           ]
           : [
-            _$_`+n.${$F}.i -${3}.I.${$L}`,
-            $_`2.i.n ${$F}.i ${3}.I.${$L}`,
-            $_`2.i.n ${$F}.${3}.I.${$L}`
+            ..._$_`+n.${$F}.i -${3}.I.${$L}`,
+            ...$_`2.i.n ${$F}.i ${3}.I.${$L}`,
+            ...$_`2.i.n ${$F}.${3}.I.${$L}`
           ];
       }
       // FIXME: there are verbs that never take yinfa3al, eg *yinshaghal "to become busy"
@@ -292,14 +292,14 @@ function verb({
       if (tam === `imp`) {
         return $L.meta.weak
           ? [
-            _$_`+${$F}.t.i -${3}.ii`,
-            $_`2.i.${$F} t.i ${3}.ii`,
-            $_`2.i.${$F} t.${3}.ii`
+            ..._$_`+${$F}.t.i -${3}.ii`,
+            ...$_`2.i.${$F} t.i ${3}.ii`,
+            ...$_`2.i.${$F} t.${3}.ii`
           ]
           : [
-            _$_`+${$F}.t.i -${3}.I.${$L}`,
-            $_`2.i.${$F} t.i ${3}.I.${$L}`,
-            $_`2.i.${$F} t.${3}.I.${$L}`
+            ..._$_`+${$F}.t.i -${3}.I.${$L}`,
+            ...$_`2.i.${$F} t.i ${3}.I.${$L}`,
+            ...$_`2.i.${$F} t.${3}.I.${$L}`
           ];
       }
       // FIXME: there are verbs that never take yifta3al, eg *yishtaghal "to work"
@@ -338,10 +338,10 @@ function verb({
       }
       if ($3.meta.weak) {
         // stuff like "yistarjyo" exists albeit apparently very rarely
-        return [_$_`s.t.a.${$F} ${$3}.ii`, _$_`s.t.a.${$F} ${$3}.I.y`];
+        return [..._$_`s.t.a.${$F} ${$3}.ii`, ..._$_`s.t.a.${$F} ${$3}.I.y`];
       }
       // yista3mil, *yista3mul* (spelled yesta3mol)
-      return [_$_`s.t.a.${$F} ${$3}.I.${$L}`, _$_`s.t.a.${$F} ${$3}.U.${$L}`];
+      return [..._$_`s.t.a.${$F} ${$3}.I.${$L}`, ..._$_`s.t.a.${$F} ${$3}.U.${$L}`];
     case `stAf3al`:
       if ($3.meta.weak) {
         return tam === `pst` ? $_`s.t.a ${$F}.aa.${$L}` : _$_`s.t.a ${$F}.ii.${$L}`;
