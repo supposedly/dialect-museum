@@ -189,56 +189,32 @@ function verb({
         ? [..._$_`${$F}.a.${$3} ${$3}.ii`, ..._$_`${$F}.i.${$3} ${$3}.ii`]
         : [..._$_`${$F}.a.${$3} ${$3}.I.${$L}`, ..._$_`${$F}.i.${$3} ${$3}.I.${$L}`];
     case `tfa33al`:
-      if (tam === `pst`) {
-        return weakAA
-          ? [...$`t.${$F}.a.${$3} ${$3}.aa`, ...$`t.${$F}.i.${$3} ${$3}.aa`]
-          : [...$_`t.${$F}.a.${$3} ${$3}.a.${$L}`, ...$_`t.${$F}.i.${$3} ${$3}.a.${$L}`];
-      }
       return $L.meta.weak
-        ? [..._$_`t.${$F}.a.${$3} ${$3}.ii`, ..._$_`t.${$F}.i.${$3} ${$3}.ii`]
-        : [..._$_`t.${$F}.a.${$3} ${$3}.I.${$L}`, ..._$_`t.${$F}.i.${$3} ${$3}.I.${$L}`];
+        ? [..._$_`t.${$F}.a.${$3} ${$3}.aa`, ..._$_`t.${$F}.i.${$3} ${$3}.aa`]
+        : [..._$_`t.${$F}.a.${$3} ${$3}.a.${$L}`, ..._$_`t.${$F}.i.${$3} ${$3}.a.${$L}`];
     case `stfa33al`:
       // stanna-yistanna
-      if ($F.value === `2` && $F.weak) {
-        if (tam === `pst`) {
-          return weakAA
-            ? [...$`s.t.a.${$3} ${$3}.aa`, ...$`s.t.i.${$3} ${$3}.aa`]
-            : [...$_`s.t.a.${$3} ${$3}.a.${$L}`, ...$_`s.t.i.${$3} ${$3}.a.${$L}`];
-        }
+      if ($F.meta.weak) {
         return $L.meta.weak
-          ? [..._$_`s.t.a.${$3} ${$3}.ii`, ..._$_`s.t.i.${$3} ${$3}.ii`]
-          : [..._$_`s.t.a.${$3} ${$3}.I.${$L}`, ..._$_`s.t.i.${$3} ${$3}.I.${$L}`];
-      }
-      if (tam === `pst`) {
-        return weakAA
-          ? [...$`s.t.${$F}.a.${$3} ${$3}.aa`, ...$`s.t.${$F}.i.${$3} ${$3}.aa`]
-          : [...$_`s.t.${$F}.a.${$3} ${$3}.a.${$L}`, ...$_`s.t.${$F}.i.${$3} ${$3}.a.${$L}`];
+          ? [..._$_`s.t.a.${$3} ${$3}.aa`, ..._$_`s.t.i.${$3} ${$3}.aa`]
+          : [..._$_`s.t.a.${$3} ${$3}.a.${$L}`, ..._$_`s.t.i.${$3} ${$3}.a.${$L}`];
       }
       return $L.meta.weak
-        ? [..._$_`s.t.${$F}.a.${$3} ${$3}.ii`, ..._$_`s.t.${$F}.i.${$3} ${$3}.ii`]
-        : [..._$_`s.t.${$F}.a.${$3} ${$3}.I.${$L}`, ..._$_`s.t.${$F}.i.${$3} ${$3}.I.${$L}`];
+        ? [..._$_`s.t.${$F}.a.${$3} ${$3}.aa`, ..._$_`s.t.${$F}.i.${$3} ${$3}.aa`]
+        : [..._$_`s.t.${$F}.a.${$3} ${$3}.a.${$L}`, ..._$_`s.t.${$F}.i.${$3} ${$3}.a.${$L}`];
     case `fe3al`:
       if (tam === `pst`) {
         return weakAA ? $`${$F}.aa ${$3}.aa` : $_`${$F}.aa ${$3}.a.${$L}`;
       }
       return $L.meta.weak ? _$_`${$F}.aa ${$3}.ii` : _$_`${$F}.aa ${$3}.I.${$L}`;
     case `tfe3al`:
-      if (tam === `pst`) {
-        return weakAA ? $`t.${$F}.aa ${$3}.aa` : $_`t.${$F}.aa ${$3}.a.${$L}`;
-      }
-      return $L.meta.weak ? _$_`t.${$F}.aa ${$3}.ii` : _$_`t.${$F}.aa ${$3}.I.${$L}`;
+      return $L.meta.weak ? _$_`t.${$F}.aa ${$3}.aa` : _$_`t.${$F}.aa ${$3}.a.${$L}`;
     case `stfe3al`:
       // stehal-yistehal
-      if ($F.value === `2` && $F.weak) {
-        if (tam === `pst`) {
-          return weakAA ? $`s.t.aa ${$3}.aa` : $_`s.t.aa ${$3}.a.${$L}`;
-        }
+      if ($F.meta.weak) {
         return $L.meta.weak ? _$_`s.t.aa ${$3}.ii` : _$_`s.t.aa ${$3}.I.${$L}`;
       }
-      if (tam === `pst`) {
-        return weakAA ? $`s.t.${$F}.aa ${$3}.aa` : $_`s.t.${$F}.aa ${$3}.a.${$L}`;
-      }
-      return $L.meta.weak ? _$_`s.t.${$F}.aa ${$3}.ii` : _$_`s.t.${$F}.aa ${$3}.I.${$L}`;
+      return $L.meta.weak ? _$_`s.t.${$F}.aa ${$3}.aa` : _$_`s.t.${$F}.aa ${$3}.a.${$L}`;
     case `nfa3al`:
       if ($3.meta.weak) {
         return _$_`n.${$F}.aa.${$L}`;
@@ -302,12 +278,12 @@ function verb({
         if (
           !noSuffix
           && $L.meta.weak
-          && conjugation.number.third
+          && conjugation.person.third
           && (conjugation.gender.fem || conjugation.number.plural)
         ) {
           // lta2it, lta2yit
           // lta2u, lta2yu
-          // XXX TODO: stuff like that ${$3}.${$Y}# prob means that parseWord
+          // XXX TODO: stuff like this ${$3}.${$Y}# prob means that parseWord
           // should do suffixes before weight-assignment...
           return [...$_`${$F}.t.a ${$3}.aa`, ...$_`${$F}.t.a ${$3}.${Y}`];
         }
@@ -344,6 +320,13 @@ function verb({
           ..._$_`${$F}.t.${3}.I.${$L}`
         ];
     case `staf3al`:
+      // stehal-yistehil
+      if ($F.meta.weak) {
+        if (tam === `pst`) {
+          return weakAA ? $`s.t.aa ${$3}.aa` : $_`s.t.aa ${$3}.a.${$L}`;
+        }
+        return $L.meta.weak ? _$_`s.t.aa ${$3}.ii` : _$_`s.t.aa ${$3}.I.${$L}`;
+      }
       if ($3.meta.weak) {
         return (
           [$`m.u.s._.t ${$F}.ii.${$L}`],
