@@ -1,7 +1,7 @@
 const parseWord = require(`./parseWord`);
-const parseConj = require(`./parseConj`);
+const misc = require(`./misc`);
 
 module.exports = {
-  ...parseWord,
-  ...parseConj
+  parseWord,
+  misc
 };

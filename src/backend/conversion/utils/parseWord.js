@@ -1,13 +1,6 @@
+const { lastOf, newSyllable } = require(`./misc`);
 const { alphabet: abc } = require(`../symbols`);
 const obj = require(`../objects`);
-
-const lastOf = (seq, index = 0) => seq[seq.length - 1 - index];
-
-const newSyllable = (string = []) => obj.obj(
-  `syllable`,
-  { stressed: null, weight: null },
-  string
-);
 
 // split a template string written using the keys of ./symbols.js's alphabet object
 // into syllable objects + consonant objects, incl. analyzing stress
@@ -19,12 +12,11 @@ const newSyllable = (string = []) => obj.obj(
 // can optionally be called as parseWord({ extraStuff: etc })`...` to pass variables
 // (just suffixes for now) that aren't root consonants & this can't be interpolated
 // in particular: parseWord({ suffix: [{ suffix object }] })`...`
-// As for `prefixer`, that's a function that'll mutate the prefixless parse result
-// to add a prefix to it
+// As for `transform`, that's an array of functions that'll mutate the raw parse result
+// which means they apply after parsing and syllabification but BEFORE syllable weight
+// and stress (stress is automatic unless specified with +- UNLESS there are transform functions)
 function parseWord({
-  prefixer = null,
-  suffix = null,
-  automaticStress = null,
+  transform = [],
   augmentation = null
 } = {}) {
   return (strings, ...rootConsonants) => {
@@ -64,9 +56,7 @@ function parseWord({
       }
     });
 
-    if (prefixer !== null) {
-      prefixer(syllables);
-    }
+    transform.forEach(f => f(syllables));
 
     // set weight of each syllable
     syllables.forEach(s => {
@@ -81,6 +71,23 @@ function parseWord({
       // go backwards so we can break when we reach the nucleus (aka before the onset)
       for (let i = s.value.length - 1; i > 0; i -= 1) {
         const segment = s.value[i];
+        if (segment.type === `suffix`) {
+          // should technically be rimeLength =
+          // instead of rimeLength +=
+          // but idk maybe if i have something bugged like `word=b` it'd
+          // be good to handle it "properly" lol
+          // (that is 'bugged' because it uses the dual suffix, `=`, non-word-finally)
+          if (segment.value === `fem`) {
+            // just V... ........ .. wait
+            // TODO: account for idafa here somehow lmao frick
+            // (not that it matters for stress but still annoying for the weight # to be inaccurate)
+            rimeLength += 1;
+          } else {
+            // all the other suffixes are VVC
+            rimeLength += 3;
+          }
+          break;
+        }
         // long vowels add 2, short vowels add 1
         if (segment.type === `vowel`) {
           rimeLength += segment.meta.length;
@@ -95,36 +102,8 @@ function parseWord({
       s.meta.weight = rimeLength;
     });
 
-    // add suffix & reassign stress to it if superheavy
-    // (this is after normal stress-assignment bc suffixes are special symbols)
-    if (suffix) {  // not triggered if suffix is either null or []
-      if (
-        suffix.length === 2
-        && suffix[0].value === `fem`
-        && suffix[1].value === `dual`
-      ) {
-        syllables.push(obj.obj(
-          `syllable`,
-          { stressed: null, weight: 3 },
-          [...suffix]
-        ));
-      } else {
-        lastOf(syllables).meta.weight -= 1;
-        syllables.push(obj.obj(
-          `syllable`,
-          {
-            stressed: null,
-            // superheavy if dual or m/f plural, light if fsg
-            // (should handle this less-hackily but w/e)
-            weight: suffix[0].value === `fem` ? 1 : 3
-          },
-          [lastOf(syllables).value.pop(), ...suffix]
-        ));
-      }
-    }
-
     // set stressed syllable (if meant to be automatically assigned and/or must be)
-    if (!alreadyStressed || automaticStress || prefixer) {
+    if (!alreadyStressed || transform) {
       if (syllables.length === 1) {
         syllables[0].meta.stressed = true;
       }
@@ -146,6 +125,7 @@ function parseWord({
       }
 
       // mark all not-stressed syllables as unstressed
+      // (aka normalize "either false or null" to "only false")
       // (either as a continuation of the above step,
       // or as a cover for if i forget my convention and
       // only mark a + syllable without marking any -)
@@ -158,7 +138,8 @@ function parseWord({
       // add schwa to CVCC syllables
       syllables.forEach(s => {
         if (s.meta.weight === 3 && s.value.length === 4) {
-          // this SHOULD always be true but just in case
+          // this SHOULD always be true (because CVVC would have s.value.length === 3)
+          // but just in case
           if (
             lastOf(s.value).type === `consonant`
             && lastOf(s.value, 1).type === `consonant`
@@ -189,12 +170,11 @@ function createWordParserTag(postprocess = null) {
 }
 
 module.exports = {
-  newSyllable,
   parseWord: createWordParserTag(),
   parseSyllable: createWordParserTag(word => {
     word.value[0].meta.stressed = null;
     return word.value[0];
   }),
-  parseString: createWordParserTag(word => word.value[0].value),
+  parseString: createWordParserTag(word => word.value.map(s => s.value).flat()),
   parseLetter: createWordParserTag(word => word.value[0].value[0])
 };

@@ -1,4 +1,4 @@
-const { parseString: $, parseLetter } = require(`../utils/parseWord`);
+const { parseWord: { parseString: $, parseLetter }} = require(`../utils`);
 const { PERSONS: P, GENDERS: G, NUMBERS: N } = require(`../symbols`);
 
 const I = Object.freeze(parseLetter`I`);
@@ -118,7 +118,9 @@ function pronoun({ value: [person, gender, number] }) {
     participle: {
       suffix: ppSuffix(person, gender, number)
     },
-    past: verbSuffix(person, gender, number),
+    past: {
+      suffix: verbSuffix(person, gender, number)
+    },
     nonpast: verbCircumfix(person, gender, number)
   };
 }

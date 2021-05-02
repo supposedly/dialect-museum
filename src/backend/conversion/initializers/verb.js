@@ -1,4 +1,12 @@
-const { parseWord, parseLetter, newSyllable } = require(`../utils/parseWord`);
+const {
+  parseWord: { parseWord, parseLetter },
+  misc: {
+    lastOf,
+    copy,
+    newSyllable,
+    invMap
+  }
+} = require(`../utils`);
 
 const LAX_I = Object.freeze(parseLetter`i`);
 const I = Object.freeze(parseLetter`I`);
@@ -13,22 +21,60 @@ function addPrefix(syllables, rest) {
     // -- in the future might have to do like _$`s._.t.blahblah` below
     // and then make noSchwa delete itself if not "/ CVC_C", but
     // that has to wait till i get the whole transformer system working)
-    if (rest && rest[rest.length - 1].type === `vowel`) {
+    if (rest && lastOf(rest).type === `vowel`) {
       while (firstSyllable[0].type === `consonant` && firstSyllable[1].type !== `vowel`) {
+        // XXX: this mutates the two arrays, which is okay because they're
+        // constructed on-demand every time verb() is called, but it's
+        // still kinda icky
+        // (atm i'm avoiding that anyway by copying them in makePrefixers() before passing)
         rest.push(firstSyllable.shift());
       }
     }
-    syllables.push(newSyllable(rest), ...base);
+    syllables.push(newSyllable(copy(rest)));
+    base.unshift(...syllables);
   };
 }
 
 function makePrefixers(...prefixes) {
-  if (prefixes) {
-    return prefixes.map(
-      ({ syllables, rest }) => addPrefix(syllables.map(newSyllable), rest)
-    );
-  }
-  return [null];
+  return prefixes.map(
+    // the object { syllables, rest } is from `switch (tam) {}` in verb() below
+    ({ syllables, rest }) => addPrefix(
+      syllables.map(copy).map(newSyllable),
+      copy(rest)
+    )
+  );
+}
+
+function makeSuffixer(suffix) {
+  return base => {
+    const lastSyllable = lastOf(base).value;
+    switch (lastOf(lastSyllable).type) {
+      case `vowel`:
+        if (
+          // $`Fem` is the only `type: suffix` object that can be found on verbs here
+          // and its initial segment is in fact a vowel
+          suffix[0].type === `vowel` || suffix[0].value === `fem`
+        ) {
+          // if we have an ending like $`.aa`, delete it before adding a
+          // vowel-initial suffix
+          lastSyllable.splice(-1, 1);
+        }
+        // this is valid because suffixes are monosyllabic as implemented rn
+        // if they weren't then this would need to be like ...suffix[0]
+        // and the rest of the suffix's syllables would need to be
+        // added to base afterwards
+        lastSyllable.push(...suffix);
+        // (btw this could also have been an if-else with the
+        // first branch instead doing `.splice(-1, 1, ...suffix);`)
+        break;
+      case `consonant`:
+        suffix.shift(lastSyllable.pop());
+        base.push(newSyllable(suffix));
+        break;
+      default:
+        throw new Error(`Didn't expect types besides vowel/consonant in the base word`);
+    }
+  };
 }
 
 function verb({
@@ -40,7 +86,7 @@ function verb({
   const isCV = `aeiou`.includes(form[1]) || (`aiu`.includes(form) && $3.meta.weak);
 
   let prefixers;
-  let suffix;
+  let suffixer;
   switch (tam) {
     case `sbjv`:
       if (isCV) {
@@ -58,7 +104,7 @@ function verb({
           { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cc }
         );
       }
-      suffix = conjugation.nonpast.suffix;
+      suffixer = makeSuffixer(copy(conjugation.nonpast.suffix));
       break;
     case `ind`:
       if (isCV) {
@@ -102,29 +148,35 @@ function verb({
           );
         }
       }
-      suffix = conjugation.nonpast.suffix;
+      suffixer = makeSuffixer(copy(conjugation.nonpast.suffix));
       break;
     case `imp`:
       prefixers = makePrefixers();
-      suffix = conjugation.nonpast.suffix;
+      suffixer = makeSuffixer(copy(conjugation.nonpast.suffix));
       break;
     case `pst`:
       prefixers = makePrefixers();
-      suffix = conjugation.past.suffix;
+      suffixer = makeSuffixer(copy(conjugation.past.suffix));
       break;
     default:  // error?
       prefixers = undefined;
-      suffix = undefined;
+      suffixer = undefined;
   }
 
-  // the second two are just so i can see more-easily which ones add affixes and which don't
-  const parsers = prefixers.map(prefixer => parseWord({
-    prefixer,
-    suffix,
-    eraseStress: !!suffix,
-    augmentation
-  }));
-  const $ = (...args) => parsers.map(f => f(...args));
+  const $ = invMap(
+    prefixers.map(prefixer => parseWord({
+      transform: [prefixer, suffixer],
+      eraseStress: !!suffixer,  // always true here
+      augmentation
+    }))
+  ).or(
+    parseWord({
+      transform: [suffixer],
+      eraseStress: !!suffixer,  // always true here
+      augmentation
+    })
+  );
+  // these two are just so i can see more-easily which ones add affixes and which don't
   const $_ = $;
   const _$_ = $;
 
@@ -231,9 +283,7 @@ function verb({
         ) {
           // lta2it, lta2yit (this is nfa3al not fta3al but same idea)
           // lta2u, lta2yu
-          // XXX TODO: stuff like that ${$3}.${$Y}# prob means that parseWord
-          // should do suffixes before weight-assignment...
-          return [...$_`n.${$F}.a ${$3}.aa`, ...$_`n.${$F}.a ${$3}.y`];
+          return [...$_`n.${$F}.a ${$3}.aa`, ...$_`n.${$F}.a.${$3}.y`];
         }
         return weakAA ? $`n.${$F}.a ${$3}.aa` : $_`n.${$F}.a ${$3}.a.${$L}`;
       }
@@ -283,9 +333,7 @@ function verb({
         ) {
           // lta2it, lta2yit
           // lta2u, lta2yu
-          // XXX TODO: stuff like this ${$3}.${$Y}# prob means that parseWord
-          // should do suffixes before weight-assignment...
-          return [...$_`${$F}.t.a ${$3}.aa`, ...$_`${$F}.t.a ${$3}.y`];
+          return [...$_`${$F}.t.a ${$3}.aa`, ...$_`${$F}.t.a.${$3}.y`];
         }
         return weakAA ? $`${$F}.t.a ${$3}.aa` : $_`${$F}.t.a ${$3}.a.${$L}`;
       }
