@@ -184,7 +184,10 @@ function verb({
   const noSuffix = tam === `pst`
     ? conjugation.person.third() && conjugation.gender.masc()
     : (!conjugation.gender.fem() || conjugation.number.third()) && !conjugation.number.plural();
-  const weakAA = $L.meta.weak && noSuffix;  // only cares abt the case where tam === `pst`
+
+  // only used when tam === `pst`
+  const weakAA = $L.meta.weak && noSuffix;
+
   // TODO: might need to uncomment this if i want the verb's root to be accessible
   // (which i forget if that would have any purpose other than "let ppl see the verb's root")
   // const $originalL = $L;
@@ -294,12 +297,12 @@ function verb({
           ? [
             ...$_`+n.${$F}.i -${$3}.ii`,
             ...$_`2.i.n ${$F}.i ${$3}.ii`,
-            ...$_`2.i.n ${$F}.${$3}.ii`
+            ...(noSuffix ? [] : $_`n.${$F}.a ${$3}.aa`)
           ]
           : [
             ...$_`+n.${$F}.i -${$3}.I.${$L}`,
             ...$_`2.i.n ${$F}.i ${$3}.I.${$L}`,
-            ...$_`2.i.n ${$F}.${$3}.I.${$L}`
+            ...(noSuffix ? [] : $_`n.${$F}.a ${$3}.a.${$L}`)
           ];
       }
       // FIXME: there are verbs that never take yinfa3al, eg *yinshaghal "to become busy"
@@ -308,16 +311,14 @@ function verb({
         ? [
           // about how the "+n." syllable interacts with prefixes:
           // the n will be taken by the prefix but the stress will remain on the Fi/Fa i think
-          ..._$_`+n.${$F}.i -${$3}.ii`,
+          ..._$_`+n.${$F}.i -${$3}.ii`,  // TODO FIXME: i think this fails actually because stress is reassigned
           ..._$_`+n.${$F}.a -${$3}.aa`,
-          ..._$_`n.${$F}.i ${$3}.ii`,
-          ..._$_`n.${$F}.${$3}.ii`
+          ..._$_`n.${$F}.i ${$3}.ii`
         ]
         : [
           ..._$_`+n.${$F}.i -${$3}.I.${$L}`,
           ..._$_`+n.${$F}.a -${$3}.a.${$L}`,
-          ..._$_`n.${$F}.i ${$3}.I.${$L}`,
-          ..._$_`n.${$F}.${$3}.I.${$L}`
+          ..._$_`n.${$F}.i ${$3}.I.${$L}`
         ];
     case `fta3al`:
       if ($3.meta.weak) {
@@ -344,12 +345,12 @@ function verb({
           ? [
             ...$_`+${$F}.t.i -${$3}.ii`,
             ...$_`2.i.${$F} t.i ${$3}.ii`,
-            ...$_`2.i.${$F} t.${$3}.ii`
+            ...(noSuffix ? [] : $_`${$F}.t.a ${$3}.aa`)
           ]
           : [
             ...$_`+${$F}.t.i -${$3}.I.${$L}`,
             ...$_`2.i.${$F} t.i ${$3}.I.${$L}`,
-            ...$_`2.i.${$F} t.${$3}.I.${$L}`
+            ...(noSuffix ? [] : $_`${$F}.t.a ${$3}.a.${$L}`)
           ];
       }
       // FIXME: there are verbs that never take yifta3al, eg *yishtaghal "to work"
@@ -360,14 +361,12 @@ function verb({
           // the F will be taken by the prefix but the stress will remain on the ti/ta i think
           ..._$_`+${$F}.t.i -${$3}.ii`,
           ..._$_`+${$F}.t.a -${$3}.aa`,
-          ..._$_`${$F}.t.i ${$3}.ii`,
-          ..._$_`${$F}.t.${$3}.ii`
+          ..._$_`${$F}.t.i ${$3}.ii`
         ]
         : [
           ..._$_`+${$F}.t.i -${$3}.I.${$L}`,
           ..._$_`+${$F}.t.a -${$3}.a.${$L}`,
-          ..._$_`${$F}.t.i ${$3}.I.${$L}`,
-          ..._$_`${$F}.t.${$3}.I.${$L}`
+          ..._$_`${$F}.t.i ${$3}.I.${$L}`
         ];
     case `staf3al`:
       // stehal-yistehil
