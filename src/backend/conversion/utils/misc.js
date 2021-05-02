@@ -6,8 +6,8 @@ module.exports = {
   invMap(arrayOfFuncs) {
     const invMapper = (...args) => arrayOfFuncs.map(f => f(...args));
     invMapper.or = arrayOfFuncs.length
-      ? backup => (..._) => [backup]
-      : _ => invMapper;
+      ? _ => invMapper
+      : backup => (...args) => [backup(...args)];
     return invMapper;
   },
   newSyllable: (string = []) => obj.obj(
