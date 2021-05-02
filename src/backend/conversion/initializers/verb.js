@@ -21,16 +21,13 @@ function addPrefix(syllables, rest) {
     // -- in the future might have to do like _$`s._.t.blahblah` below
     // and then make noSchwa delete itself if not "/ CVC_C", but
     // that has to wait till i get the whole transformer system working)
-    if (rest && lastOf(rest).type === `vowel`) {
+    if (rest.length && lastOf(rest).type === `vowel`) {
+      const postPrefix = newSyllable(copy(rest));
       while (firstSyllable[0].type === `consonant` && firstSyllable[1].type !== `vowel`) {
-        // XXX: this mutates the two arrays, which is okay because they're
-        // constructed on-demand every time verb() is called, but it's
-        // still kinda icky
-        // (atm i'm avoiding that anyway by copying them in makePrefixers() before passing)
-        rest.push(firstSyllable.shift());
+        postPrefix.push(firstSyllable.shift());
       }
+      base.unshift(postPrefix);
     }
-    syllables.push(newSyllable(copy(rest)));
     base.unshift(...syllables);
   };
 }
@@ -46,6 +43,14 @@ function makePrefixers(...prefixes) {
 }
 
 function makeSuffixer(suffix) {
+  if (!suffix.length) {
+    return _base => {};
+  }
+  if (suffix[0].type === `consonant`) {
+    return base => {
+      base.push(newSyllable(copy(suffix)));
+    };
+  }
   return base => {
     const lastSyllable = lastOf(base).value;
     switch (lastOf(lastSyllable).type) {
@@ -68,8 +73,7 @@ function makeSuffixer(suffix) {
         // first branch instead doing `.splice(-1, 1, ...suffix);`)
         break;
       case `consonant`:
-        suffix.shift(lastSyllable.pop());
-        base.push(newSyllable(suffix));
+        base.push(newSyllable([lastSyllable.pop(), ...suffix]));
         break;
       default:
         throw new Error(`Didn't expect types besides vowel/consonant in the base word`);
