@@ -219,9 +219,10 @@ module.exports.higherVerbForms = [
   `tfe3al`,
   `stfe3al`,
   `nfa3al`,
+  `nfi3il`,  // for npst -nfi3il. the pst is the same as nfa3al
   `fta3al`,
+  `fti3il`,  // for npst -fti3il. the pst is the same as fta3al
   `staf3al`,
-  `stAf3al`,  // for stafazz (not stfazz), sta2aal (not st2aal), etc
   `f3all`,
   `fa3la2`,
   `tfa3la2`,

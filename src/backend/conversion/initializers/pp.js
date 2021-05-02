@@ -238,6 +238,32 @@ function pp({
         [
           $`m.a.${$F} ${$3}.uu.${$L}`,
           ...$iy`-m.i.n +${$F}.i -${$3}.I.${$L}`,
+          ...$iy`m.i.n ${$F}.i ${$3}.I.${$L}`,
+          $`-m.i.n +${$F}.a -${$3}.a.${$L}`
+        ],
+        [
+          $L.meta.weak ? $`-m.i.n +${$F}.a -${$3}.aa` : $`-m.i.n +${$F}.a -${$3}.a.${$L}`,
+          $L.meta.weak ? $`m.i.n ${$F}.a ${$3}.aa` : $`m.i.n ${$F}.a ${$3}.a.${$L}`
+        ]
+      );
+    case `nfi3il`:
+      // same as nfa3al but can never be minfa3al when 'active', only minfi3il
+      if ($3.meta.weak) {
+        return [$`m.i.n ${$F}.aa.${$L}`];
+      }
+      if ($3.value === $L.value) {
+        return pickVoice(
+          [
+            $`m.a.${$F} ${$3}.uu.${$L}`,
+            $`m.i.n ${$F}.a.${$3}.${$L}`
+          ],
+          [$`m.i.n ${$F}.a.${$3}.${$L}`]
+        );
+      }
+      return pickVoice(
+        [
+          $`m.a.${$F} ${$3}.uu.${$L}`,
+          ...$iy`-m.i.n +${$F}.i -${$3}.I.${$L}`,
           ...$iy`m.i.n ${$F}.i ${$3}.I.${$L}`
         ],
         [
@@ -246,6 +272,25 @@ function pp({
         ]
       );
     case `fta3al`:
+      if ($3.meta.weak) {
+        return [$`m.i.${$F} t.aa.${$L}`];
+      }
+      if ($3.value === $L.value) {
+        return [$`m.i.${$F} t.a.${$3}.${$L}`];
+      }
+      return pickVoice(
+        [
+          ...$iy`-m.i.${$F} +t.i -${$3}.I.${$L}`,
+          ...$iy`m.i.${$F} t.i ${$3}.I.${$L}`,
+          $`m.i.${$F} t.a ${$3}.a.${$L}`
+        ],
+        [
+          $L.meta.weak ? $`-m.i.${$F} +t.a -${$3}.aa` : $`-m.i.${$F} +t.a -${$3}.a.${$L}`,
+          $L.meta.weak ? $`m.i.${$F} t.a ${$3}.aa` : $`m.i.${$F} t.a ${$3}.a.${$L}`
+        ]
+      );
+    case `fti3il`:
+      // same as fta3al but can never be mifta3al when 'active', only mifti3il
       if ($3.meta.weak) {
         return [$`m.i.${$F} t.aa.${$L}`];
       }
@@ -269,36 +314,21 @@ function pp({
         // should actually be constructed as a fta3al verb
         // of the "root" s7y
         return pickVoice(
-          [$`m.i.s._.t ${$F}.ii.${$L}`],
-          [$`m.i.s._.t ${$F}.aa.${$L}`]
+          [$`m.i.s._.t ${$F}.ii.${$L}`, $`m.i.s t.a ${$F}.ii.${$L}`],
+          [$`m.i.s._.t ${$F}.aa.${$L}`, $`m.i.s t.a ${$F}.aa.${$L}`]
         );
       }
       // geminate root
       if ($3.value === $L.value) {
         return pickVoice(
-          [$`m.i.s._.t ${$F}.i.${$3}.${$L}`],
-          [$`m.i.s._.t ${$F}.a.${$3}.${$L}`]
+          [$`m.i.s._.t ${$F}.i.${$3}.${$L}`, $`m.i.s t.a ${$F}.i.${$3}.${$L}`],
+          [$`m.i.s._.t ${$F}.a.${$3}.${$L}`, $`m.i.s t.a ${$F}.a.${$3}.${$L}`]
         );
       }
       return pickVoice(
         $iy`m.i.s t.a.${$F} ${$3}.I.${$L}`,
         [$L.meta.weak ? $`m.i.s t.a.${$F} ${$3}.aa` : $`m.i.s t.a.${$F} ${$3}.a.${$L}`]
       );
-    case `stAf3al`:
-      if ($3.meta.weak) {
-        return pickVoice(
-          [$`m.i.s t.a ${$F}.ii.${$L}`],
-          [$`m.i.s t.a ${$F}.aa.${$L}`]
-        );
-      }
-      // geminate root
-      if ($3.value === $L.value) {
-        return pickVoice(
-          [$`m.i.s t.a ${$F}.i.${$3}.${$L}`],
-          [$`m.i.s t.a ${$F}.a.${$3}.${$L}`]
-        );
-      }
-      throw new Error(`Can't use stAf3al except with final-geminate and second-weak verbs`);
     case `f3all`:
       if (isActiveVoice) {
         return $`m.i.${$F} ${$3}.a.${$L}.${$L}`;

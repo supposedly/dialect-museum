@@ -320,6 +320,47 @@ function verb({
           ..._$_`+n.${$F}.a -${$3}.a.${$L}`,
           ..._$_`n.${$F}.i ${$3}.I.${$L}`
         ];
+    case `nfi3il`:
+      // almost the same as nfa3al except npst conj are always yinfi3il not yinfa3al
+      if ($3.meta.weak) {
+        return _$_`n.${$F}.aa.${$L}`;
+      }
+      if ($3.value === $L.value) {
+        return $_`n.${$F}.a.${$3}.${$L}`;
+      }
+      if (tam === `pst`) {
+        if (
+          !noSuffix
+          && $L.meta.weak
+          && conjugation.number.third()
+          && (conjugation.gender.fem() || conjugation.number.plural())
+        ) {
+          // lta2it, lta2yit (this is nfa3al not fta3al but same idea)
+          // lta2u, lta2yu
+          return [...$_`n.${$F}.a ${$3}.aa`, ...$_`n.${$F}.a.${$3}.y`];
+        }
+        return weakAA ? $`n.${$F}.a ${$3}.aa` : $_`n.${$F}.a ${$3}.a.${$L}`;
+      }
+      if (tam === `imp`) {
+        return $L.meta.weak
+          ? [
+            ...$_`+n.${$F}.i -${$3}.ii`,
+            ...$_`2.i.n ${$F}.i ${$3}.ii`
+          ]
+          : [
+            ...$_`+n.${$F}.i -${$3}.I.${$L}`,
+            ...$_`2.i.n ${$F}.i ${$3}.I.${$L}`
+          ];
+      }
+      return $L.meta.weak
+        ? [
+          ..._$_`+n.${$F}.i -${$3}.ii`,
+          ..._$_`n.${$F}.i ${$3}.ii`
+        ]
+        : [
+          ..._$_`+n.${$F}.i -${$3}.I.${$L}`,
+          ..._$_`n.${$F}.i ${$3}.I.${$L}`
+        ];
     case `fta3al`:
       if ($3.meta.weak) {
         return _$_`${$F}.t.aa.${$L}`;
@@ -368,6 +409,47 @@ function verb({
           ..._$_`+${$F}.t.a -${$3}.a.${$L}`,
           ..._$_`${$F}.t.i ${$3}.I.${$L}`
         ];
+    case `fti3il`:
+      // almost the same as fta3al except npst conj are always yifti3il not yifta3al
+      if ($3.meta.weak) {
+        return _$_`${$F}.t.aa.${$L}`;
+      }
+      if ($3.value === $L.value) {
+        return $_`${$F}.t.a.${$3}.${$L}`;
+      }
+      if (tam === `pst`) {
+        if (
+          !noSuffix
+          && $L.meta.weak
+          && conjugation.number.third()
+          && (conjugation.gender.fem() || conjugation.number.plural())
+        ) {
+          // lta2it, lta2yit
+          // lta2u, lta2yu
+          return [...$_`${$F}.t.a ${$3}.aa`, ...$_`${$F}.t.a.${$3}.y`];
+        }
+        return weakAA ? $`${$F}.t.a ${$3}.aa` : $_`${$F}.t.a ${$3}.a.${$L}`;
+      }
+      if (tam === `imp`) {
+        return $L.meta.weak
+          ? [
+            ...$_`+${$F}.t.i -${$3}.ii`,
+            ...$_`2.i.${$F} t.i ${$3}.ii`
+          ]
+          : [
+            ...$_`+${$F}.t.i -${$3}.I.${$L}`,
+            ...$_`2.i.${$F} t.i ${$3}.I.${$L}`
+          ];
+      }
+      return $L.meta.weak
+        ? [
+          ..._$_`+${$F}.t.i -${$3}.ii`,
+          ..._$_`${$F}.t.i ${$3}.ii`
+        ]
+        : [
+          ..._$_`+${$F}.t.i -${$3}.I.${$L}`,
+          ..._$_`${$F}.t.i ${$3}.I.${$L}`
+        ];
     case `staf3al`:
       // stehal-yistehil
       if ($F.meta.weak) {
@@ -377,10 +459,14 @@ function verb({
         return $L.meta.weak ? _$_`s.t.aa ${$3}.ii` : _$_`s.t.aa ${$3}.I.${$L}`;
       }
       if ($3.meta.weak) {
-        return tam === `pst` ? $_`s.t.${$F}.aa.${$L}` : _$_`s.t.${$F}.ii.${$L}`;
+        return tam === `pst`
+          ? [...$_`s.t.${$F}.aa.${$L}`, ...$_`s.t.a ${$F}.aa.${$L}`]
+          : [..._$_`s.t.${$F}.ii.${$L}`, ..._$_`s.t.a ${$F}.ii.${$L}`];
       }
       if ($3.value === $L.value) {
-        return tam === `pst` ? $_`s.t.${$F}.a.${$3}.${$L}` : $_`s.t.${$F}.i.${$3}.${$L}`;
+        return tam === `pst`
+          ? [...$_`s.t.${$F}.a.${$3}.${$L}`, ...$_`s.t.a ${$F}.a.${$3}.${$L}`]
+          : [...$_`s.t.${$F}.i.${$3}.${$L}`, ...$_`s.t.a ${$F}.i.${$3}.${$L}`];
       }
       if (tam === `pst`) {
         return weakAA ? $`s.t.a.${$F} ${$3}.aa` : $`s.t.a.${$F} ${$3}.a.${$L}`;
@@ -391,14 +477,6 @@ function verb({
       }
       // yista3mil, *yista3mul* (spelled yesta3mol)
       return [..._$_`s.t.a.${$F} ${$3}.I.${$L}`, ..._$_`s.t.a.${$F} ${$3}.U.${$L}`];
-    case `stAf3al`:
-      if ($3.meta.weak) {
-        return tam === `pst` ? $_`s.t.a ${$F}.aa.${$L}` : _$_`s.t.a ${$F}.ii.${$L}`;
-      }
-      if ($3.value === $L.value) {
-        return tam === `pst` ? $_`s.t.a ${$F}.a.${$3}.${$L}` : $_`s.t.a ${$F}.i.${$3}.${$L}`;
-      }
-      throw new Error(`Can't use stAf3al except with final-geminate and second-weak verbs`);
     case `f3all`:
       return _$_`${$F}.${$3}.a.${$L}.${$L}`;
     case `fa3la2`:
