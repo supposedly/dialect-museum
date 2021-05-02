@@ -180,11 +180,13 @@ function verb({
   const $_ = $;
   const _$_ = $;
 
-  // true if a verb is above form 1 and has no TAM prefix
+  // true if a verb is above form 1 and has no TAM suffix
   const noSuffix = tam === `pst`
-    ? conjugation.person.third && conjugation.gender.masc
-    : (!conjugation.gender.feminine || conjugation.number.third) && !conjugation.number.plural;
+    ? conjugation.person.third() && conjugation.gender.masc()
+    : (!conjugation.gender.fem() || conjugation.number.third()) && !conjugation.number.plural();
   const weakAA = $L.meta.weak && noSuffix;  // only cares abt the case where tam === `pst`
+  // TODO: might need to uncomment this if i want the verb's root to be accessible
+  // (which i forget if that would have any purpose other than "let ppl see the verb's root")
   // const $originalL = $L;
   if ($L.meta.weak) {
     $L = Y;
@@ -206,7 +208,7 @@ function verb({
           ];
         }
         return [
-          ...(conjugation.gender.masc ? $`${$F}.${$3}.aa.${$L}` : $_`${$F}.${$3}.a.${$L}`),
+          ...(conjugation.gender.masc() ? $`${$F}.${$3}.aa.${$L}` : $_`${$F}.${$3}.a.${$L}`),
           ...$_`2.i.${$F} ${$3}.a.${$L}`
         ];
       }
@@ -225,7 +227,7 @@ function verb({
       }
       if (tam === `imp`) {
         return [
-          ...(conjugation.gender.masc ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.U.${$L}`),
+          ...(conjugation.gender.masc() ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.U.${$L}`),
           ...$_`2.i.${$F} ${$3}.U.${$L}`
         ];
       }
@@ -278,8 +280,8 @@ function verb({
         if (
           !noSuffix
           && $L.meta.weak
-          && conjugation.number.third
-          && (conjugation.gender.fem || conjugation.number.plural)
+          && conjugation.number.third()
+          && (conjugation.gender.fem() || conjugation.number.plural())
         ) {
           // lta2it, lta2yit (this is nfa3al not fta3al but same idea)
           // lta2u, lta2yu
@@ -328,8 +330,8 @@ function verb({
         if (
           !noSuffix
           && $L.meta.weak
-          && conjugation.person.third
-          && (conjugation.gender.fem || conjugation.number.plural)
+          && conjugation.person.third()
+          && (conjugation.gender.fem() || conjugation.number.plural())
         ) {
           // lta2it, lta2yit
           // lta2u, lta2yu

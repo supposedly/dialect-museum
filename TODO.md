@@ -7,5 +7,5 @@
 * ~~account for final-vowel-plus-suffix combos like mfa33aa+c == mfa33aayc in pp's initializer~~
 * add `(2af3al ...)` tag to grammar
 * ~~change mu- to mi- in pp~~
-* turn pronoun objects' boolean attrs into methods
+* ~~turn pronoun objects' boolean attrs into methods~~
 * add postTransform to parseWord and figure out a way to handle combinations...

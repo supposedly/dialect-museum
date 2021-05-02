@@ -25,7 +25,7 @@ function bumpLastConsonant(base) {
 }
 
 function iyStrategize(conjugation) {
-  if (conjugation.number.plural) {
+  if (conjugation.number.plural()) {
     return [
       // mishtiryiin, qaaryiin
       // aka: `*.I.y ii.n` => `*.I y.ii.n`
@@ -44,7 +44,7 @@ function iyStrategize(conjugation) {
     ];
   }
   /* else */
-  if (conjugation.gender.fem) {
+  if (conjugation.gender.fem()) {
     return [
       // mishtiryc, qaaryc
       // aka: `*.I.y c` => `*.I y.c`
