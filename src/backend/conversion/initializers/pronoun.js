@@ -96,21 +96,21 @@ function verbCircumfix(person, gender, number) {
 function pronoun({ value: [person, gender, number] }) {
   person = {
     value: person,
-    first: () => person === P.first,
-    second: () => person === P.second,
-    third: () => person === P.third
+    first() { return this.value === P.first; },
+    second() { return this.value === P.second; },
+    third() { return this.value === P.third; }
   };
   gender = {
     value: gender,
-    masc: () => gender === G.masc,
-    fem: () => gender === G.fem,
-    common: () => gender === G.common
+    masc() { return this.value === G.masc; },
+    fem() { return this.value === G.fem; },
+    common() { return this.value === G.common; }
   };
   number = {
     value: number,
-    singular: () => number === N.singular,
-    dual: () => number === N.dual,
-    plural: () => number === N.plural
+    singular() { return this.value === N.singular; },
+    dual() { return this.value === N.dual; },
+    plural() { return this.value === N.plural; }
   };
 
   return {
