@@ -71,7 +71,7 @@ function pp({
   const suffix = conjugation.participle.suffix;
 
   const $ = parseWord({
-    transform: [
+    preTransform: [
       bumpLastConsonant,
       pushSuffix(suffix)
     ],
@@ -84,7 +84,7 @@ function pp({
 
   const $iy = !lastRadical.meta.weak ? $ : invMap(
     iyStrategize(conjugation).map(preSuffix => parseWord({
-      transform: [preSuffix, pushSuffix(suffix)],
+      preTransform: [preSuffix, pushSuffix(suffix)],
       eraseStress: !!suffix,
       augmentation
     }))

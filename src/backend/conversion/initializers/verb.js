@@ -165,13 +165,13 @@ function verb({
 
   const $ = invMap(
     prefixers.map(prefixer => parseWord({
-      transform: [prefixer, suffixer],
+      preTransform: [prefixer, suffixer],
       eraseStress: !!suffixer,  // always true here
       augmentation
     }))
   ).or(
     parseWord({
-      transform: [suffixer],
+      preTransform: [suffixer],
       eraseStress: !!suffixer,  // always true here
       augmentation
     })

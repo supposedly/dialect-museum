@@ -12,11 +12,12 @@ const obj = require(`../objects`);
 // can optionally be called as parseWord({ extraStuff: etc })`...` to pass variables
 // (just suffixes for now) that aren't root consonants & this can't be interpolated
 // in particular: parseWord({ suffix: [{ suffix object }] })`...`
-// As for `transform`, that's an array of functions that'll mutate the raw parse result
+// As for `preTransform`, that's an array of functions that'll mutate the raw parse result
 // which means they apply after parsing and syllabification but BEFORE syllable weight
-// and stress (stress is automatic unless specified with +- UNLESS there are transform functions)
+// and stress (stress is automatic unless specified with +- UNLESS there are preTransform functions)
 function parseWord({
-  transform = [],
+  preTransform = [],
+  postTransform = [],
   augmentation = null
 } = {}) {
   return (strings, ...rootConsonants) => {
@@ -56,7 +57,7 @@ function parseWord({
       }
     });
 
-    transform.forEach(f => f(syllables));
+    preTransform.forEach(f => f(syllables));
 
     // set weight of each syllable
     syllables.forEach(s => {
@@ -103,7 +104,7 @@ function parseWord({
     });
 
     // set stressed syllable (if meant to be automatically assigned and/or must be)
-    if (!alreadyStressed || transform) {
+    if (!alreadyStressed || preTransform) {
       if (syllables.length === 1) {
         syllables[0].meta.stressed = true;
       }
@@ -152,6 +153,9 @@ function parseWord({
         }
       });
     }
+
+    postTransform.forEach(f => f(syllables));
+
     return obj.obj(`word`, { augmentation }, syllables);
   };
 }
