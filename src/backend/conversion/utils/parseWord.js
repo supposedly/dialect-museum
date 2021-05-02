@@ -79,10 +79,9 @@ function parseWord({
           // be good to handle it "properly" lol
           // (that is 'bugged' because it uses the dual suffix, `=`, non-word-finally)
           if (segment.value === `fem`) {
-            // just V... ........ .. wait
-            // TODO: account for idafa here somehow lmao frick
-            // (not that it matters for stress but still annoying for the weight # to be inaccurate)
-            rimeLength += 1;
+            // meta.t === false: suffix is V
+            // meta.t === true: suffix is VC (as in Vt)
+            rimeLength += 1 + segment.meta.t;
           } else {
             // all the other suffixes are VVC
             rimeLength += 3;

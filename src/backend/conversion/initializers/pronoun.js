@@ -1,7 +1,9 @@
 const { parseWord: { parseString: $, parseLetter }} = require(`../utils`);
+const _ = require(`../objects`);
 const { PERSONS: P, GENDERS: G, NUMBERS: N } = require(`../symbols`);
 
 const I = Object.freeze(parseLetter`I`);
+const FEM_T = Object.freeze(_.edit(parseLetter`c`, { meta: { t: true }}));
 
 // circumfix-generator for verbCircumfix()
 const suffixPrefix = (suffix, [cc, cv], indicative = $`b`) => ({
@@ -45,7 +47,7 @@ function verbSuffix(person, gender, number) {
   }
   if (person.third()) {
     if (number.singular()) {
-      if (gender.fem()) { return $`Fem`; }  // -it/-at
+      if (gender.fem()) { return [FEM_T]; }  // -it/-at
       return $``;
     }
     return $`uu`;

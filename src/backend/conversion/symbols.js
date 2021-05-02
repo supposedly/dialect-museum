@@ -142,19 +142,24 @@ module.exports.alphabet = {
     meta: {
       priority: false
     },
-    symbol: `_`
+    symbol: `_`,
+    value: `noschwa`
   },
   Schwa: {
     type: `epenthetic`,
     meta: {
       priority: true
     },
-    symbol: `'`
+    symbol: `'`,
+    value: `schwa`
   },
 
   // fem suffix is its own thing bc -a vs -e vs -i variation
   Fem: {
     type: `suffix`,
+    meta: {
+      t: false  // may be changed with edit() in objects.js
+    },
     symbol: `c`,
     value: `fem`
   },
