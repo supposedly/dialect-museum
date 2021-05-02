@@ -3,7 +3,7 @@ const _ = require(`../objects`);
 const { PERSONS: P, GENDERS: G, NUMBERS: N } = require(`../symbols`);
 
 const I = Object.freeze(parseLetter`I`);
-const FEM_T = Object.freeze(_.edit(parseLetter`c`, { meta: { t: true }}));
+const FEM_T = Object.freeze(_.edit(parseLetter`Fem`, { meta: { t: true }}));
 
 // circumfix-generator for verbCircumfix()
 const suffixPrefix = (suffix, [cc, cv], indicative = $`b`) => ({

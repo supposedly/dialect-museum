@@ -305,8 +305,6 @@ function verb({
             ...(noSuffix ? [] : $_`n.${$F}.a ${$3}.a.${$L}`)
           ];
       }
-      // FIXME: there are verbs that never take yinfa3al, eg *yinshaghal "to become busy"
-      // probably needs two new forms to be added, "nfa3al-i" and "fta3al-i" lol
       return $L.meta.weak
         ? [
           // about how the "+n." syllable interacts with prefixes:
@@ -394,8 +392,6 @@ function verb({
             ...(noSuffix ? [] : $_`${$F}.t.a ${$3}.a.${$L}`)
           ];
       }
-      // FIXME: there are verbs that never take yifta3al, eg *yishtaghal "to work"
-      // probably needs two new forms to be added, "nfa3al-i" and "fta3al-i" lol
       return $L.meta.weak
         ? [
           // about how the "+F." syllable interacts with prefixes:
@@ -509,5 +505,5 @@ function verb({
 }
 
 module.exports = {
-  pp: verb
+  verb
 };

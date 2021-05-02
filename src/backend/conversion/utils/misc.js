@@ -1,4 +1,4 @@
-const { obj } = require(`../objects`);
+const obj = require(`../objects`);
 
 module.exports = {
   lastOf: (seq, index = 0) => seq[seq.length - 1 - index],
