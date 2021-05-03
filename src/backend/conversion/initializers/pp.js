@@ -242,6 +242,18 @@ function pp({
         ],
         pickWeak($`m.i.s._.t ${$F}.aa ${$3}.aa`, $`m.i.s._.t ${$F}.aa ${$3}.a.${$L}`)
       );
+    case `2af3al`:
+      return pickVoice(
+        [
+          ...$iy`m.i.${$F} ${$3}.I.${$L}`,
+          ...$iy`m.2.a.${$F} ${$3}.I.${$L}`,
+          ...$`m.2.a.${$F} ${$3}.a.${$L}`
+        ],
+        [
+          ...pickWeak($`m.u.${$F} ${$3}.aa`, $`m.u.${$F} ${$3}.a.${$L}`),
+          ...pickWeak($`m.2.a.${$F} ${$3}.aa`, $`m.2.a.${$F} ${$3}.a.${$L}`)
+        ]
+      );
     case `nfa3al`:
       if ($3.meta.weak) {
         return $`m.i.n ${$F}.aa.${$L}`;

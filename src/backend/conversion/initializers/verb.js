@@ -302,9 +302,18 @@ function verb({
     case `stfe3al`:
       // stehal-yistehal
       if ($F.meta.weak) {
-        return $L.meta.weak ? _$_`s.t.aa ${$3}.ii` : _$_`s.t.aa ${$3}.I.${$L}`;
+        return $L.meta.weak ? _$_`s.t.aa ${$3}.aa` : _$_`s.t.aa ${$3}.a.${$L}`;
       }
       return $L.meta.weak ? _$_`s.t.${$F}.aa ${$3}.aa` : _$_`s.t.${$F}.aa ${$3}.a.${$L}`;
+    case `2af3al`:
+      if (tam === `pst`) {
+        return weakAA
+          ? [...$`2.a.${$F} ${$3}.aa`, ...$`2.i.${$F} ${$3}.aa`]
+          : [...$_`2.a.${$F} ${$3}.a.${$L}`, ...$`2.i.${$F} ${$3}.a.${$L}`];
+      }
+      return $L.meta.weak
+        ? [...$`${$F}.${$3}.ii`, ...$`2.a.${$F} ${$3}.ii`]
+        : [...$`${$F}.${$3}.I.${$L}`, ...$`2.a.${$F} ${$3}.I.${$L}`, ...$`2.i.${$F} ${$3}.I.${$L}`];
     case `nfa3al`:
       if ($3.meta.weak) {
         return _$_`n.${$F}.aa.${$L}`;

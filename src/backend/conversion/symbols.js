@@ -223,6 +223,7 @@ module.exports.higherVerbForms = [
   `fe3al`,
   `tfe3al`,
   `stfe3al`,
+  `2af3al`,  // never knew why this is conventionally stuck in the middle of (s/t)fa33al/(s/t)faa3al
   `nfa3al`,
   `nfi3il`,  // for npst -nfi3il. the pst is the same as nfa3al
   `fta3al`,
