@@ -27,8 +27,8 @@ function ppSuffix(person, gender, number) {
   }
   // masc and "commmon" gender are the same for now
   if (number.singular()) { return $``; }
-  if (number.dual()) { return $`=`; }  // merging verbal and nominal participles here
-  if (number.plural()) { return $`+`; }
+  if (number.dual()) { return $`Dual`; }  // merging verbal and nominal participles here
+  if (number.plural()) { return $`Plural`; }
   return null;  // error?
 }
 

@@ -24,6 +24,15 @@ function bumpLastConsonant(base) {
   }
 }
 
+// return strategies for immediately before pushing suffix
+function strategize(conjugation) {
+  if (conjugation.number.plural() || conjugation.gender.fem()) {
+    return [bumpLastConsonant];
+  }
+  return [];
+}
+
+// strategies again but specifically for iy-final participles
 function iyStrategize(conjugation) {
   if (conjugation.number.plural()) {
     return [
@@ -72,7 +81,7 @@ function pp({
 
   const $ = parseWord({
     preTransform: [[
-      bumpLastConsonant,
+      ...strategize(conjugation),
       pushSuffix(suffix)
     ]],
     augmentation
