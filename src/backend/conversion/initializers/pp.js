@@ -3,7 +3,7 @@ const {
   misc: {
     lastOf,
     newSyllable,
-    invMap
+    backup
   }
 } = require(`../utils`);
 
@@ -71,24 +71,29 @@ function pp({
   const suffix = conjugation.participle.suffix;
 
   const $ = parseWord({
-    preTransform: [
+    preTransform: [[
       bumpLastConsonant,
       pushSuffix(suffix)
-    ],
+    ]],
     augmentation
   });
 
   // XXX: hacky/bad check lol
   const lastRadical = form.includes(`2`) ? $Q : $L;
 
-  const $iy = !lastRadical.meta.weak ? $ : invMap(
-    iyStrategize(conjugation).map(preSuffix => parseWord({
-      preTransform: [preSuffix, pushSuffix(suffix)],
-      augmentation
-    }))
-  ).or($);
+  const $iy = !lastRadical.meta.weak ? $ : parseWord({
+    preTransform: backup(
+      iyStrategize(conjugation)
+    ).map(
+      preSuffix => [preSuffix, pushSuffix(suffix)]
+    ).or([]),
+    augmentation
+  });
 
   const pickVoice = (active, passive) => (isActiveVoice ? active : passive);
+
+  // *final*-weak specifically
+  const pickWeak = (weak, sound) => (lastRadical.meta.weak ? weak : sound);
 
   switch (form) {
     case `1/both`:
@@ -106,12 +111,12 @@ function pp({
               ...$iy`m.i.${$F} ${$3}.I.y`
             );
           } else {
-            variants.push($`m.i.${$F} t.aa.${$L}`);
+            variants.push(...$`m.i.${$F} t.aa.${$L}`);
           }
         }
         variants.push(
-          $`m.i.n ${$F}.aa.${$L}`,
-          $`m.a.${$F} y.uu.${$L}`
+          ...$`m.i.n ${$F}.aa.${$L}`,
+          ...$`m.a.${$F} y.uu.${$L}`
         );
         return variants;
       }
@@ -119,7 +124,7 @@ function pp({
         return $iy`m.i.${$F} ${$3}.I.y`;
       }
       // default
-      return [$`m.a.${$F} ${$3}.uu.${$L}`];
+      return $`m.a.${$F} ${$3}.uu.${$L}`;
     case `1/fe3il`: {
       if (!isActiveVoice) {
         throw new Error(`Can't use passive voice with 1/fe3il`);
@@ -128,12 +133,12 @@ function pp({
       // 2akal, 2a5ad
       if ($F.meta.weak) {
         variants.push(
-          // maayiC doesn't exist B)
+          // maayiC and maa3iy don't exist B)
           ...($3.meta.weak ? $iy`m.aa y.I.${$L}` : $iy`m.aa ${$3}.I.${$L}`)
         );
       }
       if ($3.value === $L.value) {
-        variants.push($`${$F}.aa.${$3}.${$L}`);
+        variants.push(...$`${$F}.aa.${$3}.${$L}`);
       }
       return [
         ...variants,
@@ -145,26 +150,34 @@ function pp({
         throw new Error(`Can't use passive voice with 1/fa3len`);
       }
       return [
-        $`${$F}.i.${$3} ${$L}.aa.n`,
-        $`${$F}.a.${$3} ${$L}.aa.n`
+        ...$`${$F}.i.${$3} ${$L}.aa.n`,
+        ...$`${$F}.a.${$3} ${$L}.aa.n`
       ];
     case `fa33al`:
       return pickVoice(
         [
           ...$iy`m.${$F}.a.${$3} ${$3}.I.${$L}`,
-          $L.meta.weak ? $`m.${$F}.a.${$3} ${$3}.aa` : $`m.${$F}.a.${$3} ${$3}.a.${$L}`
+          ...pickWeak($`m.${$F}.a.${$3} ${$3}.aa`, $`m.${$F}.a.${$3} ${$3}.a.${$L}`)
         ],
-        [$L.meta.weak ? $`m.${$F}.a.${$3} ${$3}.aa` : $`m.${$F}.a.${$3} ${$3}.a.${$L}`]
+        pickWeak($`m.${$F}.a.${$3} ${$3}.aa`, $`m.${$F}.a.${$3} ${$3}.a.${$L}`)
       );
     case `tfa33al`:
       return pickVoice(
-        [
-          $L.meta.weak ? $`m.i.t ${$F}.a.${$3} ${$3}.aa` : $`m.i.t ${$F}.a.${$3} ${$3}.a.${$L}`,
-          ...$iy`m.i.t ${$F}.a.${$3} ${$3}.I.${$L}`,
-          ...$iy`m.i.t ${$F}.i.${$3} ${$3}.I.${$L}`,
-          $L.meta.weak ? $`m.${$F}.a.${$3} ${$3}.aa` : $`m.${$F}.a.${$3} ${$3}.a.${$L}`
-        ],
-        [$L.meta.weak ? $`m.i.t ${$F}.a.${$3} ${$3}.aa` : $`m.i.t ${$F}.a.${$3} ${$3}.a.${$L}`]
+        pickWeak(
+          [
+            ...$`m.i.t ${$F}.a.${$3} ${$3}.aa`,
+            ...$iy`m.i.t ${$F}.a.${$3} ${$3}.I.${$L}`,
+            ...$iy`m.i.t ${$F}.i.${$3} ${$3}.I.${$L}`,
+            ...$`m.${$F}.a.${$3} ${$3}.aa`
+          ],
+          [
+            ...$`m.i.t ${$F}.a.${$3} ${$3}.a.${$L}`,
+            ...$iy`m.i.t ${$F}.a.${$3} ${$3}.I.${$L}`,
+            ...$iy`m.i.t ${$F}.i.${$3} ${$3}.I.${$L}`,
+            ...$`m.${$F}.a.${$3} ${$3}.a.${$L}`
+          ]
+        ),
+        pickWeak($`m.i.t ${$F}.a.${$3} ${$3}.aa`, $`m.i.t ${$F}.a.${$3} ${$3}.a.${$L}`)
       );
     case `stfa33al`:
       // stanna-yestanna
@@ -172,34 +185,34 @@ function pp({
         return pickVoice(
           [
             ...$iy`m.i.s t.a.${$3} ${$3}.I.${$L}`,
-            $L.meta.weak ? $`m.i.s t.a.${$3} ${$3}.aa` : $`m.i.s t.a.${$3} ${$3}.a.${$L}`
+            ...pickWeak($`m.i.s t.a.${$3} ${$3}.aa`, $`m.i.s t.a.${$3} ${$3}.a.${$L}`)
           ],
-          [$L.meta.weak ? $`m.i.s t.a.${$3} ${$3}.aa` : $`m.i.s t.a.${$3} ${$3}.a.${$L}`]
+          pickWeak($`m.i.s t.a.${$3} ${$3}.aa`, $`m.i.s t.a.${$3} ${$3}.a.${$L}`)
         );
       }
       return pickVoice(
         [
           ...$iy`m.i.s._.t ${$F}.a.${$3} ${$3}.I.${$L}`,
-          $L.meta.weak ? $`m.i.s._.t ${$F}.a.${$3} ${$3}.aa` : $`m.i.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`
+          ...pickWeak($`m.i.s._.t ${$F}.a.${$3} ${$3}.aa`, $`m.i.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`)
         ],
-        [$L.meta.weak ? $`m.i.s._.t ${$F}.a.${$3} ${$3}.aa` : $`m.i.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`]
+        pickWeak($`m.i.s._.t ${$F}.a.${$3} ${$3}.aa`, $`m.i.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`)
       );
     case `fe3al`:
       return pickVoice(
         [
           ...$iy`m.${$F}.aa ${$3}.I.${$L}`,
-          $L.meta.weak ? $`m.${$F}.aa ${$3}.aa` : $`m.${$F}.aa ${$3}.a.${$L}`
+          ...pickWeak($`m.${$F}.aa ${$3}.aa`, $`m.${$F}.aa ${$3}.a.${$L}`)
         ],
-        [$L.meta.weak ? $`m.${$F}.aa ${$3}.aa` : $`m.${$F}.aa ${$3}.a.${$L}`]
+        pickWeak($`m.${$F}.aa ${$3}.aa`, $`m.${$F}.aa ${$3}.a.${$L}`)
       );
     case `tfe3al`:
       return pickVoice(
         [
-          $L.meta.weak ? $`m.${$F}.aa ${$3}.aa` : $`m.${$F}.aa ${$3}.a.${$L}`,
+          ...pickWeak($`m.${$F}.aa ${$3}.aa`, $`m.${$F}.aa ${$3}.a.${$L}`),
           ...$iy`m.i.t ${$F}.aa ${$3}.I.${$L}`,
-          $L.meta.weak ? $`m.i.t ${$F}.aa ${$3}.aa` : $`m.i.t ${$F}.aa ${$3}.a.${$L}`
+          ...pickWeak($`m.i.t ${$F}.aa ${$3}.aa`, $`m.i.t ${$F}.aa ${$3}.a.${$L}`)
         ],
-        [$L.meta.weak ? $`m.i.t ${$F}.aa ${$3}.aa` : $`m.i.t ${$F}.aa ${$3}.a.${$L}`]
+        pickWeak($`m.i.t ${$F}.aa ${$3}.aa`, $`m.i.t ${$F}.aa ${$3}.a.${$L}`)
       );
     case `stfe3al`:
       // stehal-yistehal
@@ -207,93 +220,93 @@ function pp({
         return pickVoice(
           [
             ...$iy`m.i.s t.aa ${$3}.I.${$L}`,
-            $L.meta.weak ? $`m.i.s t.aa ${$3}.aa` : $`m.i.s t.aa ${$3}.a.${$L}`
+            ...pickWeak($`m.i.s t.aa ${$3}.aa`, $`m.i.s t.aa ${$3}.a.${$L}`)
           ],
-          [$L.meta.weak ? $`m.i.s t.aa ${$3}.aa` : $`m.i.s t.aa ${$3}.a.${$L}`]
+          pickWeak($`m.i.s t.aa ${$3}.aa`, $`m.i.s t.aa ${$3}.a.${$L}`)
         );
       }
       return pickVoice(
         [
           ...$iy`m.i.s._.t ${$F}.aa ${$3}.I.${$L}`,
-          $L.meta.weak ? $`m.i.s._.t ${$F}.aa ${$3}.aa` : $`m.i.s._.t ${$F}.aa ${$3}.a.${$L}`
+          ...pickWeak($`m.i.s._.t ${$F}.aa ${$3}.aa`, $`m.i.s._.t ${$F}.aa ${$3}.a.${$L}`)
         ],
-        [$L.meta.weak ? $`m.i.s._.t ${$F}.aa ${$3}.aa` : $`m.i.s._.t ${$F}.aa ${$3}.a.${$L}`]
+        pickWeak($`m.i.s._.t ${$F}.aa ${$3}.aa`, $`m.i.s._.t ${$F}.aa ${$3}.a.${$L}`)
       );
     case `nfa3al`:
       if ($3.meta.weak) {
-        return [$`m.i.n ${$F}.aa.${$L}`];
+        return $`m.i.n ${$F}.aa.${$L}`;
       }
       if ($3.value === $L.value) {
         return pickVoice(
           [
-            $`m.a.${$F} ${$3}.uu.${$L}`,
-            $`m.i.n ${$F}.a.${$3}.${$L}`
+            ...$`m.a.${$F} ${$3}.uu.${$L}`,
+            ...$`m.i.n ${$F}.a.${$3}.${$L}`
           ],
-          [$`m.i.n ${$F}.a.${$3}.${$L}`]
+          $`m.i.n ${$F}.a.${$3}.${$L}`
         );
       }
       return pickVoice(
         [
-          $`m.a.${$F} ${$3}.uu.${$L}`,
+          ...$`m.a.${$F} ${$3}.uu.${$L}`,
           ...$iy`-m.i.n +${$F}.i -${$3}.I.${$L}`,
           ...$iy`m.i.n ${$F}.i ${$3}.I.${$L}`,
           $`-m.i.n +${$F}.a -${$3}.a.${$L}`
         ],
         [
-          $L.meta.weak ? $`-m.i.n +${$F}.a -${$3}.aa` : $`-m.i.n +${$F}.a -${$3}.a.${$L}`,
-          $L.meta.weak ? $`m.i.n ${$F}.a ${$3}.aa` : $`m.i.n ${$F}.a ${$3}.a.${$L}`
+          ...pickWeak($`-m.i.n +${$F}.a -${$3}.aa`, $`-m.i.n +${$F}.a -${$3}.a.${$L}`),
+          ...pickWeak($`m.i.n ${$F}.a ${$3}.aa`, $`m.i.n ${$F}.a ${$3}.a.${$L}`)
         ]
       );
     case `nfi3il`:
       // same as nfa3al but can never be minfa3al when 'active', only minfi3il
       if ($3.meta.weak) {
-        return [$`m.i.n ${$F}.aa.${$L}`];
+        return $`m.i.n ${$F}.aa.${$L}`;
       }
       if ($3.value === $L.value) {
         return pickVoice(
           [
-            $`m.a.${$F} ${$3}.uu.${$L}`,
-            $`m.i.n ${$F}.a.${$3}.${$L}`
+            ...$`m.a.${$F} ${$3}.uu.${$L}`,
+            ...$`m.i.n ${$F}.a.${$3}.${$L}`
           ],
-          [$`m.i.n ${$F}.a.${$3}.${$L}`]
+          $`m.i.n ${$F}.a.${$3}.${$L}`
         );
       }
       return pickVoice(
         [
-          $`m.a.${$F} ${$3}.uu.${$L}`,
+          ...$`m.a.${$F} ${$3}.uu.${$L}`,
           ...$iy`-m.i.n +${$F}.i -${$3}.I.${$L}`,
           ...$iy`m.i.n ${$F}.i ${$3}.I.${$L}`
         ],
         [
-          $L.meta.weak ? $`-m.i.n +${$F}.a -${$3}.aa` : $`-m.i.n +${$F}.a -${$3}.a.${$L}`,
-          $L.meta.weak ? $`m.i.n ${$F}.a ${$3}.aa` : $`m.i.n ${$F}.a ${$3}.a.${$L}`
+          ...pickWeak($`-m.i.n +${$F}.a -${$3}.aa`, $`-m.i.n +${$F}.a -${$3}.a.${$L}`),
+          ...pickWeak($`m.i.n ${$F}.a ${$3}.aa`, $`m.i.n ${$F}.a ${$3}.a.${$L}`)
         ]
       );
     case `fta3al`:
       if ($3.meta.weak) {
-        return [$`m.i.${$F} t.aa.${$L}`];
+        return $`m.i.${$F} t.aa.${$L}`;
       }
       if ($3.value === $L.value) {
-        return [$`m.i.${$F} t.a.${$3}.${$L}`];
+        return $`m.i.${$F} t.a.${$3}.${$L}`;
       }
       return pickVoice(
         [
           ...$iy`-m.i.${$F} +t.i -${$3}.I.${$L}`,
           ...$iy`m.i.${$F} t.i ${$3}.I.${$L}`,
-          $`m.i.${$F} t.a ${$3}.a.${$L}`
+          ...$`m.i.${$F} t.a ${$3}.a.${$L}`
         ],
         [
-          $L.meta.weak ? $`-m.i.${$F} +t.a -${$3}.aa` : $`-m.i.${$F} +t.a -${$3}.a.${$L}`,
-          $L.meta.weak ? $`m.i.${$F} t.a ${$3}.aa` : $`m.i.${$F} t.a ${$3}.a.${$L}`
+          ...pickWeak($`-m.i.${$F} +t.a -${$3}.aa`, $`-m.i.${$F} +t.a -${$3}.a.${$L}`),
+          ...pickWeak($`m.i.${$F} t.a ${$3}.aa`, $`m.i.${$F} t.a ${$3}.a.${$L}`)
         ]
       );
     case `fti3il`:
       // same as fta3al but can never be mifta3al when 'active', only mifti3il
       if ($3.meta.weak) {
-        return [$`m.i.${$F} t.aa.${$L}`];
+        return $`m.i.${$F} t.aa.${$L}`;
       }
       if ($3.value === $L.value) {
-        return [$`m.i.${$F} t.a.${$3}.${$L}`];
+        return $`m.i.${$F} t.a.${$3}.${$L}`;
       }
       return pickVoice(
         [
@@ -301,8 +314,8 @@ function pp({
           ...$iy`m.i.${$F} t.i ${$3}.I.${$L}`
         ],
         [
-          $L.meta.weak ? $`-m.i.${$F} +t.a -${$3}.aa` : $`-m.i.${$F} +t.a -${$3}.a.${$L}`,
-          $L.meta.weak ? $`m.i.${$F} t.a ${$3}.aa` : $`m.i.${$F} t.a ${$3}.a.${$L}`
+          ...pickWeak($`-m.i.${$F} +t.a -${$3}.aa`, $`-m.i.${$F} +t.a -${$3}.a.${$L}`),
+          ...pickWeak($`m.i.${$F} t.a ${$3}.aa`, $`m.i.${$F} t.a ${$3}.a.${$L}`)
         ]
       );
     case `staf3al`:
@@ -312,20 +325,20 @@ function pp({
         // should actually be constructed as a fta3al verb
         // of the "root" s7y
         return pickVoice(
-          [$`m.i.s._.t ${$F}.ii.${$L}`, $`m.i.s t.a ${$F}.ii.${$L}`],
-          [$`m.i.s._.t ${$F}.aa.${$L}`, $`m.i.s t.a ${$F}.aa.${$L}`]
+          [...$`m.i.s._.t ${$F}.ii.${$L}`, ...$`m.i.s t.a ${$F}.ii.${$L}`],
+          [...$`m.i.s._.t ${$F}.aa.${$L}`, ...$`m.i.s t.a ${$F}.aa.${$L}`]
         );
       }
       // geminate root
       if ($3.value === $L.value) {
         return pickVoice(
-          [$`m.i.s._.t ${$F}.i.${$3}.${$L}`, $`m.i.s t.a ${$F}.i.${$3}.${$L}`],
-          [$`m.i.s._.t ${$F}.a.${$3}.${$L}`, $`m.i.s t.a ${$F}.a.${$3}.${$L}`]
+          [...$`m.i.s._.t ${$F}.i.${$3}.${$L}`, ...$`m.i.s t.a ${$F}.i.${$3}.${$L}`],
+          [...$`m.i.s._.t ${$F}.a.${$3}.${$L}`, ...$`m.i.s t.a ${$F}.a.${$3}.${$L}`]
         );
       }
       return pickVoice(
         $iy`m.i.s t.a.${$F} ${$3}.I.${$L}`,
-        [$L.meta.weak ? $`m.i.s t.a.${$F} ${$3}.aa` : $`m.i.s t.a.${$F} ${$3}.a.${$L}`]
+        pickWeak($`m.i.s t.a.${$F} ${$3}.aa`, $`m.i.s t.a.${$F} ${$3}.a.${$L}`)
       );
     case `f3all`:
       if (isActiveVoice) {
@@ -336,17 +349,17 @@ function pp({
       return pickVoice(
         [
           ...$iy`m.${$F}.a.${$3} ${$L}.I.${$Q}`,
-          $Q.meta.weak ? $`m.${$F}.a.${$3} ${$L}.aa` : $`m.${$F}.a.${$3} ${$L}.a.${$Q}`
+          ...pickWeak($`m.${$F}.a.${$3} ${$L}.aa`, $`m.${$F}.a.${$3} ${$L}.a.${$Q}`)
         ],
-        [$Q.meta.weak ? $`m.${$F}.a.${$3} ${$L}.aa` : $`m.${$F}.a.${$3} ${$L}.a.${$Q}`]
+        pickWeak($`m.${$F}.a.${$3} ${$L}.aa`, $`m.${$F}.a.${$3} ${$L}.a.${$Q}`)
       );
     case `tfa3la2`:
       return pickVoice(
         [
-          $Q.meta.weak ? $`m.${$F}.a.${$3} ${$L}.aa` : $`m.${$F}.a.${$3} ${$L}.a.${$Q}`,
+          ...pickWeak($`m.${$F}.a.${$3} ${$L}.aa`, $`m.${$F}.a.${$3} ${$L}.a.${$Q}`),
           ...$iy`m.i.t ${$F}.a.${$3} ${$L}.I.${$Q}`
         ],
-        [$Q.meta.weak ? $`m.i.t ${$F}.a.${$3} ${$L}.aa` : $`m.i.t ${$F}.a.${$3} ${$L}.a.${$Q}`]
+        pickWeak($`m.i.t ${$F}.a.${$3} ${$L}.aa`, $`m.i.t ${$F}.a.${$3} ${$L}.a.${$Q}`)
       );
     case `stfa3la2`:
       if ($F.meta.weak) {
@@ -354,17 +367,17 @@ function pp({
         return pickVoice(
           [
             ...$iy`m.i.s t.a.${$3} ${$L}.I.${$Q}`,
-            $Q.meta.weak ? $`m.i.s t.a.${$3} ${$L}.aa` : $`m.i.s t.a.${$3} ${$L}.a.${$Q}`
+            ...pickWeak($`m.i.s t.a.${$3} ${$L}.aa`, $`m.i.s t.a.${$3} ${$L}.a.${$Q}`)
           ],
-          [$Q.meta.weak ? $`m.i.s t.a.${$3} ${$L}.aa` : $`m.i.s t.a.${$3} ${$L}.a.${$Q}`]
+          pickWeak($`m.i.s t.a.${$3} ${$L}.aa`, $`m.i.s t.a.${$3} ${$L}.a.${$Q}`)
         );
       }
       return pickVoice(
         [
           ...$iy`m.i.s._.t ${$F}.a.${$3} ${$L}.I.${$Q}`,
-          $Q.meta.weak ? $`m.i.s._.t ${$F}.a.${$3} ${$L}.aa` : $`m.i.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`
+          ...pickWeak($`m.i.s._.t ${$F}.a.${$3} ${$L}.aa`, $`m.i.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`)
         ],
-        [$Q.meta.weak ? $`m.i.s._.t ${$F}.a.${$3} ${$L}.aa` : $`m.i.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`]
+        pickWeak($`m.i.s._.t ${$F}.a.${$3} ${$L}.aa`, $`m.i.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`)
       );
     default:
       return null;

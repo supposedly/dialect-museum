@@ -4,7 +4,7 @@ const {
     lastOf,
     copy,
     newSyllable,
-    invMap
+    backup
   }
 } = require(`../utils`);
 
@@ -205,17 +205,21 @@ function verb({
       suffixer = undefined;
   }
 
-  const $ = invMap(
-    prefixers.map(prefixer => parseWord({
-      preTransform: [prefixer, suffixer],
-      augmentation
-    }))
-  ).or(
-    parseWord({
-      preTransform: [suffixer],
-      augmentation
-    })
-  );
+  // const $ = invMap(
+  //   prefixers.map(prefixer => parseWord({
+  //     preTransform: [prefixer, suffixer],
+  //     augmentation
+  //   }))
+  // ).or(
+  //   parseWord({
+  //     preTransform: [suffixer],
+  //     augmentation
+  //   })
+  // );
+  const $ = parseWord({
+    preTransform: backup(prefixers).map(prefixer => [prefixer, suffixer]).or([suffixer]),
+    augmentation
+  });
   // these two are just so i can see more-easily which ones add affixes and which don't
   const $_ = $;
   const _$_ = $;

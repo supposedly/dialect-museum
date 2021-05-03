@@ -1,6 +1,46 @@
-const { lastOf, lastIndex, newSyllable } = require(`./misc`);
+const {
+  lastOf,
+  lastIndex,
+  newSyllable,
+  copy
+} = require(`./misc`);
 const { alphabet: abc } = require(`../symbols`);
 const obj = require(`../objects`);
+
+function interpolateAndParse(strings, rootConsonants) {
+  const alreadyStressed = strings[0].startsWith(`+`) || strings[0].startsWith(`-`);
+  const syllables = [newSyllable()];
+  strings.forEach(s => {
+    let lastSyllable = lastOf(syllables);
+    // iterate thru syllable chunks
+    s.split(` `).forEach((chunk, i) => {
+      if (i > 0) {
+        // means this chunk adds a new syllable
+        lastSyllable = newSyllable();
+        syllables.push(lastSyllable);
+      }
+      // +/- at the start of a chunk marks whether it's stressed
+      // (again by convention i'm probably gonna do all-or-nothing,
+      // ie either stress is automatic or EVERY syllable is marked)
+      if (chunk.startsWith(`-`) || chunk.startsWith(`+`)) {
+        if (!alreadyStressed) {
+          throw new Error(`Inconsistent use of +- for stress in parseWord string`);
+        }
+        lastSyllable.meta.stressed = chunk.startsWith(`+`);
+        chunk = chunk.slice(1);
+      }
+      lastSyllable.value.push(
+        ...chunk.split(`.`)  // m.u.s._.t > [m, u, s, _, t, ...]
+          .filter(c => abc[c])  // to avoid undefined later
+          .map(c => obj.process(abc[c]))  // -> corresponding objects
+      );
+    });
+    if (rootConsonants.length) {
+      lastSyllable.value.push(rootConsonants.shift());
+    }
+  });
+  return syllables;
+}
 
 function setWeights(syllables) {
   // set weight of each syllable
@@ -136,8 +176,8 @@ function addSchwa(syllables) {
 // which means they apply after parsing and syllabification but BEFORE syllable weight
 // and stress (stress is automatic unless specified with +- UNLESS there are preTransform functions)
 function parseWord({
-  preTransform = [],
-  postTransform = [],
+  preTransform = [[]],
+  postTransform = [[]],
   augmentation = null
 } = {}) {
   return (strings, ...rootConsonants) => {
@@ -145,53 +185,41 @@ function parseWord({
     // ie either stress is automatic or EVERY syllable is marked for it
     // ...so i can use the very first char of the first string chunk to
     // determine whether or not the whole string is marked for stress
-    let alreadyStressed = strings[0].startsWith(`-`) || strings[0].startsWith(`+`);
+    const alreadyStressed = strings[0].startsWith(`-`) || strings[0].startsWith(`+`);
 
-    // normalize individual orthographic segments
-    const syllables = [newSyllable()];
-    strings.forEach(s => {
-      let lastSyllable = lastOf(syllables);
-      // iterate thru syllable chunks
-      s.split(` `).forEach((chunk, i) => {
-        if (i > 0) {
-          // means this chunk adds a new syllable
-          lastSyllable = newSyllable();
-          syllables.push(lastSyllable);
-        }
-        // +/- at the start of a chunk marks whether it's stressed
-        // (again by convention i'm probably gonna do all-or-nothing,
-        // ie either stress is automatic or EVERY syllable is marked)
-        if (chunk.startsWith(`-`) || chunk.startsWith(`+`)) {
-          alreadyStressed = true;  // just in case i forget that convention tho
-          lastSyllable.meta.stressed = chunk.startsWith(`+`);
-          chunk = chunk.slice(1);
-        }
-        lastSyllable.value.push(
-          ...chunk.split(`.`)  // m.u.s._.t > [m, u, s, _, t, ...]
-            .filter(c => abc[c])  // to avoid undefined later
-            .map(c => obj.process(abc[c]))  // -> corresponding objects
-        );
-      });
-      if (rootConsonants.length) {
-        lastSyllable.value.push(rootConsonants.shift());
-      }
+    const preTransformed = preTransform.map(transforms => {
+      // XXX: can potentially try to cache+copy this result (somehow...)
+      // for performance later, but may not be possible
+      // the problem is that, when i tried doing something like that,
+      // the resulting necessity of avoiding mutation in EVERY
+      // interaction with the syllables array made the code rly rly rly
+      // landminey and easy to mess up and frustrating to write
+      const syllables = interpolateAndParse(strings, copy(rootConsonants));
+      transforms.forEach(f => f(syllables));
+      return syllables;
     });
 
-    preTransform.forEach(f => f(syllables));
-
-    setWeights(syllables);
+    preTransformed.forEach(setWeights);
 
     if (!alreadyStressed) {
-      setStressed(syllables);
+      preTransformed.forEach(setStressed);
     }
 
-    setBooleanStress(syllables);
+    preTransformed.forEach(setBooleanStress);
 
-    addSchwa(syllables);
+    preTransformed.forEach(addSchwa);
 
-    postTransform.forEach(f => f(syllables));
+    const postTransformed = preTransformed.map(
+      transformedSyllables => postTransform.map(
+        transforms => {
+          const newCopy = copy(transformedSyllables);
+          transforms.forEach(f => f(newCopy));
+          return newCopy;
+        }
+      )
+    ).flat();
 
-    return obj.obj(`word`, { augmentation }, syllables);
+    return postTransformed.map(result => obj.obj(`word`, { augmentation }, result));
   };
 }
 
@@ -210,10 +238,10 @@ function createWordParserTag(postprocess = null) {
 
 module.exports = {
   parseWord: createWordParserTag(),
-  parseSyllable: createWordParserTag(word => {
+  parseSyllable: createWordParserTag(([word]) => {
     word.value[0].meta.stressed = null;
     return word.value[0];
   }),
-  parseString: createWordParserTag(word => word.value.map(s => s.value).flat()),
-  parseLetter: createWordParserTag(word => word.value[0].value[0])
+  parseString: createWordParserTag(([word]) => word.value.map(s => s.value).flat()),
+  parseLetter: createWordParserTag(([word]) => word.value[0].value[0])
 };

@@ -12,7 +12,7 @@ module.exports = {
       // this is the "default"
       result.or = (
         array.length === 0
-          ? backup => [backup]
+          ? (...backups) => backups
           : _ => result
       );
       return result;
