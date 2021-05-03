@@ -185,7 +185,7 @@ function verb({
             // bitiktub (again idk found it online more than once lul)
             {
               syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I]],
-              rest: [[...cc, LAX_I]]
+              rest: cc
             }
           );
         }
@@ -205,22 +205,11 @@ function verb({
       suffixer = undefined;
   }
 
-  // const $ = invMap(
-  //   prefixers.map(prefixer => parseWord({
-  //     preTransform: [prefixer, suffixer],
-  //     augmentation
-  //   }))
-  // ).or(
-  //   parseWord({
-  //     preTransform: [suffixer],
-  //     augmentation
-  //   })
-  // );
   const $ = parseWord({
     preTransform: backup(prefixers).map(prefixer => [prefixer, suffixer]).or([suffixer]),
     augmentation
   });
-  // these two are just so i can see more-easily which ones add affixes and which don't
+  // these two are just so i can see more-easily when it adds affixes and when it doesn't
   const $_ = $;
   const _$_ = $;
 
@@ -229,12 +218,12 @@ function verb({
     ? conjugation.person.third() && conjugation.gender.masc()
     : (!conjugation.gender.fem() || conjugation.number.third()) && !conjugation.number.plural();
 
-  // only used when tam === `pst`
+  // should only be used when tam === `pst`
   const weakAA = $L.meta.weak && noSuffix;
 
   // TODO: might need to uncomment this if i want the verb's root to be accessible
   // (which i forget if that would have any purpose other than "let ppl see the verb's root")
-  // const $originalL = $L;
+  /* const $originalL = $L; */
   if ($L.meta.weak) {
     $L = Y;
   }

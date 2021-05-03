@@ -2,7 +2,7 @@ const { parseWord: { parseString: $, parseLetter }} = require(`../utils`);
 const _ = require(`../objects`);
 const { PERSONS: P, GENDERS: G, NUMBERS: N } = require(`../symbols`);
 
-const I = Object.freeze(parseLetter`I`);
+const I = Object.freeze(parseLetter`i`);
 const FEM_T = Object.freeze(_.edit(parseLetter`Fem`, { meta: { t: true }}));
 
 // circumfix-generator for verbCircumfix()
