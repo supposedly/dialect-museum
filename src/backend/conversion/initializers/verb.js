@@ -21,12 +21,16 @@ function addPrefix(syllables, rest) {
     // -- in the future might have to do like _$`s._.t.blahblah` below
     // and then make noSchwa delete itself if not "/ CVC_C", but
     // that has to wait till i get the whole transformer system working)
-    if (rest.length && lastOf(rest).type === `vowel`) {
-      const postPrefix = newSyllable(copy(rest));
-      while (firstSyllable[0].type === `consonant` && firstSyllable[1].type !== `vowel`) {
-        postPrefix.push(firstSyllable.shift());
+    if (rest.length) {
+      if (lastOf(rest).type === `vowel`) {
+        const postPrefix = newSyllable(copy(rest));
+        while (firstSyllable[0].type === `consonant` && firstSyllable[1].type !== `vowel`) {
+          postPrefix.push(firstSyllable.shift());
+        }
+        base.unshift(postPrefix);
+      } else {
+        firstSyllable.unshift(...rest);
       }
-      base.unshift(postPrefix);
     }
     base.unshift(...syllables);
   };
@@ -112,28 +116,62 @@ function verb({
       break;
     case `ind`:
       if (isCV) {
-        prefixers = makePrefixers(
-          // bitkuun
-          {
-            syllables: [[
-              ...conjugation.nonpast.prefix.indicative,
-              I,
-              ...conjugation.nonpast.prefix.subjunctive.cv
-            ]],
-            rest: []
-          },
-          // btikuun (idk lol found it more than once online)
-          {
-            syllables: [[
-              ...conjugation.nonpast.prefix.indicative,
-              ...conjugation.nonpast.prefix.subjunctive.cv,
-              LAX_I
-            ]],
-            rest: []
-          }
-        );
+        const cv = conjugation.nonpast.prefix.subjunctive.cv;
+        if (cv[0].value === `y`) {
+          prefixers = makePrefixers(
+            {
+              // "bikuun", tense i
+              syllables: [[...conjugation.nonpast.prefix.indicative, I]],
+              rest: []
+            },
+            {
+              // "bekuun", lax i
+              syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I]],
+              rest: []
+            },
+            {
+              // "biykuun", long vowel and possibly also some kinda phonetic diphthong
+              // (3arabizi spellings: beykoun, biykoun)
+              syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I, ...cv]],
+              rest: []
+            },
+            // [huwwe] b.kuun
+            {
+              syllables: [conjugation.nonpast.prefix.indicative],
+              rest: []
+            },
+            // [huwwe] bkuun (...maybe this one is too much to have idk)
+            {
+              syllables: [],
+              rest: conjugation.nonpast.prefix.indicative
+            }
+          );
+        } else {
+          prefixers = makePrefixers(
+            // minkuun, bitkuun
+            {
+              syllables: [[
+                ...conjugation.nonpast.prefix.indicative,
+                I,
+                ...cv
+              ]],
+              rest: []
+            },
+            // mnikuun, btikuun (idk lol found it more than once online)
+            // (3arabizi spellings: mnekoun, btekoun, mne2oul, bte2oul...)
+            {
+              syllables: [[
+                ...conjugation.nonpast.prefix.indicative,
+                ...cv,
+                LAX_I
+              ]],
+              rest: []
+            }
+          );
+        }
       } else {
         const cc = conjugation.nonpast.prefix.subjunctive.cc;
+        // TODO: wonder if it'd work to have this as `cc[0].meta.weak` instead
         if (cc[0].value === `2`) {
           // b + 2 + ktub = biktub, not b2iktub
           // the sbjv prefix in this case starts with 2 so the .slice(1) gets rid of it
