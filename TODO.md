@@ -5,10 +5,11 @@
     * ~~implement nfa3al-i fta3al-i and nfa3al-a fta3al-a forms (or maybe **nfi3il/fti3il & nfa3al/fta3al** even tho that breaks the pattern of using 3ms.pst)~~
     * make sure f3ii and f3aa imperatives are in place
     * add all of fa3yit, fi3yit, fi3it, fa3it
-    * make sure parseWord is upholding the stress in stuff like `` $`+nFi -3iL` ``
+    * ~~make sure parseWord is upholding the stress in stuff like `` $`+nFi -3iL` ``~~
 * ~~delete stAf3al from verb and pp (probably)~~
 * ~~account for final-vowel-plus-suffix combos like mfa33aa+c == mfa33aayc in pp's initializer~~
 * add `(2af3al ...)` tag to grammar
+* finish the other tags smh
 * ~~change mu- to mi- in pp~~
 * ~~turn pronoun objects' boolean attrs into methods~~
-* ~~add postTransform to parseWord~~ and figure out a way to handle combinations...
+* ~~add postTransform to parseWord~~ **and figure out a way to handle combinations...**

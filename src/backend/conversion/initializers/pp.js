@@ -75,7 +75,6 @@ function pp({
       bumpLastConsonant,
       pushSuffix(suffix)
     ],
-    eraseStress: !!suffix,
     augmentation
   });
 
@@ -85,7 +84,6 @@ function pp({
   const $iy = !lastRadical.meta.weak ? $ : invMap(
     iyStrategize(conjugation).map(preSuffix => parseWord({
       preTransform: [preSuffix, pushSuffix(suffix)],
-      eraseStress: !!suffix,
       augmentation
     }))
   ).or($);

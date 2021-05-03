@@ -25,7 +25,7 @@ function addPrefix(syllables, rest) {
       if (lastOf(rest).type === `vowel`) {
         const postPrefix = newSyllable(copy(rest));
         while (firstSyllable[0].type === `consonant` && firstSyllable[1].type !== `vowel`) {
-          postPrefix.push(firstSyllable.shift());
+          postPrefix.value.push(firstSyllable.shift());
         }
         base.unshift(postPrefix);
       } else {
@@ -208,13 +208,11 @@ function verb({
   const $ = invMap(
     prefixers.map(prefixer => parseWord({
       preTransform: [prefixer, suffixer],
-      eraseStress: !!suffixer,  // always true here
       augmentation
     }))
   ).or(
     parseWord({
       preTransform: [suffixer],
-      eraseStress: !!suffixer,  // always true here
       augmentation
     })
   );
@@ -392,6 +390,8 @@ function verb({
             ...$_`2.i.n ${$F}.i ${$3}.I.${$L}`
           ];
       }
+      // TODO: could possibly check noSuffix and stuff here
+      // to cut down on duplicates
       return $L.meta.weak
         ? [
           ..._$_`+n.${$F}.i -${$3}.ii`,

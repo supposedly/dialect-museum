@@ -102,8 +102,8 @@ function parseWord({
       s.meta.weight = rimeLength;
     });
 
-    // set stressed syllable (if meant to be automatically assigned and/or must be)
-    if (!alreadyStressed || preTransform) {
+    // set stressed syllable (if meant to be automatically assigned)
+    if (!alreadyStressed) {
       if (syllables.length === 1) {
         syllables[0].meta.stressed = true;
       }
