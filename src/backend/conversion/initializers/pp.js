@@ -202,6 +202,7 @@ function pp({
       return pickVoice(
         [
           ...$iy`m.i.s._.t ${$F}.a.${$3} ${$3}.I.${$L}`,
+          ...$iy`m.i.s._.t ${$F}.i.${$3} ${$3}.I.${$L}`,
           ...pickWeak($`m.i.s._.t ${$F}.a.${$3} ${$3}.aa`, $`m.i.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`)
         ],
         pickWeak($`m.i.s._.t ${$F}.a.${$3} ${$3}.aa`, $`m.i.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`)

@@ -23,7 +23,7 @@ function addPrefix(syllables, rest) {
     // that has to wait till i get the whole transformer system working)
     if (rest.length) {
       if (lastOf(rest).type === `vowel`) {
-        const postPrefix = newSyllable(copy(rest));
+        const postPrefix = newSyllable([...rest]);
         while (firstSyllable[0].type === `consonant` && firstSyllable[1].type !== `vowel`) {
           postPrefix.value.push(firstSyllable.shift());
         }
@@ -41,7 +41,7 @@ function makePrefixers(...prefixes) {
     // the object { syllables, rest } is from `switch (tam) {}` in verb() below
     ({ syllables, rest }) => addPrefix(
       syllables.map(copy).map(newSyllable),
-      copy(rest)
+      [...rest]
     )
   );
 }
@@ -52,7 +52,7 @@ function makeSuffixer(suffix) {
   }
   if (suffix[0].type === `consonant`) {
     return base => {
-      base.push(newSyllable(copy(suffix)));
+      base.push(newSyllable([...suffix]));
     };
   }
   return base => {
@@ -112,7 +112,7 @@ function verb({
           { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cc }
         );
       }
-      suffixer = makeSuffixer(copy(conjugation.nonpast.suffix));
+      suffixer = makeSuffixer([...conjugation.nonpast.suffix]);
       break;
     case `ind`:
       if (isCV) {
@@ -190,15 +190,15 @@ function verb({
           );
         }
       }
-      suffixer = makeSuffixer(copy(conjugation.nonpast.suffix));
+      suffixer = makeSuffixer([...conjugation.nonpast.suffix]);
       break;
     case `imp`:
       prefixers = makePrefixers();
-      suffixer = makeSuffixer(copy(conjugation.nonpast.suffix));
+      suffixer = makeSuffixer([...conjugation.nonpast.suffix]);
       break;
     case `pst`:
       prefixers = makePrefixers();
-      suffixer = makeSuffixer(copy(conjugation.past.suffix));
+      suffixer = makeSuffixer([...conjugation.past.suffix]);
       break;
     default:  // error?
       prefixers = undefined;

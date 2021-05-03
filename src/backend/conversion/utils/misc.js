@@ -3,7 +3,6 @@ const obj = require(`../objects`);
 module.exports = {
   lastOf: (seq, index = 0) => seq[seq.length - 1 - index],
   lastIndex: (seq, index = 0) => seq.length - 1 - index,
-  copy: o => (Array.isArray(o) ? [...o] : { ...o }),
   backup(array) {  // wrapper to give array.map an "or" method if empty
     const originalMap = array.map;
     array.map = function newMap(...args) {

@@ -1,8 +1,7 @@
 const {
   lastOf,
   lastIndex,
-  newSyllable,
-  copy
+  newSyllable
 } = require(`./misc`);
 const { alphabet: abc } = require(`../symbols`);
 const obj = require(`../objects`);
@@ -40,6 +39,14 @@ function interpolateAndParse(strings, rootConsonants) {
     }
   });
   return syllables;
+}
+
+function copy(syllables) {
+  return syllables.map(s => obj.obj(
+    `syllable`,
+    { ...s.meta },
+    [...s.value]
+  ));
 }
 
 function setWeights(syllables) {
@@ -187,14 +194,17 @@ function parseWord({
     // determine whether or not the whole string is marked for stress
     const alreadyStressed = strings[0].startsWith(`-`) || strings[0].startsWith(`+`);
 
+    const initialResult = interpolateAndParse(strings, rootConsonants);
+
     const preTransformed = preTransform.map(transforms => {
-      // XXX: can potentially try to cache+copy this result (somehow...)
-      // for performance later, but may not be possible
-      // the problem is that, when i tried doing something like that,
+      // XXX: can potentially try to cache this result (...somehow) for
+      // even-better perf than copying every time, but may not be possible
+      // the problem is that, when i tried doing something like that
+      // by passing only one single result around,
       // the resulting necessity of avoiding mutation in EVERY
       // interaction with the syllables array made the code rly rly rly
       // landminey and easy to mess up and frustrating to write
-      const syllables = interpolateAndParse(strings, copy(rootConsonants));
+      const syllables = copy(initialResult);
       transforms.forEach(f => f(syllables));
       return syllables;
     });
