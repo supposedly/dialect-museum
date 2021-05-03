@@ -20,14 +20,18 @@
 // }
 
 function c(map, createEmphatics = true) {
-  function createConsonant(name, symbol, { createEmphatic = createEmphatics } = {}) {
+  function createConsonant(
+    name,
+    symbol,
+    { sub = null, createEmphatic = createEmphatics } = {}
+  ) {
     if (name === null) {
       // terminate chain
       return map;
     }
     const names = [name];
-    if (!/^[a-z_$]$/.test(name[0])) {
-      names.push(`_${name}`);
+    if (sub || !/^[a-z_$][a-z0-9_$]*$/i.test(name)) {
+      names.push(sub || `_${name}`);
     }
     const obj = {
       type: `consonant`,
@@ -108,6 +112,11 @@ module.exports.alphabet = {
   (null),
 
   ...v({})
+  (`a/i`, null, { sub: `a_i` })  /* possibly-bad abstraction over a/i variation
+                                  * (e.g. in f@33al verbs or f@3laan participles)
+                                  * ONLY meant to be used in backend code, not the grammar,
+                                  * hence symbol being null
+                                  */
   (`a`, `a`)
   (`aa`, `A`)
   (`AA`, `@`)  // lowered aa, like in شاي

@@ -158,32 +158,32 @@ function pp({
       if (!isActiveVoice) {
         throw new Error(`Can't use passive voice with 1/fa3len`);
       }
-      return [
-        ...$`${$F}.i.${$3} ${$L}.aa.n`,
-        ...$`${$F}.a.${$3} ${$L}.aa.n`
-      ];
+      return $`${$F}.a/i.${$3} ${$L}.aa.n`;
     case `fa33al`:
       return pickVoice(
         [
           ...$iy`m.${$F}.a.${$3} ${$3}.I.${$L}`,
           ...pickWeak($`m.${$F}.a.${$3} ${$3}.aa`, $`m.${$F}.a.${$3} ${$3}.a.${$L}`)
         ],
-        pickWeak($`m.${$F}.a.${$3} ${$3}.aa`, $`m.${$F}.a.${$3} ${$3}.a.${$L}`)
+        pickWeak($`m.${$F}.a/i.${$3} ${$3}.aa`, $`m.${$F}.a.${$3} ${$3}.a.${$L}`)
       );
     case `tfa33al`:
       return pickVoice(
         pickWeak(
           [
+            ...$`m.${$F}.a.${$3} ${$3}.aa`,
             ...$`m.i.t ${$F}.a.${$3} ${$3}.aa`,
+            // XXX: should these ones use a/i? i feel like they shouldn't
+            // (like mit2akkid mit2ikkid, mitzakker mitzikkir...)
             ...$iy`m.i.t ${$F}.a.${$3} ${$3}.I.${$L}`,
-            ...$iy`m.i.t ${$F}.i.${$3} ${$3}.I.${$L}`,
-            ...$`m.${$F}.a.${$3} ${$3}.aa`
+            ...$iy`m.i.t ${$F}.i.${$3} ${$3}.I.${$L}`
           ],
           [
+            ...$`m.${$F}.a.${$3} ${$3}.a.${$L}`,
             ...$`m.i.t ${$F}.a.${$3} ${$3}.a.${$L}`,
+            // see XXX above
             ...$iy`m.i.t ${$F}.a.${$3} ${$3}.I.${$L}`,
-            ...$iy`m.i.t ${$F}.i.${$3} ${$3}.I.${$L}`,
-            ...$`m.${$F}.a.${$3} ${$3}.a.${$L}`
+            ...$iy`m.i.t ${$F}.i.${$3} ${$3}.I.${$L}`
           ]
         ),
         pickWeak($`m.i.t ${$F}.a.${$3} ${$3}.aa`, $`m.i.t ${$F}.a.${$3} ${$3}.a.${$L}`)
@@ -193,6 +193,7 @@ function pp({
       if ($F.meta.weak) {
         return pickVoice(
           [
+            // intentionally not including misti33il here, no mistinni (...right?)
             ...$iy`m.i.s t.a.${$3} ${$3}.I.${$L}`,
             ...pickWeak($`m.i.s t.a.${$3} ${$3}.aa`, $`m.i.s t.a.${$3} ${$3}.a.${$L}`)
           ],
@@ -201,6 +202,7 @@ function pp({
       }
       return pickVoice(
         [
+          // see XXX in tfa33al above
           ...$iy`m.i.s._.t ${$F}.a.${$3} ${$3}.I.${$L}`,
           ...$iy`m.i.s._.t ${$F}.i.${$3} ${$3}.I.${$L}`,
           ...pickWeak($`m.i.s._.t ${$F}.a.${$3} ${$3}.aa`, $`m.i.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`)
@@ -379,7 +381,9 @@ function pp({
       return pickVoice(
         [
           ...pickWeak($`m.${$F}.a.${$3} ${$L}.aa`, $`m.${$F}.a.${$3} ${$L}.a.${$Q}`),
-          ...$iy`m.i.t ${$F}.a.${$3} ${$L}.I.${$Q}`
+          // see XXX in tfa33al above
+          ...$iy`m.i.t ${$F}.a.${$3} ${$L}.I.${$Q}`,
+          ...$iy`m.i.t ${$F}.i.${$3} ${$L}.I.${$Q}`
         ],
         pickWeak($`m.i.t ${$F}.a.${$3} ${$L}.aa`, $`m.i.t ${$F}.a.${$3} ${$L}.a.${$Q}`)
       );
@@ -388,7 +392,9 @@ function pp({
         // doesn't exist B)
         return pickVoice(
           [
+          // see XXX in tfa33al above
             ...$iy`m.i.s t.a.${$3} ${$L}.I.${$Q}`,
+            ...$iy`m.i.s t.i.${$3} ${$L}.I.${$Q}`,
             ...pickWeak($`m.i.s t.a.${$3} ${$L}.aa`, $`m.i.s t.a.${$3} ${$L}.a.${$Q}`)
           ],
           pickWeak($`m.i.s t.a.${$3} ${$L}.aa`, $`m.i.s t.a.${$3} ${$L}.a.${$Q}`)
@@ -396,7 +402,9 @@ function pp({
       }
       return pickVoice(
         [
+          // see XXX in tfa33al above
           ...$iy`m.i.s._.t ${$F}.a.${$3} ${$L}.I.${$Q}`,
+          ...$iy`m.i.s._.t ${$F}.i.${$3} ${$L}.I.${$Q}`,
           ...pickWeak($`m.i.s._.t ${$F}.a.${$3} ${$L}.aa`, $`m.i.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`)
         ],
         pickWeak($`m.i.s._.t ${$F}.a.${$3} ${$L}.aa`, $`m.i.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`)

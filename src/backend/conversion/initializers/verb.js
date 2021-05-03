@@ -270,28 +270,18 @@ function verb({
       return _$_`${$F}.${$3}.U.${$L}`;
     case `fa33al`:
       if (tam === `pst`) {
-        return weakAA
-          ? [...$`${$F}.a.${$3} ${$3}.aa`, ...$`${$F}.i.${$3} ${$3}.aa`]
-          : [...$_`${$F}.a.${$3} ${$3}.a.${$L}`, ...$_`${$F}.i.${$3} ${$3}.a.${$L}`];
+        return weakAA ? $`${$F}.a/i.${$3} ${$3}.aa` : $_`${$F}.a/i.${$3} ${$3}.a.${$L}`;
       }
       // no need for "if imp" case bc this handles imperative too (right?)
-      return $L.meta.weak
-        ? [..._$_`${$F}.a.${$3} ${$3}.ii`, ..._$_`${$F}.i.${$3} ${$3}.ii`]
-        : [..._$_`${$F}.a.${$3} ${$3}.I.${$L}`, ..._$_`${$F}.i.${$3} ${$3}.I.${$L}`];
+      return $L.meta.weak ? _$_`${$F}.a/i.${$3} ${$3}.ii` : _$_`${$F}.a/i.${$3} ${$3}.I.${$L}`;
     case `tfa33al`:
-      return $L.meta.weak
-        ? [..._$_`t.${$F}.a.${$3} ${$3}.aa`, ..._$_`t.${$F}.i.${$3} ${$3}.aa`]
-        : [..._$_`t.${$F}.a.${$3} ${$3}.a.${$L}`, ..._$_`t.${$F}.i.${$3} ${$3}.a.${$L}`];
+      return $L.meta.weak ? _$_`t.${$F}.a/i.${$3} ${$3}.aa` : _$_`t.${$F}.a/i.${$3} ${$3}.a.${$L}`;
     case `stfa33al`:
       // stanna-yistanna
       if ($F.meta.weak) {
-        return $L.meta.weak
-          ? [..._$_`s.t.a.${$3} ${$3}.aa`, ..._$_`s.t.i.${$3} ${$3}.aa`]
-          : [..._$_`s.t.a.${$3} ${$3}.a.${$L}`, ..._$_`s.t.i.${$3} ${$3}.a.${$L}`];
+        return $L.meta.weak ? _$_`s.t.a/i.${$3} ${$3}.aa` : _$_`s.t.a/i.${$3} ${$3}.a.${$L}`;
       }
-      return $L.meta.weak
-        ? [..._$_`s.t.${$F}.a.${$3} ${$3}.aa`, ..._$_`s.t.${$F}.i.${$3} ${$3}.aa`]
-        : [..._$_`s.t.${$F}.a.${$3} ${$3}.a.${$L}`, ..._$_`s.t.${$F}.i.${$3} ${$3}.a.${$L}`];
+      return $L.meta.weak ? _$_`s.t.${$F}.a/i.${$3} ${$3}.aa` : _$_`s.t.${$F}.a/i.${$3} ${$3}.a.${$L}`;
     case `fe3al`:
       if (tam === `pst`) {
         return weakAA ? $`${$F}.aa ${$3}.aa` : $_`${$F}.aa ${$3}.a.${$L}`;
@@ -307,13 +297,11 @@ function verb({
       return $L.meta.weak ? _$_`s.t.${$F}.aa ${$3}.aa` : _$_`s.t.${$F}.aa ${$3}.a.${$L}`;
     case `2af3al`:
       if (tam === `pst`) {
-        return weakAA
-          ? [...$`2.a.${$F} ${$3}.aa`, ...$`2.i.${$F} ${$3}.aa`]
-          : [...$_`2.a.${$F} ${$3}.a.${$L}`, ...$`2.i.${$F} ${$3}.a.${$L}`];
+        return weakAA ? $`2.a/i.${$F} ${$3}.aa` : $_`2.a/i.${$F} ${$3}.a.${$L}`;
       }
       return $L.meta.weak
-        ? [...$`${$F}.${$3}.ii`, ...$`2.a.${$F} ${$3}.ii`]
-        : [...$`${$F}.${$3}.I.${$L}`, ...$`2.a.${$F} ${$3}.I.${$L}`, ...$`2.i.${$F} ${$3}.I.${$L}`];
+        ? [...$`${$F}.${$3}.ii`, ...$`2.a/i.${$F} ${$3}.ii`]
+        : [...$`${$F}.${$3}.I.${$L}`, ...$`2.a/i.${$F} ${$3}.I.${$L}`];
     case `nfa3al`:
       if ($3.meta.weak) {
         return _$_`n.${$F}.aa.${$L}`;
@@ -521,28 +509,18 @@ function verb({
       return _$_`${$F}.${$3}.a.${$L}.${$L}`;
     case `fa3la2`:
       if (tam === `pst`) {
-        return weakAA
-          ? [...$`${$F}.a.${$3} ${$L}.aa`, ...$`${$F}.i.${$3} ${$L}.aa`]
-          : [...$_`${$F}.a.${$3} ${$L}.a.${$Q}`, ...$_`${$F}.i.${$3} ${$L}.a.${$Q}`];
+        return weakAA ? $`${$F}.a/i.${$3} ${$L}.aa` : $_`${$F}.a/i.${$3} ${$L}.a.${$Q}`;
       }
-      return $Q.meta.weak
-        ? [..._$_`${$F}.a.${$3} ${$L}.ii`, ..._$_`${$F}.i.${$3} ${$L}.ii`]
-        : [..._$_`${$F}.a.${$3} ${$L}.I.${$Q}`, ..._$_`${$F}.i.${$3} ${$L}.I.${$Q}`];
+      return $Q.meta.weak ? _$_`${$F}.a/i.${$3} ${$L}.ii` : _$_`${$F}.a/i.${$3} ${$L}.I.${$Q}`;
     case `tfa3la2`:
-      return $Q.meta.weak
-        ? [..._$_`s.t.${$F}.a.${$3} ${$L}.aa`, ..._$_`s.t.${$F}.i.${$3} ${$L}.aa`]
-        : [..._$_`s.t.${$F}.a.${$3} ${$L}.a.${$Q}`, ..._$_`s.t.${$F}.i.${$3} ${$L}.a.${$Q}`];
+      return $Q.meta.weak ? _$_`s.t.${$F}.a/i.${$3} ${$L}.aa` : _$_`s.t.${$F}.a/i.${$3} ${$L}.a.${$Q}`;
     case `stfa3la2`:
       // doesn't exist B)
       // XXX: idunno about these /a/ variants btw
       if ($F.meta.weak) {
-        return $Q.meta.weak
-          ? [..._$_`s.t.a.${$3} ${$L}.aa`, ..._$_`s.t.i.${$3} ${$L}.aa`]
-          : [..._$_`s.t.a.${$3} ${$L}.a.${$Q}`, ..._$_`s.t.i.${$3} ${$L}.a.${$Q}`];
+        return $Q.meta.weak ? _$_`s.t.a/i.${$3} ${$L}.aa` : _$_`s.t.a/i.${$3} ${$L}.a.${$Q}`;
       }
-      return $Q.meta.weak
-        ? [..._$_`s.t.${$F}.a.${$3} ${$L}.aa`, ..._$_`s.t.${$F}.i.${$3} ${$L}.aa`]
-        : [..._$_`s.t.${$F}.a.${$3} ${$L}.a.${$Q}`, ..._$_`s.t.${$F}.i.${$3} ${$L}.a.${$Q}`];
+      return $Q.meta.weak ? _$_`s.t.${$F}.a/i.${$3} ${$L}.aa` : _$_`s.t.${$F}.a/i.${$3} ${$L}.a.${$Q}`;
     default:
       return null;
   }
