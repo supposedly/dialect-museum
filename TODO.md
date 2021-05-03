@@ -6,10 +6,12 @@
     * make sure f3ii and f3aa imperatives are in place
     * add all of fa3yit, fi3yit, fi3it, fa3it
     * ~~make sure parseWord is upholding the stress in stuff like `` $`+nFi -3iL` ``~~
+    * FIX BUGS: why is btinshighil getting a random `` `t.I.i` `` syllable? and also binshighil is getting syllabified as bi.nshi.ghil  
+      (i thought the first one was because of my attempts at making parseWord do multiple words at once but nope)
 * ~~delete stAf3al from verb and pp (probably)~~
 * ~~account for final-vowel-plus-suffix combos like mfa33aa+c == mfa33aayc in pp's initializer~~
 * add `(2af3al ...)` tag to grammar
 * finish the other tags smh
 * ~~change mu- to mi- in pp~~
 * ~~turn pronoun objects' boolean attrs into methods~~
-* ~~add postTransform to parseWord~~ **and figure out a way to handle combinations...**
+* ~~add postTransform to parseWord and figure out a way to handle combinations...~~
