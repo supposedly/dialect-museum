@@ -1,6 +1,126 @@
-const { lastOf, newSyllable } = require(`./misc`);
+const { lastOf, lastIndex, newSyllable } = require(`./misc`);
 const { alphabet: abc } = require(`../symbols`);
 const obj = require(`../objects`);
+
+function setWeights(syllables) {
+  // set weight of each syllable
+  const weights = syllables.map(s => {
+    // 0 segments in syllable = weight of -1
+    // 1 segment in syllable = weight of 0
+    if (s.value.length <= 1) {
+      return s.value.length - 1;
+    }
+    // otherwise just count sound units
+    let rimeLength = 0;
+    // go backwards so we can break when we reach the nucleus (aka before the onset)
+    for (let i = s.value.length - 1; i > 0; i -= 1) {
+      const segment = s.value[i];
+      if (segment.type === `suffix`) {
+        // should technically be rimeLength =
+        // instead of rimeLength +=
+        // but idk maybe if i have something bugged like `word=b` it'd
+        // be good to handle it "properly" lol
+        // (that is 'bugged' because it uses the dual suffix, `=`, non-word-finally)
+        if (segment.value === `fem`) {
+          // meta.t === false: suffix is V
+          // meta.t === true: suffix is VC (as in Vt)
+          rimeLength += 1 + segment.meta.t;
+        } else {
+          // all the other suffixes are VVC
+          rimeLength += 3;
+        }
+        break;
+      }
+      // long vowels add 2, short vowels add 1
+      if (segment.type === `vowel`) {
+        rimeLength += segment.meta.length;
+        break;
+      }
+      if (segment.type === `consonant`) {
+        // consonants just add 1
+        rimeLength += 1;
+      }
+      // the remaining type is epenthetic, which adds 0
+    }
+    return rimeLength;
+  });
+
+  weights.forEach((weight, idx) => {
+    syllables[idx] = obj.edit(syllables[idx], { meta: { weight }});
+  });
+}
+
+// determine & set stressed syllable according to weights
+function setStressed(syllables) {
+  const stress = idx => {
+    syllables[idx] = obj.edit(syllables[idx], { meta: { stressed: true }});
+  };
+
+  if (syllables.length === 1) {
+    stress(0);
+  }
+
+  const final = {
+    idx: lastIndex(syllables),
+    val: lastOf(syllables)
+  };
+  const penult = {
+    idx: lastIndex(syllables, 1),
+    val: lastOf(syllables, 1)
+  };
+  const antepenult = {
+    idx: lastIndex(syllables, 2),
+    val: lastOf(syllables, 2)
+  };
+
+  if (syllables.length === 2) {
+    if (final.val.meta.weight >= 3) {
+      stress(final.idx);
+    } else {
+      stress(penult.idx);
+    }
+  }
+
+  if (syllables.length >= 3) {
+    if (final.val.meta.weight >= 3) {
+      stress(final.idx);
+    } else if (penult.val.meta.weight >= 2) {
+      stress(penult.idx);
+    } else {
+      stress(antepenult.idx);
+    }
+  }
+}
+
+// mark all not-stressed syllables as unstressed
+// (aka normalize "either false or null" to "only false")
+// (either as a continuation of the above,
+// or as a cover for if i forget my convention and
+// only mark a + syllable without marking any -)
+function setBooleanStress(syllables) {
+  syllables.forEach((s, idx) => {
+    if (s.meta.stressed !== true) {
+      syllables[idx] = obj.edit(s, { meta: { stressed: false }});
+    }
+  });
+}
+
+// add schwa to CVCC syllables
+function addSchwa(syllables) {
+  syllables.forEach((s, idx) => {
+    if (
+      s.meta.weight === 3
+      && s.value.length === 4
+      && lastOf(s.value).value !== lastOf(s.value, 1).value
+    ) {
+      syllables[idx] = obj.edit(
+        s,
+        s.meta,
+        [s.value[0], s.value[1], s.value[3], abc.Schwa, s.value[4]]
+      );
+    }
+  });
+}
 
 // split a template string written using the keys of ./symbols.js's alphabet object
 // into syllable objects + consonant objects, incl. analyzing stress
@@ -59,99 +179,15 @@ function parseWord({
 
     preTransform.forEach(f => f(syllables));
 
-    // set weight of each syllable
-    syllables.forEach(s => {
-      // 0 segments in syllable = weight of -1
-      // 1 segment in syllable = weight of 0
-      if (s.value.length <= 1) {
-        s.meta.weight = s.value.length - 1;
-        return;
-      }
-      // otherwise just count sound units
-      let rimeLength = 0;
-      // go backwards so we can break when we reach the nucleus (aka before the onset)
-      for (let i = s.value.length - 1; i > 0; i -= 1) {
-        const segment = s.value[i];
-        if (segment.type === `suffix`) {
-          // should technically be rimeLength =
-          // instead of rimeLength +=
-          // but idk maybe if i have something bugged like `word=b` it'd
-          // be good to handle it "properly" lol
-          // (that is 'bugged' because it uses the dual suffix, `=`, non-word-finally)
-          if (segment.value === `fem`) {
-            // meta.t === false: suffix is V
-            // meta.t === true: suffix is VC (as in Vt)
-            rimeLength += 1 + segment.meta.t;
-          } else {
-            // all the other suffixes are VVC
-            rimeLength += 3;
-          }
-          break;
-        }
-        // long vowels add 2, short vowels add 1
-        if (segment.type === `vowel`) {
-          rimeLength += segment.meta.length;
-          break;
-        }
-        if (segment.type === `consonant`) {
-          // consonants just add 1
-          rimeLength += 1;
-        }
-        // the remaining type is epenthetic, which adds 0
-      }
-      s.meta.weight = rimeLength;
-    });
+    setWeights(syllables);
 
-    // set stressed syllable (if meant to be automatically assigned)
     if (!alreadyStressed) {
-      if (syllables.length === 1) {
-        syllables[0].meta.stressed = true;
-      }
-      if (syllables.length === 2) {
-        if (lastOf(syllables).meta.weight >= 3) {
-          lastOf(syllables).meta.stressed = true;
-        } else {
-          lastOf(syllables, 1).meta.stressed = true;
-        }
-      }
-      if (syllables.length >= 3) {
-        if (lastOf(syllables).meta.weight >= 3) {
-          lastOf(syllables).meta.stressed = true;
-        } else if (lastOf(syllables, 1).meta.weight >= 2) {
-          lastOf(syllables, 1).meta.stressed = true;
-        } else {
-          lastOf(syllables, 2).meta.stressed = true;
-        }
-      }
-
-      // mark all not-stressed syllables as unstressed
-      // (aka normalize "either false or null" to "only false")
-      // (either as a continuation of the above step,
-      // or as a cover for if i forget my convention and
-      // only mark a + syllable without marking any -)
-      syllables.forEach(s => {
-        if (s.meta.stressed !== true) {
-          s.meta.stressed = false;
-        }
-      });
-
-      // add schwa to CVCC syllables
-      syllables.forEach(s => {
-        if (s.meta.weight === 3 && s.value.length === 4) {
-          // this SHOULD always be true (because CVVC would have s.value.length === 3)
-          // but just in case
-          if (
-            lastOf(s.value).type === `consonant`
-            && lastOf(s.value, 1).type === `consonant`
-          ) {
-            s.value.push(
-              obj.process(abc.Schwa),
-              s.value.pop()
-            );
-          }
-        }
-      });
+      setStressed(syllables);
     }
+
+    setBooleanStress(syllables);
+
+    addSchwa(syllables);
 
     postTransform.forEach(f => f(syllables));
 
