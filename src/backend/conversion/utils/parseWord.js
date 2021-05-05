@@ -187,9 +187,16 @@ function addSchwa(syllables) {
 // can optionally be called as parseWord({ extraStuff: etc })`...` to pass variables
 // (just suffixes for now) that aren't root consonants & this can't be interpolated
 // in particular: parseWord({ suffix: [{ suffix object }] })`...`
-// As for `preTransform`, that's an array of functions that'll mutate the raw parse result
-// which means they apply after parsing and syllabification but BEFORE syllable weight
-// and stress (stress is automatic unless specified with +- UNLESS there are preTransform functions)
+// `preTransform` and `postTransform` are arrays of arrays of transform functions
+// & each inner array will cause the parse result to diverge, because its functions
+// will be applied to a new copy of the result
+// `preTransform` functions will run immediately after parsing and before stress-
+// assignment and weight-assignment and everything,
+// while `postTransform` functions will run after all of that and immediately before
+// the function returns
+// return value: an array of all transformed parse results; if there were no transformers,
+// or if there was at most one subarray of preTransform and postTransform functions each,
+// returns a single-element array of the sole parse result
 function parseWord({
   preTransform = [[]],
   postTransform = [[]],

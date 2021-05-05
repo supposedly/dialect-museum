@@ -130,6 +130,8 @@ function pronoun({ value: [person, gender, number] }) {
     },
     past: {
       suffix: verbSuffix(person, gender, number),
+      // returns true if this suffix creates a "heavier" syllable than CV at the end of the stem
+      // in other words, returns true if this suffix has -ay- before it in a geminate past verb
       heavier() {
         const initial = this.suffix[0];
         return initial && (initial.type === `consonant` || initial.type === `epenthetic`);

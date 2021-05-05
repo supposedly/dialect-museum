@@ -9,7 +9,8 @@
 * ~~delete stAf3al from verb and pp (probably)~~
 * ~~account for final-vowel-plus-suffix combos like mfa33aa+c == mfa33aayc in pp's initializer~~
 * add `(2af3al ...)` tag to grammar
-* finish the other tags smh
+* add `(taf3il ...)` tag to grammar (takes a root and generates $`t.a/i.${$F} ${$3}.ii.${$L}`)
+* implement the other tags smh
 * ~~change mu- to mi- in pp~~
 * ~~turn pronoun objects' boolean attrs into methods~~
 * ~~add postTransform to parseWord and figure out a way to handle combinations...~~
