@@ -23,10 +23,18 @@ function interpolateAndParse(strings, rootConsonants) {
       // ie either stress is automatic or EVERY syllable is marked)
       if (chunk.startsWith(`-`) || chunk.startsWith(`+`)) {
         if (!alreadyStressed) {
-          throw new Error(`Inconsistent use of +- for stress in parseWord string`);
+          // ...and if i forget that convention...
+          throw new Error(
+            `Inconsistent use of +- for stress in parseWord string: unexpected use`
+          );
         }
         lastSyllable.meta.stressed = chunk.startsWith(`+`);
         chunk = chunk.slice(1);
+      } else if (alreadyStressed && i > 0) {
+        // ...ditto...
+        throw new Error(
+          `Inconsistent use of +- for stress in parseWord string: unexpected disuse`
+        );
       }
       lastSyllable.value.push(
         ...chunk.split(`.`)  // m.u.s._.t > [m, u, s, _, t, ...]
@@ -205,7 +213,8 @@ function parseWord({
       // interaction with the syllables array made the code rly rly rly
       // landminey and easy to mess up and frustrating to write
       const syllables = copy(initialResult);
-      transforms.forEach(f => f(syllables));
+      // stuff like `false`, `null`, etc. is allowed and will just be skipped
+      transforms.forEach(f => f && f(syllables));
       return syllables;
     });
 
@@ -223,7 +232,8 @@ function parseWord({
       transformedSyllables => postTransform.map(
         transforms => {
           const newCopy = copy(transformedSyllables);
-          transforms.forEach(f => f(newCopy));
+          // stuff like `false`, `null`, etc. is allowed and will just be skipped
+          transforms.forEach(f => f && f(newCopy));
           return newCopy;
         }
       )
