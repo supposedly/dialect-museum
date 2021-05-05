@@ -2,7 +2,6 @@ const {
   parseWord: { parseWord, parseLetter },
   misc: {
     lastOf,
-    copy,
     newSyllable,
     backup
   }
@@ -10,7 +9,46 @@ const {
 
 const LAX_I = Object.freeze(parseLetter`i`);
 const I = Object.freeze(parseLetter`I`);
-const Y = Object.freeze({ ...parseLetter`y`, meta: { ...parseLetter`y`.meta, weak: true }});
+const AA = Object.freeze(parseLetter`aa`);
+const II = Object.freeze(parseLetter`ii`);
+const AY = Object.freeze(parseLetter`ay`);
+const AI = Object.freeze(parseLetter`a/i`);
+
+// transformer: replace -ay in a parsed word with -aa
+// ONLY to be used with npst or when no suffix (aka 3ms.pst)
+function fixAy(base) {
+  const lastSyllable = lastOf(base).value;
+  if (lastOf(lastSyllable, 1).value === `a` && lastOf(lastSyllable).meta.weak) {
+    lastSyllable.splice(-2, 2, AA);
+  }
+}
+
+// transformer: replaces -iy in a parsed word with -ii
+function fixIy(base) {
+  const lastSyllable = lastOf(base).value;
+  if (lastOf(lastSyllable, 1).value === `I` && lastOf(lastSyllable).meta.weak) {
+    lastSyllable.splice(-2, 2, II);
+  }
+}
+
+// transformer: replaces -CC at the end of a pasred word with -C.Cay-
+// ONLY to be used with past-tense geminate verbs when there's a suffix
+function fixGeminate(base) {
+  const lastSyllable = lastOf(base).value;
+  if (lastOf(lastSyllable, 1).value === lastOf(lastSyllable).value) {
+    // XXX: i have no idea if i should be doing the `ay` diphthong
+    // or the string `a.y`
+    // the latter is what happens with fa33aa verbs below,
+    // and that kind of a.W sequence is gonna be collapsed into the correct
+    // diphthong later anyway, but the fact that we have a choice here is
+    // annoying
+    base.push(newSyllable([lastSyllable.pop(), AY]));
+  }
+  // k.a.b.b.ay.t => k.a/i.b.b.ay.t
+  if (lastSyllable[1].value === `a`) {
+    lastSyllable[1] = AI;
+  }
+}
 
 function addPrefix(syllables, rest) {
   return base => {
@@ -40,7 +78,7 @@ function makePrefixers(...prefixes) {
   return prefixes.map(
     // the object { syllables, rest } is from `switch (tam) {}` in verb() below
     ({ syllables, rest }) => addPrefix(
-      syllables.map(copy).map(newSyllable),
+      syllables.map(s => [...s]).map(newSyllable),
       [...rest]
     )
   );
@@ -50,37 +88,35 @@ function makeSuffixer(suffix) {
   if (!suffix.length) {
     return _base => {};
   }
-  if (suffix[0].type === `consonant`) {
+  if (suffix[0].type === `consonant` && suffix.length > 1) {
     return base => {
       base.push(newSyllable([...suffix]));
     };
   }
   return base => {
     const lastSyllable = lastOf(base).value;
-    switch (lastOf(lastSyllable).type) {
-      case `vowel`:
-        if (
-          // $`Fem` is the only `type: suffix` object that can be found on verbs here
-          // and its initial segment is in fact a vowel
-          suffix[0].type === `vowel` || suffix[0].value === `fem`
-        ) {
-          // if we have an ending like $`.aa`, delete it before adding a
-          // vowel-initial suffix
-          lastSyllable.splice(-1, 1);
-        }
-        // this is valid because suffixes are monosyllabic as implemented rn
-        // if they weren't then this would need to be like ...suffix[0]
-        // and the rest of the suffix's syllables would need to be
-        // added to base afterwards
-        lastSyllable.push(...suffix);
-        // (btw this could also have been an if-else with the
-        // first branch instead doing `.splice(-1, 1, ...suffix);`)
-        break;
-      case `consonant`:
-        base.push(newSyllable([lastSyllable.pop(), ...suffix]));
-        break;
-      default:
-        throw new Error(`Didn't expect types besides vowel/consonant in the base word`);
+    const lastSegment = lastOf(lastSyllable);
+    // the .meta.weak is a lame compensation for not yet having
+    // collapsed a.y into the diphthong ay at this point
+    if (lastSegment.type === `vowel` || lastSegment.meta.weak) {
+      if (
+        // $`Fem` is the only `type: suffix` object that can be found on verbs here
+        // and its initial segment is in fact a vowel
+        suffix[0].type === `vowel` || suffix[0].value === `fem`
+      ) {
+        // if we have an ending like $`.aa`, delete it before adding a
+        // vowel-initial suffix
+        lastSyllable.splice(-1, 1);
+      }
+      // this is valid because suffixes are monosyllabic as implemented rn
+      // if they weren't then this would need to be like ...suffix[0]
+      // and the rest of the suffix's syllables would need to be
+      // added to base afterwards
+      lastSyllable.push(...suffix);
+      // (btw this could also have been an if-else with the
+      // first branch instead doing `.splice(-1, 1, ...suffix);`)
+    } else if (lastSegment.type === `consonant`) {
+      base.push(newSyllable([lastSyllable.pop(), ...suffix]));
     }
   };
 }
@@ -89,6 +125,12 @@ function verb({
   meta: { conjugation, form, tam },
   value: { root: [$F, $3, $L, $Q], augmentation }
 }) {
+  // xor but being extra-explicit about it
+  // (if form is quadriliteral then $Q must be given, and if not then not)
+  if (Boolean($Q) !== Boolean(form.endsWith(`2`))) {
+    throw new Error(`Didn't expect fourth radical ${$Q} with form ${form}`);
+  }
+
   // either the 2nd segment of the form is a vowel
   // or the verb is form-1 with a weak medial consonant
   const isCV = `aeiou`.includes(form[1]) || (`aiu`.includes(form) && $3.meta.weak);
@@ -205,34 +247,40 @@ function verb({
       suffixer = undefined;
   }
 
+  // true if a verb is above form 1 and has no TAM suffix
+  const noSuffix = tam === `pst`
+    ? conjugation.person.third() && conjugation.gender.masc()
+    : (!conjugation.gender.fem() || conjugation.number.third()) && !conjugation.number.plural();
+
+  const biliteral = $Q ? $L.value === $Q.value : $3.value === $L.value;
+
+  // XXX: these could be restricted even further based on the individual root consonants' values
+  const transformers = [
+    (noSuffix || tam !== `pst`) && fixAy,
+    ($Q || $L).meta.weak && fixIy,
+    (biliteral && conjugation.past.heavier() && tam === `pst`) && fixGeminate
+  ];
+
   const $ = parseWord({
-    preTransform: backup(prefixers).map(prefixer => [prefixer, suffixer]).or([suffixer]),
+    preTransform: backup(prefixers).map(prefixer => [
+      prefixer,
+      ...transformers,
+      suffixer
+    ]).or([...transformers, suffixer]),
     augmentation
   });
   // these two are just so i can see more-easily when it adds affixes and when it doesn't
   const $_ = $;
   const _$_ = $;
 
-  // true if a verb is above form 1 and has no TAM suffix
-  const noSuffix = tam === `pst`
-    ? conjugation.person.third() && conjugation.gender.masc()
-    : (!conjugation.gender.fem() || conjugation.number.third()) && !conjugation.number.plural();
-
-  // should only be used when tam === `pst`
-  const weakAA = $L.meta.weak && noSuffix;
-
-  // TODO: might need to uncomment this if i want the verb's root to be accessible
-  // (which i forget if that would have any purpose other than "let ppl see the verb's root")
-  /* const $originalL = $L; */
-  if ($L.meta.weak) {
-    $L = Y;
-  }
-
   // TODO: finish this line
   // if (`aiu`.includes(form) && )  // 3atyit
 
   switch (form) {
     case `a`:
+      if (biliteral) {
+        return _$_`${$F}.a.${$3}.${$L}`;
+      }
       if (tam === `pst`) {
         return $_`${$F}.a ${$3}.a.${$L}`;
       }
@@ -250,6 +298,9 @@ function verb({
       }
       return _$_`${$F}.${$3}.a.${$L}`;
     case `i`:
+      if (biliteral) {
+        return _$_`${$F}.i.${$3}.${$L}`;
+      }
       if (tam === `pst`) {
         return $_`${$F}.i ${$3}.I.${$L}`;
       }
@@ -261,6 +312,9 @@ function verb({
       if (tam === `pst`) {
         throw new Error(`No past-tense conjugation in /u/ exists`);
       }
+      if (biliteral) {
+        return _$_`${$F}.u.${$3}.${$L}`;
+      }
       if (tam === `imp`) {
         return [
           ...(conjugation.gender.masc() ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.U.${$L}`),
@@ -270,43 +324,41 @@ function verb({
       return _$_`${$F}.${$3}.U.${$L}`;
     case `fa33al`:
       if (tam === `pst`) {
-        return weakAA ? $`${$F}.a/i.${$3} ${$3}.aa` : $_`${$F}.a/i.${$3} ${$3}.a.${$L}`;
+        return $_`${$F}.a/i.${$3} ${$3}.a.${$L}`;
       }
       // no need for "if imp" case bc this handles imperative too (right?)
-      return $L.meta.weak ? _$_`${$F}.a/i.${$3} ${$3}.ii` : _$_`${$F}.a/i.${$3} ${$3}.I.${$L}`;
+      return _$_`${$F}.a/i.${$3} ${$3}.I.${$L}`;
     case `tfa33al`:
-      return $L.meta.weak ? _$_`t.${$F}.a/i.${$3} ${$3}.aa` : _$_`t.${$F}.a/i.${$3} ${$3}.a.${$L}`;
+      return _$_`t.${$F}.a/i.${$3} ${$3}.a.${$L}`;
     case `stfa33al`:
       // stanna-yistanna
       if ($F.meta.weak) {
-        return $L.meta.weak ? _$_`s.t.a/i.${$3} ${$3}.aa` : _$_`s.t.a/i.${$3} ${$3}.a.${$L}`;
+        return _$_`s.t.a/i.${$3} ${$3}.a.${$L}`;
       }
-      return $L.meta.weak ? _$_`s.t.${$F}.a/i.${$3} ${$3}.aa` : _$_`s.t.${$F}.a/i.${$3} ${$3}.a.${$L}`;
+      return _$_`s.t.${$F}.a/i.${$3} ${$3}.a.${$L}`;
     case `fe3al`:
       if (tam === `pst`) {
-        return weakAA ? $`${$F}.aa ${$3}.aa` : $_`${$F}.aa ${$3}.a.${$L}`;
+        return $_`${$F}.aa ${$3}.a.${$L}`;
       }
-      return $L.meta.weak ? _$_`${$F}.aa ${$3}.ii` : _$_`${$F}.aa ${$3}.I.${$L}`;
+      return _$_`${$F}.aa ${$3}.I.${$L}`;
     case `tfe3al`:
-      return $L.meta.weak ? _$_`t.${$F}.aa ${$3}.aa` : _$_`t.${$F}.aa ${$3}.a.${$L}`;
+      return _$_`t.${$F}.aa ${$3}.a.${$L}`;
     case `stfe3al`:
       // stehal-yistehal
       if ($F.meta.weak) {
-        return $L.meta.weak ? _$_`s.t.aa ${$3}.aa` : _$_`s.t.aa ${$3}.a.${$L}`;
+        return _$_`s.t.aa ${$3}.a.${$L}`;
       }
-      return $L.meta.weak ? _$_`s.t.${$F}.aa ${$3}.aa` : _$_`s.t.${$F}.aa ${$3}.a.${$L}`;
+      return _$_`s.t.${$F}.aa ${$3}.a.${$L}`;
     case `2af3al`:
       if (tam === `pst`) {
-        return weakAA ? $`2.a/i.${$F} ${$3}.aa` : $_`2.a/i.${$F} ${$3}.a.${$L}`;
+        return $_`2.a/i.${$F} ${$3}.a.${$L}`;
       }
-      return $L.meta.weak
-        ? [...$`${$F}.${$3}.ii`, ...$`2.a/i.${$F} ${$3}.ii`]
-        : [...$`${$F}.${$3}.I.${$L}`, ...$`2.a/i.${$F} ${$3}.I.${$L}`];
+      return [...$`${$F}.${$3}.I.${$L}`, ...$`2.a/i.${$F} ${$3}.I.${$L}`];
     case `nfa3al`:
       if ($3.meta.weak) {
         return _$_`n.${$F}.aa.${$L}`;
       }
-      if ($3.value === $L.value) {
+      if (biliteral) {
         return $_`n.${$F}.a.${$3}.${$L}`;
       }
       if (tam === `pst`) {
@@ -320,40 +372,26 @@ function verb({
           // lta2u, lta2yu
           return [...$_`n.${$F}.a ${$3}.aa`, ...$_`n.${$F}.a.${$3}.y`];
         }
-        return weakAA ? $`n.${$F}.a ${$3}.aa` : $_`n.${$F}.a ${$3}.a.${$L}`;
+        return $_`n.${$F}.a ${$3}.a.${$L}`;
       }
       if (tam === `imp`) {
-        return $L.meta.weak
-          ? [
-            ...$_`+n.${$F}.i -${$3}.ii`,
-            ...$_`2.i.n ${$F}.i ${$3}.ii`,
-            ...(noSuffix ? [] : $_`n.${$F}.a ${$3}.aa`)
-          ]
-          : [
-            ...$_`+n.${$F}.i -${$3}.I.${$L}`,
-            ...$_`2.i.n ${$F}.i ${$3}.I.${$L}`,
-            ...(noSuffix ? [] : $_`n.${$F}.a ${$3}.a.${$L}`)
-          ];
-      }
-      return $L.meta.weak
-        ? [
-          // about how the "+n." syllable interacts with prefixes:
-          // the n will be taken by the prefix but the stress will remain on the Fi/Fa i think
-          ..._$_`+n.${$F}.i -${$3}.ii`,  // TODO FIXME: i think this fails actually because stress is reassigned
-          ..._$_`+n.${$F}.a -${$3}.aa`,
-          ..._$_`n.${$F}.i ${$3}.ii`
-        ]
-        : [
-          ..._$_`+n.${$F}.i -${$3}.I.${$L}`,
-          ..._$_`+n.${$F}.a -${$3}.a.${$L}`,
-          ..._$_`n.${$F}.i ${$3}.I.${$L}`
+        return [
+          ...$_`+n.${$F}.i -${$3}.I.${$L}`,
+          ...$_`2.i.n ${$F}.i ${$3}.I.${$L}`,
+          ...(noSuffix ? [] : $_`n.${$F}.a ${$3}.a.${$L}`)
         ];
+      }
+      return [
+        ..._$_`+n.${$F}.i -${$3}.I.${$L}`,
+        ..._$_`+n.${$F}.a -${$3}.a.${$L}`,
+        ..._$_`n.${$F}.i ${$3}.I.${$L}`
+      ];
     case `nfi3il`:
       // almost the same as nfa3al except npst conj are always yinfi3il not yinfa3al
       if ($3.meta.weak) {
         return _$_`n.${$F}.aa.${$L}`;
       }
-      if ($3.value === $L.value) {
+      if (biliteral) {
         return $_`n.${$F}.a.${$3}.${$L}`;
       }
       if (tam === `pst`) {
@@ -367,35 +405,25 @@ function verb({
           // lta2u, lta2yu
           return [...$_`n.${$F}.a ${$3}.aa`, ...$_`n.${$F}.a.${$3}.y`];
         }
-        return weakAA ? $`n.${$F}.a ${$3}.aa` : $_`n.${$F}.a ${$3}.a.${$L}`;
+        return $_`n.${$F}.a ${$3}.a.${$L}`;
       }
       if (tam === `imp`) {
-        return $L.meta.weak
-          ? [
-            ...$_`+n.${$F}.i -${$3}.ii`,
-            ...$_`2.i.n ${$F}.i ${$3}.ii`
-          ]
-          : [
-            ...$_`+n.${$F}.i -${$3}.I.${$L}`,
-            ...$_`2.i.n ${$F}.i ${$3}.I.${$L}`
-          ];
+        return [
+          ...$_`+n.${$F}.i -${$3}.I.${$L}`,
+          ...$_`2.i.n ${$F}.i ${$3}.I.${$L}`
+        ];
       }
       // TODO: could possibly check noSuffix and stuff here
       // to cut down on duplicates
-      return $L.meta.weak
-        ? [
-          ..._$_`+n.${$F}.i -${$3}.ii`,
-          ..._$_`n.${$F}.i ${$3}.ii`
-        ]
-        : [
-          ..._$_`+n.${$F}.i -${$3}.I.${$L}`,
-          ..._$_`n.${$F}.i ${$3}.I.${$L}`
-        ];
+      return [
+        ..._$_`+n.${$F}.i -${$3}.I.${$L}`,
+        ..._$_`n.${$F}.i ${$3}.I.${$L}`
+      ];
     case `fta3al`:
       if ($3.meta.weak) {
         return _$_`${$F}.t.aa.${$L}`;
       }
-      if ($3.value === $L.value) {
+      if (biliteral) {
         return $_`${$F}.t.a.${$3}.${$L}`;
       }
       if (tam === `pst`) {
@@ -409,40 +437,26 @@ function verb({
           // lta2u, lta2yu
           return [...$_`${$F}.t.a ${$3}.aa`, ...$_`${$F}.t.a.${$3}.y`];
         }
-        return weakAA ? $`${$F}.t.a ${$3}.aa` : $_`${$F}.t.a ${$3}.a.${$L}`;
+        return $_`${$F}.t.a ${$3}.a.${$L}`;
       }
       if (tam === `imp`) {
-        return $L.meta.weak
-          ? [
-            ...$_`+${$F}.t.i -${$3}.ii`,
-            ...$_`2.i.${$F} t.i ${$3}.ii`,
-            ...(noSuffix ? [] : $_`${$F}.t.a ${$3}.aa`)
-          ]
-          : [
-            ...$_`+${$F}.t.i -${$3}.I.${$L}`,
-            ...$_`2.i.${$F} t.i ${$3}.I.${$L}`,
-            ...(noSuffix ? [] : $_`${$F}.t.a ${$3}.a.${$L}`)
-          ];
-      }
-      return $L.meta.weak
-        ? [
-          // about how the "+F." syllable interacts with prefixes:
-          // the F will be taken by the prefix but the stress will remain on the ti/ta i think
-          ..._$_`+${$F}.t.i -${$3}.ii`,
-          ..._$_`+${$F}.t.a -${$3}.aa`,
-          ..._$_`${$F}.t.i ${$3}.ii`
-        ]
-        : [
-          ..._$_`+${$F}.t.i -${$3}.I.${$L}`,
-          ..._$_`+${$F}.t.a -${$3}.a.${$L}`,
-          ..._$_`${$F}.t.i ${$3}.I.${$L}`
+        return [
+          ...$_`+${$F}.t.i -${$3}.I.${$L}`,
+          ...$_`2.i.${$F} t.i ${$3}.I.${$L}`,
+          ...(noSuffix ? [] : $_`${$F}.t.a ${$3}.a.${$L}`)
         ];
+      }
+      return [
+        ..._$_`+${$F}.t.i -${$3}.I.${$L}`,
+        ..._$_`+${$F}.t.a -${$3}.a.${$L}`,
+        ..._$_`${$F}.t.i ${$3}.I.${$L}`
+      ];
     case `fti3il`:
       // almost the same as fta3al except npst conj are always yifti3il not yifta3al
       if ($3.meta.weak) {
         return _$_`${$F}.t.aa.${$L}`;
       }
-      if ($3.value === $L.value) {
+      if (biliteral) {
         return $_`${$F}.t.a.${$3}.${$L}`;
       }
       if (tam === `pst`) {
@@ -456,48 +470,38 @@ function verb({
           // lta2u, lta2yu
           return [...$_`${$F}.t.a ${$3}.aa`, ...$_`${$F}.t.a.${$3}.y`];
         }
-        return weakAA ? $`${$F}.t.a ${$3}.aa` : $_`${$F}.t.a ${$3}.a.${$L}`;
+        return $_`${$F}.t.a ${$3}.a.${$L}`;
       }
       if (tam === `imp`) {
-        return $L.meta.weak
-          ? [
-            ...$_`+${$F}.t.i -${$3}.ii`,
-            ...$_`2.i.${$F} t.i ${$3}.ii`
-          ]
-          : [
-            ...$_`+${$F}.t.i -${$3}.I.${$L}`,
-            ...$_`2.i.${$F} t.i ${$3}.I.${$L}`
-          ];
-      }
-      return $L.meta.weak
-        ? [
-          ..._$_`+${$F}.t.i -${$3}.ii`,
-          ..._$_`${$F}.t.i ${$3}.ii`
-        ]
-        : [
-          ..._$_`+${$F}.t.i -${$3}.I.${$L}`,
-          ..._$_`${$F}.t.i ${$3}.I.${$L}`
+        return [
+          ...$_`+${$F}.t.i -${$3}.I.${$L}`,
+          ...$_`2.i.${$F} t.i ${$3}.I.${$L}`
         ];
+      }
+      return [
+        ..._$_`+${$F}.t.i -${$3}.I.${$L}`,
+        ..._$_`${$F}.t.i ${$3}.I.${$L}`
+      ];
     case `staf3al`:
       // stehal-yistehil
       if ($F.meta.weak) {
         if (tam === `pst`) {
-          return weakAA ? $`s.t.aa ${$3}.aa` : $_`s.t.aa ${$3}.a.${$L}`;
+          return $_`s.t.aa ${$3}.a.${$L}`;
         }
-        return $L.meta.weak ? _$_`s.t.aa ${$3}.ii` : _$_`s.t.aa ${$3}.I.${$L}`;
+        return _$_`s.t.aa ${$3}.I.${$L}`;
       }
       if ($3.meta.weak) {
         return tam === `pst`
           ? [...$_`s.t.${$F}.aa.${$L}`, ...$_`s.t.a ${$F}.aa.${$L}`]
           : [..._$_`s.t.${$F}.ii.${$L}`, ..._$_`s.t.a ${$F}.ii.${$L}`];
       }
-      if ($3.value === $L.value) {
+      if (biliteral) {
         return tam === `pst`
           ? [...$_`s.t.${$F}.a.${$3}.${$L}`, ...$_`s.t.a ${$F}.a.${$3}.${$L}`]
           : [...$_`s.t.${$F}.i.${$3}.${$L}`, ...$_`s.t.a ${$F}.i.${$3}.${$L}`];
       }
       if (tam === `pst`) {
-        return weakAA ? $`s.t.a.${$F} ${$3}.aa` : $`s.t.a.${$F} ${$3}.a.${$L}`;
+        return $`s.t.a.${$F} ${$3}.a.${$L}`;
       }
       if ($3.meta.weak) {
         // stuff like "yistarjyo" exists albeit apparently very rarely
@@ -509,18 +513,18 @@ function verb({
       return _$_`${$F}.${$3}.a.${$L}.${$L}`;
     case `fa3la2`:
       if (tam === `pst`) {
-        return weakAA ? $`${$F}.a/i.${$3} ${$L}.aa` : $_`${$F}.a/i.${$3} ${$L}.a.${$Q}`;
+        return $_`${$F}.a/i.${$3} ${$L}.a.${$Q}`;
       }
-      return $Q.meta.weak ? _$_`${$F}.a/i.${$3} ${$L}.ii` : _$_`${$F}.a/i.${$3} ${$L}.I.${$Q}`;
+      return _$_`${$F}.a/i.${$3} ${$L}.I.${$Q}`;
     case `tfa3la2`:
-      return $Q.meta.weak ? _$_`s.t.${$F}.a/i.${$3} ${$L}.aa` : _$_`s.t.${$F}.a/i.${$3} ${$L}.a.${$Q}`;
+      return _$_`s.t.${$F}.a/i.${$3} ${$L}.a.${$Q}`;
     case `stfa3la2`:
       // doesn't exist B)
       // XXX: idunno about these /a/ variants btw
       if ($F.meta.weak) {
-        return $Q.meta.weak ? _$_`s.t.a/i.${$3} ${$L}.aa` : _$_`s.t.a/i.${$3} ${$L}.a.${$Q}`;
+        return _$_`s.t.a/i.${$3} ${$L}.a.${$Q}`;
       }
-      return $Q.meta.weak ? _$_`s.t.${$F}.a/i.${$3} ${$L}.aa` : _$_`s.t.${$F}.a/i.${$3} ${$L}.a.${$Q}`;
+      return _$_`s.t.${$F}.a/i.${$3} ${$L}.a.${$Q}`;
     default:
       return null;
   }
