@@ -147,14 +147,15 @@ function parseWord({
       transformedSyllables => postTransform.map(
         transforms => {
           const newCopy = copy(transformedSyllables);
+          const localMeta = { ...meta };
           // stuff like `false`, `null`, etc. is allowed and will just be skipped
-          transforms.forEach(f => f && f(newCopy));
-          return newCopy;
+          transforms.forEach(f => f && f(newCopy, localMeta));
+          return { result: newCopy, localMeta };
         }
       )
     ).flat();
 
-    return postTransformed.map(result => obj.obj(`word`, meta, result));
+    return postTransformed.map(({ result, localMeta }) => obj.obj(`word`, localMeta, result));
   };
 }
 

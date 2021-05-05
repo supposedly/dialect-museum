@@ -118,6 +118,30 @@ function makeSuffixer(suffix) {
   };
 }
 
+// post-transformer: modifies a verb to make it augmentable
+function augment({ meta: { delimiter: { value: delimiter }}, value: { clitic }}) {
+  switch (delimiter) {
+    case `object`:
+      return (base, meta) => {
+        const lastSyllable = lastOf(base).value;
+        const penultimateSegment = lastOf(lastSyllable, 1).value;
+        const finalSegment = lastOf(lastSyllable).value;
+
+        const ending = finalSegment.type === `consonant`
+          ? `${penultimateSegment}${finalSegment}`
+          : finalSegment;
+
+        const variants = clitic.after[ending] || clitic.default;
+
+        variants.forEach(variant => {
+          // ??? how to make base reflect new variants
+        });
+      };
+    default:
+      throw new Error(`Can only use 'object' and 'dative' delimiters with verbs`);
+  }
+}
+
 function verb({
   meta: { conjugation, form, tam },
   value: { root: [$F, $3, $L, $Q], augmentation }

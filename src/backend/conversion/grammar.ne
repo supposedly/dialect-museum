@@ -357,7 +357,7 @@ voice -> %openTag %voice %closeTag  {% ([ , value]) => value %}
 pp_form -> %openTag (%higherForm | %ppForm1) %closeTag  {% ([ , [value]]) => value %}
 verb_form -> %openTag (%higherForm | %verbForm1) %closeTag  {% ([ , [value]]) => value %}
 
-augmentation -> delimiter %pronoun  {% ([a, { value }]) => [a, _.obj(`pronoun`, {}, value)] %}
+augmentation -> delimiter %pronoun  {% ([delimiter, { value }]) => _.obj(`augmentation`, { delimiter }, _.obj(`pronoun`, {}, value))] %}
 
 # ditto
 delimiter ->
