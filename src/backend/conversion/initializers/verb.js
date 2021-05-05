@@ -309,6 +309,12 @@ function verb({
         return $_`${$F}.i ${$3}.I.${$L}`;
       }
       if (tam === `imp`) {
+        if ($L.meta.weak) {
+          return [
+            ...$_`2.i.${$F} ${$3}.ii`,
+            ...$_`${$F}.${$3}.ii`
+          ];
+        }
         return $_`2.i.${$F} ${$3}.I.${$L}`;
       }
       return _$_`${$F}.${$3}.I.${$L}`;
@@ -320,6 +326,9 @@ function verb({
         return _$_`${$F}.u.${$3}.${$L}`;
       }
       if (tam === `imp`) {
+        if ($L.meta.weak) {
+          throw new Error(`No hollow imperative conjugation in /u/ exists`);
+        }
         return [
           ...(conjugation.gender.masc() ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.U.${$L}`),
           ...$_`2.i.${$F} ${$3}.U.${$L}`
