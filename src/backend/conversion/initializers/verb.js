@@ -1,10 +1,7 @@
 const {
   parseWord: { parseWord, parseLetter },
-  misc: {
-    lastOf,
-    newSyllable,
-    backup
-  }
+  misc: { lastOf, backup },
+  syllables: { newSyllable }
 } = require(`../utils`);
 
 const LAX_I = Object.freeze(parseLetter`i`);
