@@ -256,10 +256,13 @@ function verb({
   const biliteral = $Q ? $L.value === $Q.value : $3.value === $L.value;
 
   // XXX: these could be restricted even further based on the individual root consonants' values
+  // like `($Q || $L).meta.weak &&` for the first
+  // or `tam !== `pst`` for the second
+  // or e.g. `biliteral &&` for the last one
   const transformers = [
     (noSuffix || tam !== `pst`) && fixAy,
     ($Q || $L).meta.weak && fixIy,
-    (biliteral && conjugation.past.heavier() && tam === `pst`) && fixGeminate
+    (conjugation.past.heavier() && tam === `pst`) && fixGeminate
   ];
 
   const $ = parseWord({
@@ -357,6 +360,9 @@ function verb({
       return [...$`${$F}.${$3}.I.${$L}`, ...$`2.a/i.${$F} ${$3}.I.${$L}`];
     case `nfa3al`:
       if ($3.meta.weak) {
+        if (tam === `pst` && conjugation.past.heavier()) {
+          return $_`n.${$F}.a/i.${$L}`;
+        }
         return _$_`n.${$F}.aa.${$L}`;
       }
       if (biliteral) {
@@ -390,6 +396,9 @@ function verb({
     case `nfi3il`:
       // almost the same as nfa3al except npst conj are always yinfi3il not yinfa3al
       if ($3.meta.weak) {
+        if (tam === `pst` && conjugation.past.heavier()) {
+          return $_`n.${$F}.a/i.${$L}`;
+        }
         return _$_`n.${$F}.aa.${$L}`;
       }
       if (biliteral) {
@@ -422,6 +431,9 @@ function verb({
       ];
     case `fta3al`:
       if ($3.meta.weak) {
+        if (tam === `pst` && conjugation.past.heavier()) {
+          return $_`${$F}.t.a/i.${$L}`;
+        }
         return _$_`${$F}.t.aa.${$L}`;
       }
       if (biliteral) {
@@ -455,6 +467,9 @@ function verb({
     case `fti3il`:
       // almost the same as fta3al except npst conj are always yifti3il not yifta3al
       if ($3.meta.weak) {
+        if (tam === `pst` && conjugation.past.heavier()) {
+          return $_`${$F}.t.a/i.${$L}`;
+        }
         return _$_`${$F}.t.aa.${$L}`;
       }
       if (biliteral) {
@@ -492,6 +507,9 @@ function verb({
         return _$_`s.t.aa ${$3}.I.${$L}`;
       }
       if ($3.meta.weak) {
+        if (tam === `pst` && conjugation.past.heavier()) {
+          return $_`s.t.${$F}.a/i.${$L}`;
+        }
         return tam === `pst`
           ? [...$_`s.t.${$F}.aa.${$L}`, ...$_`s.t.a ${$F}.aa.${$L}`]
           : [..._$_`s.t.${$F}.ii.${$L}`, ..._$_`s.t.a ${$F}.ii.${$L}`];
