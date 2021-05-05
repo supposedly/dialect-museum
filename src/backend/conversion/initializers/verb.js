@@ -265,13 +265,21 @@ function verb({
     (conjugation.past.heavier() && tam === `pst`) && fixGeminate
   ];
 
+  const meta = {
+    augmentation,
+    conjugation,
+    form,
+    tam,
+    root: $Q ? [$F, $3, $L, $Q] : [$F, $3, $L]
+  };
+
   const $ = parseWord({
     preTransform: backup(prefixers).map(prefixer => [
       prefixer,
       ...transformers,
       suffixer
     ]).or([...transformers, suffixer]),
-    augmentation
+    meta
   });
   // these two are just so i can see more-easily when it adds affixes and when it doesn't
   const $_ = $;

@@ -200,7 +200,7 @@ function addSchwa(syllables) {
 function parseWord({
   preTransform = [[]],
   postTransform = [[]],
-  augmentation = null
+  meta = {}
 } = {}) {
   return (strings, ...rootConsonants) => {
     // by convention i'm gonna do all-or-nothing
@@ -246,7 +246,7 @@ function parseWord({
       )
     ).flat();
 
-    return postTransformed.map(result => obj.obj(`word`, { augmentation }, result));
+    return postTransformed.map(result => obj.obj(`word`, meta, result));
   };
 }
 

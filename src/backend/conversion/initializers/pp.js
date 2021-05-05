@@ -97,13 +97,21 @@ function pp({
 
   const ayFixer = (!suffix.length && lastRadical.meta.weak) && fixAy;
 
+  const meta = {
+    augmentation,
+    conjugation,
+    form,
+    voice,
+    root: $Q ? [$F, $3, $L, $Q] : [$F, $3, $L]
+  };
+
   const $ = parseWord({
     preTransform: [[
       ayFixer,
       strategize(conjugation),
       pushSuffix(suffix)
     ]],
-    augmentation
+    meta
   });
 
   const $iy = !lastRadical.meta.weak ? $ : parseWord({
@@ -112,7 +120,7 @@ function pp({
     ).map(
       preSuffix => [ayFixer, preSuffix, pushSuffix(suffix)]
     ).or([/* ayFixer */]),
-    augmentation
+    meta
   });
 
   const pickVoice = (active, passive) => (isActiveVoice ? active : passive);
