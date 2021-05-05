@@ -35,13 +35,13 @@ function ppSuffix(person, gender, number) {
 // past-tense verbs
 function verbSuffix(person, gender, number) {
   if (person.first()) {
-    if (number.singular()) { return $`Schwa.t`; }
+    if (number.singular()) { return $`t`; }
     return $`n.aa`;
   }
   if (person.second()) {
     if (number.singular()) {
       if (gender.fem()) { return $`t.ii`; }
-      return $`Schwa.t`;
+      return $`t`;
     }
     return $`t.uu`;
   }
@@ -121,7 +121,11 @@ function pronoun({ value: [person, gender, number] }) {
       suffix: ppSuffix(person, gender, number)
     },
     past: {
-      suffix: verbSuffix(person, gender, number)
+      suffix: verbSuffix(person, gender, number),
+      heavier() {
+        const initial = this.suffix[0];
+        return initial && (initial.type === `consonant` || initial.type === `epenthetic`);
+      }
     },
     nonpast: verbCircumfix(person, gender, number)
   };
