@@ -100,6 +100,113 @@ function verbCircumfix(person, gender, number) {
   );
 }
 
+// special = like in 'fiyyo'
+function cliticInContext(
+  basic,
+  afterSemivowel,
+  { ay, aw, ii, iy, uu, uw, aa },  // eslint-disable-line object-curly-newline
+  special
+) {
+  return {
+    default: basic,
+    after: {
+      ay: ay || afterSemivowel || basic,
+      aw: aw || afterSemivowel || basic,
+      aa: aa || afterSemivowel || basic,
+      ii: ii || iy || afterSemivowel || basic,
+      iy: iy || ii || afterSemivowel || basic,
+      uu: uu || uw || afterSemivowel || basic,
+      uw: uw || uu || afterSemivowel || basic,
+      special
+    }
+  };
+}
+
+// stress: true=stress the syllable before (even if it wouldn't naturally be stressed)
+// syllable: -1=attach to last syllable, 0=new syllable, 1=pull last consonant into new syllable
+function clitic(person, gender, number) {
+  if (person.first()) {
+    if (number.singular()) {
+      return cliticInContext(
+        // -ni
+        [{ syllable: 0, stress: true }]
+      );
+    }
+    return cliticInContext(
+      // -na
+      [{ syllable: 0, stress: true }]
+    );
+  }
+  if (person.second()) {
+    if (number.singular()) {
+      if (gender.fem()) {
+        return cliticInContext(
+          // -ik
+          [{ syllable: 1, stress: null }],
+          // -ki
+          [{ syllable: 0, stress: true }]
+        );
+      }
+      return cliticInContext(
+        // -ak
+        [{ syllable: 1, stress: null }],
+        // -k
+        [{ syllable: -1, stress: true }]
+      );
+    }
+    return cliticInContext(
+      // -kun/-kin
+      [{ syllable: 0, stress: true }]
+    );
+  }
+  if (person.third()) {
+    if (number.singular()) {
+      if (gender.fem()) {
+        return cliticInContext(
+          [
+            // -a
+            { syllable: 1, stress: false },
+            // -a
+            { syllable: 1, stress: true },
+            // -ha
+            { syllable: 0, stress: true }
+          ],
+          [
+            // -ya, -wa, -ha
+            { syllable: 0, stress: true }
+          ]
+        );
+      }
+      return cliticInContext(
+        // -o; -o
+        [{ syllable: 1, stress: false }, { syllable: 1, stress: true }],
+        // -0
+        [{ syllable: -1, stress: true }],
+        {},
+        // -yo, (-wo?); e.g. fiyyo
+        [{ syllable: 0, stress: true }]
+      );
+    }
+    return cliticInContext(
+      [
+        // -un, -in
+        { syllable: 1, stress: false },
+        // -un, -in
+        { syllable: 1, stress: true },
+        // -hun/-hin
+        { syllable: 0, stress: true }
+      ],
+      [
+        // -yun/-yin, -wun/-win, -hun/-hin
+        { syllable: 0, stress: true }
+      ]
+    );
+  }
+  throw new Error(
+    `Unrecognized augmented pronoun: ${person.value}${gender.value}${number.value}`
+  );
+}
+
 // value is a string but we can still destructure it
 function pronoun({ value: [person, gender, number] }) {
   person = {
@@ -137,7 +244,8 @@ function pronoun({ value: [person, gender, number] }) {
         return initial && (initial.type === `consonant` || initial.type === `epenthetic`);
       }
     },
-    nonpast: verbCircumfix(person, gender, number)
+    nonpast: verbCircumfix(person, gender, number),
+    clitic: clitic(person, gender, number)
   };
 }
 
