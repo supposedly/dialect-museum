@@ -243,8 +243,9 @@ function verb({
       suffixer = makeSuffixer([...conjugation.past.suffix]);
       break;
     default:  // error?
-      prefixers = undefined;
-      suffixer = undefined;
+      throw new Error(
+        `Unrecognized TAM in verb-initializer: ${tam} (supported values are sbjv, ind, imp, pst)`
+      );
   }
 
   // true if a verb is above form 1 and has no TAM suffix

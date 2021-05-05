@@ -23,13 +23,17 @@ function ppSuffix(person, gender, number) {
     if (number.singular()) { return $`Fem`; }
     if (number.dual()) { return $`Fem.Dual`; }
     if (number.plural()) { return $`FemPlural`; }
-    return null;  // error?
+    throw new Error(
+      `Unrecognized conjugation for participles: ${person.value}${gender.value}${number.value}`
+    );
   }
   // masc and "commmon" gender are the same for now
   if (number.singular()) { return $``; }
   if (number.dual()) { return $`Dual`; }  // merging verbal and nominal participles here
   if (number.plural()) { return $`Plural`; }
-  return null;  // error?
+  throw new Error(
+    `Unrecognized conjugation for participles: ${person.value}${gender.value}${number.value}`
+  );
 }
 
 // past-tense verbs
@@ -52,7 +56,9 @@ function verbSuffix(person, gender, number) {
     }
     return $`uu`;
   }
-  return null;  // error?
+  throw new Error(
+    `Unrecognized conjugation for verbs: ${person.value}${gender.value}${number.value}`
+  );
 }
 
 // nonpast verbs
@@ -89,7 +95,9 @@ function verbCircumfix(person, gender, number) {
     // 3cp
     return suffixPrefix($`uu`, [$`y`]);
   }
-  return null;  // error?
+  throw new Error(
+    `Unrecognized conjugation for verbs: ${person.value}${gender.value}${number.value}`
+  );
 }
 
 // value is a string but we can still destructure it
