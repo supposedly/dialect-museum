@@ -19,11 +19,13 @@
 //   return true;
 // }
 
+const { phonemeProperties: props } = require(`./utils`);
+
 function c(map, createEmphatics = true) {
   function createConsonant(
     name,
     symbol,
-    { sub = null, createEmphatic = createEmphatics } = {}
+    { sub = null, createEmphatic = createEmphatics, intrinsic = {}} = {}
   ) {
     if (name === null) {
       // terminate chain
@@ -38,7 +40,18 @@ function c(map, createEmphatics = true) {
       meta: {
         emphatic: false,
         weak: false,
-        null: name === `null`
+        intrinsic: {
+          ...intrinsic,
+          articulator: props.articulators.inv[intrinsic.articulator],
+          voicing: intrinsic.voicing,
+          manner: props.manners.inv[intrinsic.manner],
+          ly: {  // yes ik it's -ally
+            semivocalic: false,
+            rounded: false,
+            ...intrinsic.ly,
+            null: name === `null`
+          }
+        }
       },
       symbol,
       value: name
@@ -81,34 +94,60 @@ module.exports.alphabet = {
   ...c({
     emphatic: `*`  // goes after the emphatic letter
   })
-  (`2`, `2`)
-  (`3`, `3`)
-  (`b`, `b`)
-  (`d`, `d`)
-  (`f`, `f`)
-  (`g`, `g`)
-  (`gh`, `9`)
-  (`h`, `h`)
-  (`7`, `7`)
-  (`5`, `5`)
-  (`j`, `j`)
-  (`k`, `k`)
-  (`q`, `q`)
-  (`l`, `l`)
-  (`m`, `m`)
-  (`n`, `n`)
-  (`p`, `p`)
-  (`r`, `r`)
-  (`s`, `s`)
-  (`sh`, `x`)
-  (`t`, `t`)
-  (`v`, `v`)
-  (`w`, `w`)
-  (`y`, `y`)
-  (`z`, `z`)
-  (`th`, `8`)
-  (`dh`, `6`)
-  (`null`, `0`, { createEmphatic: false })
+  // glottal
+  (`h`, `h`, { intrinsic: { articulator: `throat`, voicing: false, manner: `fricative` }})
+  (`2`, `2`, { intrinsic: { articulator: `throat`, voicing: false, manner: `plosive` }})
+  // pharyngeal
+  (`7`, `7`, { intrinsic: { articulator: `throat`, voicing: false, manner: `fricative` }})
+  (`3`, `3`, { intrinsic: { articulator: `throat`, voicing: true, manner: `approximant` }})
+  // uvular
+  (`5`, `5`, { intrinsic: { articulator: `root`, voicing: false, manner: `fricative` }})
+  (`gh`, `9`, { intrinsic: { articulator: `root`, voicing: true, manner: `fricative` }})
+  (`q`, `q`, { intrinsic: { articulator: `root`, voicing: false, manner: `plosive` }})
+  // velar
+  (`k`, `k`, { intrinsic: { articulator: `root`, voicing: false, manner: `plosive` }})
+  (`g`, `g`, { intrinsic: { articulator: `root`, voicing: true, manner: `plosive` }})
+  // palatal
+  (`y`, `y`, {
+    intrinsic: {
+      articulator: `body`,
+      voicing: true,
+      manner: `approximant`,
+      ly: { semivocalic: true }
+    }
+  })
+  // postalveolar
+  (`sh`, `x`, { intrinsic: { articulator: `crown`, voicing: false, manner: `fricative` }})
+  (`j`, `j`, { intrinsic: { articulator: `crown`, voicing: true, manner: `fricative` }})
+  // alveolar
+  (`r`, `r`, { intrinsic: { articulator: `crown`, voicing: true, manner: `flap` }})  // trill...
+  // denti-alveolar idk
+  (`l`, `l`, { intrinsic: { articulator: `crown`, voicing: true, manner: `approximant` }})  // lateral don't real
+  (`s`, `s`, { intrinsic: { articulator: `crown`, voicing: false, manner: `fricative` }})
+  (`z`, `z`, { intrinsic: { articulator: `crown`, voicing: true, manner: `fricative` }})
+  (`n`, `n`, { intrinsic: { articulator: `crown`, voicing: true, manner: `nasal` }})
+  (`t`, `t`, { intrinsic: { articulator: `crown`, voicing: false, manner: `plosive` }})
+  (`d`, `d`, { intrinsic: { articulator: `crown`, voicing: true, manner: `plosive` }})
+  // interdental
+  (`th`, `8`, { intrinsic: { articulator: `crown`, voicing: false, manner: `fricative` }})
+  (`dh`, `6`, { intrinsic: { articulator: `crown`, voicing: true, manner: `fricative` }})
+  // labiodental
+  (`f`, `f`, { intrinsic: { articulator: `lips`, voicing: false, manner: `fricative` }})
+  (`v`, `v`, { intrinsic: { articulator: `lips`, voicing: true, manner: `fricative` }})
+  // bilabial
+  (`w`, `w`, {
+    intrinsic: {
+      articulator: `lips`,
+      voicing: true,
+      manner: `approximant`,
+      ly: { semivocalic: true, rounded: true }
+    }
+  })
+  (`m`, `m`, { intrinsic: { articulator: `lips`, voicing: true, manner: `nasal` }})  // nasal???
+  (`b`, `b`, { intrinsic: { articulator: `lips`, voicing: true, manner: `plosive` }})
+  (`p`, `p`, { intrinsic: { articulator: `lips`, voicing: false, manner: `plosive` }})
+  // null
+  (`null`, `0`, { createEmphatic: false, intrinsic: { articulator: null, voicing: true, manner: `fricative` }})
   (null),
 
   ...v({})
