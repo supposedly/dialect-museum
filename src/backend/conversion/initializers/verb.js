@@ -9,15 +9,24 @@ const I = Object.freeze(parseLetter`I`);
 const AA = Object.freeze(parseLetter`aa`);
 const II = Object.freeze(parseLetter`ii`);
 const AY = Object.freeze(parseLetter`ay`);
-const AI = Object.freeze(parseLetter`a/i`);
+// const AI = Object.freeze(parseLetter`a/i`);  // see final comment in fixGeminate
 
-// transformer: replace -ay in a parsed word with -aa
-// ONLY to be used with npst or when no suffix (aka 3ms.pst)
-function fixAy(base) {
-  const lastSyllable = lastOf(base).value;
-  if (lastOf(lastSyllable, 1).value === `a` && lastOf(lastSyllable).meta.weak) {
-    lastSyllable.splice(-2, 2, AA);
-  }
+// transformer: replace -a.y in a parsed word with -aa if npst or no suffix (3ms pst),
+// else replace -a.y- with -ay-
+function fixAy(noSuffix) {
+  return noSuffix
+    ? base => {
+      const lastSyllable = lastOf(base).value;
+      if (lastOf(lastSyllable, 1).value === `a` && lastOf(lastSyllable).meta.weak) {
+        lastSyllable.splice(-2, 2, AA);
+      }
+    }
+    : base => {
+      const lastSyllable = lastOf(base).value;
+      if (lastOf(lastSyllable, 1).value === `a` && lastOf(lastSyllable).meta.weak) {
+        lastSyllable.splice(-2, 2, AY);
+      }
+    };
 }
 
 // transformer: replaces -iy in a parsed word with -ii
@@ -33,18 +42,15 @@ function fixIy(base) {
 function fixGeminate(base) {
   const lastSyllable = lastOf(base).value;
   if (lastOf(lastSyllable, 1).value === lastOf(lastSyllable).value) {
-    // XXX: i have no idea if i should be doing the `ay` diphthong
-    // or the string `a.y`
-    // the latter is what happens with fa33aa verbs below,
-    // and that kind of a.W sequence is gonna be collapsed into the correct
-    // diphthong later anyway, but the fact that we have a choice here is
-    // annoying
     base.push(newSyllable([lastSyllable.pop(), AY]));
   }
-  // k.a.b.b.ay.t => k.a/i.b.b.ay.t
-  if (lastSyllable[1].value === `a`) {
-    lastSyllable[1] = AI;
-  }
+  // // k.a.b.b.ay.t => k.a/i.b.b.ay.t
+  // if (lastSyllable[1].value === `a`) {
+  //   lastSyllable[1] = AI;
+  // }
+  // commented out because this can be an automatic rule that transforms `a`
+  // to also account for 2addaysh/2iddaysh and stuff
+  // unlike with f.a/i.33al where it can't be predicted
 }
 
 function addPrefix(syllables, rest) {
@@ -71,7 +77,7 @@ function addPrefix(syllables, rest) {
   };
 }
 
-function makePrefixers(...prefixes) {
+function makePrefixers(prefixes) {
   return prefixes.map(
     // the object { syllables, rest } is from `switch (tam) {}` in verb() below
     ({ syllables, rest }) => addPrefix(
@@ -118,82 +124,46 @@ function makeSuffixer(suffix) {
   };
 }
 
-// post-transformer: modifies a verb to make it augmentable
-function augment({ meta: { delimiter: { value: delimiter }}, value: { clitic }}) {
-  switch (delimiter) {
-    case `object`:
-      return (base, meta) => {
-        const lastSyllable = lastOf(base).value;
-        const penultimateSegment = lastOf(lastSyllable, 1).value;
-        const finalSegment = lastOf(lastSyllable).value;
-
-        const ending = finalSegment.type === `consonant`
-          ? `${penultimateSegment}${finalSegment}`
-          : finalSegment;
-
-        const variants = clitic.after[ending] || clitic.default;
-
-        variants.forEach(variant => {
-          // ??? how to make base reflect new variants
-        });
-      };
-    default:
-      throw new Error(`Can only use 'object' and 'dative' delimiters with verbs`);
-  }
-}
-
-function verb({
-  meta: { conjugation, form, tam },
-  value: { root: [$F, $3, $L, $Q], augmentation }
-}) {
-  // xor but being extra-explicit about it
-  // (if form is quadriliteral then $Q must be given, and if not then not)
-  if (Boolean($Q) !== Boolean(form.endsWith(`2`))) {
-    throw new Error(`Didn't expect fourth radical ${$Q} with form ${form}`);
-  }
-
-  // either the 2nd segment of the form is a vowel
-  // or the verb is form-1 with a weak medial consonant
-  const isCV = `aeiou`.includes(form[1]) || (`aiu`.includes(form) && $3.meta.weak);
-
-  let prefixers;
-  let suffixer;
+function getAffixes(tam, conjugation, isCV) {
+  let prefixes;
+  let suffix;
   switch (tam) {
     case `sbjv`:
       if (isCV) {
-        prefixers = makePrefixers(
+        prefixes = [
           // tkuun
           { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cv },
           // t.kuun
           { syllables: [conjugation.nonpast.prefix.subjunctive.cv], rest: [] },
           // tikuun
           { syllables: [[...conjugation.nonpast.prefix.subjunctive.cv, LAX_I]], rest: [] }
-        );
+        ];
       } else {
         // tiktub
-        prefixers = makePrefixers(
+        prefixes = [
           { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cc }
-        );
+        ];
       }
-      suffixer = makeSuffixer([...conjugation.nonpast.suffix]);
+      suffix = [...conjugation.nonpast.suffix];
       break;
     case `ind`:
       if (isCV) {
         const cv = conjugation.nonpast.prefix.subjunctive.cv;
         if (cv[0].value === `y`) {
-          prefixers = makePrefixers(
+          prefixes = [
             {
               // "bikuun", tense i
               syllables: [[...conjugation.nonpast.prefix.indicative, I]],
               rest: []
             },
             {
-              // "bekuun", lax i
+              // "bikuun", lax i
+              // (3arabizi spelling: bekoun)
               syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I]],
               rest: []
             },
             {
-              // "biykuun", long vowel and possibly also some kinda phonetic diphthong
+              // "biykuun", long vowel and/or possibly also some kinda phonetic diphthong
               // (3arabizi spellings: beykoun, biykoun)
               syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I, ...cv]],
               rest: []
@@ -208,9 +178,9 @@ function verb({
               syllables: [],
               rest: conjugation.nonpast.prefix.indicative
             }
-          );
+          ];
         } else {
-          prefixers = makePrefixers(
+          prefixes = [
             // minkuun, bitkuun
             {
               syllables: [[
@@ -230,7 +200,7 @@ function verb({
               ]],
               rest: []
             }
-          );
+          ];
         }
       } else {
         const cc = conjugation.nonpast.prefix.subjunctive.cc;
@@ -238,11 +208,11 @@ function verb({
         if (cc[0].value === `2`) {
           // b + 2 + ktub = biktub, not b2iktub
           // the sbjv prefix in this case starts with 2 so the .slice(1) gets rid of it
-          prefixers = makePrefixers(
+          prefixes = [
             { syllables: [], rest: [...conjugation.nonpast.prefix.indicative, ...cc.slice(1)] }
-          );
+          ];
         } else {
-          prefixers = makePrefixers(
+          prefixes = [
             // btiktub
             { syllables: [], rest: [...conjugation.nonpast.prefix.indicative, ...cc] },
             // bitiktub (again idk found it online more than once lul)
@@ -250,24 +220,48 @@ function verb({
               syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I]],
               rest: cc
             }
-          );
+          ];
         }
       }
-      suffixer = makeSuffixer([...conjugation.nonpast.suffix]);
+      suffix = [...conjugation.nonpast.suffix];
       break;
     case `imp`:
-      prefixers = makePrefixers();
-      suffixer = makeSuffixer([...conjugation.nonpast.suffix]);
+      prefixes = [];
+      suffix = [...conjugation.nonpast.suffix];
       break;
     case `pst`:
-      prefixers = makePrefixers();
-      suffixer = makeSuffixer([...conjugation.past.suffix]);
+      prefixes = [];
+      suffix = [...conjugation.past.suffix];
       break;
     default:  // error?
       throw new Error(
         `Unrecognized TAM in verb-initializer: ${tam} (supported values are sbjv, ind, imp, pst)`
       );
   }
+  return { prefixes, suffix };
+}
+
+function verb({
+  type,
+  meta: { conjugation, form, tam },
+  value: { root: [$F, $3, $L, $Q], augmentation }
+}) {
+  // xor but being extra-explicit about it
+  // (if form is quadriliteral then $Q must be given, and if not then not)
+  if (Boolean($Q) !== Boolean(form.endsWith(`2`))) {
+    throw new Error(`Didn't expect fourth radical ${$Q} with form ${form}`);
+  }
+
+  const { prefixes, suffix } = getAffixes(
+    tam,
+    conjugation,
+    // either the 2nd segment of the form is a vowel
+    // or the verb is form-1 with a weak medial consonant
+    `aeiou`.includes(form[1]) || (`aiu`.includes(form) && $3.meta.weak)
+  );
+
+  const prefixers = makePrefixers(prefixes);
+  const suffixer = makeSuffixer(suffix);
 
   // true if a verb is above form 1 and has no TAM suffix
   const noSuffix = tam === `pst`
@@ -275,18 +269,18 @@ function verb({
     : (!conjugation.gender.fem() || conjugation.number.third()) && !conjugation.number.plural();
 
   const biliteral = $Q ? $L.value === $Q.value : $3.value === $L.value;
+  const lastRadical = $Q || $L;
+  const finalWeak = lastRadical.meta.weak;
+  const nonpast = tam !== `pst`;
 
-  // XXX: these could be restricted even further based on the individual root consonants' values
-  // like `($Q || $L).meta.weak &&` for the first
-  // or `tam !== `pst`` for the second
-  // or e.g. `biliteral &&` for the last one
   const transformers = [
-    (noSuffix || tam !== `pst`) && fixAy,
-    ($Q || $L).meta.weak && fixIy,
-    (conjugation.past.heavier() && tam === `pst`) && fixGeminate
+    (finalWeak) && fixAy(noSuffix || nonpast),
+    (nonpast && finalWeak) && fixIy,
+    (biliteral && !nonpast && conjugation.past.heavier()) && fixGeminate
   ];
 
   const meta = {
+    was: type,
     augmentation,
     conjugation,
     form,
@@ -295,12 +289,13 @@ function verb({
   };
 
   const $ = parseWord({
+    meta,
     preTransform: backup(prefixers).map(prefixer => [
       prefixer,
       ...transformers,
       suffixer
     ]).or([...transformers, suffixer]),
-    meta
+    postTransform: []
   });
   // these two are just so i can see more-easily when it adds affixes and when it doesn't
   const $_ = $;
