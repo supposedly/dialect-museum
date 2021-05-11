@@ -14,3 +14,15 @@
 * ~~change mu- to mi- in pp~~
 * ~~turn pronoun objects' boolean attrs into methods~~
 * ~~add postTransform to parseWord and figure out a way to handle combinations...~~
+* Make augmenting a distinct step and allow multiple augmentations (no reason why it couldn't happen!)
+* Add metadata to consonants: place, manner, voicing
+    * The PoA scale:
+    * 0: glottal
+    * 1: pharyngeal
+    * 3: uvular
+    * 4: velar
+    * 6: palatal
+    * 8: postalveolar
+    * 9: alveolar/dental
+    * 11: labiodental
+    * 12: bilabial
