@@ -161,24 +161,27 @@ module.exports.alphabet = {
   (`AA`, `@`)  // lowered aa, like in شاي
   (`ae`, `&`)  // 'foreign' ae, like in نان or فادي
 
-  (`I`, `!`)  // e.g. 2!d`Afc; also word-final as in the name فادي
-  (`i`, `i`)  /* default value of kasra
-               * also for 0<i<a when still in the medial stage, like for ppl with kitIr كتير
+  (`I`, `1`)  /* lax i, specifically for unstressed open syllables
+               * like null<i<a when still in the medial stage, e.g. for ppl with kitIr كتير
                * aaand for stuff like mixYk/mixEke and mixAn (when not something like mxYk and mxAn)
                */
+  (`i`, `i`)  // default unspecified-tenseness i (= kasra)
   (`ii`, `I`)
 
-  (`U`, `V`)  // there's definitely a tense U but its distribution is weird compared to i/I... still, including it for symmetry
-  (`u`, `u`)
+  (`U`, `0`)  /* lax u, specifically for unstressed open syllables
+               * like l08C instead of lu8C (is that a thing?)
+               */
+  (`u`, `u`)  // default unspecified-tenseness u (= damme)
   (`uu`, `U`)
 
   (`e`, `e`)  /* word-final for *-a, like hYdIke
-               * plus undecided whether to do e.g. hEdIk or hedIk (or even just hYdIk) هيديك
+               * plus undecided on e.g. hEdIk vs hedIk (or just hYdIk?) for the short pron of هيديك
+               * .......or h1dIk lol
                * also for loans like fetta فتا or elI" إيلي
                */
   (`ee`, `E`)
 
-  (`o`, `o`)
+  (`o`, `o`)  // motEr?
   (`oo`, `O`)
 
   (`ay`, `Y`)
@@ -240,6 +243,11 @@ module.exports.alphabet = {
     type: `modifier`,  // idk lol
     symbol: `"`,
     value: `stressed`
+  },
+  French: {  // stressed and nasalized; lOsyON kappitAN
+    type: `modifier`,
+    symbol: `N`,
+    value: `nasalized`
   },
 
   Of: {  // introduces idafe pronouns

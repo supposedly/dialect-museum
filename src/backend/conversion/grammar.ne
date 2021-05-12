@@ -101,6 +101,7 @@
       femPlural: $`FemPlural`,
 
       stressed: $`Stressed`,
+      french: $`French`,
 
       genitiveDelimiter: {
         ...$`Of`,
@@ -309,7 +310,7 @@ final_superheavy_syllable ->
 
 final_light_rime -> final_short_vowel
 final_heavy_rime -> short_vowel consonant
-final_stressed_rime -> (long_vowel  {% id %} | %aa  {% id %} | %ee  {% id %} | %oo  {% id %}) STRESSED
+final_stressed_rime -> (long_vowel  {% id %} | %a  {% id %} | %e  {% id %} | %o  {% id %}) (STRESSED {% id %} | FRENCH {% id %})
 final_superheavy_rime ->
     superheavy_rime  {% id %}
   | PLURAL
@@ -374,6 +375,7 @@ DUAL -> %dual  {% processToken %}
 PLURAL -> %plural  {% processToken %}
 FEM_PLURAL -> %femPlural  {% processToken %}
 STRESSED -> %stressed  {% processToken %}
+FRENCH -> %french {% processToken %}
 __ -> %ws  {% () => null %}
 
 # a good example of <e> and <*>: hexxa* for donkeys (alternative form: hixx)

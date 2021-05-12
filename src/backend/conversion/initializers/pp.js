@@ -136,9 +136,9 @@ function pp({
         if ($F.value === `n`) {
           if ($L.meta.weak) {
             variants.push(
-              ...$iy`-m.i.${$F} +t.i -${$3}.I.y`,
-              ...$iy`m.i.${$F} t.i ${$3}.I.y`,
-              ...$iy`m.i.${$F} ${$3}.I.y`
+              ...$iy`-m.i.${$F} +t.i -${$3}.i.y`,
+              ...$iy`m.i.${$F} t.I ${$3}.i.y`,
+              ...$iy`m.i.${$F} ${$3}.i.y`
             );
           } else {
             variants.push(...$`m.i.${$F} t.aa.${$L}`);
@@ -151,7 +151,7 @@ function pp({
         return variants;
       }
       if ($L.meta.weak) {
-        return $iy`m.i.${$F} ${$3}.I.y`;
+        return $iy`m.i.${$F} ${$3}.i.y`;
       }
       // default
       return $`m.a.${$F} ${$3}.uu.${$L}`;
@@ -164,7 +164,7 @@ function pp({
       if ($F.meta.weak) {
         variants.push(
           // maayiC and maa3iy don't exist B)
-          ...($3.meta.weak ? $iy`m.aa y.I.${$L}` : $iy`m.aa ${$3}.I.${$L}`)
+          ...($3.meta.weak ? $iy`m.aa y.i.${$L}` : $iy`m.aa ${$3}.i.${$L}`)
         );
       }
       if ($3.value === $L.value) {
@@ -172,7 +172,7 @@ function pp({
       }
       return [
         ...variants,
-        ...($3.meta.weak ? $iy`${$F}.aa y.I.${$L}` : $iy`${$F}.aa ${$3}.I.${$L}`)
+        ...($3.meta.weak ? $iy`${$F}.aa y.i.${$L}` : $iy`${$F}.aa ${$3}.i.${$L}`)
       ];
     }
     case `1/fa3len`:
@@ -183,7 +183,7 @@ function pp({
     case `fa33al`:
       return pickVoice(
         [
-          ...$iy`m.${$F}.a.${$3} ${$3}.I.${$L}`,
+          ...$iy`m.${$F}.a.${$3} ${$3}.i.${$L}`,
           ...$`m.${$F}.a.${$3} ${$3}.a.${$L}`
         ],
         $`m.${$F}.a.${$3} ${$3}.a.${$L}`
@@ -195,8 +195,8 @@ function pp({
           ...$`m.i.t ${$F}.a.${$3} ${$3}.a.${$L}`,
           // XXX: should these ones use a/i? i feel like they shouldn't
           // (like mit2akkid mit2ikkid, mitzakker mitzikkir...)
-          ...$iy`m.i.t ${$F}.a.${$3} ${$3}.I.${$L}`,
-          ...$iy`m.i.t ${$F}.i.${$3} ${$3}.I.${$L}`
+          ...$iy`m.i.t ${$F}.a.${$3} ${$3}.i.${$L}`,
+          ...$iy`m.i.t ${$F}.i.${$3} ${$3}.i.${$L}`
         ],
         $`m.i.t ${$F}.a.${$3} ${$3}.a.${$L}`
       );
@@ -206,7 +206,7 @@ function pp({
         return pickVoice(
           [
             // intentionally not including misti33il here, no mistinni (...right?)
-            ...$iy`m.i.s t.a.${$3} ${$3}.I.${$L}`,
+            ...$iy`m.i.s t.a.${$3} ${$3}.i.${$L}`,
             ...$`m.i.s t.a.${$3} ${$3}.a.${$L}`
           ],
           $`m.i.s t.a.${$3} ${$3}.a.${$L}`
@@ -215,8 +215,8 @@ function pp({
       return pickVoice(
         [
           // see XXX in tfa33al above
-          ...$iy`m.i.s._.t ${$F}.a.${$3} ${$3}.I.${$L}`,
-          ...$iy`m.i.s._.t ${$F}.i.${$3} ${$3}.I.${$L}`,
+          ...$iy`m.i.s._.t ${$F}.a.${$3} ${$3}.i.${$L}`,
+          ...$iy`m.i.s._.t ${$F}.i.${$3} ${$3}.i.${$L}`,
           ...$`m.i.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`
         ],
         $`m.i.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`
@@ -224,7 +224,7 @@ function pp({
     case `fe3al`:
       return pickVoice(
         [
-          ...$iy`m.${$F}.aa ${$3}.I.${$L}`,
+          ...$iy`m.${$F}.aa ${$3}.i.${$L}`,
           ...$`m.${$F}.aa ${$3}.a.${$L}`
         ],
         $`m.${$F}.aa ${$3}.a.${$L}`
@@ -233,7 +233,7 @@ function pp({
       return pickVoice(
         [
           ...$`m.${$F}.aa ${$3}.a.${$L}`,
-          ...$iy`m.i.t ${$F}.aa ${$3}.I.${$L}`,
+          ...$iy`m.i.t ${$F}.aa ${$3}.i.${$L}`,
           ...$`m.i.t ${$F}.aa ${$3}.a.${$L}`
         ],
         $`m.i.t ${$F}.aa ${$3}.a.${$L}`
@@ -243,7 +243,7 @@ function pp({
       if ($F.meta.weak) {
         return pickVoice(
           [
-            ...$iy`m.i.s t.aa ${$3}.I.${$L}`,
+            ...$iy`m.i.s t.aa ${$3}.i.${$L}`,
             ...$`m.i.s t.aa ${$3}.a.${$L}`
           ],
           $`m.i.s t.aa ${$3}.a.${$L}`
@@ -251,7 +251,7 @@ function pp({
       }
       return pickVoice(
         [
-          ...$iy`m.i.s._.t ${$F}.aa ${$3}.I.${$L}`,
+          ...$iy`m.i.s._.t ${$F}.aa ${$3}.i.${$L}`,
           ...$`m.i.s._.t ${$F}.aa ${$3}.a.${$L}`
         ],
         $`m.i.s._.t ${$F}.aa ${$3}.a.${$L}`
@@ -259,8 +259,8 @@ function pp({
     case `2af3al`:
       return pickVoice(
         [
-          ...$iy`m.i.${$F} ${$3}.I.${$L}`,
-          ...$iy`m.2.a.${$F} ${$3}.I.${$L}`,
+          ...$iy`m.i.${$F} ${$3}.i.${$L}`,
+          ...$iy`m.2.a.${$F} ${$3}.i.${$L}`,
           ...$`m.2.a.${$F} ${$3}.a.${$L}`
         ],
         [
@@ -284,8 +284,8 @@ function pp({
       return pickVoice(
         [
           ...$`m.a.${$F} ${$3}.uu.${$L}`,
-          ...$iy`-m.i.n +${$F}.i -${$3}.I.${$L}`,
-          ...$iy`m.i.n ${$F}.i ${$3}.I.${$L}`,
+          ...$iy`-m.i.n +${$F}.i -${$3}.i.${$L}`,
+          ...$iy`m.i.n ${$F}.I ${$3}.i.${$L}`,
           $`-m.i.n +${$F}.a -${$3}.a.${$L}`
         ],
         [
@@ -310,8 +310,8 @@ function pp({
       return pickVoice(
         [
           ...$`m.a.${$F} ${$3}.uu.${$L}`,
-          ...$iy`-m.i.n +${$F}.i -${$3}.I.${$L}`,
-          ...$iy`m.i.n ${$F}.i ${$3}.I.${$L}`
+          ...$iy`-m.i.n +${$F}.i -${$3}.i.${$L}`,
+          ...$iy`m.i.n ${$F}.I ${$3}.i.${$L}`
         ],
         [
           ...$`-m.i.n +${$F}.a -${$3}.a.${$L}`,
@@ -327,8 +327,8 @@ function pp({
       }
       return pickVoice(
         [
-          ...$iy`-m.i.${$F} +t.i -${$3}.I.${$L}`,
-          ...$iy`m.i.${$F} t.i ${$3}.I.${$L}`,
+          ...$iy`-m.i.${$F} +t.i -${$3}.i.${$L}`,
+          ...$iy`m.i.${$F} t.I ${$3}.i.${$L}`,
           ...$`m.i.${$F} t.a ${$3}.a.${$L}`
         ],
         [
@@ -346,8 +346,8 @@ function pp({
       }
       return pickVoice(
         [
-          ...$iy`-m.i.${$F} +t.i -${$3}.I.${$L}`,
-          ...$iy`m.i.${$F} t.i ${$3}.I.${$L}`
+          ...$iy`-m.i.${$F} +t.i -${$3}.i.${$L}`,
+          ...$iy`m.i.${$F} t.I ${$3}.i.${$L}`
         ],
         [
           ...$`-m.i.${$F} +t.a -${$3}.a.${$L}`,
@@ -373,7 +373,7 @@ function pp({
         );
       }
       return pickVoice(
-        $iy`m.i.s t.a.${$F} ${$3}.I.${$L}`,
+        $iy`m.i.s t.a.${$F} ${$3}.i.${$L}`,
         $`m.i.s t.a.${$F} ${$3}.a.${$L}`
       );
     case `f3all`:
@@ -384,7 +384,7 @@ function pp({
     case `fa3la2`:
       return pickVoice(
         [
-          ...$iy`m.${$F}.a.${$3} ${$L}.I.${$Q}`,
+          ...$iy`m.${$F}.a.${$3} ${$L}.i.${$Q}`,
           ...$`m.${$F}.a.${$3} ${$L}.a.${$Q}`
         ],
         $`m.${$F}.a.${$3} ${$L}.a.${$Q}`
@@ -394,8 +394,8 @@ function pp({
         [
           ...$`m.${$F}.a.${$3} ${$L}.a.${$Q}`,
           // see XXX in tfa33al above
-          ...$iy`m.i.t ${$F}.a.${$3} ${$L}.I.${$Q}`,
-          ...$iy`m.i.t ${$F}.i.${$3} ${$L}.I.${$Q}`
+          ...$iy`m.i.t ${$F}.a.${$3} ${$L}.i.${$Q}`,
+          ...$iy`m.i.t ${$F}.i.${$3} ${$L}.i.${$Q}`
         ],
         $`m.i.t ${$F}.a.${$3} ${$L}.a.${$Q}`
       );
@@ -405,8 +405,8 @@ function pp({
         return pickVoice(
           [
           // see XXX in tfa33al above
-            ...$iy`m.i.s t.a.${$3} ${$L}.I.${$Q}`,
-            ...$iy`m.i.s t.i.${$3} ${$L}.I.${$Q}`,
+            ...$iy`m.i.s t.a.${$3} ${$L}.i.${$Q}`,
+            ...$iy`m.i.s t.i.${$3} ${$L}.i.${$Q}`,
             ...$`m.i.s t.a.${$3} ${$L}.a.${$Q}`
           ],
           $`m.i.s t.a.${$3} ${$L}.a.${$Q}`
@@ -415,8 +415,8 @@ function pp({
       return pickVoice(
         [
           // see XXX in tfa33al above
-          ...$iy`m.i.s._.t ${$F}.a.${$3} ${$L}.I.${$Q}`,
-          ...$iy`m.i.s._.t ${$F}.i.${$3} ${$L}.I.${$Q}`,
+          ...$iy`m.i.s._.t ${$F}.a.${$3} ${$L}.i.${$Q}`,
+          ...$iy`m.i.s._.t ${$F}.i.${$3} ${$L}.i.${$Q}`,
           ...$`m.i.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`
         ],
         $`m.i.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`

@@ -4,8 +4,8 @@ const {
   syllables: { newSyllable }
 } = require(`../utils`);
 
-const LAX_I = Object.freeze(parseLetter`i`);
-const I = Object.freeze(parseLetter`I`);
+const LAX_I = Object.freeze(parseLetter`I`);
+const I = Object.freeze(parseLetter`i`);
 const AA = Object.freeze(parseLetter`aa`);
 const II = Object.freeze(parseLetter`ii`);
 const AY = Object.freeze(parseLetter`ay`);
@@ -32,7 +32,7 @@ function fixAy(noSuffix) {
 // transformer: replaces -iy in a parsed word with -ii
 function fixIy(base) {
   const lastSyllable = lastOf(base).value;
-  if (lastOf(lastSyllable, 1).value === `I` && lastOf(lastSyllable).meta.weak) {
+  if (lastOf(lastSyllable, 1).value === `i` && lastOf(lastSyllable).meta.weak) {
     lastSyllable.splice(-2, 2, II);
   }
 }
@@ -165,7 +165,7 @@ function getAffixes(tam, conjugation, isCV) {
             {
               // "biykuun", long vowel and/or possibly also some kinda phonetic diphthong
               // (3arabizi spellings: beykoun, biykoun)
-              syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I, ...cv]],
+              syllables: [[...conjugation.nonpast.prefix.indicative, I, ...cv]],
               rest: []
             },
             // [huwwe] b.kuun
@@ -330,7 +330,9 @@ function verb({
         return _$_`${$F}.i.${$3}.${$L}`;
       }
       if (tam === `pst`) {
-        return $_`${$F}.i ${$3}.I.${$L}`;
+        // this will be postTransformed to convert the ambiguous i to a tense I
+        // if there's an augmentation that stresses the 3iL syllable
+        return $_`${$F}.i ${$3}.i.${$L}`;
       }
       if (tam === `imp`) {
         if ($L.meta.weak) {
@@ -339,9 +341,9 @@ function verb({
             ...$_`${$F}.${$3}.ii`
           ];
         }
-        return $_`2.i.${$F} ${$3}.I.${$L}`;
+        return $_`2.i.${$F} ${$3}.i.${$L}`;
       }
-      return _$_`${$F}.${$3}.I.${$L}`;
+      return _$_`${$F}.${$3}.i.${$L}`;
     case `u`:
       if (tam === `pst`) {
         throw new Error(`No past-tense conjugation in /u/ exists`);
@@ -354,17 +356,17 @@ function verb({
           throw new Error(`No hollow imperative conjugation in /u/ exists`);
         }
         return [
-          ...(conjugation.gender.masc() ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.U.${$L}`),
-          ...$_`2.i.${$F} ${$3}.U.${$L}`
+          ...(conjugation.gender.masc() ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.u.${$L}`),
+          ...$_`2.i.${$F} ${$3}.u.${$L}`
         ];
       }
-      return _$_`${$F}.${$3}.U.${$L}`;
+      return _$_`${$F}.${$3}.u.${$L}`;
     case `fa33al`:
       if (tam === `pst`) {
         return $_`${$F}.a/i.${$3} ${$3}.a.${$L}`;
       }
       // no need for "if imp" case bc this handles imperative too (right?)
-      return _$_`${$F}.a/i.${$3} ${$3}.I.${$L}`;
+      return _$_`${$F}.a/i.${$3} ${$3}.i.${$L}`;
     case `tfa33al`:
       return _$_`t.${$F}.a/i.${$3} ${$3}.a.${$L}`;
     case `stfa33al`:
@@ -377,7 +379,7 @@ function verb({
       if (tam === `pst`) {
         return $_`${$F}.aa ${$3}.a.${$L}`;
       }
-      return _$_`${$F}.aa ${$3}.I.${$L}`;
+      return _$_`${$F}.aa ${$3}.i.${$L}`;
     case `tfe3al`:
       return _$_`t.${$F}.aa ${$3}.a.${$L}`;
     case `stfe3al`:
@@ -390,7 +392,7 @@ function verb({
       if (tam === `pst`) {
         return $_`2.a/i.${$F} ${$3}.a.${$L}`;
       }
-      return [...$`${$F}.${$3}.I.${$L}`, ...$`2.a/i.${$F} ${$3}.I.${$L}`];
+      return [...$`${$F}.${$3}.i.${$L}`, ...$`2.a/i.${$F} ${$3}.i.${$L}`];
     case `nfa3al`:
       if ($3.meta.weak) {
         if (tam === `pst` && conjugation.past.heavier()) {
@@ -417,14 +419,14 @@ function verb({
       if (tam === `imp`) {
         return [
           ...$_`+n.${$F}.i -${$3}.I.${$L}`,
-          ...$_`2.i.n ${$F}.i ${$3}.I.${$L}`,
+          ...$_`2.i.n ${$F}.I ${$3}.i.${$L}`,
           ...(noSuffix ? [] : $_`n.${$F}.a ${$3}.a.${$L}`)
         ];
       }
       return [
-        ..._$_`+n.${$F}.i -${$3}.I.${$L}`,
+        ..._$_`+n.${$F}.i -${$3}.i.${$L}`,
         ..._$_`+n.${$F}.a -${$3}.a.${$L}`,
-        ..._$_`n.${$F}.i ${$3}.I.${$L}`
+        ..._$_`n.${$F}.I ${$3}.i.${$L}`
       ];
     case `nfi3il`:
       // almost the same as nfa3al except npst conj are always yinfi3il not yinfa3al
@@ -452,15 +454,15 @@ function verb({
       }
       if (tam === `imp`) {
         return [
-          ...$_`+n.${$F}.i -${$3}.I.${$L}`,
-          ...$_`2.i.n ${$F}.i ${$3}.I.${$L}`
+          ...$_`+n.${$F}.i -${$3}.i.${$L}`,
+          ...$_`2.i.n ${$F}.I ${$3}.i.${$L}`
         ];
       }
       // TODO: could possibly check noSuffix and stuff here
       // to cut down on duplicates
       return [
-        ..._$_`+n.${$F}.i -${$3}.I.${$L}`,
-        ..._$_`n.${$F}.i ${$3}.I.${$L}`
+        ..._$_`+n.${$F}.i -${$3}.i.${$L}`,
+        ..._$_`n.${$F}.I ${$3}.i.${$L}`
       ];
     case `fta3al`:
       if ($3.meta.weak) {
@@ -487,15 +489,15 @@ function verb({
       }
       if (tam === `imp`) {
         return [
-          ...$_`+${$F}.t.i -${$3}.I.${$L}`,
-          ...$_`2.i.${$F} t.i ${$3}.I.${$L}`,
+          ...$_`+${$F}.t.i -${$3}.i.${$L}`,
+          ...$_`2.i.${$F} t.I ${$3}.i.${$L}`,
           ...(noSuffix ? [] : $_`${$F}.t.a ${$3}.a.${$L}`)
         ];
       }
       return [
-        ..._$_`+${$F}.t.i -${$3}.I.${$L}`,
+        ..._$_`+${$F}.t.i -${$3}.i.${$L}`,
         ..._$_`+${$F}.t.a -${$3}.a.${$L}`,
-        ..._$_`${$F}.t.i ${$3}.I.${$L}`
+        ..._$_`${$F}.t.I ${$3}.i.${$L}`
       ];
     case `fti3il`:
       // almost the same as fta3al except npst conj are always yifti3il not yifta3al
@@ -523,13 +525,13 @@ function verb({
       }
       if (tam === `imp`) {
         return [
-          ...$_`+${$F}.t.i -${$3}.I.${$L}`,
-          ...$_`2.i.${$F} t.i ${$3}.I.${$L}`
+          ...$_`+${$F}.t.i -${$3}.i.${$L}`,
+          ...$_`2.i.${$F} t.I ${$3}.i.${$L}`
         ];
       }
       return [
-        ..._$_`+${$F}.t.i -${$3}.I.${$L}`,
-        ..._$_`${$F}.t.i ${$3}.I.${$L}`
+        ..._$_`+${$F}.t.i -${$3}.i.${$L}`,
+        ..._$_`${$F}.t.I ${$3}.i.${$L}`
       ];
     case `staf3al`:
       // stehal-yistehil
@@ -557,17 +559,17 @@ function verb({
       }
       if ($3.meta.weak) {
         // stuff like "yistarjyo" exists albeit apparently very rarely
-        return [..._$_`s.t.a.${$F} ${$3}.ii`, ..._$_`s.t.a.${$F} ${$3}.I.y`];
+        return [..._$_`s.t.a.${$F} ${$3}.ii`, ..._$_`s.t.a.${$F} ${$3}.i.y`];
       }
       // yista3mil, *yista3mul* (spelled yesta3mol)
-      return [..._$_`s.t.a.${$F} ${$3}.I.${$L}`, ..._$_`s.t.a.${$F} ${$3}.U.${$L}`];
+      return [..._$_`s.t.a.${$F} ${$3}.i.${$L}`, ..._$_`s.t.a.${$F} ${$3}.u.${$L}`];
     case `f3all`:
       return _$_`${$F}.${$3}.a.${$L}.${$L}`;
     case `fa3la2`:
       if (tam === `pst`) {
         return $_`${$F}.a/i.${$3} ${$L}.a.${$Q}`;
       }
-      return _$_`${$F}.a/i.${$3} ${$L}.I.${$Q}`;
+      return _$_`${$F}.a/i.${$3} ${$L}.i.${$Q}`;
     case `tfa3la2`:
       return _$_`s.t.${$F}.a/i.${$3} ${$L}.a.${$Q}`;
     case `stfa3la2`:
