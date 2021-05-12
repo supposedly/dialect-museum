@@ -91,6 +91,7 @@
           "objectsInObjects": false
         }
       ],
+      "object-curly-newline": "off",
       "no-underscore-dangle": "off",
       "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
     }

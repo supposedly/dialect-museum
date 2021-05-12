@@ -53,6 +53,24 @@ function fixGeminate(base) {
   // unlike with f.a/i.33al where it can't be predicted
 }
 
+// post-transformers: turns fi3il (two ambiguous i's) into fI3il (explicitly
+// lax i) if there's a stress-attracting augmentation
+// only to be used with 3ms.pst verbs when there's an augmentation
+function fixFi3il(augmentations) {
+  return augmentations.map(augmentation => augmentation.stress && [
+    (base, meta) => {
+      if (base[0].value[1].value !== `i`) {
+        throw new Error(`Can't use non-fi3il verb with fixFi3il: ${
+          base.map(syllable => syllable.value.map(segment => segment.value).join()).join(`.`)
+        }`);
+      }
+      base[0].value[1] = LAX_I;
+      // meta.augmentation used to be all clitics; replace with just this one
+      meta.augmentation = [augmentation];
+    }
+  ]);
+}
+
 function addPrefix(syllables, rest) {
   return base => {
     const firstSyllable = base[0].value;
@@ -273,6 +291,10 @@ function verb({
   const finalWeak = lastRadical.meta.weak;
   const nonpast = tam !== `pst`;
 
+  // XXX: it would be cool, even if inefficient, if $ below were instead declared like
+  // `const $ = ({ pre, post }) => parseWord(kaza)`
+  // so that i could put these transformers in the actual switch branches next to
+  // the forms they apply to instead of having them detached up here
   const transformers = [
     (finalWeak) && fixAy(noSuffix || nonpast),
     (nonpast && finalWeak) && fixIy,
@@ -295,9 +317,14 @@ function verb({
       ...transformers,
       suffixer
     ]).or([...transformers, suffixer]),
-    postTransform: []
+    // see XXX above at `const transformers = [...]`
+    postTransform: [...(
+      form === `i` && tam === `pst` && conjugation.person.third() && conjugation.gender.masc()
+        ? fixFi3il(augmentation)
+        : [[]]
+    )]
   });
-  // these two are just so i can see more-easily when it adds affixes and when it doesn't
+  // these two are just so i can see more-easily when $ adds affixes and when it doesn't
   const $_ = $;
   const _$_ = $;
 
