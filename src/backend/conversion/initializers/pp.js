@@ -46,17 +46,17 @@ function iyStrategize(conjugation) {
   if (conjugation.number.plural()) {
     return [
       // mishtiryiin, qaaryiin
-      // aka: `*.I.y ii.n` => `*.I y.ii.n`
+      // aka: `*.i.y ii.n` => `*.i y.ii.n`
       bumpLastConsonant,
       base => {
         // mishtriin, qaariin
-        // aka: `*.I.y ii.n` => `* ii.n`
+        // aka: `*.i.y ii.n` => `* ii.n`
         lastOf(base).value.splice(-2);
         base.push(newSyllable());
       },
       base => {
         // mishtriyyiin, qaariyyiin (yikes...)
-        // aka: `*.I.y ii.n` => `*.I.y y.ii.n`
+        // aka: `*.i.y ii.n` => `*.i.y y.ii.n`
         base.push(newSyllable([Y]));
       }
     ];
@@ -65,11 +65,11 @@ function iyStrategize(conjugation) {
   if (conjugation.gender.fem()) {
     return [
       // mishtiryc, qaaryc
-      // aka: `*.I.y c` => `*.I y.c`
+      // aka: `*.i.y c` => `*.i y.c`
       bumpLastConsonant,
       base => {
         // mishtriyyc, qaariyyc (yikes...)
-        // aka: `*.I.y c` => `*.I.y y.c`
+        // aka: `*.i.y c` => `*.i.y y.c`
         base.push(newSyllable([Y]));
       }
     ];
