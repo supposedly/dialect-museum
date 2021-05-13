@@ -1,4 +1,4 @@
-const { parseWord: { parseString: $, parseLetter }} = require(`../utils`);
+const { misc: { lastOf }, parseWord: { parseString: $, parseLetter }} = require(`../utils`);
 const _ = require(`../objects`);
 const { PERSONS: P, GENDERS: G, NUMBERS: N } = require(`../symbols`);
 
@@ -102,9 +102,9 @@ function verbCircumfix(person, gender, number) {
 
 // special = like in 'fiyyo'
 function cliticInContext(
-  basic,
+  { default: basic, vc },
   afterSemivowel,
-  { ay, aw, ii, iy, uu, uw, aa },  // eslint-disable-line object-curly-newline
+  { ay, aw, ii, iy, uu, uw, aa } = {},
   special
 ) {
   return {
@@ -117,24 +117,69 @@ function cliticInContext(
       iy: iy || ii || afterSemivowel || basic,
       uu: uu || uw || afterSemivowel || basic,
       uw: uw || uu || afterSemivowel || basic,
+      cc: basic,
+      vc: [...(vc || []), ...basic],
       special
+    },
+    afterEndOf(segments) {
+      const a = lastOf(segments);
+      const b = lastOf(segments, 1);
+      if (b.type === `vowel` && b.length === 2) {
+        return this.after[b.value];
+      }
+      if (
+        a.type === `vowel` && a.length === 1
+        && b.type === `consonant` && !b.meta.intrinsic.ly.semivocalic
+      ) {
+        return this.after.vc;
+      }
+      // the `a === Fem` case is also handled here
+      return this.after[`${a.value}${b.value}`] || this.default;
     }
   };
 }
 
+// forcibly stress previous syllable
+function stress(syllable) {
+  return { syllable, stress: true };
+}
+
+// don't forcibly stress previous syllable
+function natural(syllable) {
+  return { syllable, stress: false };
+}
+
 // stress: true=stress the syllable before (even if it wouldn't naturally be stressed)
 // syllable: -1=attach to last syllable, 0=new syllable, 1=pull last consonant into new syllable
-function clitic(person, gender, number) {
+function clitic(person, gender, number, n) {
   if (person.first()) {
     if (number.singular()) {
-      return cliticInContext(
-        // -ni
-        [{ syllable: 0, stress: true }]
-      );
+      switch (n) {
+        case 2:
+          return cliticInContext(
+            // -ni
+            { default: [stress(0)] }
+          );
+        case 1:
+          return cliticInContext(
+            // -i, ni
+            { default: [natural(1), stress(0)] },
+            // -yi, (-wi?), -ni
+            [stress(0)]
+          );
+        default:
+        case 0:
+          return cliticInContext(
+            // -i
+            { default: [natural(0)] },
+            // -yi, (-wi?)
+            [stress(0)]
+          );
+      }
     }
     return cliticInContext(
       // -na
-      [{ syllable: 0, stress: true }]
+      { default: [stress(0)] }
     );
   }
   if (person.second()) {
@@ -142,64 +187,64 @@ function clitic(person, gender, number) {
       if (gender.fem()) {
         return cliticInContext(
           // -ik
-          [{ syllable: 1, stress: null }],
+          { default: [natural(1)] },
           // -ki
-          [{ syllable: 0, stress: true }]
+          [stress(0)]
         );
       }
       return cliticInContext(
         // -ak
-        [{ syllable: 1, stress: null }],
+        { default: [natural(1)] },
         // -k
-        [{ syllable: -1, stress: true }]
+        [stress(-1)]
       );
     }
     return cliticInContext(
       // -kun/-kin
-      [{ syllable: 0, stress: true }]
+      { default: [stress(0)] }
     );
   }
   if (person.third()) {
     if (number.singular()) {
       if (gender.fem()) {
         return cliticInContext(
-          [
+          {
+            default: [
+              // -a
+              natural(1),
+              // -ha
+              stress(0)
+            ],
             // -a
-            { syllable: 1, stress: false },
-            // -a
-            { syllable: 1, stress: true },
-            // -ha
-            { syllable: 0, stress: true }
-          ],
-          [
-            // -ya, -wa, -ha
-            { syllable: 0, stress: true }
-          ]
+            vc: [stress(1)]
+          },
+          // -ya, -wa, -ha
+          [stress(0)]
         );
       }
       return cliticInContext(
         // -o; -o
-        [{ syllable: 1, stress: false }, { syllable: 1, stress: true }],
-        // -0
-        [{ syllable: -1, stress: true }],
+        { default: [natural(1)], vc: [stress(1)] },
+        // -null
+        [stress(-1)],
         {},
         // -yo, (-wo?); e.g. fiyyo
-        [{ syllable: 0, stress: true }]
+        [stress(0)]
       );
     }
     return cliticInContext(
-      [
+      {
+        default: [
+          // -un, -in
+          natural(1),
+          // -hun/-hin
+          stress(0)
+        ],
         // -un, -in
-        { syllable: 1, stress: false },
-        // -un, -in
-        { syllable: 1, stress: true },
-        // -hun/-hin
-        { syllable: 0, stress: true }
-      ],
-      [
-        // -yun/-yin, -wun/-win, -hun/-hin
-        { syllable: 0, stress: true }
-      ]
+        vc: [stress(1)]
+      },
+      // -yun/-yin, -wun/-win, -hun/-hin
+      [stress(0)]
     );
   }
   throw new Error(
@@ -208,7 +253,7 @@ function clitic(person, gender, number) {
 }
 
 // value is a string but we can still destructure it
-function pronoun({ value: [person, gender, number] }) {
+function pronoun({ value: [person, gender, number, n] }) {
   person = {
     value: person,
     first() { return this.value === P.first; },
@@ -227,11 +272,20 @@ function pronoun({ value: [person, gender, number] }) {
     dual() { return this.value === N.dual; },
     plural() { return this.value === N.plural; }
   };
+  // 0 = no N for 1s clitic
+  // 1 = optional N for 1s clitic (like صرني and كلني stuff)
+  // 2 = required N
+  // needless to say this is bad and hacky lol
+  // eslint-disable-next-line no-nested-ternary
+  n = (n === `N` || n === 2) ? 2 : (n === `n` || n === 1) ? 1 : 0;
 
   return {
     person,
     gender,
     number,
+    misc: {
+      n() { return n; }
+    },
     participle: {
       suffix: ppSuffix(person, gender, number)
     },
@@ -245,7 +299,7 @@ function pronoun({ value: [person, gender, number] }) {
       }
     },
     nonpast: verbCircumfix(person, gender, number),
-    clitic: clitic(person, gender, number)
+    clitic: clitic(person, gender, number, n)
   };
 }
 

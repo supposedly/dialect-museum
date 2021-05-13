@@ -3,6 +3,7 @@ const {
   misc: { lastOf, backup },
   syllables: { newSyllable }
 } = require(`../utils`);
+const { alphabet: abc } = require(`../symbols`);
 
 const LAX_I = Object.freeze(parseLetter`I`);
 const I = Object.freeze(parseLetter`i`);
@@ -53,22 +54,45 @@ function fixGeminate(base) {
   // unlike with f.a/i.33al where it can't be predicted
 }
 
-// post-transformers: turns fi3il (two ambiguous i's) into fI3il (explicitly
-// lax i) if there's a stress-attracting augmentation
-// only to be used with 3ms.pst verbs when there's an augmentation
-function fixFi3il(augmentations) {
-  return augmentations.map(augmentation => augmentation.stress && [
-    (base, meta) => {
-      if (base[0].value[1].value !== `i`) {
-        throw new Error(`Can't use non-fi3il verb with fixFi3il: ${
-          base.map(syllable => syllable.value.map(segment => segment.value).join()).join(`.`)
-        }`);
+// post-transformer: adds augmentations to meta depending on end of base
+// and contracts long vowel VVC in base if augmentation is dative -l-
+function augment(augmentation) {
+  return augmentation && ((base, meta) => {
+    meta.augmentation = augmentation(base);
+    if (meta.augmentation.delimiter.value === `dative`) {
+      // this part needs to be in a post-transformer because it doesn't make sense
+      // for the contracted syllable to be temporarily unstressed
+      // (which would be the case were it a pretransformer)
+      const lastSyllable = lastOf(base).value;
+      const a = lastOf(lastSyllable, 1);
+      const b = lastOf(lastSyllable);
+      if (
+        a.type === `vowel` && a.meta.length === 2 && !a.meta.intrinsic.ly.diphthongal
+        && b.type === `consonant`
+      ) {
+        lastSyllable.splice(-2, 1, abc[a.meta.intrinsic.shortVersion]);
       }
-      base[0].value[1] = LAX_I;
-      // meta.augmentation used to be all clitics; replace with just this one
-      meta.augmentation = [augmentation];
     }
-  ]);
+  });
+}
+
+// post-transformer: turns fi3il (two ambiguous i's) into fI3il (explicitly
+// lax i) if there's an augmentation
+// *ONLY to be used with the literal verb pattern fi3il, 3ms.pst*
+// FIXME: this is hacky, the lax i should specifically only be inserted for
+// *stress-attracting* augmentations (e.g. lax for sImi3na "he heard us" and
+// ambiguous for sim3ak "he heard you", or more-pertinently, lax for
+// sImí3o "he heard him" and ambiguous for sim3o "he heard him") but i went
+// nuts trying to figure out a sane way to implement that
+function fixFi3il(base, meta) {
+  if (meta.augmentation) {
+    if (base[0].value[1].value !== `i`) {
+      throw new Error(`Can't use non-fi3il verb with fixFi3il: ${
+        base.map(syllable => syllable.value.map(segment => segment.value).join()).join(`.`)
+      }`);
+    }
+    base[0].value[1] = LAX_I;
+  }
 }
 
 function addPrefix(syllables, rest) {
@@ -303,7 +327,6 @@ function verb({
 
   const meta = {
     was: type,
-    augmentation,
     conjugation,
     form,
     tam,
@@ -318,11 +341,10 @@ function verb({
       suffixer
     ]).or([...transformers, suffixer]),
     // see XXX above at `const transformers = [...]`
-    postTransform: [...(
-      form === `i` && tam === `pst` && conjugation.person.third() && conjugation.gender.masc()
-        ? fixFi3il(augmentation)
-        : [[]]
-    )]
+    postTransform: [[
+      augment(augmentation),
+      (form === `i` && tam === `pst` && conjugation.person.third() && conjugation.gender.masc()) && fixFi3il
+    ]]
   });
   // these two are just so i can see more-easily when $ adds affixes and when it doesn't
   const $_ = $;
@@ -335,6 +357,9 @@ function verb({
     case `a`:
       if (biliteral) {
         return _$_`${$F}.a.${$3}.${$L}`;
+      }
+      if ($3.meta.weak) {
+        return _$_`${$F}.aa.${$L}`;
       }
       if (tam === `pst`) {
         return $_`${$F}.a ${$3}.a.${$L}`;
@@ -355,6 +380,10 @@ function verb({
     case `i`:
       if (biliteral) {
         return _$_`${$F}.i.${$3}.${$L}`;
+      }
+      if ($3.meta.weak) {
+        // possible for past-tense verbs technically, like صِيب (fus7a-ish passive)
+        return _$_`${$F}.ii.${$L}`;
       }
       if (tam === `pst`) {
         // this will be postTransformed to convert the ambiguous i to a tense I
@@ -377,6 +406,10 @@ function verb({
       }
       if (biliteral) {
         return _$_`${$F}.u.${$3}.${$L}`;
+      }
+      if ($3.meta.weak) {
+        // above error also applies here, yeet
+        return _$_`${$F}.uu.${$L}`;
       }
       if (tam === `imp`) {
         if ($L.meta.weak) {

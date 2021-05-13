@@ -18,3 +18,4 @@
 * Make augmenting a distinct step and allow multiple augmentations (no reason why it couldn't happen!)
 * ~~Add metadata to consonants: place, manner, voicing **(grouped by articulator instead of place)**~~
 * Update style: enforce commas on the last element of multiline lists, enforce curly-internal spaces only for blocks and not objects
+* figure out a way to make shortVersion (and, in the future, longVersion) on vowels lead to a Node

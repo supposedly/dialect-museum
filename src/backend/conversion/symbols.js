@@ -69,7 +69,7 @@ function c(map, createEmphatics = true) {
 }
 
 function v(map) {
-  function createVowel(name, symbol) {
+  function createVowel(name, symbol, { intrinsic = {}} = {}) {
     if (name === null) {
       // terminate chain
       return map;
@@ -77,6 +77,13 @@ function v(map) {
     map[name] = {
       type: `vowel`,
       meta: {
+        intrinsic: {
+          ...intrinsic,
+          ly: {
+            diphthongal: false,
+            ...intrinsic.ly
+          }
+        },
         // if we ever develop overlong vowels i'll see if
         // i wanna just add a length param to this function lol
         length: name.length
@@ -157,35 +164,35 @@ module.exports.alphabet = {
                                   * hence symbol being null
                                   */
   (`a`, `a`)
-  (`aa`, `A`)
-  (`AA`, `@`)  // lowered aa, like in شاي
-  (`ae`, `&`)  // 'foreign' ae, like in نان or فادي
+  (`aa`, `A`, { intrinsic: { shortVersion: `a` }})
+  (`AA`, `@`, { intrinsic: { shortVersion: `a` }})  // lowered aa, like in شاي
+  (`ae`, `&`, { intrinsic: { shortVersion: `a` }})  // 'foreign' ae, like in نان or فادي
 
   (`I`, `1`)  /* lax i, specifically for unstressed open syllables
                * like null<i<a when still in the medial stage, e.g. for ppl with kitIr كتير
                * aaand for stuff like mixYk/mixEke and mixAn (when not something like mxYk and mxAn)
                */
   (`i`, `i`)  // default unspecified-tenseness i (= kasra)
-  (`ii`, `I`)
+  (`ii`, `I`, { intrinsic: { shortVersion: `i` }})
 
   (`U`, `0`)  /* lax u, specifically for unstressed open syllables
                * like l08C instead of lu8C (is that a thing?)
                */
   (`u`, `u`)  // default unspecified-tenseness u (= damme)
-  (`uu`, `U`)
+  (`uu`, `U`, { intrinsic: { shortVersion: `u` }})
 
   (`e`, `e`)  /* word-final for *-a, like hYdIke
                * plus undecided on e.g. hEdIk vs hedIk (or just hYdIk?) for the short pron of هيديك
                * .......or h1dIk lol
                * also for loans like fetta فتا or elI" إيلي
                */
-  (`ee`, `E`)
+  (`ee`, `E`, { intrinsic: { shortVersion: `e` }})
 
   (`o`, `o`)  // motEr?
-  (`oo`, `O`)
+  (`oo`, `O`, { intrinsic: { shortVersion: `o` }})
 
-  (`ay`, `Y`)
-  (`aw`, `W`)
+  (`ay`, `Y`, { intrinsic: { ly: { diphthongal: true }}})
+  (`aw`, `W`, { intrinsic: { ly: { diphthongal: true }}})
   (null),
 
   _: {  // no schwa
@@ -322,22 +329,30 @@ module.exports.NUMBERS = {
 
 const [P, G, N] = [this.PERSONS, this.GENDERS, this.NUMBERS];
 
+// ...i don't like this N thing
+// might be better to have individual word types implement it idk man
 module.exports.pronouns = [
-  P.first  + G.masc   + N.singular,   // -e according to loun
-  P.first  + G.fem    + N.singular,   // -i according to loun
-  P.first  + G.common + N.singular,   // the normal neutral one idk
-  P.first  + G.common + N.plural,
-  P.second + G.masc   + N.singular,
-  P.second + G.fem    + N.singular,
-  P.second + G.common + N.singular,   // maybe someday
-  P.second + G.masc   + N.plural,     // -kVm in case it exists in some southern dialect
-  P.second + G.fem    + N.plural,     // ditto but -kVn
-  P.second + G.common + N.plural,
-  P.third  + G.masc   + N.singular,
-  P.third  + G.fem    + N.singular,
-  P.third  + G.masc   + N.plural,     // ditto but -(h)Vm
-  P.third  + G.fem    + N.plural,     // ditto but -(h)Vn
-  P.third  + G.common + N.plural
+  P.first    + G.masc   + N.singular,   // -e according to loun
+  P.first    + G.fem    + N.singular,   // -i according to loun
+  P.first    + G.common + N.singular,   // the normal neutral one idk
+  `${P.first + G.masc   + N.singular}n`,   // -e according to loun, + optional -n-
+  `${P.first + G.fem    + N.singular}n`,   // -i according to loun, + optional -n-
+  `${P.first + G.common + N.singular}n`,   // the normal neutral one idk, + optional -n-
+  `${P.first + G.masc   + N.singular}N`,   // -e according to loun, + mandatory -n-
+  `${P.first + G.fem    + N.singular}N`,   // -i according to loun, + mandatory -n-
+  `${P.first + G.common + N.singular}N`,   // the normal neutral one idk, + mandatory -n-
+  P.first    + G.common + N.plural,
+  P.second   + G.masc   + N.singular,
+  P.second   + G.fem    + N.singular,
+  P.second   + G.common + N.singular,   // maybe someday
+  P.second   + G.masc   + N.plural,     // -kVm in case it exists in some southern dialect
+  P.second   + G.fem    + N.plural,     // ditto but -kVn
+  P.second   + G.common + N.plural,
+  P.third    + G.masc   + N.singular,
+  P.third    + G.fem    + N.singular,
+  P.third    + G.masc   + N.plural,     // ditto but -(h)Vm
+  P.third    + G.fem    + N.plural,     // ditto but -(h)Vn
+  P.third    + G.common + N.plural
 ];
 
 module.exports.negative = `X`;  // dunno how to implement this

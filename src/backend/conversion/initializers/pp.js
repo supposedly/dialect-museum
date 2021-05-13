@@ -6,6 +6,7 @@ const {
     backup
   }
 } = require(`../utils`);
+const { alphabet: abc } = require(`../symbols`);
 
 const Y = Object.freeze(parseLetter`y`);
 const AA = Object.freeze(parseLetter`aa`);
@@ -78,6 +79,28 @@ function iyStrategize(conjugation) {
   return [];
 }
 
+// post-transformer: adds augmentations to meta depending on end of base
+// and contracts long vowel VVC in base if augmentation is dative -l-
+function augment(augmentation) {
+  return augmentation && ((base, meta) => {
+    meta.augmentation = augmentation(base);
+    if (meta.augmentation.delimiter.value === `dative`) {
+      // this part needs to be in a post-transformer because it doesn't make sense
+      // for the contracted syllable to be temporarily unstressed
+      // (which would be the case were it a pretransformer)
+      const lastSyllable = lastOf(base).value;
+      const a = lastOf(lastSyllable, 1);
+      const b = lastOf(lastSyllable);
+      if (
+        a.type === `vowel` && a.meta.length === 2 && !a.meta.intrinsic.ly.diphthongal
+        && b.type === `consonant`
+      ) {
+        lastSyllable.splice(-2, 1, abc[a.meta.intrinsic.shortVersion]);
+      }
+    }
+  });
+}
+
 function pp({
   meta: { conjugation, form, voice },
   value: {
@@ -119,7 +142,8 @@ function pp({
       iyStrategize(conjugation)
     ).map(
       preSuffix => [ayFixer, preSuffix, pushSuffix(suffix)]
-    ).or([/* ayFixer */]),
+    ).or([/* ayFixer */]),  // TODO: re-figure-out the reason this is fine being commented out
+    postTransform: [[augment(augmentation)]],
     meta
   });
 
