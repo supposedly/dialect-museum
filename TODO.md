@@ -10,9 +10,11 @@
 * ~~account for final-vowel-plus-suffix combos like mfa33aa+c == mfa33aayc in pp's initializer~~
 * add `(2af3al ...)` tag to grammar
 * add `(taf3il ...)` tag to grammar (takes a root and generates $`t.a/i.${$F} ${$3}.ii.${$L}`)
+* Add `(ctx ...)` tag to grammar, e.g. `(ctx [tense final vowel] jOni)` or `` (ctx [pseudoverb] s`arr~1msN) ``
 * implement the other tags smh
 * ~~change mu- to mi- in pp~~
 * ~~turn pronoun objects' boolean attrs into methods~~
 * ~~add postTransform to parseWord and figure out a way to handle combinations...~~
 * Make augmenting a distinct step and allow multiple augmentations (no reason why it couldn't happen!)
 * ~~Add metadata to consonants: place, manner, voicing **(grouped by articulator instead of place)**~~
+* Update style: enforce commas on the last element of multiline lists, enforce curly-internal spaces only for blocks and not objects

@@ -19,7 +19,7 @@
 //   return true;
 // }
 
-const { phonemeProperties: props } = require(`./utils`);
+const props = require(`./phoneme-properties`);
 
 function c(map, createEmphatics = true) {
   function createConsonant(

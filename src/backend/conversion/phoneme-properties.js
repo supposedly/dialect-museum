@@ -1,5 +1,6 @@
 const withInv = arr => {
   arr.inv = Object.fromEntries(arr.map((e, i) => [i, e]));
+  return arr;
 };
 
 // alternatively: [dip, hip, strip, tip, lip]
