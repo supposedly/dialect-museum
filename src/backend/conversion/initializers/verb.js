@@ -351,9 +351,6 @@ function verb({
   const $_ = $;
   const _$_ = $;
 
-  // TODO: finish this line
-  // if (`aiu`.includes(form) && )  // 3atyit
-
   switch (form) {
     case `a`:
       if (biliteral) {
@@ -363,6 +360,10 @@ function verb({
         return _$_`${$F}.aa.${$L}`;
       }
       if (tam === `pst`) {
+        if ($L.meta.weak && !conjugation.gender.masc() && !conjugation.past.heavier()) {
+          // 3atit, 3atyit
+          return [...$_`${$F}.a.${$3}`, ...$_`${$F}.a.${$3}.y`];
+        }
         return $_`${$F}.a ${$3}.a.${$L}`;
       }
       if (tam === `imp`) {
@@ -391,6 +392,10 @@ function verb({
         return _$_`${$F}.ii.${$L}`;
       }
       if (tam === `pst`) {
+        if ($L.meta.weak && !conjugation.gender.masc() && !conjugation.past.heavier()) {
+          // 7ikyit, 7ikit
+          return [...$_`${$F}.i.${$3}.y`, ...$_`${$F}.i.${$3}`];
+        }
         // this will be postTransformed to convert the ambiguous i to a tense I
         // if there's an augmentation that stresses the 3iL syllable
         return $_`${$F}.i ${$3}.i.${$L}`;
