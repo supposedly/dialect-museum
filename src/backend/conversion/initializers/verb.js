@@ -366,6 +366,10 @@ function verb({
         return $_`${$F}.a ${$3}.a.${$L}`;
       }
       if (tam === `imp`) {
+        if ($F.meta.weak) {
+          // not a thing
+          return conjugation.gender.masc() ? $`${$F}.aa.${$L}` : $`${$F}.a.${$L}`;
+        }
         if ($L.meta.weak) {
           return [
             ...$_`2.i.${$F} ${$3}.aa`,
@@ -392,6 +396,10 @@ function verb({
         return $_`${$F}.i ${$3}.i.${$L}`;
       }
       if (tam === `imp`) {
+        if ($F.meta.weak) {
+          // not a thing
+          return conjugation.gender.masc() ? $`${$F}.ee.${$L}` : $`${$F}.I.${$L}`;
+        }
         if ($L.meta.weak) {
           return [
             ...$_`2.i.${$F} ${$3}.ii`,
@@ -413,8 +421,12 @@ function verb({
         return _$_`${$F}.uu.${$L}`;
       }
       if (tam === `imp`) {
+        if ($F.meta.weak) {
+          // kool, 5ood, and for some, 3ood = 23ood/q3ood
+          return conjugation.gender.masc() ? $`${$F}.oo.${$L}` : $`${$F}.U.${$L}`;
+        }
         if ($L.meta.weak) {
-          throw new Error(`No hollow imperative conjugation in /u/ exists`);
+          throw new Error(`No final-weak imperative conjugation in /u/ exists`);
         }
         return [
           ...(conjugation.gender.masc() ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.u.${$L}`),
