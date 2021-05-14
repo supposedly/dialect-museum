@@ -1,9 +1,9 @@
 const {
-  parseWord: { parseWord, parseLetter },
   misc: { lastOf, backup },
-  syllables: { newSyllable }
+  syllables: { newSyllable },
+  vowels
 } = require(`../utils`);
-const { alphabet: abc } = require(`../symbols`);
+const { parseWord, parseLetter } = require(`../parse-word`);
 
 const LAX_I = Object.freeze(parseLetter`I`);
 const I = Object.freeze(parseLetter`i`);
@@ -49,7 +49,7 @@ function fixGeminate(base) {
   // if (lastSyllable[1].value === `a`) {
   //   lastSyllable[1] = AI;
   // }
-  // commented out because this can be an automatic rule that transforms `a`
+  // commented out because that can be an automatic rule that transforms `a`
   // to also account for 2addaysh/2iddaysh and stuff
   // unlike with f.a/i.33al where it can't be predicted
 }
@@ -58,7 +58,7 @@ function fixGeminate(base) {
 // and contracts long vowel VVC in base if augmentation is dative -l-
 function augment(augmentation) {
   return augmentation && ((base, meta) => {
-    meta.augmentation = augmentation(base);
+    meta.augmentation = augmentation(base).nFor1sg;
     if (meta.augmentation.delimiter.value === `dative`) {
       // this part needs to be in a post-transformer because it doesn't make sense
       // for the contracted syllable to be temporarily unstressed
@@ -67,10 +67,10 @@ function augment(augmentation) {
       const a = lastOf(lastSyllable, 1);
       const b = lastOf(lastSyllable);
       if (
-        a.type === `vowel` && a.meta.length === 2 && !a.meta.intrinsic.ly.diphthongal
+        a.type === `vowel` && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
         && b.type === `consonant`
       ) {
-        lastSyllable.splice(-2, 1, abc[a.meta.intrinsic.shortVersion]);
+        lastSyllable.splice(-2, 1, vowels.contract(a));
       }
     }
   });
@@ -86,12 +86,13 @@ function augment(augmentation) {
 // nuts trying to figure out a sane way to implement that
 function fixFi3il(base, meta) {
   if (meta.augmentation) {
-    if (base[0].value[1].value !== `i`) {
+    const firstSyllable = base[0];
+    if (firstSyllable.value[1].value !== `i`) {
       throw new Error(`Can't use non-fi3il verb with fixFi3il: ${
         base.map(syllable => syllable.value.map(segment => segment.value).join()).join(`.`)
       }`);
     }
-    base[0].value[1] = LAX_I;
+    firstSyllable.value[1] = vowels.lax(firstSyllable.value[1]);
   }
 }
 

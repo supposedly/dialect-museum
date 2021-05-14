@@ -1,7 +1,7 @@
-const { lastOf } = require(`./misc`);
-const { newSyllable, getSyllableWeight, setStressedSyllable } = require(`./syllables`);
-const { alphabet: abc } = require(`../symbols`);
-const obj = require(`../objects`);
+const { lastOf } = require(`./utils/misc`);
+const { newSyllable, getSyllableWeight, setStressedSyllable } = require(`./utils/syllables`);
+const { alphabet: abc } = require(`./symbols`);
+const obj = require(`./objects`);
 
 function interpolateAndParse(strings, rootConsonants) {
   const alreadyStressed = strings[0].startsWith(`+`) || strings[0].startsWith(`-`);

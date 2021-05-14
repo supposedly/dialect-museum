@@ -1,9 +1,9 @@
-const parseWord = require(`./parseWord`);
 const misc = require(`./misc`);
 const syllables = require(`./syllables`);
+const vowels = require(`./vowels`);
 
 module.exports = {
-  parseWord,
   misc,
-  syllables
+  syllables,
+  vowels
 };

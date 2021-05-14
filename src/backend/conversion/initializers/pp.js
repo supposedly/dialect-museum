@@ -1,12 +1,12 @@
 const {
-  parseWord: { parseWord, parseLetter },
   misc: {
     lastOf,
     newSyllable,
     backup
-  }
+  },
+  vowels
 } = require(`../utils`);
-const { alphabet: abc } = require(`../symbols`);
+const { parseWord, parseLetter } = require(`../parse-word`);
 
 const Y = Object.freeze(parseLetter`y`);
 const AA = Object.freeze(parseLetter`aa`);
@@ -83,7 +83,7 @@ function iyStrategize(conjugation) {
 // and contracts long vowel VVC in base if augmentation is dative -l-
 function augment(augmentation) {
   return augmentation && ((base, meta) => {
-    meta.augmentation = augmentation(base);
+    meta.augmentation = augmentation(base).nFor1sg;
     if (meta.augmentation.delimiter.value === `dative`) {
       // this part needs to be in a post-transformer because it doesn't make sense
       // for the contracted syllable to be temporarily unstressed
@@ -92,10 +92,10 @@ function augment(augmentation) {
       const a = lastOf(lastSyllable, 1);
       const b = lastOf(lastSyllable);
       if (
-        a.type === `vowel` && a.meta.length === 2 && !a.meta.intrinsic.ly.diphthongal
+        a.type === `vowel` && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
         && b.type === `consonant`
       ) {
-        lastSyllable.splice(-2, 1, abc[a.meta.intrinsic.shortVersion]);
+        lastSyllable.splice(-2, 1, vowels.contract(a));
       }
     }
   });

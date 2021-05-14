@@ -36,7 +36,7 @@ module.exports.getSyllableWeight = s => {
     }
     // long vowels add 2, short vowels add 1
     if (segment.type === `vowel`) {
-      rimeLength += segment.meta.length;
+      rimeLength += segment.meta.intrinsic.length;
       break;
     }
     if (segment.type === `consonant`) {
