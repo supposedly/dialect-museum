@@ -1,4 +1,5 @@
-const { misc: { lastOf }, parseWord: { parseLetter }} = require(`../utils`);
+const { misc: { lastOf }} = require(`../utils`);
+const { parseLetter } = require(`../parse-word`);
 
 const L = Object.freeze(parseLetter`l`);
 
@@ -158,7 +159,7 @@ function clitic(person, gender, number, n) {
 }
 
 function makeAugmentor(delimiter, person, gender, number, makeEnd = null) {
-  return Object.fromEntries(N_VALUES.map((n, i) => base => [
+  return base => Object.fromEntries(N_VALUES.map((n, i) => [
     n,
     {
       delimiter,

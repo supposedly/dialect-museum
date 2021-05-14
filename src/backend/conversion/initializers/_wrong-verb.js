@@ -1,5 +1,7 @@
+// this file is not used
+// it was my first attempt at a verb-initializer where i forgot that i should keep prefixes separate from the real word lol rip
 const {
-  misc: { lastOf /* , backup */ },
+  misc: { lastOf, backup },
   syllables: { newSyllable },
   vowels
 } = require(`../utils`);
@@ -96,7 +98,6 @@ function fixFi3il(base, meta) {
   }
 }
 
-/*
 function addPrefix(syllables, rest) {
   return base => {
     const firstSyllable = base[0].value;
@@ -130,7 +131,6 @@ function makePrefixers(prefixes) {
     )
   );
 }
-*/
 
 function makeSuffixer(suffix) {
   if (!suffix.length) {
@@ -305,7 +305,7 @@ function verb({
     `aeiou`.includes(form[1]) || (`aiu`.includes(form) && $3.meta.weak)
   );
 
-  // const prefixers = makePrefixers(prefixes);
+  const prefixers = makePrefixers(prefixes);
   const suffixer = makeSuffixer(suffix);
 
   // true if a verb is above form 1 and has no TAM suffix
@@ -338,10 +338,13 @@ function verb({
 
   const $ = parseWord({
     meta,
-    preTransform: [[...transformers, suffixer]],
+    preTransform: backup(prefixers).map(prefixer => [
+      prefixer,
+      ...transformers,
+      suffixer
+    ]).or([...transformers, suffixer]),
     // see XXX above at `const transformers = [...]`
     postTransform: [[
-      (_, localMeta) => { localMeta.prefixes = prefixes; },
       augment(augmentation),
       (form === `i` && tam === `pst` && conjugation.person.third() && conjugation.gender.masc()) && fixFi3il
     ]]

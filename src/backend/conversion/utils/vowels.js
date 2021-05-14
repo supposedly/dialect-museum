@@ -12,7 +12,7 @@ module.exports.contract = vowel => {
   if (vowel.meta.intrinsic.length < 2) {
     return vowel;
   }
-  if (!vowel.meta.intrinsic.ly.diphthongal) {
+  if (vowel.meta.intrinsic.ly.diphthongal) {
     throw new Error(`Attempt to contract a diphthong: ${vowel.value}`);
   }
   // sloppy impl lul
