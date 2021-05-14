@@ -1,5 +1,6 @@
 @{%
   const _ = require(`./objects`);
+  const inits = require(`./initializers`);
 
   const moo = require(`moo`);
   const sym = require(`./symbols`);
@@ -140,6 +141,11 @@
   });
 
   const processToken = ([{ value }]) => _.process(value);
+
+  const init = (...args) => {
+    const o = _.obj(...args);
+    return inits[o.type](o) || o;
+  };
 %}
 
 @lexer lexer
@@ -166,10 +172,10 @@ literal ->
     "(\\" [^)]:+ ")"  {% ([ , value]) => _.obj(`literal`, {}, value.join('')) %}
   | "(\\)" ")"  {% () => _.obj(`literal`, {}, `)`) %}  # just in case
 
-af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => _.obj(`af3al`, {}, { root, augmentation }) %}
+af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(`af3al`, {}, { root, augmentation }) %}
 
 taf3il -> "(taf3il" __ root (FEM {% id %} | FEM_PLURAL {% id %}):? augmentation:? ")" {%
-  ([ ,, root, fem, augmentation]) => _.obj(`taf3il`, {}, { root, fem, augmentation })
+  ([ ,, root, fem, augmentation]) => init(`taf3il`, {}, { root, fem, augmentation })
 %}
 
 idafe ->
@@ -177,12 +183,12 @@ idafe ->
     __ (word | idafe)
     __ (word | l | idafe)
   ")"  {%
-    ([ ,, [possessee] ,, [possessor], d]) => _.obj(
+    ([ ,, [possessee] ,, [possessor], d]) => init(
       `idafe`, {}, { possessee, possessor }
     )
   %}
 
-l -> "(l" __ word ")"  {% ([ ,, value]) => _.obj(`def`, {}, value) %}
+l -> "(l" __ word ")"  {% ([ ,, value]) => init(`def`, {}, value) %}
 
 # pp needs to be a thing because -c behaves funny in participles (fe3la and fe3ilt-/fe3lit-/fe3liit-),
 # A is more likely to raise to /e:/ in fe3il participles,
@@ -194,7 +200,7 @@ pp -> "(pp"
     __ root
     augmentation:?
   ")"  {%
-    ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => _.obj(
+    ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => init(
       `pp`, { conjugation, form, voice }, { root, augmentation }
     )
   %}
@@ -209,15 +215,19 @@ verb ->
     __ root
     augmentation:?
   ")"  {%
-    ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => _.obj(
+    ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => init(
       `verb`, { form, tam, conjugation }, { root, augmentation }
     )
   %}
 
-# TODO figure out a better way of including the augmentation
+# TODO figure out a better way of including the augmentation?
+# TODO since I'm not using stems, maybe remove them
+# (what specifically happened was that i didn't look at this part of the grammar until i'd finished
+# a lot of the rest of the backend, none of which i thought to use stems in, so i had to go back
+# here and change `([value]) =>` to `([{ value }])) =>`
 word ->
-    stem  {% ([value]) => _.obj(`word`, { augmentation: null }, value) %}
-  | stem augmentation  {% ([value, augmentation]) => _.obj(`word`, { augmentation }, value) %}
+    stem  {% ([{ value }]) => init(`word`, { was: null, augmentation: null }, value) %}
+  | stem augmentation  {% ([{ value }, augmentation]) => init(`word`, { augmentation }, value) %}
 
 # messy because of stressedOn :(
 stem ->
@@ -358,13 +368,13 @@ strong_consonant -> (
 )  {% ([[{ value }]]) => _.process(value) %}
 
 # ditto
-pronoun -> %openTag %pronoun %closeTag  {% ([ , value]) => _.process(value) %}  # (1/2) this one has to be `process()`
+pronoun -> %openTag %pronoun %closeTag  {% ([ , { type, meta, value }]) => init(type, meta, value) %}
 tam -> %openTag %tam %closeTag  {% ([ , value]) => value %}
 voice -> %openTag %voice %closeTag  {% ([ , value]) => value %}
 pp_form -> %openTag (%higherForm | %ppForm1) %closeTag  {% ([ , [value]]) => value %}
 verb_form -> %openTag (%higherForm | %verbForm1) %closeTag  {% ([ , [value]]) => value %}
 
-augmentation -> delimiter %pronoun  {% ([delimiter, { value }]) => _.obj(`augmentation`, { delimiter }, _.obj(`pronoun`, {}, value))] %}
+augmentation -> delimiter %pronoun  {% ([delimiter, { value }]) => init(`augmentation`, { delimiter }, init(`pronoun`, {}, value))] %}
 
 # ditto
 delimiter ->
