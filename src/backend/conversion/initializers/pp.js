@@ -203,7 +203,7 @@ function pp({
       if (!isActiveVoice) {
         throw new Error(`Can't use passive voice with 1/fa3len`);
       }
-      return $`${$F}.a/i.${$3} ${$L}.aa.n`;
+      return $`${$F}.a.${$3} ${$L}.aa.n`;
     case `fa33al`:
       return pickVoice(
         [
