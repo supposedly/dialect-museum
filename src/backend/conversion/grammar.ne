@@ -166,6 +166,12 @@ literal ->
     "(\\" [^)]:+ ")"  {% ([ , value]) => _.obj(`literal`, {}, value.join('')) %}
   | "(\\)" ")"  {% () => _.obj(`literal`, {}, `)`) %}  # just in case
 
+af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => _.obj(`af3al`, {}, { root, augmentation }) %}
+
+taf3il -> "(taf3il" __ root (FEM {% id %} | FEM_PLURAL {% id %}) augmentation:? ")" {%
+  ([ ,, root, fem, augmentation]) => _.obj(`taf3il`, {}, { root, fem, augmentation })
+%}
+
 idafe ->
   "(idafe"
     __ (word | idafe)
