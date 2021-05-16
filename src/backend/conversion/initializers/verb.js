@@ -59,20 +59,8 @@ function fixGeminate(base) {
 function augment(augmentation) {
   return augmentation && ((base, meta) => {
     meta.augmentation = augmentation(base).nFor1sg;
-    if (meta.augmentation.delimiter.value === `dative`) {
-      // this part needs to be in a post-transformer because it doesn't make sense
-      // for the contracted syllable to be temporarily unstressed
-      // (which would be the case were it a pretransformer)
-      const lastSyllable = lastOf(base).value;
-      const a = lastOf(lastSyllable, 1);
-      const b = lastOf(lastSyllable);
-      if (
-        a.type === `vowel` && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
-        && b.type === `consonant`
-      ) {
-        lastSyllable.splice(-2, 1, vowels.contract(a));
-      }
-    }
+    // not contracting vowel for dative here because that's instead
+    // being done in the word-initializer
   });
 }
 
@@ -167,6 +155,20 @@ function makeSuffixer(suffix) {
       base.push(newSyllable([lastSyllable.pop(), ...suffix]));
     }
   };
+}
+
+// pre-transformer, tiktub => tiktib
+// ONLY to be used with npst & when there's a suffix conjugation
+// (or an augmentation, actually - see comment in word-initializer)
+// applies before the suffix/augmentation is added
+function uToI(base) {
+  const lastSyllable = lastOf(base);
+  const a = lastOf(lastSyllable, 1);
+  const b = lastOf(lastSyllable);
+
+  if (b.type === `consonant` && a.value === `u`) {
+    lastSyllable[lastSyllable.length - 2] = I;
+  }
 }
 
 function getAffixes(tam, conjugation, isCV) {
@@ -318,16 +320,6 @@ function verb({
   const finalWeak = lastRadical.meta.weak;
   const nonpast = tam !== `pst`;
 
-  // XXX: it would be cool, even if inefficient, if $ below were instead declared like
-  // `const $ = ({ pre, post }) => parseWord(kaza)`
-  // so that i could put these transformers in the actual switch branches next to
-  // the forms they apply to instead of having them detached up here
-  const transformers = [
-    (finalWeak) && fixAy(noSuffix || nonpast),
-    (nonpast && finalWeak) && fixIy,
-    (biliteral && !nonpast && conjugation.past.heavier()) && fixGeminate
-  ];
-
   const meta = {
     was: type,
     conjugation,
@@ -338,7 +330,22 @@ function verb({
 
   const $ = parseWord({
     meta,
-    preTransform: [[...transformers, suffixer]],
+    // XXX: it would be cool, even if inefficient, if this $ were instead declared like
+    // `const $ = ({ pre, post }) => parseWord({ preTransform: pre, postTransform: post, ... })`
+    // so that i could put these transformers in the actual switch branches next to
+    // the forms they apply to instead of having them detached & condition-guarded up here
+    preTransform: [[
+      (finalWeak) && fixAy(noSuffix || nonpast),
+      (nonpast && finalWeak) && fixIy,
+      (biliteral && !nonpast && conjugation.past.heavier()) && fixGeminate,
+      (nonpast && (!noSuffix || augmentation)) && uToI,
+      // suffixer doesn't have a condition attached because both pst AND npst suffixes are very
+      // strongly attached to the verb (unlike npst prefixes and also clitic pronouns),
+      // meaning the conjugation suffix can always just be attached
+      // maybe this is a bad move and i should allow transformers to access the stem of the
+      // verb but ah well
+      suffixer
+    ]],
     // see XXX above at `const transformers = [...]`
     postTransform: [[
       (_, localMeta) => { localMeta.prefixes = prefixes; },
@@ -395,8 +402,9 @@ function verb({
           // 7ikyit, 7ikit
           return [...$_`${$F}.i.${$3}.y`, ...$_`${$F}.i.${$3}`];
         }
-        // this will be postTransformed to convert the ambiguous i to a tense I
-        // if there's an augmentation that stresses the 3iL syllable
+        // this will be postTransformed to convert the first ambiguous i to a tense I
+        // if there's an augmentation [should be only if it stresses the 3iL syllable
+        // but that specificity isn't implemented yet]
         return $_`${$F}.i ${$3}.i.${$L}`;
       }
       if (tam === `imp`) {
@@ -415,7 +423,10 @@ function verb({
       return _$_`${$F}.${$3}.i.${$L}`;
     case `u`:
       if (tam === `pst`) {
-        throw new Error(`No past-tense conjugation in /u/ exists`);
+        throw new Error(`No past-tense Form 1 conjugation in /u/ exists: ${$F}${$3}${$L}`);
+      }
+      if ($L.meta.weak) {
+        throw new Error(`No final-weak Form 1 conjugation in /u/ exists: ${$F}${$3}${$L}`);
       }
       if (biliteral) {
         return _$_`${$F}.u.${$3}.${$L}`;
@@ -428,9 +439,6 @@ function verb({
         if ($F.meta.weak) {
           // kool, 5ood, and for some, 3ood = 23ood/q3ood
           return conjugation.gender.masc() ? $`${$F}.oo.${$L}` : $`${$F}.U.${$L}`;
-        }
-        if ($L.meta.weak) {
-          throw new Error(`No final-weak imperative conjugation in /u/ exists`);
         }
         return [
           ...(conjugation.gender.masc() ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.u.${$L}`),
