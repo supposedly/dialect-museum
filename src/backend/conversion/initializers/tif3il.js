@@ -42,7 +42,7 @@ function augment(augmentation) {
   });
 }
 
-function af3al({ type, root: [$F, $3, $L, $Q], suffix, augmentation }) {
+function taf3iil({ type, root: [$F, $3, $L, $Q], suffix, augmentation }) {
   if ($Q) {
     throw new Error(
       `Can't use quadriliteral root with taf3il: ${$F.value}${$3.value}${$L.value}${$Q.value}`
@@ -71,5 +71,5 @@ function af3al({ type, root: [$F, $3, $L, $Q], suffix, augmentation }) {
 }
 
 module.exports = {
-  af3al
+  taf3iil
 };

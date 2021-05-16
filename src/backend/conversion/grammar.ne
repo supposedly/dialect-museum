@@ -142,10 +142,7 @@
 
   const processToken = ([{ value }]) => _.process(value);
 
-  const init = (...args) => {
-    const o = _.obj(...args);
-    return inits[o.type](o) || o;
-  };
+  const init = (...args) => _.obj(...args).init(inits);
 %}
 
 @lexer lexer
@@ -165,6 +162,8 @@ term ->
   | pp  {% id %}
   | verb  {% id %}
   | l  {% id %}
+  | af3al {% id %}
+  | tif3il {% id %}
   | literal {% id %}
 
 # `bruh (\ -- ) what (\?)` gives `bruh -- what?` (aka whitespace only matters inside the literal)
@@ -174,8 +173,8 @@ literal ->
 
 af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(`af3al`, {}, { root, augmentation }) %}
 
-taf3il -> "(taf3il" __ root (FEM {% id %} | FEM_PLURAL {% id %}):? augmentation:? ")" {%
-  ([ ,, root, fem, augmentation]) => init(`taf3il`, {}, { root, fem, augmentation })
+tif3il -> "(tif3il" __ root (FEM {% id %} | FEM_PLURAL {% id %}):? augmentation:? ")" {%
+  ([ ,, root, fem, augmentation]) => init(`tif3il`, {}, { root, fem, augmentation })
 %}
 
 idafe ->
