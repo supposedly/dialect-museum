@@ -4,7 +4,7 @@ const { parseLetter } = require(`../parse-word`);
 const L = Object.freeze(parseLetter`l`);
 
 // 0, 1, 2
-const N_VALUES = [`nFor1sg`, `bothFor1sg`, `yFor1sg`];
+const N_VALUES = [`yFor1sg`, `bothFor1sg`, `nFor1sg`];
 
 // special = like in 'fiyyo'
 function cliticInContext(
@@ -141,12 +141,12 @@ function clitic(person, gender, number, n) {
     return cliticInContext(
       {
         default: [
-          // -un, -in
+          // -un/-in
           natural(1),
           // -hun/-hin
           stress(0)
         ],
-        // -un, -in
+        // -un/-in
         vc: [stress(1)]
       },
       // -yun/-yin, -wun/-win, -hun/-hin
@@ -158,13 +158,13 @@ function clitic(person, gender, number, n) {
   );
 }
 
-function makeAugmentor(delimiter, person, gender, number, makeEnd = null) {
+function makeAugmentor(delimiter, person, gender, number, makeEnd = null, allN = null) {
   return base => Object.fromEntries(N_VALUES.map((n, i) => [
     n,
     {
       delimiter,
       pronoun: { person, gender, number },
-      clitics: clitic(person, gender, number, i).afterEndOf(
+      clitics: clitic(person, gender, number, allN || i).afterEndOf(
         makeEnd
           ? makeEnd(base)
           : lastOf(base).value
@@ -184,7 +184,8 @@ function augmentation({
       person,
       gender,
       number,
-      base => [lastOf(lastOf(base).value), L]
+      base => [lastOf(lastOf(base).value), L],
+      0  // all N values are 0 because 1sg datives can't be -lni
     );
   }
   return makeAugmentor(
