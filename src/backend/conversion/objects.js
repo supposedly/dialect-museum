@@ -6,19 +6,22 @@ class Node {
     this.value = value;
   }
 
-  // Initialization is the process that'll turn e.g. (verb ...) into a set of
-  // variants like [3aTit, 3aTyit]
+  // Initialization is the process that'll turn e.g. (verb [...]) into a set of
+  // variants like [3aTct, 3aTyct]
   init(initializers) {
-    return initializers[this.type](this);
-  }
-
-  // Transformation is a progressive/iterative process of turning initialized
-  // nodes into, uh, other nodes that may then be turned into plain text; the difference btwn
-  // it and initialization is that this will result in per-segment variants
-  // like *[3aTyit] -> [[3] [a, o], [T], [y], [i, I], [t]]
-  // (or something idk i'm on ramadan brain rn)
-  transform(transformers) {
-    return transformers[this.type](this);
+    const initializer = initializers[this.type];
+    if (!initializer) {
+      return this;
+    }
+    const initialized = initializer(this);
+    if (Array.isArray(initialized)) {
+      // should only be an array of either 100% Nodes or 100% initialized non-Nodes
+      // but not enforcing that strictly bc js
+      return initialized.map(
+        result => (result instanceof Node ? result.init(initializers) : result)
+      );
+    }
+    return initialized;
   }
 }
 
