@@ -5,12 +5,15 @@ function word({
   value
 }) {
   const lastSyllable = lastOf(value).value;
+  const a = lastOf(lastSyllable, 1);
+  const b = lastOf(lastSyllable);
+  // set (femsuffix).t = true with further suffixes
+  if (b.type === `suffix` && a.value === `fem`) {
+    a.meta.t = true;
+  }
   // contract long vowels w/ dative L
   // TODO: extend this to -X (-sh) suffix and -jiyy
   if (augmentation.delimiter.value === `dative`) {
-    // (which would be the case were it a pretransformer)
-    const a = lastOf(lastSyllable, 1);
-    const b = lastOf(lastSyllable);
     if (
       a.type === `vowel` && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
       && b.type === `consonant`
