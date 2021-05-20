@@ -1,7 +1,7 @@
 const { lastOf } = require(`./utils/misc`);
 const { newSyllable, getSyllableWeight, setStressedSyllable } = require(`./utils/syllables`);
 const { alphabet: abc } = require(`./symbols`);
-const obj = require(`./objects`);
+const { obj, choice } = require(`./objects`);
 
 function interpolateAndParse(strings, rootConsonants) {
   const alreadyStressed = strings[0].startsWith(`+`) || strings[0].startsWith(`-`);
@@ -155,7 +155,7 @@ function parseWord({
       )
     ).flat();
 
-    return postTransformed.map(({ result, localMeta }) => obj.obj(`word`, localMeta, result));
+    return choice.choice(postTransformed.map(({ result, localMeta }) => obj.obj(`word`, localMeta, result)));
   };
 }
 

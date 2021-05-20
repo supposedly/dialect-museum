@@ -4,6 +4,7 @@ const {
   vowels
 } = require(`../utils`);
 const { parseWord, parseLetter } = require(`../parse-word`);
+const { choice: { choice }} = require(`../objects`);
 
 const LAX_I = Object.freeze(parseLetter`I`);
 const I = Object.freeze(parseLetter`i`);
@@ -177,19 +178,19 @@ function getAffixes(tam, conjugation, isCV) {
   switch (tam) {
     case `sbjv`:
       if (isCV) {
-        prefixes = [
+        prefixes = choice(
           // tkuun
           { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cv },
           // t.kuun
           { syllables: [conjugation.nonpast.prefix.subjunctive.cv], rest: [] },
           // tikuun
           { syllables: [[...conjugation.nonpast.prefix.subjunctive.cv, LAX_I]], rest: [] }
-        ];
+        );
       } else {
         // tiktub
-        prefixes = [
+        prefixes = choice(
           { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cc }
-        ];
+        );
       }
       suffix = [...conjugation.nonpast.suffix];
       break;
@@ -197,7 +198,7 @@ function getAffixes(tam, conjugation, isCV) {
       if (isCV) {
         const cv = conjugation.nonpast.prefix.subjunctive.cv;
         if (cv[0].value === `y`) {
-          prefixes = [
+          prefixes = choice(
             {
               // "bikuun", tense i
               syllables: [[...conjugation.nonpast.prefix.indicative, I]],
@@ -225,9 +226,9 @@ function getAffixes(tam, conjugation, isCV) {
               syllables: [],
               rest: conjugation.nonpast.prefix.indicative
             }
-          ];
+          );
         } else {
-          prefixes = [
+          prefixes = choice(
             // minkuun, bitkuun
             {
               syllables: [[
@@ -247,7 +248,7 @@ function getAffixes(tam, conjugation, isCV) {
               ]],
               rest: []
             }
-          ];
+          );
         }
       } else {
         const cc = conjugation.nonpast.prefix.subjunctive.cc;
@@ -255,11 +256,11 @@ function getAffixes(tam, conjugation, isCV) {
         if (cc[0].value === `2`) {
           // b + 2 + ktub = biktub, not b2iktub
           // the sbjv prefix in this case starts with 2 so the .slice(1) gets rid of it
-          prefixes = [
+          prefixes = choice(
             { syllables: [], rest: [...conjugation.nonpast.prefix.indicative, ...cc.slice(1)] }
-          ];
+          );
         } else {
-          prefixes = [
+          prefixes = choice(
             // btiktub
             { syllables: [], rest: [...conjugation.nonpast.prefix.indicative, ...cc] },
             // bitiktub (again idk found it online more than once lul)
@@ -267,7 +268,7 @@ function getAffixes(tam, conjugation, isCV) {
               syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I]],
               rest: cc
             }
-          ];
+          );
         }
       }
       suffix = [...conjugation.nonpast.suffix];

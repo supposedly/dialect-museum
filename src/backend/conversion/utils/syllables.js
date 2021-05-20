@@ -1,4 +1,4 @@
-const obj = require(`../objects`);
+const { obj } = require(`../objects`);
 const { lastOf } = require(`./misc`);
 
 module.exports.newSyllable = (string = []) => obj.obj(
