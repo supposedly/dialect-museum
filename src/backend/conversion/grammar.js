@@ -3,7 +3,8 @@
 (function () {
 function id(x) { return x[0]; }
 
-  const _ = require(`./objects`);
+  const { obj: _ } = require(`./objects`);
+  const inits = require(`./initializers`);
 
   const moo = require(`moo`);
   const sym = require(`./symbols`);
@@ -45,6 +46,7 @@ function id(x) { return x[0]; }
       closeFilter: /\)/,
 
       openTag: { match: /\[/, push: `tag` },
+      openCtx: { match: /</, push: `ctxTag` },
 
       openWeakConsonant: /\{/,
       closeWeakConsonant: /\}/,
@@ -85,6 +87,7 @@ function id(x) { return x[0]; }
       iTense: $`I`,
       i: $`i`,
       ii: $`ii`,
+      uTense: $`U`,
       u: $`u`,
       uu: $`uu`,
       e: $`e`,
@@ -100,9 +103,11 @@ function id(x) { return x[0]; }
       fem: $`Fem`,
       dual: $`Dual`,
       plural: $`Plural`,
+      // femDual: $`FemDual`,  # not sure if good idea?
       femPlural: $`FemPlural`,
 
       stressed: $`Stressed`,
+      french: $`French`,
 
       genitiveDelimiter: {
         ...$`Of`,
@@ -137,56 +142,85 @@ function id(x) { return x[0]; }
       tam: /\b(?:pst|ind|sbjv|imp)\b/,
       voice: /\bactive\b|\bpassive\b/,
       closeTag: { match: /]/, pop: 1 }
+    },
+    ctxTag: {
+      ctxItem: /[a-zA-Z0-9\s]+/,
+      closeCtx: { match: />/, pop: 1 }
     }
   });
 
   const processToken = ([{ value }]) => _.process(value);
+
+  const init = (...args) => _.obj(...args).init(inits);
 var grammar = {
     Lexer: lexer,
     ParserRules: [
-    {"name": "sentence", "symbols": ["term"], "postprocess": id},
-    {"name": "sentence$ebnf$1$subexpression$1", "symbols": ["__", "term"], "postprocess": ([ , term]) => term},
-    {"name": "sentence$ebnf$1", "symbols": ["sentence$ebnf$1$subexpression$1"]},
-    {"name": "sentence$ebnf$1$subexpression$2", "symbols": ["__", "term"], "postprocess": ([ , term]) => term},
-    {"name": "sentence$ebnf$1", "symbols": ["sentence$ebnf$1", "sentence$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "sentence", "symbols": ["term", "sentence$ebnf$1"], "postprocess": ([a, b]) => [a, ...b]},
-    {"name": "term", "symbols": ["word"], "postprocess": id},
-    {"name": "term", "symbols": ["idafe"], "postprocess": id},
-    {"name": "term", "symbols": ["pp"], "postprocess": id},
-    {"name": "term", "symbols": ["verb"], "postprocess": id},
-    {"name": "term", "symbols": ["l"], "postprocess": id},
-    {"name": "term", "symbols": ["literal"], "postprocess": id},
+    {"name": "passage$ebnf$1", "symbols": []},
+    {"name": "passage$ebnf$1$subexpression$1", "symbols": ["__", "term"], "postprocess": ([ , term]) => term},
+    {"name": "passage$ebnf$1", "symbols": ["passage$ebnf$1", "passage$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "passage", "symbols": ["term", "passage$ebnf$1"], "postprocess": ([a, b]) => [a, ...b]},
+    {"name": "term", "symbols": ["raw_term"], "postprocess": id},
+    {"name": "term", "symbols": ["ctx"], "postprocess": id},
+    {"name": "ctx$ebnf$1$subexpression$1", "symbols": ["__", "ctx_tag"], "postprocess": ([ , value]) => value.replace(/\s+(\w)/g, (_, c) => `-${c.toUpperCase()}`)},
+    {"name": "ctx$ebnf$1", "symbols": ["ctx$ebnf$1$subexpression$1"]},
+    {"name": "ctx$ebnf$1$subexpression$2", "symbols": ["__", "ctx_tag"], "postprocess": ([ , value]) => value.replace(/\s+(\w)/g, (_, c) => `-${c.toUpperCase()}`)},
+    {"name": "ctx$ebnf$1", "symbols": ["ctx$ebnf$1", "ctx$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "ctx", "symbols": [{"literal":"(ctx"}, "ctx$ebnf$1", "__", "raw_term", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, term ]) =>  
+        },
+    {"name": "ctx_tag", "symbols": [(lexer.has("openCtx") ? {type: "openCtx"} : openCtx), (lexer.has("ctxItem") ? {type: "ctxItem"} : ctxItem), (lexer.has("closeCtx") ? {type: "closeCtx"} : closeCtx)], "postprocess": ([ , value]) => value},
+    {"name": "raw_term", "symbols": ["expr"], "postprocess": id},
+    {"name": "raw_term", "symbols": ["literal"], "postprocess": id},
+    {"name": "raw_term", "symbols": ["idafe"], "postprocess": id},
+    {"name": "raw_term", "symbols": ["l"], "postprocess": id},
     {"name": "literal$ebnf$1", "symbols": [/[^)]/]},
     {"name": "literal$ebnf$1", "symbols": ["literal$ebnf$1", /[^)]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "literal", "symbols": [{"literal":"(\\"}, "literal$ebnf$1", {"literal":")"}], "postprocess": ([ , value]) => _.obj(`literal`, {}, value.join(''))},
     {"name": "literal", "symbols": [{"literal":"(\\)"}, {"literal":")"}], "postprocess": () => _.obj(`literal`, {}, `)`)},
-    {"name": "idafe$subexpression$1", "symbols": ["word"]},
+    {"name": "idafe$subexpression$1", "symbols": ["expr"]},
     {"name": "idafe$subexpression$1", "symbols": ["idafe"]},
-    {"name": "idafe$subexpression$2", "symbols": ["word"]},
+    {"name": "idafe$subexpression$2", "symbols": ["expr"]},
     {"name": "idafe$subexpression$2", "symbols": ["l"]},
     {"name": "idafe$subexpression$2", "symbols": ["idafe"]},
     {"name": "idafe", "symbols": [{"literal":"(idafe"}, "__", "idafe$subexpression$1", "__", "idafe$subexpression$2", {"literal":")"}], "postprocess": 
-        ([ ,, [possessee] ,, [possessor], d]) => _.obj(
+        ([ ,, [possessee] ,, [possessor], d]) => init(
           `idafe`, {}, { possessee, possessor }
         )
           },
-    {"name": "l", "symbols": [{"literal":"(l"}, "__", "word", {"literal":")"}], "postprocess": ([ ,, value]) => _.obj(`def`, {}, value)},
+    {"name": "l", "symbols": [{"literal":"(l"}, "__", "expr", {"literal":")"}], "postprocess": ([ ,, value]) => init(`l`, {}, value)},
+    {"name": "expr", "symbols": ["word"], "postprocess": id},
+    {"name": "expr", "symbols": ["pp"], "postprocess": id},
+    {"name": "expr", "symbols": ["verb"], "postprocess": id},
+    {"name": "expr", "symbols": ["tif3il"], "postprocess": id},
+    {"name": "expr", "symbols": ["af3al"], "postprocess": id},
+    {"name": "af3al$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "af3al$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "af3al", "symbols": [{"literal":"(af3al"}, "__", "root", "af3al$ebnf$1", {"literal":")"}], "postprocess": ([ ,, root, augmentation]) => init(`af3al`, {}, { root, augmentation })},
+    {"name": "tif3il$ebnf$1$subexpression$1", "symbols": ["FEM"], "postprocess": id},
+    {"name": "tif3il$ebnf$1$subexpression$1", "symbols": ["FEM_PLURAL"], "postprocess": id},
+    {"name": "tif3il$ebnf$1", "symbols": ["tif3il$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "tif3il$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "tif3il$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "tif3il$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "tif3il", "symbols": [{"literal":"(tif3il"}, "__", "root", "tif3il$ebnf$1", "tif3il$ebnf$2", {"literal":")"}], "postprocess": 
+        ([ ,, root, fem, augmentation]) => init(`tif3il`, {}, { root, fem, augmentation })
+        },
     {"name": "pp$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
     {"name": "pp$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "pp", "symbols": [{"literal":"(pp"}, "__", "pronoun", "__", "pp_form", "__", "voice", "__", "root", "pp$ebnf$1", {"literal":")"}], "postprocess": 
-        ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => _.obj(
+        ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => init(
           `pp`, { conjugation, form, voice }, { root, augmentation }
         )
           },
     {"name": "verb$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
     {"name": "verb$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "verb", "symbols": [{"literal":"(verb"}, "__", "pronoun", "__", "verb_form", "__", "tam", "__", "root", "verb$ebnf$1", {"literal":")"}], "postprocess": 
-        ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => _.obj(
+        ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => init(
           `verb`, { form, tam, conjugation }, { root, augmentation }
         )
           },
-    {"name": "word", "symbols": ["stem"], "postprocess": ([value]) => _.obj(`word`, { augmentation: null }, value)},
-    {"name": "word", "symbols": ["stem", "augmentation"], "postprocess": ([value, augmentation]) => _.obj(`word`, { augmentation }, value)},
+    {"name": "word", "symbols": ["stem"], "postprocess": ([{ value }]) => init(`word`, { was: null, augmentation: null }, value)},
+    {"name": "word", "symbols": ["stem", "augmentation"], "postprocess": ([{ value }, augmentation]) => init(`word`, { augmentation }, value)},
     {"name": "stem", "symbols": ["consonant"], "postprocess": ([value]) => _.obj(`stem`, { stressedOn: null }, [_.obj(`syllable`, { stressed: null, weight: 0 }, value)])},
     {"name": "stem", "symbols": ["monosyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value)},
     {"name": "stem", "symbols": ["disyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value)},
@@ -263,10 +297,12 @@ var grammar = {
     {"name": "final_light_rime", "symbols": ["final_short_vowel"]},
     {"name": "final_heavy_rime", "symbols": ["short_vowel", "consonant"]},
     {"name": "final_stressed_rime$subexpression$1", "symbols": ["long_vowel"], "postprocess": id},
-    {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("aa") ? {type: "aa"} : aa)], "postprocess": id},
-    {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("ee") ? {type: "ee"} : ee)], "postprocess": id},
-    {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("oo") ? {type: "oo"} : oo)], "postprocess": id},
-    {"name": "final_stressed_rime", "symbols": ["final_stressed_rime$subexpression$1", "STRESSED"]},
+    {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("a") ? {type: "a"} : a)], "postprocess": id},
+    {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("e") ? {type: "e"} : e)], "postprocess": id},
+    {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("o") ? {type: "o"} : o)], "postprocess": id},
+    {"name": "final_stressed_rime$subexpression$2", "symbols": ["STRESSED"], "postprocess": id},
+    {"name": "final_stressed_rime$subexpression$2", "symbols": ["FRENCH"], "postprocess": id},
+    {"name": "final_stressed_rime", "symbols": ["final_stressed_rime$subexpression$1", "final_stressed_rime$subexpression$2"]},
     {"name": "final_superheavy_rime", "symbols": ["superheavy_rime"], "postprocess": id},
     {"name": "final_superheavy_rime", "symbols": ["PLURAL"]},
     {"name": "final_superheavy_rime", "symbols": ["FEM_PLURAL"]},
@@ -290,13 +326,15 @@ var grammar = {
     {"name": "vowel", "symbols": ["vowel$subexpression$1"], "postprocess": ([[value]]) => value},
     {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("a") ? {type: "a"} : a)]},
     {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("iTense") ? {type: "iTense"} : iTense)]},
-    {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("i") ? {type: "i"} : i)]},
+    {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("uTense") ? {type: "uTense"} : uTense)]},
     {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("e") ? {type: "e"} : e)]},
+    {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("o") ? {type: "o"} : o)]},
     {"name": "final_short_vowel$subexpression$1", "symbols": [(lexer.has("fem") ? {type: "fem"} : fem)]},
     {"name": "final_short_vowel", "symbols": ["final_short_vowel$subexpression$1"], "postprocess": ([[{ value }]]) => _.process(value)},
     {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("a") ? {type: "a"} : a)]},
     {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("iTense") ? {type: "iTense"} : iTense)]},
     {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("i") ? {type: "i"} : i)]},
+    {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("uTense") ? {type: "uTense"} : uTense)]},
     {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("u") ? {type: "u"} : u)]},
     {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("e") ? {type: "e"} : e)]},
     {"name": "short_vowel$subexpression$1", "symbols": [(lexer.has("o") ? {type: "o"} : o)]},
@@ -348,7 +386,7 @@ var grammar = {
     {"name": "strong_consonant$subexpression$1", "symbols": [(lexer.has("y") ? {type: "y"} : y)]},
     {"name": "strong_consonant$subexpression$1", "symbols": [(lexer.has("nullConsonant") ? {type: "nullConsonant"} : nullConsonant)]},
     {"name": "strong_consonant", "symbols": ["strong_consonant$subexpression$1"], "postprocess": ([[{ value }]]) => _.process(value)},
-    {"name": "pronoun", "symbols": [(lexer.has("openTag") ? {type: "openTag"} : openTag), (lexer.has("pronoun") ? {type: "pronoun"} : pronoun), (lexer.has("closeTag") ? {type: "closeTag"} : closeTag)], "postprocess": ([ , value]) => _.process(value)},
+    {"name": "pronoun", "symbols": [(lexer.has("openTag") ? {type: "openTag"} : openTag), (lexer.has("pronoun") ? {type: "pronoun"} : pronoun), (lexer.has("closeTag") ? {type: "closeTag"} : closeTag)], "postprocess": ([ , { type, meta, value }]) => init(type, meta, value)},
     {"name": "tam", "symbols": [(lexer.has("openTag") ? {type: "openTag"} : openTag), (lexer.has("tam") ? {type: "tam"} : tam), (lexer.has("closeTag") ? {type: "closeTag"} : closeTag)], "postprocess": ([ , value]) => value},
     {"name": "voice", "symbols": [(lexer.has("openTag") ? {type: "openTag"} : openTag), (lexer.has("voice") ? {type: "voice"} : voice), (lexer.has("closeTag") ? {type: "closeTag"} : closeTag)], "postprocess": ([ , value]) => value},
     {"name": "pp_form$subexpression$1", "symbols": [(lexer.has("higherForm") ? {type: "higherForm"} : higherForm)]},
@@ -357,7 +395,7 @@ var grammar = {
     {"name": "verb_form$subexpression$1", "symbols": [(lexer.has("higherForm") ? {type: "higherForm"} : higherForm)]},
     {"name": "verb_form$subexpression$1", "symbols": [(lexer.has("verbForm1") ? {type: "verbForm1"} : verbForm1)]},
     {"name": "verb_form", "symbols": [(lexer.has("openTag") ? {type: "openTag"} : openTag), "verb_form$subexpression$1", (lexer.has("closeTag") ? {type: "closeTag"} : closeTag)], "postprocess": ([ , [value]]) => value},
-    {"name": "augmentation", "symbols": ["delimiter", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun)], "postprocess": ([a, { value }]) => [a, _.obj(`pronoun`, {}, value)]},
+    {"name": "augmentation", "symbols": ["delimiter", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun)], "postprocess": ([delimiter, { value }]) => init(`augmentation`, { delimiter }, init(`pronoun`, {}, value))]},
     {"name": "delimiter", "symbols": [(lexer.has("objectDelimiter") ? {type: "objectDelimiter"} : objectDelimiter)], "postprocess": processToken},
     {"name": "delimiter", "symbols": [(lexer.has("genitiveDelimiter") ? {type: "genitiveDelimiter"} : genitiveDelimiter)], "postprocess": processToken},
     {"name": "delimiter", "symbols": [(lexer.has("pseudoSubjectDelimiter") ? {type: "pseudoSubjectDelimiter"} : pseudoSubjectDelimiter)], "postprocess": processToken},
@@ -369,9 +407,10 @@ var grammar = {
     {"name": "PLURAL", "symbols": [(lexer.has("plural") ? {type: "plural"} : plural)], "postprocess": processToken},
     {"name": "FEM_PLURAL", "symbols": [(lexer.has("femPlural") ? {type: "femPlural"} : femPlural)], "postprocess": processToken},
     {"name": "STRESSED", "symbols": [(lexer.has("stressed") ? {type: "stressed"} : stressed)], "postprocess": processToken},
+    {"name": "FRENCH", "symbols": [(lexer.has("french") ? {type: "french"} : french)], "postprocess": processToken},
     {"name": "__", "symbols": [(lexer.has("ws") ? {type: "ws"} : ws)], "postprocess": () => null}
 ]
-  , ParserStart: "sentence"
+  , ParserStart: "passage"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;

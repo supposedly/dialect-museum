@@ -1,5 +1,5 @@
 @{%
-  const _ = require(`./objects`);
+  const { obj: _ } = require(`./objects`);
   const inits = require(`./initializers`);
 
   const moo = require(`moo`);
@@ -42,6 +42,7 @@
       closeFilter: /\)/,
 
       openTag: { match: /\[/, push: `tag` },
+      openCtx: { match: /</, push: `ctxTag` },
 
       openWeakConsonant: /\{/,
       closeWeakConsonant: /\}/,
@@ -137,6 +138,10 @@
       tam: /\b(?:pst|ind|sbjv|imp)\b/,
       voice: /\bactive\b|\bpassive\b/,
       closeTag: { match: /]/, pop: 1 }
+    },
+    ctxTag: {
+      ctxItem: /[a-zA-Z0-9\s]+/,
+      closeCtx: { match: />/, pop: 1 }
     }
   });
 
@@ -152,42 +157,53 @@ makeInitial[Syllable] ->
   | consonant $Syllable  {% ([c, value]) => _.obj(`syllable`, value.meta, [c, ...value.value]) %}
   | $Syllable  {% ([value]) => value %}
 
-sentence ->
-    term {% id %}
-  | term (__ term {% ([ , term]) => term %}):+ {% ([a, b]) => [a, ...b] %}
+passage -> term (__ term {% ([ , term]) => term %}):* {% ([a, b]) => [a, ...b] %}
 
 term ->
-    word  {% id %}
-  | idafe  {% id %}
-  | pp  {% id %}
-  | verb  {% id %}
-  | l  {% id %}
-  | af3al {% id %}
-  | tif3il {% id %}
+  raw_term {% id %}
+  | ctx {% id %}
+
+ctx -> "(ctx" (__ ctx_tag {% ([ , value]) => value.replace(/\s+(\w)/g, (_, c) => `-${c.toUpperCase()}`) %}):+ __ raw_term ")" {%
+  ([ , ctx ,, term ]) =>  
+%}
+ctx_tag -> %openCtx %ctxItem %closeCtx {% ([ , value]) => value %}
+
+raw_term ->
+    expr {% id %}
   | literal {% id %}
+  | idafe  {% id %}
+  | l  {% id %}
 
 # `bruh (\ -- ) what (\?)` gives `bruh -- what?` (aka whitespace only matters inside the literal)
 literal ->
     "(\\" [^)]:+ ")"  {% ([ , value]) => _.obj(`literal`, {}, value.join('')) %}
   | "(\\)" ")"  {% () => _.obj(`literal`, {}, `)`) %}  # just in case
 
-af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(`af3al`, {}, { root, augmentation }) %}
-
-tif3il -> "(tif3il" __ root (FEM {% id %} | FEM_PLURAL {% id %}):? augmentation:? ")" {%
-  ([ ,, root, fem, augmentation]) => init(`tif3il`, {}, { root, fem, augmentation })
-%}
-
+# TODO: multiple words i guess
 idafe ->
   "(idafe"
-    __ (word | idafe)
-    __ (word | l | idafe)
+    __ (expr | idafe)
+    __ (expr | l | idafe)
   ")"  {%
     ([ ,, [possessee] ,, [possessor], d]) => init(
       `idafe`, {}, { possessee, possessor }
     )
   %}
 
-l -> "(l" __ word ")"  {% ([ ,, value]) => init(`def`, {}, value) %}
+l -> "(l" __ expr ")"  {% ([ ,, value]) => init(`l`, {}, value) %}
+
+expr ->
+    word  {% id %}
+  | pp  {% id %}
+  | verb  {% id %}
+  | tif3il {% id %}
+  | af3al {% id %}
+
+af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(`af3al`, {}, { root, augmentation }) %}
+
+tif3il -> "(tif3il" __ root (FEM {% id %} | FEM_PLURAL {% id %}):? augmentation:? ")" {%
+  ([ ,, root, fem, augmentation]) => init(`tif3il`, {}, { root, fem, augmentation })
+%}
 
 # pp needs to be a thing because -c behaves funny in participles (fe3la and fe3ilt-/fe3lit-/fe3liit-),
 # A is more likely to raise to /e:/ in fe3il participles,
