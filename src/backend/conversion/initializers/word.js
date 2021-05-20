@@ -1,7 +1,7 @@
 const { misc: { lastOf }, vowels } = require(`../utils`);
 
 function word({
-  meta: { augmentation, ...rest },
+  meta: { augmentation, was: type, ...rest },
   value
 }) {
   const lastSyllable = lastOf(value).value;
@@ -26,7 +26,7 @@ function word({
   // but it's more sillum->sillumo than sillmo, etc
   // otherwise there would be code for that in here instead of
   // just in the verb-initializer
-  return { type: `initialized`, meta: { augmentation, ...rest }, value };
+  return { type, meta: { augmentation, ...rest }, value };
 }
 
 module.exports = {
