@@ -166,7 +166,10 @@ var grammar = {
     {"name": "ctx$ebnf$1$subexpression$2", "symbols": ["__", "ctx_tag"], "postprocess": ([ , value]) => value.replace(/\s+(\w)/g, (_, c) => `-${c.toUpperCase()}`)},
     {"name": "ctx$ebnf$1", "symbols": ["ctx$ebnf$1", "ctx$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "ctx", "symbols": [{"literal":"(ctx"}, "ctx$ebnf$1", "__", "raw_term", {"literal":")"}], "postprocess": 
-        ([ , ctx ,, term ]) =>  
+        ([ , contextItems ,, term ]) => {
+          contextItems.forEach(term.ctx);
+          return term;
+        }
         },
     {"name": "ctx_tag", "symbols": [(lexer.has("openCtx") ? {type: "openCtx"} : openCtx), (lexer.has("ctxItem") ? {type: "ctxItem"} : ctxItem), (lexer.has("closeCtx") ? {type: "closeCtx"} : closeCtx)], "postprocess": ([ , value]) => value},
     {"name": "raw_term", "symbols": ["expr"], "postprocess": id},
