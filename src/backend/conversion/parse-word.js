@@ -1,7 +1,7 @@
-const { lastOf } = require(`./utils/misc`);
-const { newSyllable, getSyllableWeight, setStressedSyllable } = require(`./utils/syllables`);
-const { alphabet: abc } = require(`./symbols`);
-const { obj, choice } = require(`./objects`);
+const {lastOf} = require(`./utils/misc`);
+const {newSyllable, getSyllableWeight, setStressedSyllable} = require(`./utils/syllables`);
+const {alphabet: abc} = require(`./symbols`);
+const {obj, choice} = require(`./objects`);
 
 function interpolateAndParse(strings, rootConsonants) {
   const alreadyStressed = strings[0].startsWith(`+`) || strings[0].startsWith(`-`);
@@ -22,7 +22,7 @@ function interpolateAndParse(strings, rootConsonants) {
         if (!alreadyStressed) {
           // ...and if i forget that convention...
           throw new Error(
-            `Inconsistent use of +- for stress in parseWord string: unexpected use`
+            `Inconsistent use of +- for stress in parseWord string: unexpected use`,
           );
         }
         lastSyllable.meta.stressed = chunk.startsWith(`+`);
@@ -30,13 +30,13 @@ function interpolateAndParse(strings, rootConsonants) {
       } else if (alreadyStressed && i > 0) {
         // ...ditto...
         throw new Error(
-          `Inconsistent use of +- for stress in parseWord string: unexpected disuse`
+          `Inconsistent use of +- for stress in parseWord string: unexpected disuse`,
         );
       }
       lastSyllable.value.push(
         ...chunk.split(`.`)  // m.u.s._.t > [m, u, s, _, t, ...]
           .filter(c => abc[c])  // to avoid undefined later
-          .map(c => obj.process(abc[c]))  // -> corresponding objects
+          .map(c => obj.process(abc[c])),  // -> corresponding objects
       );
     });
     if (rootConsonants.length) {
@@ -49,8 +49,8 @@ function interpolateAndParse(strings, rootConsonants) {
 function copy(syllables) {
   return syllables.map(s => obj.obj(
     `syllable`,
-    { ...s.meta },
-    [...s.value]
+    {...s.meta},
+    [...s.value],
   ));
 }
 
@@ -108,7 +108,7 @@ function addSchwa(syllables) {
 function parseWord({
   preTransform = [[]],
   postTransform = [[]],
-  meta = {}
+  meta = {},
 } = {}) {
   return (strings, ...rootConsonants) => {
     // by convention i'm gonna do all-or-nothing
@@ -147,15 +147,15 @@ function parseWord({
       transformedSyllables => postTransform.map(
         transforms => {
           const newCopy = copy(transformedSyllables);
-          const localMeta = { ...meta };
+          const localMeta = {...meta};
           // stuff like `false`, `null`, etc. is allowed and will just be skipped
           transforms.forEach(f => f && f(newCopy, localMeta));
-          return { result: newCopy, localMeta };
-        }
-      )
+          return {result: newCopy, localMeta};
+        },
+      ),
     ).flat();
 
-    return choice.choice(postTransformed.map(({ result, localMeta }) => obj.obj(`word`, localMeta, result)));
+    return choice.choice(postTransformed.map(({result, localMeta}) => obj.obj(`word`, localMeta, result)));
   };
 }
 
@@ -179,5 +179,5 @@ module.exports = {
     return word.value[0];
   }),
   parseString: createWordParserTag(([word]) => word.value.map(s => s.value).flat()),
-  parseLetter: createWordParserTag(([word]) => word.value[0].value[0])
+  parseLetter: createWordParserTag(([word]) => word.value[0].value[0]),
 };

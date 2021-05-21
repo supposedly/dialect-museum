@@ -3,5 +3,5 @@ const choice = require(`./choice`);
 
 module.exports = {
   obj,
-  choice
+  choice,
 };

@@ -72,10 +72,6 @@
           "variables": false
         }
       ],
-      "comma-dangle": [
-        "error",
-        "never"
-      ],
       "no-multi-spaces": [
         "warn",
         {
@@ -85,10 +81,7 @@
       "no-param-reassign": "off",
       "object-curly-spacing": [
         "error",
-        "always",
-        {
-          "objectsInObjects": false
-        }
+        "never"
       ],
       "object-curly-newline": "off",
       "no-underscore-dangle": "off",

@@ -1,10 +1,10 @@
-const { obj } = require(`../objects`);
-const { lastOf } = require(`./misc`);
+const {obj} = require(`../objects`);
+const {lastOf} = require(`./misc`);
 
 module.exports.newSyllable = (string = []) => obj.obj(
   `syllable`,
-  { stressed: null, weight: null },
-  string
+  {stressed: null, weight: null},
+  string,
 );
 
 module.exports.getSyllableWeight = s => {

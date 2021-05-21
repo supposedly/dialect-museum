@@ -1,6 +1,6 @@
-const { misc: { lastOf }} = require(`../utils`);
-const { parseWord, parseLetter } = require(`../parse-word`);
-const { choice } = require(`../objects`);
+const {misc: {lastOf}} = require(`../utils`);
+const {parseWord, parseLetter} = require(`../parse-word`);
+const {choice} = require(`../objects`);
 
 const AA = Object.freeze(parseLetter`aa`);
 
@@ -22,10 +22,10 @@ function augment(augmentation) {
   });
 }
 
-function af3al({ root: [$F, $3, $L, $Q], augmentation }) {
+function af3al({root: [$F, $3, $L, $Q], augmentation}) {
   const $ = parseWord({
     preTransform: [[fixAy]],
-    postTransform: [[augment(augmentation)]]
+    postTransform: [[augment(augmentation)]],
   });
 
   if ($Q) {
@@ -41,7 +41,7 @@ function af3al({ root: [$F, $3, $L, $Q], augmentation }) {
     return choice(
       $`2.a ${$F}.a.${$3}.${$L}`,
       $`2.a ${$F}.a.${$3} ${$L}.a`,
-      $`2.a.${$F} ${$3}.a/i.${$L}`
+      $`2.a.${$F} ${$3}.a/i.${$L}`,
     );
   }
 
@@ -49,5 +49,5 @@ function af3al({ root: [$F, $3, $L, $Q], augmentation }) {
 }
 
 module.exports = {
-  af3al
+  af3al,
 };

@@ -11,5 +11,5 @@ module.exports = {
   pp,
   pronoun,
   tif3il,
-  verb
+  verb,
 };

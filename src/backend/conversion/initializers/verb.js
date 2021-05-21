@@ -1,10 +1,10 @@
 const {
-  misc: { lastOf /* , backup */ },
-  syllables: { newSyllable },
-  vowels
+  misc: {lastOf /* , backup */},
+  syllables: {newSyllable},
+  vowels,
 } = require(`../utils`);
-const { parseWord, parseLetter } = require(`../parse-word`);
-const { choice: { choice }} = require(`../objects`);
+const {parseWord, parseLetter} = require(`../parse-word`);
+const {choice: {choice}} = require(`../objects`);
 
 const LAX_I = Object.freeze(parseLetter`I`);
 const I = Object.freeze(parseLetter`i`);
@@ -180,16 +180,16 @@ function getAffixes(tam, conjugation, isCV) {
       if (isCV) {
         prefixes = choice(
           // tkuun
-          { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cv },
+          {syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cv},
           // t.kuun
-          { syllables: [conjugation.nonpast.prefix.subjunctive.cv], rest: [] },
+          {syllables: [conjugation.nonpast.prefix.subjunctive.cv], rest: []},
           // tikuun
-          { syllables: [[...conjugation.nonpast.prefix.subjunctive.cv, LAX_I]], rest: [] }
+          {syllables: [[...conjugation.nonpast.prefix.subjunctive.cv, LAX_I]], rest: []},
         );
       } else {
         // tiktub
         prefixes = choice(
-          { syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cc }
+          {syllables: [], rest: conjugation.nonpast.prefix.subjunctive.cc},
         );
       }
       suffix = [...conjugation.nonpast.suffix];
@@ -202,30 +202,30 @@ function getAffixes(tam, conjugation, isCV) {
             {
               // "bikuun", tense i
               syllables: [[...conjugation.nonpast.prefix.indicative, I]],
-              rest: []
+              rest: [],
             },
             {
               // "bikuun", lax i
               // (3arabizi spelling: bekoun)
               syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I]],
-              rest: []
+              rest: [],
             },
             {
               // "biykuun", long vowel and/or possibly also some kinda phonetic diphthong
               // (3arabizi spellings: beykoun, biykoun)
               syllables: [[...conjugation.nonpast.prefix.indicative, I, ...cv]],
-              rest: []
+              rest: [],
             },
             // [huwwe] b.kuun
             {
               syllables: [conjugation.nonpast.prefix.indicative],
-              rest: []
+              rest: [],
             },
             // [huwwe] bkuun (...maybe this one is too much to have idk)
             {
               syllables: [],
-              rest: conjugation.nonpast.prefix.indicative
-            }
+              rest: conjugation.nonpast.prefix.indicative,
+            },
           );
         } else {
           prefixes = choice(
@@ -234,9 +234,9 @@ function getAffixes(tam, conjugation, isCV) {
               syllables: [[
                 ...conjugation.nonpast.prefix.indicative,
                 I,
-                ...cv
+                ...cv,
               ]],
-              rest: []
+              rest: [],
             },
             // mnikuun, btikuun (idk lol found it more than once online)
             // (3arabizi spellings: mnekoun, btekoun, mne2oul, bte2oul...)
@@ -244,10 +244,10 @@ function getAffixes(tam, conjugation, isCV) {
               syllables: [[
                 ...conjugation.nonpast.prefix.indicative,
                 ...cv,
-                LAX_I
+                LAX_I,
               ]],
-              rest: []
-            }
+              rest: [],
+            },
           );
         }
       } else {
@@ -257,17 +257,17 @@ function getAffixes(tam, conjugation, isCV) {
           // b + 2 + ktub = biktub, not b2iktub
           // the sbjv prefix in this case starts with 2 so the .slice(1) gets rid of it
           prefixes = choice(
-            { syllables: [], rest: [...conjugation.nonpast.prefix.indicative, ...cc.slice(1)] }
+            {syllables: [], rest: [...conjugation.nonpast.prefix.indicative, ...cc.slice(1)]},
           );
         } else {
           prefixes = choice(
             // btiktub
-            { syllables: [], rest: [...conjugation.nonpast.prefix.indicative, ...cc] },
+            {syllables: [], rest: [...conjugation.nonpast.prefix.indicative, ...cc]},
             // bitiktub (again idk found it online more than once lul)
             {
               syllables: [[...conjugation.nonpast.prefix.indicative, LAX_I]],
-              rest: cc
-            }
+              rest: cc,
+            },
           );
         }
       }
@@ -283,16 +283,16 @@ function getAffixes(tam, conjugation, isCV) {
       break;
     default:  // error?
       throw new Error(
-        `Unrecognized TAM in verb-initializer: ${tam} (supported values are sbjv, ind, imp, pst)`
+        `Unrecognized TAM in verb-initializer: ${tam} (supported values are sbjv, ind, imp, pst)`,
       );
   }
-  return { prefixes, suffix };
+  return {prefixes, suffix};
 }
 
 function verb({
   type,
-  meta: { conjugation, form, tam },
-  value: { root: [$F, $3, $L, $Q], augmentation }
+  meta: {conjugation, form, tam},
+  value: {root: [$F, $3, $L, $Q], augmentation},
 }) {
   // xor but being extra-explicit about it
   // (if form is quadriliteral then $Q must be given, and if not then not)
@@ -300,12 +300,12 @@ function verb({
     throw new Error(`Didn't expect fourth radical ${$Q} with form ${form}`);
   }
 
-  const { prefixes, suffix } = getAffixes(
+  const {prefixes, suffix} = getAffixes(
     tam,
     conjugation,
     // either the 2nd segment of the form is a vowel
     // or the verb is form-1 with a weak medial consonant
-    `aeiou`.includes(form[1]) || (`aiu`.includes(form) && $3.meta.weak)
+    `aeiou`.includes(form[1]) || (`aiu`.includes(form) && $3.meta.weak),
   );
 
   // const prefixers = makePrefixers(prefixes);
@@ -326,7 +326,7 @@ function verb({
     conjugation,
     form,
     tam,
-    root: $Q ? [$F, $3, $L, $Q] : [$F, $3, $L]
+    root: $Q ? [$F, $3, $L, $Q] : [$F, $3, $L],
   };
 
   const $ = parseWord({
@@ -345,14 +345,14 @@ function verb({
       // meaning the conjugation suffix can always just be attached
       // maybe this is a bad move and i should allow transformers to access the stem of the
       // verb but ah well
-      suffixer
+      suffixer,
     ]],
     // see XXX above at `const transformers = [...]`
     postTransform: [[
       (_, localMeta) => { localMeta.prefixes = prefixes; },
       augment(augmentation),
-      (form === `i` && tam === `pst` && conjugation.person.third() && conjugation.gender.masc()) && fixFi3il
-    ]]
+      (form === `i` && tam === `pst` && conjugation.person.third() && conjugation.gender.masc()) && fixFi3il,
+    ]],
   });
   // these two are just so i can see more-easily when $ adds affixes and when it doesn't
   const $_ = $;
@@ -381,12 +381,12 @@ function verb({
         if ($L.meta.weak) {
           return [
             ...$_`2.i.${$F} ${$3}.aa`,
-            ...$_`${$F}.${$3}.aa`
+            ...$_`${$F}.${$3}.aa`,
           ];
         }
         return [
           ...(conjugation.gender.masc() ? $`${$F}.${$3}.aa.${$L}` : $_`${$F}.${$3}.a.${$L}`),
-          ...$_`2.i.${$F} ${$3}.a.${$L}`
+          ...$_`2.i.${$F} ${$3}.a.${$L}`,
         ];
       }
       return _$_`${$F}.${$3}.a.${$L}`;
@@ -416,7 +416,7 @@ function verb({
         if ($L.meta.weak) {
           return [
             ...$_`2.i.${$F} ${$3}.ii`,
-            ...$_`${$F}.${$3}.ii`
+            ...$_`${$F}.${$3}.ii`,
           ];
         }
         return $_`2.i.${$F} ${$3}.i.${$L}`;
@@ -443,7 +443,7 @@ function verb({
         }
         return [
           ...(conjugation.gender.masc() ? $`${$F}.${$3}.oo.${$L}` : $_`${$F}.${$3}.u.${$L}`),
-          ...$_`2.i.${$F} ${$3}.u.${$L}`
+          ...$_`2.i.${$F} ${$3}.u.${$L}`,
         ];
       }
       return _$_`${$F}.${$3}.u.${$L}`;
@@ -506,13 +506,13 @@ function verb({
         return [
           ...$_`+n.${$F}.i -${$3}.I.${$L}`,
           ...$_`2.i.n ${$F}.I ${$3}.i.${$L}`,
-          ...(noSuffix ? [] : $_`n.${$F}.a ${$3}.a.${$L}`)
+          ...(noSuffix ? [] : $_`n.${$F}.a ${$3}.a.${$L}`),
         ];
       }
       return [
         ..._$_`+n.${$F}.i -${$3}.i.${$L}`,
         ..._$_`+n.${$F}.a -${$3}.a.${$L}`,
-        ..._$_`n.${$F}.I ${$3}.i.${$L}`
+        ..._$_`n.${$F}.I ${$3}.i.${$L}`,
       ];
     case `nfi3il`:
       // almost the same as nfa3al except npst conj are always yinfi3il not yinfa3al
@@ -541,14 +541,14 @@ function verb({
       if (tam === `imp`) {
         return [
           ...$_`+n.${$F}.i -${$3}.i.${$L}`,
-          ...$_`2.i.n ${$F}.I ${$3}.i.${$L}`
+          ...$_`2.i.n ${$F}.I ${$3}.i.${$L}`,
         ];
       }
       // TODO: could possibly check noSuffix and stuff here
       // to cut down on duplicates
       return [
         ..._$_`+n.${$F}.i -${$3}.i.${$L}`,
-        ..._$_`n.${$F}.I ${$3}.i.${$L}`
+        ..._$_`n.${$F}.I ${$3}.i.${$L}`,
       ];
     case `fta3al`:
       if ($3.meta.weak) {
@@ -577,13 +577,13 @@ function verb({
         return [
           ...$_`+${$F}.t.i -${$3}.i.${$L}`,
           ...$_`2.i.${$F} t.I ${$3}.i.${$L}`,
-          ...(noSuffix ? [] : $_`${$F}.t.a ${$3}.a.${$L}`)
+          ...(noSuffix ? [] : $_`${$F}.t.a ${$3}.a.${$L}`),
         ];
       }
       return [
         ..._$_`+${$F}.t.i -${$3}.i.${$L}`,
         ..._$_`+${$F}.t.a -${$3}.a.${$L}`,
-        ..._$_`${$F}.t.I ${$3}.i.${$L}`
+        ..._$_`${$F}.t.I ${$3}.i.${$L}`,
       ];
     case `fti3il`:
       // almost the same as fta3al except npst conj are always yifti3il not yifta3al
@@ -612,12 +612,12 @@ function verb({
       if (tam === `imp`) {
         return [
           ...$_`+${$F}.t.i -${$3}.i.${$L}`,
-          ...$_`2.i.${$F} t.I ${$3}.i.${$L}`
+          ...$_`2.i.${$F} t.I ${$3}.i.${$L}`,
         ];
       }
       return [
         ..._$_`+${$F}.t.i -${$3}.i.${$L}`,
-        ..._$_`${$F}.t.I ${$3}.i.${$L}`
+        ..._$_`${$F}.t.I ${$3}.i.${$L}`,
       ];
     case `staf3al`:
       // stehal-yistehil
@@ -671,5 +671,5 @@ function verb({
 }
 
 module.exports = {
-  verb
+  verb,
 };

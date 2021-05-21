@@ -1,5 +1,5 @@
-const { misc: { lastOf }, syllables: { newSyllable }} = require(`../utils`);
-const { parseWord, parseLetter } = require(`../parse-word`);
+const {misc: {lastOf}, syllables: {newSyllable}} = require(`../utils`);
+const {parseWord, parseLetter} = require(`../parse-word`);
 
 const AA = Object.freeze(parseLetter`aa`);
 const I = Object.freeze(parseLetter`i`);
@@ -42,16 +42,16 @@ function augment(augmentation) {
   });
 }
 
-function taf3iil({ type, root: [$F, $3, $L, $Q], suffix, augmentation }) {
+function taf3iil({type, root: [$F, $3, $L, $Q], suffix, augmentation}) {
   if ($Q) {
     throw new Error(
-      `Can't use quadriliteral root with taf3il: ${$F.value}${$3.value}${$L.value}${$Q.value}`
+      `Can't use quadriliteral root with taf3il: ${$F.value}${$3.value}${$L.value}${$Q.value}`,
     );
   }
 
   const meta = {
     was: type,
-    root: [$F, $3, $L]
+    root: [$F, $3, $L],
   };
 
   const $ = $L.meta.weak
@@ -59,17 +59,17 @@ function taf3iil({ type, root: [$F, $3, $L, $Q], suffix, augmentation }) {
       // if there's no suffix these will both default to FEM which is correct
       preTransform: [[aayc(suffix)], [iyc(suffix)]],
       postTransform: [[augment(augmentation)]],
-      meta
+      meta,
     })
     : parseWord({
       preTransform: [[suffix && addSuffix(suffix)]],
       postTransform: [[augment(augmentation)]],
-      meta
+      meta,
     });
 
   return $`t.a/i.${$F} ${$3}.ii.${$L}`;
 }
 
 module.exports = {
-  taf3iil
+  taf3iil,
 };

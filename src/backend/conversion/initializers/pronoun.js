@@ -1,9 +1,9 @@
-const { parseString: $, parseLetter } = require(`../parse-word`);
+const {parseString: $, parseLetter} = require(`../parse-word`);
 const _ = require(`../objects`);
-const { PERSONS: P, GENDERS: G, NUMBERS: N } = require(`../symbols`);
+const {PERSONS: P, GENDERS: G, NUMBERS: N} = require(`../symbols`);
 
 const I = Object.freeze(parseLetter`i`);
-const FEM_T = Object.freeze(_.edit(parseLetter`Fem`, { meta: { t: true }}));
+const FEM_T = Object.freeze(_.edit(parseLetter`Fem`, {meta: {t: true}}));
 
 // circumfix-generator for verbCircumfix()
 const suffixPrefix = (suffix, [cc, cv], indicative = $`b`) => ({
@@ -11,10 +11,10 @@ const suffixPrefix = (suffix, [cc, cv], indicative = $`b`) => ({
     indicative,
     subjunctive: {
       cc: [...cc, I],
-      cv: cv !== undefined ? cv : cc
-    }
+      cv: cv !== undefined ? cv : cc,
+    },
   },
-  suffix
+  suffix,
 });
 
 function ppSuffix(person, gender, number) {
@@ -24,7 +24,7 @@ function ppSuffix(person, gender, number) {
     if (number.dual()) { return $`Fem.Dual`; }
     if (number.plural()) { return $`FemPlural`; }
     throw new Error(
-      `Unrecognized conjugation for participles: ${person.value}${gender.value}${number.value}`
+      `Unrecognized conjugation for participles: ${person.value}${gender.value}${number.value}`,
     );
   }
   // masc and "commmon" gender are the same for now
@@ -32,7 +32,7 @@ function ppSuffix(person, gender, number) {
   if (number.dual()) { return $`Dual`; }  // merging verbal and nominal participles here
   if (number.plural()) { return $`Plural`; }
   throw new Error(
-    `Unrecognized conjugation for participles: ${person.value}${gender.value}${number.value}`
+    `Unrecognized conjugation for participles: ${person.value}${gender.value}${number.value}`,
   );
 }
 
@@ -57,7 +57,7 @@ function verbSuffix(person, gender, number) {
     return $`uu`;
   }
   throw new Error(
-    `Unrecognized conjugation for verbs: ${person.value}${gender.value}${number.value}`
+    `Unrecognized conjugation for verbs: ${person.value}${gender.value}${number.value}`,
   );
 }
 
@@ -96,29 +96,29 @@ function verbCircumfix(person, gender, number) {
     return suffixPrefix($`uu`, [$`y`]);
   }
   throw new Error(
-    `Unrecognized conjugation for verbs: ${person.value}${gender.value}${number.value}`
+    `Unrecognized conjugation for verbs: ${person.value}${gender.value}${number.value}`,
   );
 }
 
 // value is a string but we can still destructure it
-function pronoun({ value: [person, gender, number] }) {
+function pronoun({value: [person, gender, number]}) {
   person = {
     value: person,
     first() { return this.value === P.first; },
     second() { return this.value === P.second; },
-    third() { return this.value === P.third; }
+    third() { return this.value === P.third; },
   };
   gender = {
     value: gender,
     masc() { return this.value === G.masc; },
     fem() { return this.value === G.fem; },
-    common() { return this.value === G.common; }
+    common() { return this.value === G.common; },
   };
   number = {
     value: number,
     singular() { return this.value === N.singular; },
     dual() { return this.value === N.dual; },
-    plural() { return this.value === N.plural; }
+    plural() { return this.value === N.plural; },
   };
 
   return {
@@ -126,7 +126,7 @@ function pronoun({ value: [person, gender, number] }) {
     gender,
     number,
     participle: {
-      suffix: ppSuffix(person, gender, number)
+      suffix: ppSuffix(person, gender, number),
     },
     past: {
       suffix: verbSuffix(person, gender, number),
@@ -135,12 +135,12 @@ function pronoun({ value: [person, gender, number] }) {
       heavier() {
         const initial = this.suffix[0];
         return initial && (initial.type === `consonant` || initial.type === `epenthetic`);
-      }
+      },
     },
-    nonpast: verbCircumfix(person, gender, number)
+    nonpast: verbCircumfix(person, gender, number),
   };
 }
 
 module.exports = {
-  pronoun
+  pronoun,
 };

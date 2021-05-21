@@ -5,5 +5,5 @@ const vowels = require(`./vowels`);
 module.exports = {
   misc,
   syllables,
-  vowels
+  vowels,
 };

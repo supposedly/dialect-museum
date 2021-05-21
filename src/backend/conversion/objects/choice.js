@@ -31,5 +31,5 @@ function choice(...objs) {
 }
 
 module.exports = {
-  choice
+  choice,
 };

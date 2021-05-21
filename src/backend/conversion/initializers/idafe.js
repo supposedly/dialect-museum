@@ -1,4 +1,4 @@
-const { lastOf } = require(`../utils/misc`);
+const {lastOf} = require(`../utils/misc`);
 
 // TODO: numbers
 function toConstruct(word) {
@@ -17,23 +17,23 @@ function toConstruct(word) {
 
 function idafe({
   possessor,
-  possessee
+  possessee,
 }) {
   possessee = Array.isArray(possessee) ? possessee.map(toConstruct) : [toConstruct(possessee)];
   if (possessor.type === `chain`) {
     return {
       type: `chain`,
-      meta: { ...possessor.meta },
-      value: [...possessee, ...possessor.value]
+      meta: {...possessor.meta},
+      value: [...possessee, ...possessor.value],
     };
   }
   return {
     type: `chain`,
     meta: {},
-    value: [...possessee, possessor]
+    value: [...possessee, possessor],
   };
 }
 
 module.exports = {
-  idafe
+  idafe,
 };
