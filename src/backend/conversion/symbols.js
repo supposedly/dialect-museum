@@ -38,7 +38,6 @@ function c(map, createEmphatics = true) {
     const obj = {
       type: `consonant`,
       meta: {
-        emphatic: false,
         weak: false,
         intrinsic: {
           ...intrinsic,
@@ -46,6 +45,7 @@ function c(map, createEmphatics = true) {
           voicing: intrinsic.voicing,
           manner: props.manners.inv[intrinsic.manner],
           ly: {  // yes ik it's -ally
+            emphatic: false,
             semivocalic: false,
             rounded: false,
             ...intrinsic.ly,
@@ -58,7 +58,8 @@ function c(map, createEmphatics = true) {
     };
     names.forEach(n => { map[n] = obj; });
     if (createEmphatic) {
-      const emphatic = {...obj, meta: {...obj.meta, emphatic: true}};
+      const emphatic = {...obj};
+      emphatic.meta.intrinsic.ly.emphatic = true;
       names.forEach(n => {
         map[`${n}${map.emphatic}`] = emphatic;
       });
