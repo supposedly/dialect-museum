@@ -148,6 +148,8 @@
   const processToken = ([{ value }]) => _.process(value);
 
   const init = (...args) => _.obj(...args).init(inits);
+  /* const initAs = type => ([value]) => value.init(inits, type); */
+  const reInit = ([value]) => value.init(initializers)
 %}
 
 @lexer lexer
@@ -197,10 +199,10 @@ l -> "(l" __ expr ")"  {% ([ ,, value]) => init(`l`, {}, value) %}
 
 expr ->
     word  {% id %}
-  | pp  {% id %}
-  | verb  {% id %}
-  | tif3il {% id %}
-  | af3al {% id %}
+  | pp  {% reInit %}
+  | verb  {% reInit %}
+  | tif3il {% reInit %}
+  | af3al {% reInit %}
 
 af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(`af3al`, {}, { root, augmentation }) %}
 

@@ -152,6 +152,8 @@ function id(x) { return x[0]; }
   const processToken = ([{ value }]) => _.process(value);
 
   const init = (...args) => _.obj(...args).init(inits);
+  /* const initAs = type => ([value]) => value.init(inits, type); */
+  const reInit = ([value]) => value.init(initializers)
 var grammar = {
     Lexer: lexer,
     ParserRules: [
@@ -192,10 +194,10 @@ var grammar = {
           },
     {"name": "l", "symbols": [{"literal":"(l"}, "__", "expr", {"literal":")"}], "postprocess": ([ ,, value]) => init(`l`, {}, value)},
     {"name": "expr", "symbols": ["word"], "postprocess": id},
-    {"name": "expr", "symbols": ["pp"], "postprocess": id},
-    {"name": "expr", "symbols": ["verb"], "postprocess": id},
-    {"name": "expr", "symbols": ["tif3il"], "postprocess": id},
-    {"name": "expr", "symbols": ["af3al"], "postprocess": id},
+    {"name": "expr", "symbols": ["pp"], "postprocess": reInit},
+    {"name": "expr", "symbols": ["verb"], "postprocess": reInit},
+    {"name": "expr", "symbols": ["tif3il"], "postprocess": reInit},
+    {"name": "expr", "symbols": ["af3al"], "postprocess": reInit},
     {"name": "af3al$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
     {"name": "af3al$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "af3al", "symbols": [{"literal":"(af3al"}, "__", "root", "af3al$ebnf$1", {"literal":")"}], "postprocess": ([ ,, root, augmentation]) => init(`af3al`, {}, { root, augmentation })},
