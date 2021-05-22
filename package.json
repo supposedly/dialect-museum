@@ -85,7 +85,17 @@
       ],
       "object-curly-newline": "off",
       "no-underscore-dangle": "off",
-      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "comma-dangle": [
+        "error",
+        {
+          "arrays": "always-multiline",
+          "objects": "always-multiline",
+          "imports": "always-multiline",
+          "exports": "always-multiline",
+          "functions": "only-multiline"
+        }
+      ]
     }
   },
   "browserslist": [
