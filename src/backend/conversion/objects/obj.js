@@ -1,9 +1,9 @@
 class Obj {
-  constructor(type, meta, value) {
+  constructor(type, meta, value, context = new Set()) {
     this.type = type;
     this.meta = meta;
     this.value = value;
-    this.context = new Set();
+    this.context = context;
   }
 
   // Initialization is the process that'll turn e.g. (verb [...]) into a set of
@@ -29,20 +29,21 @@ class Obj {
   }
 }
 
-function obj(type, meta = {}, value) {
-  return new Obj(type, meta, value);
+function obj(type, meta, value, context) {
+  return new Obj(type, meta, value, context);
 }
 
 // gives an already-created object a resolver+transformer
-function process({type, meta, value}) {
-  return this.obj(type, meta, value);
+function process({type, meta, value, context}) {
+  return this.obj(type, meta, value, context);
 }
 
-function edit(og, {type, meta, value}) {
+function edit(og, {type, meta, value, context}) {
   return this.obj(
     type || og.type,
     {...og.meta, ...meta},
     value || og.value,
+    context || og.context,
   );
 }
 

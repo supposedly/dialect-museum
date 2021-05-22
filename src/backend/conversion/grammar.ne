@@ -163,7 +163,7 @@ term ->
   raw_term {% id %}
   | ctx {% id %}
 
-ctx -> "(ctx" (__ ctx_tag {% ([ , value]) => value.replace(/\s+(\w)/g, (_, c) => `-${c.toUpperCase()}`) %}):+ __ raw_term ")" {%
+ctx -> "(ctx" (__ ctx_tag {% ([ , value]) => value %}):+ __ raw_term ")" {%
   ([ , contextItems ,, term ]) => {
     contextItems.forEach(term.ctx);
     return term;

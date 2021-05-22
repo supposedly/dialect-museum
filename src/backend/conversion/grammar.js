@@ -161,9 +161,9 @@ var grammar = {
     {"name": "passage", "symbols": ["term", "passage$ebnf$1"], "postprocess": ([a, b]) => [a, ...b]},
     {"name": "term", "symbols": ["raw_term"], "postprocess": id},
     {"name": "term", "symbols": ["ctx"], "postprocess": id},
-    {"name": "ctx$ebnf$1$subexpression$1", "symbols": ["__", "ctx_tag"], "postprocess": ([ , value]) => value.replace(/\s+(\w)/g, (_, c) => `-${c.toUpperCase()}`)},
+    {"name": "ctx$ebnf$1$subexpression$1", "symbols": ["__", "ctx_tag"], "postprocess": ([ , value]) => value},
     {"name": "ctx$ebnf$1", "symbols": ["ctx$ebnf$1$subexpression$1"]},
-    {"name": "ctx$ebnf$1$subexpression$2", "symbols": ["__", "ctx_tag"], "postprocess": ([ , value]) => value.replace(/\s+(\w)/g, (_, c) => `-${c.toUpperCase()}`)},
+    {"name": "ctx$ebnf$1$subexpression$2", "symbols": ["__", "ctx_tag"], "postprocess": ([ , value]) => value},
     {"name": "ctx$ebnf$1", "symbols": ["ctx$ebnf$1", "ctx$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "ctx", "symbols": [{"literal":"(ctx"}, "ctx$ebnf$1", "__", "raw_term", {"literal":")"}], "postprocess": 
         ([ , contextItems ,, term ]) => {
