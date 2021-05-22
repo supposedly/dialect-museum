@@ -1,3 +1,6 @@
+/* eslint-disable max-classes-per-file */
+const symbols = require(`../symbols`);
+
 const _ = {
   h: `h`,
   2: `2`,
@@ -85,10 +88,16 @@ class Transformer {
   }
 }
 
+const subAlphabets = (...types) => Object.fromKeys(
+  types.map(
+    type => [type, Object.values(symbols.alphabet).filter(v => v.type === type)]
+  )
+);
+
 function mapWord(word) {
   const segMap = {};
   word.value.forEach((syllable, sylIdx) => {
-    syllable.value.forEach((segment, segIdx) => {
+    syllable.value.forEach(({value: segment}, segIdx) => {
       if (Array.isArray(segMap[segment])) {
         segMap[segment].push([sylIdx, segIdx]);
       } else {
@@ -97,6 +106,88 @@ function mapWord(word) {
     });
   });
   return segMap;
+}
+
+class Props {
+  constructor(obj) {
+    if (obj === undefined || obj === null) {
+      this.obj = {};
+      this.empty = true;
+    } else {
+      const objCopy = {...(obj instanceof Props ? obj.obj : obj)};
+      Object.entries(objCopy).forEach(([k, v]) => {
+        if (!(v instanceof Props) && v instanceof Object && !Array.isArray(v)) {
+          objCopy[k] = new Props(v);
+        }
+      });
+      this.obj = objCopy;
+      this.empty = false;
+    }
+  }
+
+  matches(other) {
+    return this.empty || this.obj.entries.every(([k, v]) => {
+      if (Object.prototype.hasOwnProperty.call(other, k)) {
+        return v instanceof Props ? v.matches(other[k]) : v === k;
+      }
+      return false;
+    });
+  }
+}
+
+class Cap {
+  constructor(word) {
+    this.word = word.value;
+    this.wordMap = mapWord(this.word);
+  }
+
+  wrap(results) {
+    // TODO: inspect handler to determine its dependencies
+    // assign dependencies to their dependents for change-listening
+    // and finish everything
+    return handler => results.forEach(handler);
+  }
+
+  segment(props) {
+    props = props instanceof Props ? props : new Props(props);
+    return this.wrap(
+      Object.values(this.wordMap)
+        .map(indices => indices.filter(([syl, seg]) => props.matches(this.word[syl][seg])))
+        .flat()
+    );
+  }
+
+  segmentOfType(type, props) {
+    props = props instanceof Props ? props : new Props(props);
+    // don't think i'll allow type or value to be set
+    const {meta: {intrinsic, ...rawMeta}} = props.obj;
+    const meta = new Props(rawMeta);
+    const searchSpace = props && intrinsic
+      ? subAlphabets[type].filter(c => intrinsic.matches(c.meta.intrinsic))
+      : subAlphabets[type];
+    return this.wrap(
+      searchSpace
+        .map(c => this.wordMap[c])
+        .map(indices => indices.filter(([syl, seg]) => meta.matches(this.word[syl][seg].meta)))
+        .flat()
+    );
+  }
+
+  consonant(props) {
+    return this.segmentOfType(`consonant`, props);
+  }
+
+  vowel(props) {
+    return this.segmentOfType(`vowel`, props);
+  }
+
+  epenthetic(props) {
+    return this.segmentOfType(`epenthetic`, props);
+  }
+
+  suffix(props) {
+    return this.segmentOfType(`suffix`, props);
+  }
 }
 
 const rules = [
