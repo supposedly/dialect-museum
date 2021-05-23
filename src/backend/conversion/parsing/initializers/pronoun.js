@@ -1,10 +1,10 @@
 const {type} = require(`../type`);
 const {parseString: $, parseLetter} = require(`../../parse-word`);
-const {obj: _} = require(`../../objects`);
+const {obj} = require(`../../objects`);
 const {PERSON: P, GENDER: G, NUMBER: N} = require(`../../symbols`);
 
 const I = Object.freeze(parseLetter`i`);
-const FEM_T = Object.freeze(_.edit(parseLetter`Fem`, {meta: {t: true}}));
+const FEM_T = Object.freeze(obj.edit(parseLetter`Fem`, {meta: {t: true}}));
 
 const _ = {
   FEM: $`Fem`,
