@@ -1,6 +1,6 @@
 const {fenum} = require(`../enums`);
 
-const type = fenum(
+const type = fenum([
   `augmentation`,
   `pronoun`,
   `stem`,
@@ -12,8 +12,8 @@ const type = fenum(
   `l`,
   `idafe`,
   `tif3il`,
-  `af3al`
-);
+  `af3al`,
+]);
 
 module.exports = {
   type,

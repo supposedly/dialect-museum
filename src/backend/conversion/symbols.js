@@ -22,8 +22,8 @@
 const {fenum} = require(`./enums`);
 const {type} = require(`./objects`);
 
-const articulator = fenum(`throat`, `root`, `mid`, `crown`, `lips`);
-const manner = fenum(`plosive`, `fricative`, `affricate`, `approximant`, `nasal`, `flap`);
+const articulator = fenum([`throat`, `root`, `mid`, `crown`, `lips`]);
+const manner = fenum([`plosive`, `fricative`, `affricate`, `approximant`, `nasal`, `flap`]);
 
 function c(map, createEmphatics = true) {
   function createConsonant(
@@ -216,7 +216,7 @@ const alphabet = {
   },
 
   // fem suffix is its own thing bc -a vs -e vs -i variation
-  Fem: {
+  c: {
     type: type.suffix,
     meta: {
       t: false,  // may be changed with edit() in objects.js
@@ -303,19 +303,19 @@ const higherVerbForms = [
 
 // technically this should be aa, ai, au, ia, ii, iu
 // but since verbs can only show up in one tense here fina nokhtser
-const verbForm = fenum(
+const verbForm = fenum([
   `a`,
   `i`,
   `u`,
-  ...higherVerbForms
-);
+  ...higherVerbForms,
+]);
 
-const ppForm = fenum(
+const ppForm = fenum([
   `anyForm1`,
   `fa3len`,
   `fe3il`,
-  ...higherVerbForms
-);
+  ...higherVerbForms,
+]);
 
 const PERSON = {
   first: `1`,
@@ -339,7 +339,7 @@ const [P, G, N] = [PERSON, GENDER, NUMBER];
 
 // not an enum because other code looks the individual chars of each element
 // could probably fix that by turning P/G/N into enums like
-// fenum(1, 2, 3), fenum(`m`, `f`, `c`), fenum(`s`, `d`, `p`)
+// fenum([1, 2, 3]), fenum([`m`, `f`, `c`]), fenum([`s`, `d`, `p`])
 // but that would need some refactoring
 const pronoun = [
   P.first  + G.masc   + N.singular,   // -e according to loun
@@ -361,17 +361,17 @@ const pronoun = [
 
 const negative = `X`;  // dunno how to implement this
 
-const tamToken = fenum(
+const tamToken = fenum([
   `pst`,
   `sbjv`,
   `ind`,
-  `imp`
-);
+  `imp`,
+]);
 
-const voiceToken = fenum(
+const voiceToken = fenum([
   `active`,
-  `passive`
-);
+  `passive`,
+]);
 
 module.exports = {
   articulator,

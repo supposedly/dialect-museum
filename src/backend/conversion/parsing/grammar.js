@@ -109,7 +109,7 @@ function id(x) { return x[0]; }
       noSchwa: $`_`,
       schwa: $`Schwa`,
 
-      fem: $`Fem`,
+      fem: $`c`,
       dual: $`Dual`,
       plural: $`Plural`,
       // femDual: $`FemDual`,  # not sure if good idea?

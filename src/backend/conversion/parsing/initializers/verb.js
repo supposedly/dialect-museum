@@ -139,7 +139,7 @@ function makeSuffixer(suffix) {
     // collapsed a.y into the diphthong ay at this point
     if (lastSegment.type === type.vowel || lastSegment.meta.weak) {
       if (
-        // $`Fem` is the only `type: suffix` object that can be found on verbs here
+        // $`fem` is the only `type: suffix` object that can be found on verbs here
         // and its initial segment is in fact a vowel
         suffix[0].type === type.vowel || suffix[0].value === `fem`
       ) {

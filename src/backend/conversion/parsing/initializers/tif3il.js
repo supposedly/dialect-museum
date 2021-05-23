@@ -4,7 +4,7 @@ const {parseWord, parseLetter} = require(`../../parse-word`);
 const AA = Object.freeze(parseLetter`aa`);
 const I = Object.freeze(parseLetter`i`);
 const Y = Object.freeze(parseLetter`y`);
-const FEM = Object.freeze(parseLetter`Fem`);
+const FEM = Object.freeze(parseLetter`c`);
 
 // transformer: -iiY(+c) and -iiY+C => -aayc and -aayC
 // only to be used when last consonant is weak

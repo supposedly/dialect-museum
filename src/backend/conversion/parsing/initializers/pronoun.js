@@ -4,12 +4,12 @@ const {obj} = require(`../../objects`);
 const {PERSON: P, GENDER: G, NUMBER: N} = require(`../../symbols`);
 
 const I = Object.freeze(parseLetter`i`);
-const FEM_T = Object.freeze(obj.edit(parseLetter`Fem`, {meta: {t: true}}));
+const FEM_T = Object.freeze(obj.edit(parseLetter`c`, {meta: {t: true}}));
 
 const _ = {
-  FEM: $`Fem`,
-  FEM_DUAL: $`Fem.Dual`,
-  FEM_PLURAL: $`Fem.Plural`,
+  FEM: $`c`,
+  FEM_DUAL: $`c.Dual`,
+  FEM_PLURAL: $`c.Plural`,
   NOTHING: $``,
   DUAL: $`Dual`,
   PLURAL: $`Plural`,
