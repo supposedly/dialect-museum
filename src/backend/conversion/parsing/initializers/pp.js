@@ -1,13 +1,14 @@
+const vowels = require(`../vowels`);
+const {type} = require(`../type`);
+const {parseWord, parseLetter} = require(`../../parse-word`);
+const {ppForm, voiceToken} = require(`../../symbols`);
 const {
   misc: {
     lastOf,
     newSyllable,
     backup,
   },
-  vowels,
 } = require(`../../utils`);
-const {type, parseWord: {parseWord, parseLetter}} = require(`..`);
-const {ppForm, voiceToken} = require(`../../symbols`);
 
 const Y = Object.freeze(parseLetter`y`);
 const AA = Object.freeze(parseLetter`aa`);
@@ -112,7 +113,7 @@ function pp({
 }) {
   // xor but being extra-explicit about it
   // (if form is quadriliteral then $Q must be given, and if not then not)
-  if (Boolean($Q) !== Boolean(ppForm.inv[form].endsWith(`2`))) {
+  if (Boolean($Q) !== Boolean(ppForm.keys[form].endsWith(`2`))) {
     throw new Error(`Didn't expect fourth radical ${$Q} with form ${form}`);
   }
 

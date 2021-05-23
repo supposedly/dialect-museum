@@ -1,6 +1,6 @@
 const obj = require(`./obj`);
 const choice = require(`./choice`);
-const {enums: {fenum}} = require(`./utils`);
+const {fenum} = require(`../enums`);
 
 const type = fenum(
   `consonant`,

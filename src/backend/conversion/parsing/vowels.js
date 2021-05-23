@@ -1,4 +1,4 @@
-const {parseWord: {parseLetter}} = require(`../parsing`);
+const {parseLetter} = require(`../parse-word`);
 
 const I = Object.freeze(parseLetter`i`);
 const LAX_I = Object.freeze(parseLetter`I`);

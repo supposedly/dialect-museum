@@ -1,5 +1,5 @@
 const {misc: {lastOf}, syllables: {newSyllable}} = require(`../../utils`);
-const {parseWord: {parseWord, parseLetter}} = require(`..`);
+const {parseWord, parseLetter} = require(`../../parse-word`);
 
 const AA = Object.freeze(parseLetter`aa`);
 const I = Object.freeze(parseLetter`i`);

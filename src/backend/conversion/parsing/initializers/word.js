@@ -1,5 +1,6 @@
-const {misc: {lastOf}, vowels} = require(`../../utils`);
-const {type} = require(`..`);
+const {type} = require(`../type`);
+const vowels = require(`../vowels`);
+const {misc: {lastOf}} = require(`../../utils`);
 
 function word({
   meta: {augmentation, was, ...rest},

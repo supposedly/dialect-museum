@@ -1,6 +1,7 @@
 class Choice {
-  constructor(choices) {
+  constructor(choices, context = new Set()) {
     this.choices = choices;
+    this.context = context;
   }
 
   init(initializers) {
@@ -8,7 +9,8 @@ class Choice {
   }
 
   ctx(item) {
-    this.choices.forEach(obj => obj.ctx(item));
+    /* this.choices.forEach(obj => obj.ctx(item)); */
+    this.context.add(item);
   }
 
   // remove duplicates based on key func

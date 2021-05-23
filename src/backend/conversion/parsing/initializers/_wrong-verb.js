@@ -1,11 +1,11 @@
 // this file is not used
 // it was my first attempt at a verb-initializer where i forgot that i should keep prefixes separate from the real word lol rip
+const vowels = require(`../vowels`);
+const {parseWord, parseLetter} = require(`../../parse-word`);
 const {
   misc: {lastOf, backup},
   syllables: {newSyllable},
-  vowels,
 } = require(`../utils`);
-const {parseWord, parseLetter} = require(`../parse-word`);
 
 const LAX_I = Object.freeze(parseLetter`I`);
 const I = Object.freeze(parseLetter`i`);

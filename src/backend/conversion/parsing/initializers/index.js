@@ -7,15 +7,15 @@ const {tif3il} = require(`./tif3il`);
 const {verb} = require(`./verb`);
 const {word} = require(`./word`);
 
-const {types} = require(`..`);
+const {type} = require(`../type`);
 
 module.exports = {
-  [types.af3al]: af3al,
-  [types.augmentation]: augmentation,
-  [types.idafe]: idafe,
-  [types.pp]: pp,
-  [types.pronoun]: pronoun,
-  [types.tif3il]: tif3il,
-  [types.verb]: verb,
-  [types.word]: word,
+  [type.af3al]: af3al,
+  [type.augmentation]: augmentation,
+  [type.idafe]: idafe,
+  [type.pp]: pp,
+  [type.pronoun]: pronoun,
+  [type.tif3il]: tif3il,
+  [type.verb]: verb,
+  [type.word]: word,
 };

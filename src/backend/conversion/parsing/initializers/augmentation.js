@@ -1,4 +1,5 @@
-const {type, parseWord: {parseLetter}} = require(`..`);
+const {type} = require(`../type`);
+const {parseLetter} = require(`../../parse-word`);
 const {misc: {lastOf}} = require(`../../utils`);
 
 const L = Object.freeze(parseLetter`l`);

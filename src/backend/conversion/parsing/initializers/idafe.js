@@ -1,5 +1,5 @@
 const {misc: {lastOf}} = require(`../../utils`);
-const {type} = require(`..`);
+const {type} = require(`../type`);
 
 // TODO: numbers
 function toConstruct(word) {

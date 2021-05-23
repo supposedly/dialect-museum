@@ -1,11 +1,12 @@
+const {type} = require(`../type`);
+const vowels = require(`../vowels`);
+const {parseWord, parseLetter} = require(`../../parse-word`);
+const {choice: {choice}} = require(`../../objects`);
+const {verbForm, tamToken} = require(`../../symbols`);
 const {
   misc: {lastOf /* , backup */},
   syllables: {newSyllable},
-  vowels,
 } = require(`../../utils`);
-const {type, parseWord: {parseWord, parseLetter}} = require(`..`);
-const {choice: {choice}} = require(`../objects`);
-const {verbForm, tamToken} = require(`../../symbols`);
 
 const LAX_I = Object.freeze(parseLetter`I`);
 const I = Object.freeze(parseLetter`i`);
@@ -295,10 +296,11 @@ function verb({
   meta: {conjugation, form, tam},
   value: {root: [$F, $3, $L, $Q], augmentation},
 }) {
+  const stringForm = verbForm.keys[form];
   // xor but being extra-explicit about it
   // (if form is quadriliteral then $Q must be given, and if not then not)
-  if (Boolean($Q) !== Boolean(form.endsWith(`2`))) {
-    throw new Error(`Didn't expect fourth radical ${$Q} with form ${form}`);
+  if (Boolean($Q) !== Boolean(stringForm.endsWith(`2`))) {
+    throw new Error(`Didn't expect fourth radical ${$Q} with form ${stringForm}`);
   }
 
   const {prefixes, suffix} = getAffixes(
@@ -306,7 +308,7 @@ function verb({
     conjugation,
     // either the 2nd segment of the form is a vowel
     // or the verb is form-1 with a weak medial consonant
-    `aeiou`.includes(form[1]) || (`aiu`.includes(form) && $3.meta.weak),
+    `aeiou`.includes(stringForm[1]) || (`aiu`.includes(stringForm) && $3.meta.weak),
   );
 
   // const prefixers = makePrefixers(prefixes);

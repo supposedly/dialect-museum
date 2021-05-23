@@ -1,4 +1,4 @@
-const {enums: {fenum}} = require(`../utils`);
+const {fenum} = require(`../enums`);
 
 const type = fenum(
   `augmentation`,

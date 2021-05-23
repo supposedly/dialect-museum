@@ -148,7 +148,7 @@
       closeTag: { match: /]/, pop: 1 }
     },
     ctxTag: {
-      ctxItem: /[a-zA-Z0-9\s]+/,
+      ctxItem: /[a-zA-Z0-9 ]+/,
       closeCtx: { match: />/, pop: 1 }
     }
   });

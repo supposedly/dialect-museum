@@ -1,7 +1,6 @@
 const {misc: {lastOf}} = require(`../../utils`);
-const {parseWord, parseLetter} = require(`../parse-word`);
+const {parseWord, parseLetter} = require(`../../parse-word`);
 const {choice} = require(`../../objects`);
-
 const AA = Object.freeze(parseLetter`aa`);
 
 // transformer: replace -ay with -aa
@@ -17,7 +16,7 @@ function fixAy(base) {
 function augment(augmentation) {
   return augmentation && ((base, meta) => {
     const result = augmentation(base);
-    // "2asra3li" vs. "ma 2asra3ni"
+    // "2asra3li" vs. "ma 2asra3ni" (etymology doesn't matter for the 2nd one)
     meta.augmentation = result.delimiter === `dative` ? result.yFor1sg : result.nFor1sg;
   });
 }

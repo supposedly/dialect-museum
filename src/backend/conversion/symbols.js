@@ -19,7 +19,7 @@
 //   return true;
 // }
 
-const {enum: {fenum}} = require(`./utils`);
+const {fenum} = require(`./enums`);
 const {type} = require(`./objects`);
 
 const articulator = fenum(`throat`, `root`, `mid`, `crown`, `lips`);

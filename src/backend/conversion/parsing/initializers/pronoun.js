@@ -1,5 +1,6 @@
-const {type, parseWord: {parseString: $, parseLetter}} = require(`..`);
-const _ = require(`../../objects`);
+const {type} = require(`../type`);
+const {parseString: $, parseLetter} = require(`../../parse-word`);
+const {obj: _} = require(`../../objects`);
 const {PERSON: P, GENDER: G, NUMBER: N} = require(`../../symbols`);
 
 const I = Object.freeze(parseLetter`i`);
