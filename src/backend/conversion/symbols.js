@@ -317,6 +317,18 @@ const ppForm = fenum([
   ...higherVerbForms,
 ]);
 
+const tamToken = fenum([
+  `pst`,
+  `sbjv`,
+  `ind`,
+  `imp`,
+]);
+
+const voiceToken = fenum([
+  `active`,
+  `passive`,
+]);
+
 const PERSON = {
   first: `1`,
   second: `2`,
@@ -361,18 +373,6 @@ const pronoun = [
 
 const negative = `X`;  // dunno how to implement this
 
-const tamToken = fenum([
-  `pst`,
-  `sbjv`,
-  `ind`,
-  `imp`,
-]);
-
-const voiceToken = fenum([
-  `active`,
-  `passive`,
-]);
-
 module.exports = {
   articulator,
   manner,
@@ -380,11 +380,11 @@ module.exports = {
   alphabet,
   verbForm,
   ppForm,
+  tamToken,
+  voiceToken,
   PERSON,
   GENDER,
   NUMBER,
   pronoun,
   negative,
-  tamToken,
-  voiceToken,
 };

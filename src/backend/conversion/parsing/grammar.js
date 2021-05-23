@@ -60,6 +60,10 @@ function id(x) { return x[0]; }
       openWeakConsonant: /\{/,
       closeWeakConsonant: /\}/,
 
+      genderedNumber: /[12]/,
+      numberGender: /m|f/,
+      number: /0|[12]0{1,3}|[3-9]0?/,
+
       2: c`2`,
       3: c`3`,
       b: c`b`,
@@ -109,7 +113,7 @@ function id(x) { return x[0]; }
       noSchwa: $`_`,
       schwa: $`Schwa`,
 
-      fem: $`c`,
+      fem: $`Fem`,
       dual: $`Dual`,
       plural: $`Plural`,
       // femDual: $`FemDual`,  # not sure if good idea?
@@ -161,7 +165,8 @@ function id(x) { return x[0]; }
 
   const init = (...args) => _.obj(...args).init(inits);
   /* const initAs = type => ([value]) => value.init(inits, type); */
-  const reInit = ([value]) => value.init(initializers)
+  /* const reInit = ([value]) => value.init(inits) */
+  const initWordChoices = ([value]) => value.map(word => word.init(inits));
 var grammar = {
     Lexer: lexer,
     ParserRules: [
@@ -202,10 +207,12 @@ var grammar = {
           },
     {"name": "l", "symbols": [{"literal":"(l"}, "__", "expr", {"literal":")"}], "postprocess": ([ ,, value]) => init(type.l, {}, value)},
     {"name": "expr", "symbols": ["word"], "postprocess": id},
-    {"name": "expr", "symbols": ["pp"], "postprocess": reInit},
-    {"name": "expr", "symbols": ["verb"], "postprocess": reInit},
-    {"name": "expr", "symbols": ["tif3il"], "postprocess": reInit},
-    {"name": "expr", "symbols": ["af3al"], "postprocess": reInit},
+    {"name": "expr", "symbols": ["pp"], "postprocess": initWordChoices},
+    {"name": "expr", "symbols": ["verb"], "postprocess": initWordChoices},
+    {"name": "expr", "symbols": ["tif3il"], "postprocess": initWordChoices},
+    {"name": "expr", "symbols": ["af3al"], "postprocess": initWordChoices},
+    {"name": "number", "symbols": [{"literal":"(number"}, "__", {"literal":"["}, (lexer.has("numberGender") ? {type: "numberGender"} : numberGender), {"literal":"]"}, "__", (lexer.has("genderedNumber") ? {type: "genderedNumber"} : genderedNumber), {"literal":")"}], "postprocess": ([ ,,, gender ,, quantity ]) => init(type.number, {}, { gender, quantity })},
+    {"name": "number", "symbols": [{"literal":"(number"}, "__", (lexer.has("number") ? {type: "number"} : number), {"literal":")"}], "postprocess": ([ ,, quantity ]) => init(type.number, {}, { quantity })},
     {"name": "af3al$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
     {"name": "af3al$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "af3al", "symbols": [{"literal":"(af3al"}, "__", "root", "af3al$ebnf$1", {"literal":")"}], "postprocess": ([ ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation })},

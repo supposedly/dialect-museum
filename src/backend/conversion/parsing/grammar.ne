@@ -56,6 +56,10 @@
       openWeakConsonant: /\{/,
       closeWeakConsonant: /\}/,
 
+      genderedNumber: /[12]/,
+      numberGender: /m|f/,
+      number: /0|[12]0{1,3}|[3-9]0?/,
+
       2: c`2`,
       3: c`3`,
       b: c`b`,
@@ -212,6 +216,9 @@ expr ->
   | verb  {% initWordChoices %}
   | tif3il {% initWordChoices %}
   | af3al {% initWordChoices %}
+
+number -> "(number" __ "[" %numberGender "]" __ %genderedNumber ")" {% ([ ,,, gender ,, quantity ]) => init(type.number, {}, { gender, quantity }) %}
+   | "(number" __ %number ")" {% ([ ,, quantity ]) => init(type.number, {}, { quantity }) %}
 
 af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }) %}
 

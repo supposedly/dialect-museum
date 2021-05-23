@@ -13,6 +13,7 @@ const type = fenum([
   `idafe`,
   `tif3il`,
   `af3al`,
+  `number`,
 ]);
 
 module.exports = {
