@@ -1,6 +1,6 @@
-const {misc: {lastOf}} = require(`../utils`);
+const {misc: {lastOf}} = require(`../../utils`);
 const {parseWord, parseLetter} = require(`../parse-word`);
-const {choice} = require(`../objects`);
+const {choice} = require(`../../objects`);
 
 const AA = Object.freeze(parseLetter`aa`);
 

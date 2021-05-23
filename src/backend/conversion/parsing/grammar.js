@@ -3,11 +3,11 @@
 (function () {
 function id(x) { return x[0]; }
 
-  const { obj: _ } = require(`./objects`);
+  const { obj: _ } = require(`../objects`);
   const inits = require(`./initializers`);
 
   const moo = require(`moo`);
-  const sym = require(`./symbols`);
+  const sym = require(`../symbols`);
   const abc = sym.alphabet;
 
   // // generate regex
@@ -400,7 +400,7 @@ var grammar = {
     {"name": "verb_form$subexpression$1", "symbols": [(lexer.has("higherForm") ? {type: "higherForm"} : higherForm)]},
     {"name": "verb_form$subexpression$1", "symbols": [(lexer.has("verbForm1") ? {type: "verbForm1"} : verbForm1)]},
     {"name": "verb_form", "symbols": [(lexer.has("openTag") ? {type: "openTag"} : openTag), "verb_form$subexpression$1", (lexer.has("closeTag") ? {type: "closeTag"} : closeTag)], "postprocess": ([ , [value]]) => value},
-    {"name": "augmentation", "symbols": ["delimiter", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun)], "postprocess": ([delimiter, { value }]) => init(`augmentation`, { delimiter }, init(`pronoun`, {}, value))]},
+    {"name": "augmentation", "symbols": ["delimiter", (lexer.has("pronoun") ? {type: "pronoun"} : pronoun)], "postprocess": ([delimiter, { value }]) => init(`augmentation`, { delimiter }, init(`pronoun`, {}, value))},
     {"name": "delimiter", "symbols": [(lexer.has("objectDelimiter") ? {type: "objectDelimiter"} : objectDelimiter)], "postprocess": processToken},
     {"name": "delimiter", "symbols": [(lexer.has("genitiveDelimiter") ? {type: "genitiveDelimiter"} : genitiveDelimiter)], "postprocess": processToken},
     {"name": "delimiter", "symbols": [(lexer.has("pseudoSubjectDelimiter") ? {type: "pseudoSubjectDelimiter"} : pseudoSubjectDelimiter)], "postprocess": processToken},

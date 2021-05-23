@@ -1,7 +1,8 @@
-const {misc: {lastOf}, vowels} = require(`../utils`);
+const {misc: {lastOf}, vowels} = require(`../../utils`);
+const {type} = require(`..`);
 
 function word({
-  meta: {augmentation, was: type, ...rest},
+  meta: {augmentation, was, ...rest},
   value,
 }) {
   const lastSyllable = lastOf(value).value;
@@ -15,8 +16,8 @@ function word({
   // TODO: extend this to -X (-sh) suffix and -jiyy
   if (augmentation.delimiter.value === `dative`) {
     if (
-      a.type === `vowel` && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
-      && b.type === `consonant`
+      a.type === type.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
+      && b.type === type.consonant
     ) {
       lastSyllable.splice(-2, 1, vowels.contract(a));
     }
@@ -26,7 +27,7 @@ function word({
   // but it's more sillum->sillumo than sillmo, etc
   // otherwise there would be code for that in here instead of
   // just in the verb-initializer
-  return {type, meta: {augmentation, ...rest}, value};
+  return {type: was, meta: {augmentation, ...rest}, value};
 }
 
 module.exports = {

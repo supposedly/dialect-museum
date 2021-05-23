@@ -1,6 +1,6 @@
-const {parseString: $, parseLetter} = require(`../parse-word`);
-const _ = require(`../objects`);
-const {PERSONS: P, GENDERS: G, NUMBERS: N} = require(`../symbols`);
+const {type, parseWord: {parseString: $, parseLetter}} = require(`..`);
+const _ = require(`../../objects`);
+const {PERSON: P, GENDER: G, NUMBER: N} = require(`../../symbols`);
 
 const I = Object.freeze(parseLetter`i`);
 const FEM_T = Object.freeze(_.edit(parseLetter`Fem`, {meta: {t: true}}));
@@ -134,7 +134,7 @@ function pronoun({value: [person, gender, number]}) {
       // in other words, returns true if this suffix has -ay- before it in a geminate past verb
       heavier() {
         const initial = this.suffix[0];
-        return initial && (initial.type === `consonant` || initial.type === `epenthetic`);
+        return initial && (initial.type === type.consonant || initial.type === type.epenthetic);
       },
     },
     nonpast: verbCircumfix(person, gender, number),

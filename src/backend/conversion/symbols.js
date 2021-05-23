@@ -19,7 +19,11 @@
 //   return true;
 // }
 
-const props = require(`./phoneme-properties`);
+const {enum: {fenum}} = require(`./utils`);
+const {type} = require(`./objects`);
+
+const articulator = fenum(`throat`, `root`, `mid`, `crown`, `lips`);
+const manner = fenum(`plosive`, `fricative`, `affricate`, `approximant`, `nasal`, `flap`);
 
 function c(map, createEmphatics = true) {
   function createConsonant(
@@ -36,14 +40,14 @@ function c(map, createEmphatics = true) {
       names.push(sub || `_${name}`);
     }
     const obj = {
-      type: `consonant`,
+      type: type.consonant,
       meta: {
         weak: false,
         intrinsic: {
           ...intrinsic,
-          articulator: props.articulators.inv[intrinsic.articulator],
+          articulator: intrinsic.articulator,
           voicing: intrinsic.voicing,
-          manner: props.manners.inv[intrinsic.manner],
+          manner: intrinsic.manner,
           ly: {  // yes ik it's -ally
             emphatic: false,
             semivocalic: false,
@@ -76,7 +80,7 @@ function v(map) {
       return map;
     }
     map[name] = {
-      type: `vowel`,
+      type: type.vowel,
       meta: {
         intrinsic: {
           length: name.length,
@@ -96,64 +100,64 @@ function v(map) {
 }
 
 // anything that isn't a letter is capitalized
-module.exports.alphabet = {
+const alphabet = {
   ...c({
     emphatic: `*`,  // goes after the emphatic letter
   })
   // glottal
-  (`h`, `h`, {intrinsic: {articulator: `throat`, voicing: false, manner: `fricative`}})
-  (`2`, `2`, {intrinsic: {articulator: `throat`, voicing: false, manner: `plosive`}})
+  (`h`, `h`, {intrinsic: {articulator: articulator.throat, voicing: false, manner: manner.fricative}})
+  (`2`, `2`, {intrinsic: {articulator: articulator.throat, voicing: false, manner: manner.plosive}})
   // pharyngeal
-  (`7`, `7`, {intrinsic: {articulator: `throat`, voicing: false, manner: `fricative`}})
-  (`3`, `3`, {intrinsic: {articulator: `throat`, voicing: true, manner: `approximant`}})
+  (`7`, `7`, {intrinsic: {articulator: articulator.throat, voicing: false, manner: manner.fricative}})
+  (`3`, `3`, {intrinsic: {articulator: articulator.throat, voicing: true, manner: manner.approximant}})
   // uvular
-  (`5`, `5`, {intrinsic: {articulator: `root`, voicing: false, manner: `fricative`}})
-  (`gh`, `9`, {intrinsic: {articulator: `root`, voicing: true, manner: `fricative`}})
-  (`q`, `q`, {intrinsic: {articulator: `root`, voicing: false, manner: `plosive`}})
+  (`5`, `5`, {intrinsic: {articulator: articulator.root, voicing: false, manner: manner.fricative}})
+  (`gh`, `9`, {intrinsic: {articulator: articulator.root, voicing: true, manner: manner.fricative}})
+  (`q`, `q`, {intrinsic: {articulator: articulator.root, voicing: false, manner: manner.plosive}})
   // velar
-  (`k`, `k`, {intrinsic: {articulator: `root`, voicing: false, manner: `plosive`}})
-  (`g`, `g`, {intrinsic: {articulator: `root`, voicing: true, manner: `plosive`}})
+  (`k`, `k`, {intrinsic: {articulator: articulator.root, voicing: false, manner: manner.plosive}})
+  (`g`, `g`, {intrinsic: {articulator: articulator.root, voicing: true, manner: manner.plosive}})
   // palatal
   (`y`, `y`, {
     intrinsic: {
-      articulator: `body`,
+      articulator: articulator.mid,
       voicing: true,
-      manner: `approximant`,
+      manner: manner.approximant,
       ly: {semivocalic: true},
     },
   })
   // postalveolar
-  (`sh`, `x`, {intrinsic: {articulator: `crown`, voicing: false, manner: `fricative`}})
-  (`j`, `j`, {intrinsic: {articulator: `crown`, voicing: true, manner: `fricative`}})
+  (`sh`, `x`, {intrinsic: {articulator: articulator.crown, voicing: false, manner: manner.fricative}})
+  (`j`, `j`, {intrinsic: {articulator: articulator.crown, voicing: true, manner: manner.fricative}})
   // alveolar
-  (`r`, `r`, {intrinsic: {articulator: `crown`, voicing: true, manner: `flap`}})  // trill...
+  (`r`, `r`, {intrinsic: {articulator: articulator.crown, voicing: true, manner: manner.flap}})  // trill...
   // denti-alveolar idk
-  (`l`, `l`, {intrinsic: {articulator: `crown`, voicing: true, manner: `approximant`}})  // lateral don't real
-  (`s`, `s`, {intrinsic: {articulator: `crown`, voicing: false, manner: `fricative`}})
-  (`z`, `z`, {intrinsic: {articulator: `crown`, voicing: true, manner: `fricative`}})
-  (`n`, `n`, {intrinsic: {articulator: `crown`, voicing: true, manner: `nasal`}})
-  (`t`, `t`, {intrinsic: {articulator: `crown`, voicing: false, manner: `plosive`}})
-  (`d`, `d`, {intrinsic: {articulator: `crown`, voicing: true, manner: `plosive`}})
+  (`l`, `l`, {intrinsic: {articulator: articulator.crown, voicing: true, manner: manner.approximant}})  // lateral don't real
+  (`s`, `s`, {intrinsic: {articulator: articulator.crown, voicing: false, manner: manner.fricative}})
+  (`z`, `z`, {intrinsic: {articulator: articulator.crown, voicing: true, manner: manner.fricative}})
+  (`n`, `n`, {intrinsic: {articulator: articulator.crown, voicing: true, manner: manner.nasal}})
+  (`t`, `t`, {intrinsic: {articulator: articulator.crown, voicing: false, manner: manner.plosive}})
+  (`d`, `d`, {intrinsic: {articulator: articulator.crown, voicing: true, manner: manner.plosive}})
   // interdental
-  (`th`, `8`, {intrinsic: {articulator: `crown`, voicing: false, manner: `fricative`}})
-  (`dh`, `6`, {intrinsic: {articulator: `crown`, voicing: true, manner: `fricative`}})
+  (`th`, `8`, {intrinsic: {articulator: articulator.crown, voicing: false, manner: manner.fricative}})
+  (`dh`, `6`, {intrinsic: {articulator: articulator.crown, voicing: true, manner: manner.fricative}})
   // labiodental
-  (`f`, `f`, {intrinsic: {articulator: `lips`, voicing: false, manner: `fricative`}})
-  (`v`, `v`, {intrinsic: {articulator: `lips`, voicing: true, manner: `fricative`}})
+  (`f`, `f`, {intrinsic: {articulator: articulator.lips, voicing: false, manner: manner.fricative}})
+  (`v`, `v`, {intrinsic: {articulator: articulator.lips, voicing: true, manner: manner.fricative}})
   // bilabial
   (`w`, `w`, {
     intrinsic: {
-      articulator: `lips`,
+      articulator: articulator.lips,
       voicing: true,
-      manner: `approximant`,
+      manner: manner.approximant,
       ly: {semivocalic: true, rounded: true},
     },
   })
-  (`m`, `m`, {intrinsic: {articulator: `lips`, voicing: true, manner: `nasal`}})  // nasal???
-  (`b`, `b`, {intrinsic: {articulator: `lips`, voicing: true, manner: `plosive`}})
-  (`p`, `p`, {intrinsic: {articulator: `lips`, voicing: false, manner: `plosive`}})
+  (`m`, `m`, {intrinsic: {articulator: articulator.lips, voicing: true, manner: manner.nasal}})  // nasal???
+  (`b`, `b`, {intrinsic: {articulator: articulator.lips, voicing: true, manner: manner.plosive}})
+  (`p`, `p`, {intrinsic: {articulator: articulator.lips, voicing: false, manner: manner.plosive}})
   // null
-  (`null`, `0`, {createEmphatic: false, intrinsic: {articulator: null, voicing: true, manner: `fricative`}})
+  (`null`, `0`, {createEmphatic: false, intrinsic: {articulator: null, voicing: true, manner: null}})
   (null),
 
   ...v({})
@@ -195,7 +199,7 @@ module.exports.alphabet = {
   (null),
 
   _: {  // no schwa
-    type: `epenthetic`,
+    type: type.epenthetic,
     meta: {
       priority: false,
     },
@@ -203,7 +207,7 @@ module.exports.alphabet = {
     value: `noschwa`,
   },
   Schwa: {
-    type: `epenthetic`,
+    type: type.epenthetic,
     meta: {
       priority: true,
     },
@@ -213,7 +217,7 @@ module.exports.alphabet = {
 
   // fem suffix is its own thing bc -a vs -e vs -i variation
   Fem: {
-    type: `suffix`,
+    type: type.suffix,
     meta: {
       t: false,  // may be changed with edit() in objects.js
     },
@@ -222,63 +226,63 @@ module.exports.alphabet = {
   },
   // not sure if this is a good idea?
   // FemDual: {
-  //   type: `suffix`,
+  //   type: type.suffix,
   //   symbol: `<`,
   //   value: `fdual`
   // },
   FemPlural: {
-    type: `suffix`,
+    type: type.suffix,
     symbol: `C`,
     value: `fplural`,
   },
   // dual suffix is its own thing bc -ayn/-een vs -aan variation (per Mekki 1984)
   Dual: {
-    type: `suffix`,
+    type: type.suffix,
     symbol: `=`,
     value: `dual`,
   },
   // plural suffix is its own thing bc -iin-l- vs -in-l- variation, or stuff
   // like meshteryiin vs meshtriyyiin vs meshtriin
   Plural: {
-    type: `suffix`,
+    type: type.suffix,
     symbol: `+`,
     value: `plural`,
   },
 
   Stressed: {  // goes after the stressed syllable; only use if the word's stress is not automatic
-    type: `modifier`,  // idk lol
+    type: type.modifier,  // idk lol
     symbol: `"`,
     value: `stressed`,
   },
   French: {  // stressed and nasalized; lOsyON kappitAN
-    type: `modifier`,
+    type: type.modifier,
     symbol: `N`,
     value: `nasalized`,
   },
 
   Of: {  // introduces idafe pronouns
-    type: `delimiter`,
+    type: type.delimiter,
     symbol: `-`,
     value: `genitive`,
   },
   Object: {  // introduces verbs and active participles
-    type: `delimiter`,
+    type: type.delimiter,
     symbol: `.`,
     value: `object`,
   },
   PseudoSubject: {  // s`arr~3ms/s`all~3ms, badd~3ms/bidd~3ms, أوعك أصحك etc
-    type: `delimiter`,
+    type: type.delimiter,
     symbol: `~`,
     value: `pseudo-subject`,
   },
   Dative: {  // this stands for the dative L
-    type: `delimiter`,
+    type: type.delimiter,
     symbol: `|`,
     value: `dative`,
   },
 };
 
-module.exports.higherVerbForms = [
+const higherVerbForms = [
   `fa33al`,
   `tfa33al`,
   `stfa33al`,
@@ -299,36 +303,45 @@ module.exports.higherVerbForms = [
 
 // technically this should be aa, ai, au, ia, ii, iu
 // but since verbs can only show up in one tense here fina nokhtser
-module.exports.verbForm1 = [`a`, `i`, `u`];
+const verbForm = fenum(
+  `a`,
+  `i`,
+  `u`,
+  ...higherVerbForms
+);
 
-module.exports.ppForm1 = [
-  `1/both`,
-  `1/fa3len`,
-  `1/fe3il`,
-  // ...higherVerbForms
-];
+const ppForm = fenum(
+  `anyForm1`,
+  `fa3len`,
+  `fe3il`,
+  ...higherVerbForms
+);
 
-module.exports.PERSONS = {
+const PERSON = {
   first: `1`,
   second: `2`,
   third: `3`,
 };
 
-module.exports.GENDERS = {
+const GENDER = {
   masc: `m`,
   fem: `f`,
   common: `c`,
 };
 
-module.exports.NUMBERS = {
+const NUMBER = {
   singular: `s`,
   dual: `d`,
   plural: `p`,
 };
 
-const [P, G, N] = [this.PERSONS, this.GENDERS, this.NUMBERS];
+const [P, G, N] = [PERSON, GENDER, NUMBER];
 
-module.exports.pronouns = [
+// not an enum because other code looks the individual chars of each element
+// could probably fix that by turning P/G/N into enums like
+// fenum(1, 2, 3), fenum(`m`, `f`, `c`), fenum(`s`, `d`, `p`)
+// but that would need some refactoring
+const pronoun = [
   P.first  + G.masc   + N.singular,   // -e according to loun
   P.first  + G.fem    + N.singular,   // -i according to loun
   P.first  + G.common + N.singular,   // the normal neutral one idk
@@ -346,4 +359,32 @@ module.exports.pronouns = [
   P.third  + G.common + N.plural,
 ];
 
-module.exports.negative = `X`;  // dunno how to implement this
+const negative = `X`;  // dunno how to implement this
+
+const tamToken = fenum(
+  `pst`,
+  `sbjv`,
+  `ind`,
+  `imp`
+);
+
+const voiceToken = fenum(
+  `active`,
+  `passive`
+);
+
+module.exports = {
+  articulator,
+  manner,
+  type,
+  alphabet,
+  verbForm,
+  ppForm,
+  PERSON,
+  GENDER,
+  NUMBER,
+  pronoun,
+  negative,
+  tamToken,
+  voiceToken,
+};

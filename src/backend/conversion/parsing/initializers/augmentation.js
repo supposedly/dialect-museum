@@ -1,5 +1,5 @@
-const {misc: {lastOf}} = require(`../utils`);
-const {parseLetter} = require(`../parse-word`);
+const {type, parseWord: {parseLetter}} = require(`..`);
+const {misc: {lastOf}} = require(`../../utils`);
 
 const L = Object.freeze(parseLetter`l`);
 
@@ -30,12 +30,12 @@ function cliticInContext(
     afterEndOf(segments) {
       const a = lastOf(segments);
       const b = lastOf(segments, 1);
-      if (b.type === `vowel` && b.length === 2) {
+      if (b.type === type.vowel && b.length === 2) {
         return this.after[b.value];
       }
       if (
-        a.type === `vowel` && a.length === 1
-        && b.type === `consonant` && !b.meta.intrinsic.ly.semivocalic
+        a.type === type.vowel && a.length === 1
+        && b.type === type.consonant && !b.meta.intrinsic.ly.semivocalic
       ) {
         return this.after.vc;
       }

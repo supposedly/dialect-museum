@@ -1,10 +1,13 @@
 @{%
-  const { obj: _ } = require(`./objects`);
+  const obj = require(`../objects`);
   const inits = require(`./initializers`);
+  const {type} = require(`.`);
 
   const moo = require(`moo`);
-  const sym = require(`./symbols`);
+  const sym = require(`../symbols`);
+
   const abc = sym.alphabet;
+  const _ = obj.obj;
 
   // // generate regex
   // const r = (strings, ...interp) => new RegExp(
@@ -34,6 +37,12 @@
   const $ = ([s]) => ({
     match: abc[s].symbol,
     value: () => abc[s]
+  });
+
+  // generate tokens from enum
+  const fromEnum = fenum => ({
+    match: new RegExp(fenum.keys.join(`|`)),
+    value: k => fenum[k]
   });
 
   const lexer = moo.states({
@@ -126,17 +135,16 @@
     },
     augmentation: {
       pronoun: {
-        match: new RegExp(sym.pronouns.join(`|`)),
+        match: new RegExp(sym.pronoun.join(`|`)),
         pop: 1
       }
     },
     tag: {
-      higherForm: new RegExp(sym.higherVerbForms.join(`|`)),
-      verbForm1: new RegExp(sym.verbForm1.join(`|`)),
-      ppForm1: new RegExp(sym.ppForm1.join(`|`)),
-      pronoun: new RegExp(sym.pronouns.join(`|`)),
-      tam: /\b(?:pst|ind|sbjv|imp)\b/,
-      voice: /\bactive\b|\bpassive\b/,
+      verbForm: fromEnum(sym.verbForm),
+      ppForm: fromEnum(sym.ppForm),
+      pronoun: new RegExp(sym.pronoun.join(`|`)),
+      tam: fromEnum(sym.tamToken),
+      voice: fromEnum(sym.voiceToken),
       closeTag: { match: /]/, pop: 1 }
     },
     ctxTag: {
@@ -155,8 +163,8 @@
 @lexer lexer
 
 makeInitial[Syllable] ->
-    ST $Syllable  {% ([st, value]) => _.obj(`syllable`, value.meta, [...st, ...value.value]) %}
-  | consonant $Syllable  {% ([c, value]) => _.obj(`syllable`, value.meta, [c, ...value.value]) %}
+    ST $Syllable  {% ([st, value]) => _.obj(type.syllable, value.meta, [...st, ...value.value]) %}
+  | consonant $Syllable  {% ([c, value]) => _.obj(type.syllable, value.meta, [c, ...value.value]) %}
   | $Syllable  {% ([value]) => value %}
 
 passage -> term (__ term {% ([ , term]) => term %}):* {% ([a, b]) => [a, ...b] %}
@@ -181,8 +189,8 @@ raw_term ->
 
 # `bruh (\ -- ) what (\?)` gives `bruh -- what?` (aka whitespace only matters inside the literal)
 literal ->
-    "(\\" [^)]:+ ")"  {% ([ , value]) => _.obj(`literal`, {}, value.join('')) %}
-  | "(\\)" ")"  {% () => _.obj(`literal`, {}, `)`) %}  # just in case
+    "(\\" [^)]:+ ")"  {% ([ , value]) => _.obj(type.literal, {}, value.join('')) %}
+  | "(\\)" ")"  {% () => _.obj(type.literal, {}, `)`) %}  # just in case
 
 # TODO: multiple words i guess
 idafe ->
@@ -191,11 +199,11 @@ idafe ->
     __ (expr | l | idafe)
   ")"  {%
     ([ ,, [possessee] ,, [possessor], d]) => init(
-      `idafe`, {}, { possessee, possessor }
+      type.idafe, {}, { possessee, possessor }
     )
   %}
 
-l -> "(l" __ expr ")"  {% ([ ,, value]) => init(`l`, {}, value) %}
+l -> "(l" __ expr ")"  {% ([ ,, value]) => init(type.l, {}, value) %}
 
 expr ->
     word  {% id %}
@@ -204,10 +212,10 @@ expr ->
   | tif3il {% reInit %}
   | af3al {% reInit %}
 
-af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(`af3al`, {}, { root, augmentation }) %}
+af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }) %}
 
 tif3il -> "(tif3il" __ root (FEM {% id %} | FEM_PLURAL {% id %}):? augmentation:? ")" {%
-  ([ ,, root, fem, augmentation]) => init(`tif3il`, {}, { root, fem, augmentation })
+  ([ ,, root, fem, augmentation]) => init(type.tif3il, {}, { root, fem, augmentation })
 %}
 
 # pp needs to be a thing because -c behaves funny in participles (fe3la and fe3ilt-/fe3lit-/fe3liit-),
@@ -221,7 +229,7 @@ pp -> "(pp"
     augmentation:?
   ")"  {%
     ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => init(
-      `pp`, { conjugation, form, voice }, { root, augmentation }
+      type.pp, { conjugation, form, voice }, { root, augmentation }
     )
   %}
 
@@ -236,7 +244,7 @@ verb ->
     augmentation:?
   ")"  {%
     ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => init(
-      `verb`, { form, tam, conjugation }, { root, augmentation }
+      type.verb, { form, tam, conjugation }, { root, augmentation }
     )
   %}
 
@@ -246,16 +254,16 @@ verb ->
 # a lot of the rest of the backend, none of which i thought to use stems in, so i had to go back
 # here and change `([value]) =>` to `([{ value }])) =>`
 word ->
-    stem  {% ([{ value }]) => init(`word`, { was: null, augmentation: null }, value) %}
-  | stem augmentation  {% ([{ value }, augmentation]) => init(`word`, { augmentation }, value) %}
+    stem  {% ([{ value }]) => init(type.word, { was: null, augmentation: null }, value) %}
+  | stem augmentation  {% ([{ value }, augmentation]) => init(type.word, { augmentation }, value) %}
 
 # messy because of stressedOn :(
 stem ->
-    consonant  {% ([value]) => _.obj(`stem`, { stressedOn: null }, [_.obj(`syllable`, { stressed: null, weight: 0 }, value)]) %}
-  | monosyllable  {% ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value) %}
-  | disyllable  {% ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value) %}
-  | trisyllable  {% ([{ stressedOn, value }]) => _.obj(`stem`, { stressedOn }, value) %}
-  | initial_syllable medial_syllable:* final_three_syllables  {% ([a, b, { stressedOn, value: c }]) => _.obj(`stem`, { stressedOn }, [a, ...b, ...c]) %}
+    consonant  {% ([value]) => _.obj(type.stem, { stressedOn: null }, [_.obj(type.syllable, { stressed: null, weight: 0 }, value)]) %}
+  | monosyllable  {% ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value) %}
+  | disyllable  {% ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value) %}
+  | trisyllable  {% ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value) %}
+  | initial_syllable medial_syllable:* final_three_syllables  {% ([a, b, { stressedOn, value: c }]) => _.obj(type.stem, { stressedOn }, [a, ...b, ...c]) %}
 
 monosyllable -> makeInitial[final_syllable  {% id %}]  {% ([syllable]) => ({
   stressedOn: -1,
@@ -334,14 +342,14 @@ initial_light_syllable -> makeInitial[light_syllable {% id %}]  {% id %}
 initial_heavy_syllable -> makeInitial[heavy_syllable {% id %}]  {% id %}
 initial_superheavy_syllable -> makeInitial[superheavy_syllable {% id %}]  {% id %}
 
-final_light_syllable -> consonant final_light_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 1, stressed: false }, [a, ...b]) %}
-final_heavy_syllable -> consonant final_heavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 2, stressed: false }, [a, ...b]) %}
-final_stressed_syllable -> consonant final_stressed_rime  {% ([a, b]) => _.obj(`syllable`, { weight: null, stressed: true }, [a, ...b]) %}
+final_light_syllable -> consonant final_light_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 1, stressed: false }, [a, ...b]) %}
+final_heavy_syllable -> consonant final_heavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 2, stressed: false }, [a, ...b]) %}
+final_stressed_syllable -> consonant final_stressed_rime  {% ([a, b]) => _.obj(type.syllable, { weight: null, stressed: true }, [a, ...b]) %}
 final_superheavy_syllable ->
-    consonant final_superheavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 3, stressed: false }, [a, ...b]) %}
+    consonant final_superheavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: false }, [a, ...b]) %}
   # this will allow this sequence to be word-initial (bc monosyllables) but w/e probably not worth fixing lol
   | FEM DUAL  {%
-    ([a, b]) => _.obj(`syllable`, { weight: 3, stressed: false }, [a, b])
+    ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: false }, [a, b])
   %}
 
 final_light_rime -> final_short_vowel
@@ -353,9 +361,9 @@ final_superheavy_rime ->
   | FEM_PLURAL
   | DUAL
 
-light_syllable -> consonant light_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 1, stressed: false }, [a, ...b]) %}
-heavy_syllable -> consonant heavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 2, stressed: false }, [a, ...b]) %}
-superheavy_syllable -> consonant superheavy_rime  {% ([a, b]) => _.obj(`syllable`, { weight: 3, stressed: false }, [a, ...b]) %}
+light_syllable -> consonant light_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 1, stressed: false }, [a, ...b]) %}
+heavy_syllable -> consonant heavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 2, stressed: false }, [a, ...b]) %}
+superheavy_syllable -> consonant superheavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: false }, [a, ...b]) %}
 
 light_rime -> short_vowel
 heavy_rime -> (long_vowel | short_vowel consonant)  {% id %}
@@ -388,13 +396,13 @@ strong_consonant -> (
 )  {% ([[{ value }]]) => _.process(value) %}
 
 # ditto
-pronoun -> %openTag %pronoun %closeTag  {% ([ , { type, meta, value }]) => init(type, meta, value) %}
+pronoun -> %openTag %pronoun %closeTag  {% ([ , { value }]) => init(type.pronoun, {}, value) %}
 tam -> %openTag %tam %closeTag  {% ([ , value]) => value %}
 voice -> %openTag %voice %closeTag  {% ([ , value]) => value %}
-pp_form -> %openTag (%higherForm | %ppForm1) %closeTag  {% ([ , [value]]) => value %}
-verb_form -> %openTag (%higherForm | %verbForm1) %closeTag  {% ([ , [value]]) => value %}
+pp_form -> %openTag %ppForm %closeTag  {% ([ , value]) => value %}
+verb_form -> %openTag %verbForm %closeTag  {% ([ , value]) => value %}
 
-augmentation -> delimiter %pronoun  {% ([delimiter, { value }]) => init(`augmentation`, { delimiter }, init(`pronoun`, {}, value))] %}
+augmentation -> delimiter %pronoun  {% ([delimiter, { value }]) => init(type.augmentation, { delimiter }, init(type.pronoun, {}, value)) %}
 
 # ditto
 delimiter ->

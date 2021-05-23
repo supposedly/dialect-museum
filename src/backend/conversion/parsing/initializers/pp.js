@@ -5,8 +5,9 @@ const {
     backup,
   },
   vowels,
-} = require(`../utils`);
-const {parseWord, parseLetter} = require(`../parse-word`);
+} = require(`../../utils`);
+const {type, parseWord: {parseWord, parseLetter}} = require(`..`);
+const {ppForm, voiceToken} = require(`../../symbols`);
 
 const Y = Object.freeze(parseLetter`y`);
 const AA = Object.freeze(parseLetter`aa`);
@@ -18,7 +19,7 @@ const pushSuffix = suffix => base => lastOf(base).value.push(...suffix);
 // if last syllable's last segment isn't a consonant, just make an empty new syllable
 function bumpLastConsonant(base) {
   const lastSyllable = lastOf(base).value;
-  if (lastOf(lastSyllable).type === `consonant`) {
+  if (lastOf(lastSyllable).type === type.consonant) {
     base.push(newSyllable([lastSyllable.pop()]));
   } else {
     base.push(newSyllable());
@@ -92,8 +93,8 @@ function augment(augmentation) {
       const a = lastOf(lastSyllable, 1);
       const b = lastOf(lastSyllable);
       if (
-        a.type === `vowel` && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
-        && b.type === `consonant`
+        a.type === type.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
+        && b.type === type.consonant
       ) {
         lastSyllable.splice(-2, 1, vowels.contract(a));
       }
@@ -102,6 +103,7 @@ function augment(augmentation) {
 }
 
 function pp({
+  type: was,
   meta: {conjugation, form, voice},
   value: {
     root: [$F, $3, $L, $Q],
@@ -110,17 +112,18 @@ function pp({
 }) {
   // xor but being extra-explicit about it
   // (if form is quadriliteral then $Q must be given, and if not then not)
-  if (Boolean($Q) !== Boolean(form.endsWith(`2`))) {
+  if (Boolean($Q) !== Boolean(ppForm.inv[form].endsWith(`2`))) {
     throw new Error(`Didn't expect fourth radical ${$Q} with form ${form}`);
   }
 
-  const isActiveVoice = voice === `active`;
+  const isActiveVoice = voice === voiceToken.active;
   const suffix = conjugation.participle.suffix;
   const lastRadical = $Q || $L;
 
   const ayFixer = (!suffix.length && lastRadical.meta.weak) && fixAy;
 
   const meta = {
+    was,
     augmentation,
     conjugation,
     form,
@@ -150,9 +153,9 @@ function pp({
   const pickVoice = (active, passive) => (isActiveVoice ? active : passive);
 
   switch (form) {
-    case `1/both`:
+    case ppForm.anyForm1:
       if (isActiveVoice) {
-        throw new Error(`Active voice is currently unsupported with 1/both`);
+        throw new Error(`Active voice is currently unsupported with anyForm1`);
       }
       // now passive
       if ($3.meta.weak) {
@@ -179,9 +182,9 @@ function pp({
       }
       // default
       return $`m.a.${$F} ${$3}.uu.${$L}`;
-    case `1/fe3il`: {
+    case ppForm.fe3il: {
       if (!isActiveVoice) {
-        throw new Error(`Can't use passive voice with 1/fe3il`);
+        throw new Error(`Can't use passive voice with fe3il`);
       }
       const variants = [];
       // 2akal, 2a5ad
@@ -199,12 +202,12 @@ function pp({
         ...($3.meta.weak ? $iy`${$F}.aa y.i.${$L}` : $iy`${$F}.aa ${$3}.i.${$L}`),
       ];
     }
-    case `1/fa3len`:
+    case ppForm.fa3len:
       if (!isActiveVoice) {
-        throw new Error(`Can't use passive voice with 1/fa3len`);
+        throw new Error(`Can't use passive voice with fa3len`);
       }
       return $`${$F}.a.${$3} ${$L}.aa.n`;
-    case `fa33al`:
+    case ppForm.fa33al:
       return pickVoice(
         [
           ...$iy`m.${$F}.a.${$3} ${$3}.i.${$L}`,
@@ -212,7 +215,7 @@ function pp({
         ],
         $`m.${$F}.a.${$3} ${$3}.a.${$L}`,
       );
-    case `tfa33al`:
+    case ppForm.tfa33al:
       return pickVoice(
         [
           ...$`m.${$F}.a.${$3} ${$3}.a.${$L}`,
@@ -224,7 +227,7 @@ function pp({
         ],
         $`m.i.t ${$F}.a.${$3} ${$3}.a.${$L}`,
       );
-    case `stfa33al`:
+    case ppForm.stfa33al:
       // stanna-yestanna
       if ($F.meta.weak) {
         return pickVoice(
@@ -245,7 +248,7 @@ function pp({
         ],
         $`m.i.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`,
       );
-    case `fe3al`:
+    case ppForm.fe3al:
       return pickVoice(
         [
           ...$iy`m.${$F}.aa ${$3}.i.${$L}`,
@@ -253,7 +256,7 @@ function pp({
         ],
         $`m.${$F}.aa ${$3}.a.${$L}`,
       );
-    case `tfe3al`:
+    case ppForm.tfe3al:
       return pickVoice(
         [
           ...$`m.${$F}.aa ${$3}.a.${$L}`,
@@ -262,7 +265,7 @@ function pp({
         ],
         $`m.i.t ${$F}.aa ${$3}.a.${$L}`,
       );
-    case `stfe3al`:
+    case ppForm.stfe3al:
       // stehal-yistehal
       if ($F.meta.weak) {
         return pickVoice(
@@ -280,7 +283,7 @@ function pp({
         ],
         $`m.i.s._.t ${$F}.aa ${$3}.a.${$L}`,
       );
-    case `2af3al`:
+    case ppForm[`2af3al`]:
       return pickVoice(
         [
           ...$iy`m.i.${$F} ${$3}.i.${$L}`,
@@ -292,7 +295,7 @@ function pp({
           ...$`m.2.a.${$F} ${$3}.a.${$L}`,
         ],
       );
-    case `nfa3al`:
+    case ppForm.nfa3al:
       if ($3.meta.weak) {
         return $`m.i.n ${$F}.aa.${$L}`;
       }
@@ -317,7 +320,7 @@ function pp({
           ...$`m.i.n ${$F}.a ${$3}.a.${$L}`,
         ],
       );
-    case `nfi3il`:
+    case ppForm.nfi3il:
       // same as nfa3al but can never be minfa3al when 'active', only minfi3il
       if ($3.meta.weak) {
         return $`m.i.n ${$F}.aa.${$L}`;
@@ -342,7 +345,7 @@ function pp({
           ...$`m.i.n ${$F}.a ${$3}.a.${$L}`,
         ],
       );
-    case `fta3al`:
+    case ppForm.fta3al:
       if ($3.meta.weak) {
         return $`m.i.${$F} t.aa.${$L}`;
       }
@@ -360,7 +363,7 @@ function pp({
           ...$`m.i.${$F} t.a ${$3}.a.${$L}`,
         ],
       );
-    case `fti3il`:
+    case ppForm.fti3il:
       // same as fta3al but can never be mifta3al when 'active', only mifti3il
       if ($3.meta.weak) {
         return $`m.i.${$F} t.aa.${$L}`;
@@ -378,7 +381,7 @@ function pp({
           ...$`m.i.${$F} t.a ${$3}.a.${$L}`,
         ],
       );
-    case `staf3al`:
+    case ppForm.staf3al:
       if ($3.meta.weak) {
         // not including an "if $L.meta.weak" branch here because
         // the only verb possibly like that is sta7aa, and that
@@ -400,12 +403,12 @@ function pp({
         $iy`m.i.s t.a.${$F} ${$3}.i.${$L}`,
         $`m.i.s t.a.${$F} ${$3}.a.${$L}`,
       );
-    case `f3all`:
+    case ppForm.f3all:
       if (isActiveVoice) {
         return $`m.i.${$F} ${$3}.a.${$L}.${$L}`;
       }
       throw new Error(`Can't use passive voice with f3all`);
-    case `fa3la2`:
+    case ppForm.fa3la2:
       return pickVoice(
         [
           ...$iy`m.${$F}.a.${$3} ${$L}.i.${$Q}`,
@@ -413,7 +416,7 @@ function pp({
         ],
         $`m.${$F}.a.${$3} ${$L}.a.${$Q}`,
       );
-    case `tfa3la2`:
+    case ppForm.tfa3la2:
       return pickVoice(
         [
           ...$`m.${$F}.a.${$3} ${$L}.a.${$Q}`,
@@ -423,7 +426,7 @@ function pp({
         ],
         $`m.i.t ${$F}.a.${$3} ${$L}.a.${$Q}`,
       );
-    case `stfa3la2`:
+    case ppForm.stfa3la2:
       if ($F.meta.weak) {
         // doesn't exist B)
         return pickVoice(

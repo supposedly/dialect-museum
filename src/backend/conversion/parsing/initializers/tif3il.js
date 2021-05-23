@@ -1,5 +1,5 @@
-const {misc: {lastOf}, syllables: {newSyllable}} = require(`../utils`);
-const {parseWord, parseLetter} = require(`../parse-word`);
+const {misc: {lastOf}, syllables: {newSyllable}} = require(`../../utils`);
+const {parseWord: {parseWord, parseLetter}} = require(`..`);
 
 const AA = Object.freeze(parseLetter`aa`);
 const I = Object.freeze(parseLetter`i`);
@@ -42,7 +42,7 @@ function augment(augmentation) {
   });
 }
 
-function taf3iil({type, root: [$F, $3, $L, $Q], suffix, augmentation}) {
+function tif3il({type: was, root: [$F, $3, $L, $Q], suffix, augmentation}) {
   if ($Q) {
     throw new Error(
       `Can't use quadriliteral root with taf3il: ${$F.value}${$3.value}${$L.value}${$Q.value}`,
@@ -50,7 +50,7 @@ function taf3iil({type, root: [$F, $3, $L, $Q], suffix, augmentation}) {
   }
 
   const meta = {
-    was: type,
+    was,
     root: [$F, $3, $L],
   };
 
@@ -71,5 +71,5 @@ function taf3iil({type, root: [$F, $3, $L, $Q], suffix, augmentation}) {
 }
 
 module.exports = {
-  taf3iil,
+  tif3il,
 };

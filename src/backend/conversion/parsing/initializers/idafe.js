@@ -1,8 +1,9 @@
-const {lastOf} = require(`../utils/misc`);
+const {misc: {lastOf}} = require(`../../utils`);
+const {type} = require(`..`);
 
 // TODO: numbers
 function toConstruct(word) {
-  if (word.type === `idafeChain`) {  // this shouldn't ever trigger but ykno...
+  if (word.type === type.idafe) {  // this shouldn't ever trigger but ykno...
     toConstruct(lastOf(word.value));
   }
   const lastSegment = lastOf(lastOf(word.value).value);
@@ -20,15 +21,15 @@ function idafe({
   possessee,
 }) {
   possessee = Array.isArray(possessee) ? possessee.map(toConstruct) : [toConstruct(possessee)];
-  if (possessor.type === `chain`) {
+  if (possessor.type === type.idafe) {
     return {
-      type: `chain`,
+      type: type.idafe,
       meta: {...possessor.meta},
       value: [...possessee, ...possessor.value],
     };
   }
   return {
-    type: `chain`,
+    type: type.idafe,
     meta: {},
     value: [...possessee, possessor],
   };
