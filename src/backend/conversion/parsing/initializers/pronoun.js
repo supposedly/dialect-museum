@@ -6,8 +6,27 @@ const {PERSON: P, GENDER: G, NUMBER: N} = require(`../../symbols`);
 const I = Object.freeze(parseLetter`i`);
 const FEM_T = Object.freeze(_.edit(parseLetter`Fem`, {meta: {t: true}}));
 
+const _ = {
+  FEM: $`Fem`,
+  FEM_DUAL: $`Fem.Dual`,
+  FEM_PLURAL: $`Fem.Plural`,
+  NOTHING: $``,
+  DUAL: $`Dual`,
+  PLURAL: $`Plural`,
+  T: $`t`,
+  NAA: $`n.aa`,
+  TII: $`t.ii`,
+  TUU: $`t.uu`,
+  II: $`ii`,
+  UU: $`uu`,
+  HAMZE: $`2`,
+  N: $`n`,
+  Y: $`y`,
+  B: $`b`,
+};
+
 // circumfix-generator for verbCircumfix()
-const suffixPrefix = (suffix, [cc, cv], indicative = $`b`) => ({
+const suffixPrefix = (suffix, [cc, cv], indicative = _.B) => ({
   prefix: {
     indicative,
     subjunctive: {
@@ -21,17 +40,17 @@ const suffixPrefix = (suffix, [cc, cv], indicative = $`b`) => ({
 function ppSuffix(person, gender, number) {
   // person only matters when clitics are added so we ignore it here
   if (gender.fem()) {
-    if (number.singular()) { return $`Fem`; }
-    if (number.dual()) { return $`Fem.Dual`; }
-    if (number.plural()) { return $`FemPlural`; }
+    if (number.singular()) { return _.FEM; }
+    if (number.dual()) { return _.FEM_DUAL; }
+    if (number.plural()) { return _.FEM_PLURAL; }
     throw new Error(
       `Unrecognized conjugation for participles: ${person.value}${gender.value}${number.value}`,
     );
   }
   // masc and "commmon" gender are the same for now
-  if (number.singular()) { return $``; }
-  if (number.dual()) { return $`Dual`; }  // merging verbal and nominal participles here
-  if (number.plural()) { return $`Plural`; }
+  if (number.singular()) { return _.NOTHING; }
+  if (number.dual()) { return _.DUAL; }  // merging verbal and nominal participles here
+  if (number.plural()) { return _.PLURAL; }
   throw new Error(
     `Unrecognized conjugation for participles: ${person.value}${gender.value}${number.value}`,
   );
@@ -40,22 +59,22 @@ function ppSuffix(person, gender, number) {
 // past-tense verbs
 function verbSuffix(person, gender, number) {
   if (person.first()) {
-    if (number.singular()) { return $`t`; }
-    return $`n.aa`;
+    if (number.singular()) { return _.T; }
+    return _.NAA;
   }
   if (person.second()) {
     if (number.singular()) {
-      if (gender.fem()) { return $`t.ii`; }
-      return $`t`;
+      if (gender.fem()) { return _.TII; }
+      return _.T;
     }
-    return $`t.uu`;
+    return _.TUU;
   }
   if (person.third()) {
     if (number.singular()) {
       if (gender.fem()) { return [FEM_T]; }  // -it/-at
-      return $``;
+      return _.NOTHING;
     }
-    return $`uu`;
+    return _.UU;
   }
   throw new Error(
     `Unrecognized conjugation for verbs: ${person.value}${gender.value}${number.value}`,
@@ -67,34 +86,34 @@ function verbCircumfix(person, gender, number) {
   if (person.first()) {
     if (number.singular()) {
       // 1cs
-      return suffixPrefix($``, [$`2`, $``]);
+      return suffixPrefix(_.NOTHING, [_.HAMZE, _.NOTHING]);
     }
     // "1cd", 1cp
-    return suffixPrefix($``, [$`n`]);
+    return suffixPrefix(_.NOTHING, [_.N]);
   }
   if (person.second()) {
     if (number.singular()) {
       if (gender.fem()) {
         // 2fs
-        return suffixPrefix($`ii`, [$`t`]);
+        return suffixPrefix(_.II, [_.T]);
       }
       // 2ms, 2cs
-      return suffixPrefix($``, [$`t`]);
+      return suffixPrefix(_.NOTHING, [_.T]);
     }
     // 2cd, 2cp
-    return suffixPrefix($`uu`, [$`t`]);
+    return suffixPrefix(_.UU, [_.T]);
   }
   if (person.third()) {
     if (number.singular()) {
       if (gender.fem()) {
         // 3fs
-        return suffixPrefix($``, [$`t`]);
+        return suffixPrefix(_.NOTHING, [_.T]);
       }
       // 3ms, 3cs
-      return suffixPrefix($``, [$`y`]);
+      return suffixPrefix(_.NOTHING, [_.Y]);
     }
     // 3cp
-    return suffixPrefix($`uu`, [$`y`]);
+    return suffixPrefix(_.UU, [_.Y]);
   }
   throw new Error(
     `Unrecognized conjugation for verbs: ${person.value}${gender.value}${number.value}`,
