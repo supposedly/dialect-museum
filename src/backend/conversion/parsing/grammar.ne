@@ -157,7 +157,8 @@
 
   const init = (...args) => _.obj(...args).init(inits);
   /* const initAs = type => ([value]) => value.init(inits, type); */
-  const reInit = ([value]) => value.init(initializers)
+  /* const reInit = ([value]) => value.init(inits) */
+  const initWordChoices = ([value]) => value.map(word => word.init(inits));
 %}
 
 @lexer lexer
@@ -207,10 +208,10 @@ l -> "(l" __ expr ")"  {% ([ ,, value]) => init(type.l, {}, value) %}
 
 expr ->
     word  {% id %}
-  | pp  {% reInit %}
-  | verb  {% reInit %}
-  | tif3il {% reInit %}
-  | af3al {% reInit %}
+  | pp  {% initWordChoices %}
+  | verb  {% initWordChoices %}
+  | tif3il {% initWordChoices %}
+  | af3al {% initWordChoices %}
 
 af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }) %}
 
