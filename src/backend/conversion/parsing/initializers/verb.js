@@ -165,7 +165,7 @@ function makeSuffixer(suffix) {
 // (or an augmentation, actually - see comment in word-initializer)
 // applies before the suffix/augmentation is added
 function uToI(base) {
-  const lastSyllable = lastOf(base);
+  const lastSyllable = lastOf(base).value;
   const a = lastOf(lastSyllable, 1);
   const b = lastOf(lastSyllable);
 

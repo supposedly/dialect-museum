@@ -1,4 +1,5 @@
 const {obj} = require(`../objects`);
+const {type} = require(`../objects`);
 const {lastOf} = require(`./misc`);
 
 module.exports.newSyllable = (string = []) => obj.obj(
@@ -18,7 +19,7 @@ module.exports.getSyllableWeight = s => {
   // go backwards so we can break when we reach the nucleus (aka before the onset)
   for (let i = s.value.length - 1; i > 0; i -= 1) {
     const segment = s.value[i];
-    if (segment.type === `suffix`) {
+    if (segment.type === type.suffix) {
       // should technically be rimeLength =
       // instead of rimeLength +=
       // but idk maybe if i have something bugged like `word=b` it'd
@@ -35,11 +36,11 @@ module.exports.getSyllableWeight = s => {
       break;
     }
     // long vowels add 2, short vowels add 1
-    if (segment.type === `vowel`) {
+    if (segment.type === type.vowel) {
       rimeLength += segment.meta.intrinsic.length;
       break;
     }
-    if (segment.type === `consonant`) {
+    if (segment.type === type.consonant) {
       // consonants just add 1
       rimeLength += 1;
     }
