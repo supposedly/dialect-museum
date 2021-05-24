@@ -1,6 +1,7 @@
 /* eslint-disable max-classes-per-file */
 const symbols = require(`../symbols`);
 const {type: objType} = require(`../objs`);
+const {fenum} = require(`../enums`);
 
 const _ = {
   h: `h`,
@@ -95,136 +96,269 @@ const subAlphabets = Object.fromKeys(
   )
 );
 
+class Not {
+  constructor(value) {
+    this.value = value;
+  }
+
+  matches(other) {
+    // eslint-disable-next-line no-use-before-define
+    if (this.value instanceof Or || this.value instanceof Not) {
+      return this.value.matches(other);
+    }
+    return this.value !== other;
+  }
+}
+
+class Or {
+  constructor(...values) {
+    this.values = values;
+  }
+
+  matches(other) {
+    return this.values.some(value => {
+      if (value instanceof Not || value instanceof Or) {
+        return value.matches(other);
+      }
+      return value === other;
+    });
+  }
+}
+
+class Props {
+  constructor(...objs) {
+    if (objs === undefined || objs === null) {
+      objs = [];
+    }
+    this.objs = objs.map(obj => {
+      const objCopy = {...obj};
+      Object.entries(objCopy).forEach(([k, v]) => {
+        if (
+          !(v instanceof Props || v instanceof Not || v instanceof Or)
+          && v instanceof Object
+          && !Array.isArray(v)
+        ) {
+          objCopy[k] = new Props(v);
+        }
+      });
+      return objCopy;
+    });
+    this.empty = this.objs.length === 0;
+  }
+
+  matches(other) {
+    if (this.empty) {
+      return true;
+    }
+    return this.objs.some(
+      obj => Object.entries(obj).every(([k, v]) => {
+        if (Object.prototype.hasOwnProperty.call(other, k)) {
+          if (v instanceof Props || v instanceof Not || v instanceof Or) {
+            return v.matches(other[k]);
+          }
+          return v === other[k];
+        }
+        return false;
+      })
+    );
+  }
+
+  or(other) {
+    return new Props(...this.objs, ...other.objs);
+  }
+}
+
+const consonantPred = new Props({type: objType.consonant});
+const vowelPred = new Props({type: objType.vowel}).or({type: objType.suffix, meta: {t: false}, value: `fem`});
+
+const depType = fenum([
+  `type`,
+  `meta`,
+  `wordType`,
+  `wordMeta`,
+  `word`,
+  `prevConsonant`,
+  `nextConsonant`,
+  `prevVowel`,
+  `nextVowel`,
+]);
+
+function extractDeps(arrowFunc) {
+  const [s] = String(arrowFunc).split(`=>`, 1);
+  return [...s.matchAll(/(\w+)(?:\s*:\s*\w+)?/g)].map(match => match[1]);
+}
+
+class ID {
+  constructor(word, sylIdx, valIdx) {
+    this.word = word;
+    this.sylIdx = sylIdx === null ? word.length - 1 : sylIdx;
+    this.syllable = this.word[this.sylIdx];
+    this.valIdx = valIdx === null ? this.syllable.length - 1 : valIdx;
+    this.value = this.syllable[this.valIdx];
+  }
+
+  toString() {
+    // idx
+    return `${this.sylIdx},${this.segIdx}`;
+  }
+
+  of(otherWord) {
+    return new ID(otherWord, this.sylIdx, this.valIdx);
+  }
+
+  at(newSyl, newSeg) {
+    return new ID(this.word, newSyl, newSeg);
+  }
+}
+
 function mapWord(word) {
   const segMap = {};
   word.value.forEach((syllable, sylIdx) => {
     syllable.value.forEach(({value: segment}, segIdx) => {
       if (Array.isArray(segMap[segment])) {
-        segMap[segment].push([sylIdx, segIdx]);
+        segMap[segment].push(new ID(word.value, sylIdx, segIdx));
       } else {
-        segMap[segment] = [[sylIdx, segIdx]];
+        segMap[segment] = [new ID(word.value, sylIdx, segIdx)];
       }
     });
   });
   return segMap;
 }
 
-class Props {
-  constructor(obj) {
-    if (obj === undefined || obj === null) {
-      this.obj = {};
-      this.empty = true;
-    } else {
-      const objCopy = {...(obj instanceof Props ? obj.obj : obj)};
-      Object.entries(objCopy).forEach(([k, v]) => {
-        if (!(v instanceof Props) && v instanceof Object && !Array.isArray(v)) {
-          objCopy[k] = new Props(v);
-        }
-      });
-      this.obj = objCopy;
-      this.empty = false;
-    }
-  }
-
-  matches(other) {
-    return this.empty || this.obj.entries.every(([k, v]) => {
-      if (Object.prototype.hasOwnProperty.call(other, k)) {
-        return v instanceof Props ? v.matches(other[k]) : v === k;
-      }
-      return false;
-    });
-  }
-}
-
-const consonantPred = new Props({type: objType.consonant});
-const vowelPred = new Props({type: objType.vowel});
-
 class Cap {
   constructor(word) {
-    this.word = { ...word };
+    this.word = {...word};
     this.wordMap = mapWord(this.word.value);
+    this.trackers = this.word.map(syllable => Array.from(
+      {length: syllable.value.length},
+      () => ({
+        visible: true,
+        environment: null,
+        dependents: {},
+        currentChoiceIndices: [],
+        choices: [],
+      }),
+    ));
   }
 
-  searchSegmentRight(syl, seg, props) {
-    const syllable = this.word.value[syl].value;
-    if (seg === null) {
-      seg = syllable.length - 1;
-    }
-    for (let i = seg - 1; i >= 0; i -= 1) {
+  searchSegmentRight(id, props) {
+    const syllable = id.syllable.value;
+
+    for (let i = id.valIdx - 1; i >= 0; i -= 1) {
       if (props.matches(syllable[i])) {
-        return syllable[i];
+        /* return syllable[i]; */
+        return id.at(id.sylIdx, i);
       }
     }
-    if (syl > 0) {
-      return this.searchSegmentRight(syl - 1, null, props);
+    if (id.sylIdx > 0) {
+      return this.searchSegmentRight(id.at(id.sylIdx - 1, null), props);
     }
     return null;
   }
 
-  searchSegmentLeft(syl, seg, props) {
-    const syllable = this.word.value[syl].value;
-    if (seg === null) {
-      seg = 0;
-    }
-    for (let i = seg + 1; i < syllable.length; i += 1) {
+  searchSegmentLeft(id, props) {
+    const syllable = id.syllable.value;
+    for (let i = id.valIdx + 1; i < syllable.length; i += 1) {
       if (props.matches(syllable[i])) {
-        return syllable[i];
+        /* return syllable[i]; */
+        return id.at(id.sylIdx, i);
       }
     }
-    if (syl < this.word.value.length - 1) {
-      return this.searchSegmentLeft(syl + 1, 0, props);
+    if (id.sylIdx < this.word.value.length - 1) {
+      return this.searchSegmentLeft(id.at(id.sylIdx + 1, 0), props);
     }
     return null;
   }
 
-  environment(
-    [syl, seg],
-    {
-      prevConsonant,
-      nextConsonant,
-      prevVowel,
-      nextVowel,
-      lastConsonant,
-      lastVowel,
-      suffix,
-      augmentation
-    }
-  ) {
-    return {
-      type: this.word.type,
-      meta: this.word.meta,
-      prevConsonant: prevConsonant && this.searchSegmentRight(syl, seg, consonantPred),
-      nextConsonant: nextConsonant && this.searchSegmentLeft(syl, seg, consonantPred),
-      prevVowel: prevVowel && this.searchSegmentRight(syl, seg, vowelPred),
-      nextVowel: nextVowel && this.searchSegmentRight(syl, seg, vowelPred),
+  depGetter(id) {
+    return key => {
+      switch (key) {
+        case depType.type:
+          return id.value.type;
+        case depType.meta:
+          return id.value.meta;
+        case depType.wordType:
+          return id.word.type;
+        case depType.wordMeta:
+          return id.word.meta;
+        case depType.word:
+          return id.word.value;
+        case depType.prevConsonant:
+          return this.searchSegmentRight(id, consonantPred);
+        case depType.nextConsonant:
+          return this.searchSegmentLeft(id, consonantPred);
+        case depType.prevVowel:
+          return this.searchSegmentRight(id, vowelPred);
+        case depType.nextVowel:
+          return this.searchSegmentRight(id, vowelPred);
+        default:
+          throw new Error(`Unknown dependency: ${key} (enum value ${depType.keys[key]})`);
+      }
     };
   }
 
-  wrap(results) {
-    if (!results || results.length === 0) {
-      return _handler => {};
+  updateEnv(
+    id,
+    dep
+  ) {
+    const tracker = id.of(this.trackers);
+    if (tracker.environment === null) {
+      tracker.environment = {};
     }
-    // TODO: inspect handler to determine its dependencies
-    // assign dependencies to their dependents for change-listening
-    // and finish everything
-    return handler => results.forEach(handler);
+
+    const getDependency = this.depGetter(id);
+    dep.forEach(key => {
+      if (tracker.environment[key] === undefined) {
+        const dependency = getDependency(key);
+        tracker.environment[key] = dependency;
+        // XXX: should this be buried down here???
+        // (the part that assigns dependents)
+        if (dependency instanceof ID) {
+          // = true bc it has to be an object instead of a set due to
+          // sets not allowing you to customize equality
+          // (as an object it instead takes advantage of toString() which... meh)
+          dependency.of(this.trackers).value.dependents[dependency] = true;
+        }
+      }
+    });
+
+    return tracker.environment;
   }
 
-  just(obj) {
-    const props = obj instanceof Props ? obj : new Props(obj);
-    return this.wrap(this.wordMap[obj.value]);
+  wrap(filter, results) {
+    if (filter) {
+      const filterDeps = extractDeps(filter);
+      // filter based on calling the filter function on the environment it requests
+      results = results.filter(id => filter(this.updateEnv(id, filterDeps)));
+    }
+    if (!results || results.length === 0) {
+      return () => {};
+    }
+    return handler => {
+      const handlerDeps = extractDeps(handler);
+      results.forEach(id => {
+        const tracker = id.of(this.trackers).value;
+        tracker.choices.push(handler(this.updateEnv(id, handlerDeps)));
+        tracker.currentChoiceIndices.push(0);
+      });
+    };
   }
 
-  segment(props) {
+  just(obj, filter) {
+    return this.wrap(filter, this.wordMap[obj.value]);
+  }
+
+  segment(props, filter) {
     props = props instanceof Props ? props : new Props(props);
     return this.wrap(
+      filter,
       Object.values(this.wordMap)
-        .map(indices => indices.filter(([syl, seg]) => props.matches(this.word.value[syl][seg])))
+        .map(indices => indices.filter(id => props.matches(id.value)))
         .flat()
     );
   }
 
-  segmentOfType(type, props) {
+  segmentOfType(type, props, filter) {
     props = props instanceof Props ? props : new Props(props);
     // don't think i'll allow type or value to be set
     const {meta: {intrinsic, ...rawMeta}} = props.obj;
@@ -233,29 +367,30 @@ class Cap {
       ? subAlphabets[type].filter(c => intrinsic.matches(c.meta.intrinsic))
       : subAlphabets[type];
     return this.wrap(
+      filter,
       searchSpace
         .map(c => this.wordMap[c])
         .map(indices => indices.filter(
-          ([syl, seg]) => meta.matches(this.word.value[syl][seg].meta))
-        )
+          id => meta.matches(id.value.meta)
+        ))
         .flat()
     );
   }
 
-  consonant(props) {
-    return this.segmentOfType(objType.consonant, props);
+  consonant(props, filter) {
+    return this.segmentOfType(objType.consonant, props, filter);
   }
 
-  vowel(props) {
-    return this.segmentOfType(objType.vowel, props);
+  vowel(props, filter) {
+    return this.segmentOfType(objType.vowel, props, filter);
   }
 
-  epenthetic(props) {
-    return this.segmentOfType(objType.epenthetic, props);
+  epenthetic(props, filter) {
+    return this.segmentOfType(objType.epenthetic, props, filter);
   }
 
-  suffix(props) {
-    return this.segmentOfType(objType.suffix, props);
+  suffix(props, filter) {
+    return this.segmentOfType(objType.suffix, props, filter);
   }
 }
 
