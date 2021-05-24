@@ -51,7 +51,7 @@ function id(x) { return x[0]; }
 
   const lexer = moo.states({
     main: {
-      openFilter: /\((?:\w+|\\\)?)/,
+      openFilter: /\((?:[a-z]+|[^a-z\s])?)/,
       closeFilter: /\)/,
 
       openTag: { match: /\[/, push: `tag` },
@@ -139,7 +139,7 @@ function id(x) { return x[0]; }
         push: `augmentation`
       },
 
-      ws: / +/
+      ws: /[^\S\r\n]+/
     },
     augmentation: {
       pronoun: {
@@ -211,8 +211,14 @@ var grammar = {
     {"name": "expr", "symbols": ["verb"], "postprocess": initWordChoices},
     {"name": "expr", "symbols": ["tif3il"], "postprocess": initWordChoices},
     {"name": "expr", "symbols": ["af3al"], "postprocess": initWordChoices},
-    {"name": "number", "symbols": [{"literal":"(number"}, "__", {"literal":"["}, (lexer.has("numberGender") ? {type: "numberGender"} : numberGender), {"literal":"]"}, "__", (lexer.has("genderedNumber") ? {type: "genderedNumber"} : genderedNumber), {"literal":")"}], "postprocess": ([ ,,, gender ,, quantity ]) => init(type.number, {}, { gender, quantity })},
-    {"name": "number", "symbols": [{"literal":"(number"}, "__", (lexer.has("number") ? {type: "number"} : number), {"literal":")"}], "postprocess": ([ ,, quantity ]) => init(type.number, {}, { quantity })},
+    {"name": "number$subexpression$1$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},
+    {"name": "number$subexpression$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "number$subexpression$1", "symbols": ["number$subexpression$1$ebnf$1"], "postprocess": ([c]) => Boolean(c)},
+    {"name": "number", "symbols": [{"literal":"(#"}, (lexer.has("genderedNumber") ? {type: "genderedNumber"} : genderedNumber), (lexer.has("numberGender") ? {type: "numberGender"} : numberGender), "number$subexpression$1", {"literal":")"}], "postprocess": ([ ,, quantity, gender, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity })},
+    {"name": "number$subexpression$2$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},
+    {"name": "number$subexpression$2$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "number$subexpression$2", "symbols": ["number$subexpression$2$ebnf$1"], "postprocess": ([c]) => Boolean(c)},
+    {"name": "number", "symbols": [{"literal":"(#"}, (lexer.has("number") ? {type: "number"} : number), "number$subexpression$2", {"literal":")"}], "postprocess": ([ ,, quantity, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity })},
     {"name": "af3al$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
     {"name": "af3al$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "af3al", "symbols": [{"literal":"(af3al"}, "__", "root", "af3al$ebnf$1", {"literal":")"}], "postprocess": ([ ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation })},

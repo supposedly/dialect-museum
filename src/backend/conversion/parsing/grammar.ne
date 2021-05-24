@@ -47,7 +47,7 @@
 
   const lexer = moo.states({
     main: {
-      openFilter: /\((?:\w+|\\\)?)/,
+      openFilter: /\((?:[a-z]+|[^a-z\s])?)/,
       closeFilter: /\)/,
 
       openTag: { match: /\[/, push: `tag` },
@@ -135,7 +135,7 @@
         push: `augmentation`
       },
 
-      ws: / +/
+      ws: /[^\S\r\n]+/
     },
     augmentation: {
       pronoun: {
@@ -217,8 +217,9 @@ expr ->
   | tif3il {% initWordChoices %}
   | af3al {% initWordChoices %}
 
-number -> "(number" __ "[" %numberGender "]" __ %genderedNumber ")" {% ([ ,,, gender ,, quantity ]) => init(type.number, {}, { gender, quantity }) %}
-   | "(number" __ %number ")" {% ([ ,, quantity ]) => init(type.number, {}, { quantity }) %}
+# XXX TODO: this sucks
+number -> "(#" %genderedNumber %numberGender ("-":? {% ([c]) => Boolean(c) %}) ")" {% ([ ,, quantity, gender, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity }) %}
+   | "(#" %number ("-":? {% ([c]) => Boolean(c) %}) ")" {% ([ ,, quantity, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity }) %}
 
 af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }) %}
 
