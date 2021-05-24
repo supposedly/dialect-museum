@@ -2,13 +2,15 @@ const {obj} = require(`../objects`);
 const {type} = require(`../objects`);
 const {lastOf} = require(`./misc`);
 
-module.exports.newSyllable = (string = []) => obj.obj(
-  `syllable`,
-  {stressed: null, weight: null},
-  string,
-);
+function newSyllable(string = []) {
+  return obj.obj(
+    `syllable`,
+    {stressed: null, weight: null},
+    string,
+  );
+}
 
-module.exports.getSyllableWeight = s => {
+function getSyllableWeight(s) {
   // 0 segments in syllable = weight of -1
   // 1 segment in syllable = weight of 0
   if (s.value.length <= 1) {
@@ -47,10 +49,10 @@ module.exports.getSyllableWeight = s => {
     // the remaining type is epenthetic, which adds 0
   }
   return rimeLength;
-};
+}
 
 // determine & set stressed syllable according to weights
-module.exports.setStressedSyllable = (syllables, clearRest = false) => {
+function setStressedSyllable(syllables, clearRest = false) {
   if (clearRest) {
     syllables.forEach(s => { s.meta.stressed = false; });
   }
@@ -82,4 +84,19 @@ module.exports.setStressedSyllable = (syllables, clearRest = false) => {
       antepenult.meta.stressed = true;
     }
   }
+}
+
+function copy(syllables) {
+  return syllables.map(s => obj.obj(
+    `syllable`,
+    {...s.meta},
+    [...s.value],
+  ));
+}
+
+module.exports = {
+  newSyllable,
+  getSyllableWeight,
+  setStressedSyllable,
+  copy,
 };

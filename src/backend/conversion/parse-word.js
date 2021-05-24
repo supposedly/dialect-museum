@@ -1,6 +1,6 @@
 const {
   misc: {lastOf},
-  syllables: {newSyllable, getSyllableWeight, setStressedSyllable},
+  syllables: {newSyllable, getSyllableWeight, setStressedSyllable, copy},
 } = require(`./utils`);
 const {alphabet: abc} = require(`./symbols`);
 const {obj} = require(`./objects`);
@@ -46,14 +46,6 @@ function interpolateAndParse(strings, rootConsonants) {
     }
   });
   return syllables;
-}
-
-function copy(syllables) {
-  return syllables.map(s => obj.obj(
-    `syllable`,
-    {...s.meta},
-    [...s.value],
-  ));
 }
 
 function setWeights(syllables) {
