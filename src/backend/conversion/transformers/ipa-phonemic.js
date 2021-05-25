@@ -216,9 +216,9 @@ function mapWord(word) {
   word.value.forEach((syllable, sylIdx) => {
     syllable.value.forEach(({value: segment}, segIdx) => {
       if (Array.isArray(segMap[segment])) {
-        segMap[segment].push(new ID(word.value, sylIdx, segIdx));
+        segMap[segment][new ID(word.value, sylIdx, segIdx)] = true;
       } else {
-        segMap[segment] = [new ID(word.value, sylIdx, segIdx)];
+        segMap[segment] = {[new ID(word.value, sylIdx, segIdx)]: true};
       }
     });
   });
@@ -237,6 +237,9 @@ class Cap {
         dependents: {},
         currentChoiceIndices: [],
         choices: [],
+        update(choicesIdx, newSubIdx) {
+          
+        },
       }),
     ));
   }
@@ -393,6 +396,17 @@ class Cap {
     return this.segmentOfType(objType.suffix, props, filter);
   }
 }
+
+/*
+needs some way of separating "become this underlying internal thing-eme"
+from "become this surface form"
+e.g. يضطر should have the ض "become" [ظ ض] (after a rule that
+turns ظ into [ظ z*], not before), then have the ض variant be transformed by
+a rule that optionally turns (voiced consonant)(unvoiced with same articulator & manner)
+into a geminate
+but both of those are underlying internal transformations, and the surface choice
+should only come after all that
+*/
 
 const rules = [
   [_.c, (abc, ctx, {previousVowel, previousConsonant}) => {
