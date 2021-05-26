@@ -175,18 +175,6 @@ makeInitial[Syllable] ->
 passage -> term (__ term {% ([ , term]) => term %}):* {% ([a, b]) => [a, ...b] %}
 
 term ->
-  raw_term {% id %}
-  | ctx {% id %}
-
-ctx -> "(ctx" (__ ctx_tag {% ([ , value]) => value %}):+ __ raw_term ")" {%
-  ([ , contextItems ,, term ]) => {
-    contextItems.forEach(term.ctx);
-    return term;
-  }
-%}
-ctx_tag -> %openCtx %ctxItem %closeCtx {% ([ , value]) => value %}
-
-raw_term ->
     expr {% id %}
   | literal {% id %}
   | idafe  {% id %}
@@ -200,11 +188,12 @@ literal ->
 # TODO: multiple words i guess
 idafe ->
   "(idafe"
+    ctx_tags:?
     __ (expr | idafe)
     __ (expr | l | idafe)
   ")"  {%
-    ([ ,, [possessee] ,, [possessor], d]) => init(
-      type.idafe, {}, { possessee, possessor }
+    ([ , ctx ,, [possessee] ,, [possessor], d]) => init(
+      type.idafe, {}, { possessee, possessor }, ctx
     )
   %}
 
@@ -218,27 +207,35 @@ expr ->
   | af3al {% initWordChoices %}
 
 # XXX TODO: this sucks
-number -> "(#" %genderedNumber %numberGender ("-":? {% ([c]) => Boolean(c) %}) ")" {% ([ ,, quantity, gender, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity }) %}
-   | "(#" %number ("-":? {% ([c]) => Boolean(c) %}) ")" {% ([ ,, quantity, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity }) %}
+number -> "(#" ctx_tags:? %genderedNumber %numberGender ("-":? {% ([c]) => Boolean(c) %}) ")" {%
+  ([ , ctx ,, quantity, gender, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity }, ctx)
+%}
+  | "(#" ctx_tags:? %number ("-":? {% ([c]) => Boolean(c) %}) ")" {%
+    ([ , ctx ,, quantity, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity }, ctx)
+  %}
 
-af3al -> "(af3al" __ root augmentation:? ")" {% ([ ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }) %}
+af3al -> "(af3al" ctx_tags:? __ root augmentation:? ")" {% ([ , ctx ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }, ctx) %}
 
-tif3il -> "(tif3il" __ root (FEM {% id %} | FEM_PLURAL {% id %}):? augmentation:? ")" {%
-  ([ ,, root, fem, augmentation]) => init(type.tif3il, {}, { root, fem, augmentation })
+tif3il -> "(tif3il" ctx_tags:? __ root (FEM {% id %} | FEM_PLURAL {% id %}):? augmentation:? ")" {%
+  ([ , ctx ,, root, fem, augmentation]) => init(type.tif3il, {}, { root, fem, augmentation }, ctx)
 %}
 
 # pp needs to be a thing because -c behaves funny in participles (fe3la and fe3ilt-/fe3lit-/fe3liit-),
 # A is more likely to raise to /e:/ in fe3il participles,
 # and the first vowel in fa3len participles is a~i
 pp -> "(pp"
+    ctx_tags:?
     __ pronoun
     __ pp_form
     __ voice
     __ root
     augmentation:?
   ")"  {%
-    ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => init(
-      type.pp, { conjugation, form, voice }, { root, augmentation }
+    ([ , ctx ,, conjugation ,, form ,, voice ,, root, augmentation]) => init(
+      type.pp,
+      { conjugation, form, voice },
+      { root, augmentation },
+      ctx
     )
   %}
 
@@ -246,14 +243,18 @@ pp -> "(pp"
 # (7aky!t/7iky!t vs 7ak!t vs 7ik!t (and -at too)... rta7t vs rti7t, seme3kon vs sme3kon etc)
 verb ->
   "(verb"
+    ctx_tags:?
     __ pronoun
     __ verb_form
     __ tam
     __ root
     augmentation:?
   ")"  {%
-    ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => init(
-      type.verb, { form, tam, conjugation }, { root, augmentation }
+    ([ , ctx ,, conjugation ,, form ,, tam ,, root, augmentation]) => init(
+      type.verb,
+      { form, tam, conjugation },
+      { root, augmentation },
+      ctx
     )
   %}
 
@@ -265,6 +266,11 @@ verb ->
 word ->
     stem  {% ([{ value }]) => init(type.word, { was: null, augmentation: null }, value) %}
   | stem augmentation  {% ([{ value }, augmentation]) => init(type.word, { augmentation }, value) %}
+  | "(ctx" ctx_tags __ word ")" {% ([ , ctx ,, word]) => ctx.map(word.ctx) %}
+
+ctx_tags -> (__ %openCtx %ctxItem %closeCtx {% ([ ,, value]) => value %}):+ {%
+  ([ , values]) => values
+%}
 
 # messy because of stressedOn :(
 stem ->

@@ -174,35 +174,24 @@ var grammar = {
     {"name": "passage$ebnf$1$subexpression$1", "symbols": ["__", "term"], "postprocess": ([ , term]) => term},
     {"name": "passage$ebnf$1", "symbols": ["passage$ebnf$1", "passage$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "passage", "symbols": ["term", "passage$ebnf$1"], "postprocess": ([a, b]) => [a, ...b]},
-    {"name": "term", "symbols": ["raw_term"], "postprocess": id},
-    {"name": "term", "symbols": ["ctx"], "postprocess": id},
-    {"name": "ctx$ebnf$1$subexpression$1", "symbols": ["__", "ctx_tag"], "postprocess": ([ , value]) => value},
-    {"name": "ctx$ebnf$1", "symbols": ["ctx$ebnf$1$subexpression$1"]},
-    {"name": "ctx$ebnf$1$subexpression$2", "symbols": ["__", "ctx_tag"], "postprocess": ([ , value]) => value},
-    {"name": "ctx$ebnf$1", "symbols": ["ctx$ebnf$1", "ctx$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "ctx", "symbols": [{"literal":"(ctx"}, "ctx$ebnf$1", "__", "raw_term", {"literal":")"}], "postprocess": 
-        ([ , contextItems ,, term ]) => {
-          contextItems.forEach(term.ctx);
-          return term;
-        }
-        },
-    {"name": "ctx_tag", "symbols": [(lexer.has("openCtx") ? {type: "openCtx"} : openCtx), (lexer.has("ctxItem") ? {type: "ctxItem"} : ctxItem), (lexer.has("closeCtx") ? {type: "closeCtx"} : closeCtx)], "postprocess": ([ , value]) => value},
-    {"name": "raw_term", "symbols": ["expr"], "postprocess": id},
-    {"name": "raw_term", "symbols": ["literal"], "postprocess": id},
-    {"name": "raw_term", "symbols": ["idafe"], "postprocess": id},
-    {"name": "raw_term", "symbols": ["l"], "postprocess": id},
+    {"name": "term", "symbols": ["expr"], "postprocess": id},
+    {"name": "term", "symbols": ["literal"], "postprocess": id},
+    {"name": "term", "symbols": ["idafe"], "postprocess": id},
+    {"name": "term", "symbols": ["l"], "postprocess": id},
     {"name": "literal$ebnf$1", "symbols": [/[^)]/]},
     {"name": "literal$ebnf$1", "symbols": ["literal$ebnf$1", /[^)]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "literal", "symbols": [{"literal":"(\\"}, "literal$ebnf$1", {"literal":")"}], "postprocess": ([ , value]) => _.obj(type.literal, {}, value.join(''))},
     {"name": "literal", "symbols": [{"literal":"(\\)"}, {"literal":")"}], "postprocess": () => _.obj(type.literal, {}, `)`)},
+    {"name": "idafe$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
+    {"name": "idafe$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "idafe$subexpression$1", "symbols": ["expr"]},
     {"name": "idafe$subexpression$1", "symbols": ["idafe"]},
     {"name": "idafe$subexpression$2", "symbols": ["expr"]},
     {"name": "idafe$subexpression$2", "symbols": ["l"]},
     {"name": "idafe$subexpression$2", "symbols": ["idafe"]},
-    {"name": "idafe", "symbols": [{"literal":"(idafe"}, "__", "idafe$subexpression$1", "__", "idafe$subexpression$2", {"literal":")"}], "postprocess": 
-        ([ ,, [possessee] ,, [possessor], d]) => init(
-          type.idafe, {}, { possessee, possessor }
+    {"name": "idafe", "symbols": [{"literal":"(idafe"}, "idafe$ebnf$1", "__", "idafe$subexpression$1", "__", "idafe$subexpression$2", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, [possessee] ,, [possessor], d]) => init(
+          type.idafe, {}, { possessee, possessor }, ctx
         )
           },
     {"name": "l", "symbols": [{"literal":"(l"}, "__", "expr", {"literal":")"}], "postprocess": ([ ,, value]) => init(type.l, {}, value)},
@@ -211,42 +200,72 @@ var grammar = {
     {"name": "expr", "symbols": ["verb"], "postprocess": initWordChoices},
     {"name": "expr", "symbols": ["tif3il"], "postprocess": initWordChoices},
     {"name": "expr", "symbols": ["af3al"], "postprocess": initWordChoices},
+    {"name": "number$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
+    {"name": "number$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$1$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},
     {"name": "number$subexpression$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$1", "symbols": ["number$subexpression$1$ebnf$1"], "postprocess": ([c]) => Boolean(c)},
-    {"name": "number", "symbols": [{"literal":"(#"}, (lexer.has("genderedNumber") ? {type: "genderedNumber"} : genderedNumber), (lexer.has("numberGender") ? {type: "numberGender"} : numberGender), "number$subexpression$1", {"literal":")"}], "postprocess": ([ ,, quantity, gender, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity })},
+    {"name": "number", "symbols": [{"literal":"(#"}, "number$ebnf$1", (lexer.has("genderedNumber") ? {type: "genderedNumber"} : genderedNumber), (lexer.has("numberGender") ? {type: "numberGender"} : numberGender), "number$subexpression$1", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, quantity, gender, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity }, ctx)
+        },
+    {"name": "number$ebnf$2", "symbols": ["ctx_tags"], "postprocess": id},
+    {"name": "number$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$2$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},
     {"name": "number$subexpression$2$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$2", "symbols": ["number$subexpression$2$ebnf$1"], "postprocess": ([c]) => Boolean(c)},
-    {"name": "number", "symbols": [{"literal":"(#"}, (lexer.has("number") ? {type: "number"} : number), "number$subexpression$2", {"literal":")"}], "postprocess": ([ ,, quantity, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity })},
-    {"name": "af3al$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "number", "symbols": [{"literal":"(#"}, "number$ebnf$2", (lexer.has("number") ? {type: "number"} : number), "number$subexpression$2", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, quantity, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity }, ctx)
+          },
+    {"name": "af3al$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "af3al$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "af3al", "symbols": [{"literal":"(af3al"}, "__", "root", "af3al$ebnf$1", {"literal":")"}], "postprocess": ([ ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation })},
-    {"name": "tif3il$ebnf$1$subexpression$1", "symbols": ["FEM"], "postprocess": id},
-    {"name": "tif3il$ebnf$1$subexpression$1", "symbols": ["FEM_PLURAL"], "postprocess": id},
-    {"name": "tif3il$ebnf$1", "symbols": ["tif3il$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "af3al$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "af3al$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "af3al", "symbols": [{"literal":"(af3al"}, "af3al$ebnf$1", "__", "root", "af3al$ebnf$2", {"literal":")"}], "postprocess": ([ , ctx ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }, ctx)},
+    {"name": "tif3il$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "tif3il$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "tif3il$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM"], "postprocess": id},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM_PLURAL"], "postprocess": id},
+    {"name": "tif3il$ebnf$2", "symbols": ["tif3il$ebnf$2$subexpression$1"], "postprocess": id},
     {"name": "tif3il$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "tif3il", "symbols": [{"literal":"(tif3il"}, "__", "root", "tif3il$ebnf$1", "tif3il$ebnf$2", {"literal":")"}], "postprocess": 
-        ([ ,, root, fem, augmentation]) => init(type.tif3il, {}, { root, fem, augmentation })
+    {"name": "tif3il$ebnf$3", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "tif3il$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "tif3il", "symbols": [{"literal":"(tif3il"}, "tif3il$ebnf$1", "__", "root", "tif3il$ebnf$2", "tif3il$ebnf$3", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, root, fem, augmentation]) => init(type.tif3il, {}, { root, fem, augmentation }, ctx)
         },
-    {"name": "pp$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "pp$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "pp$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "pp", "symbols": [{"literal":"(pp"}, "__", "pronoun", "__", "pp_form", "__", "voice", "__", "root", "pp$ebnf$1", {"literal":")"}], "postprocess": 
-        ([ ,, conjugation ,, form ,, voice ,, root, augmentation]) => init(
-          type.pp, { conjugation, form, voice }, { root, augmentation }
+    {"name": "pp$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "pp$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "pp", "symbols": [{"literal":"(pp"}, "pp$ebnf$1", "__", "pronoun", "__", "pp_form", "__", "voice", "__", "root", "pp$ebnf$2", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, conjugation ,, form ,, voice ,, root, augmentation]) => init(
+          type.pp,
+          { conjugation, form, voice },
+          { root, augmentation },
+          ctx
         )
           },
-    {"name": "verb$ebnf$1", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "verb$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "verb$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "verb", "symbols": [{"literal":"(verb"}, "__", "pronoun", "__", "verb_form", "__", "tam", "__", "root", "verb$ebnf$1", {"literal":")"}], "postprocess": 
-        ([ ,, conjugation ,, form ,, tam ,, root, augmentation]) => init(
-          type.verb, { form, tam, conjugation }, { root, augmentation }
+    {"name": "verb$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "verb$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "verb", "symbols": [{"literal":"(verb"}, "verb$ebnf$1", "__", "pronoun", "__", "verb_form", "__", "tam", "__", "root", "verb$ebnf$2", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, conjugation ,, form ,, tam ,, root, augmentation]) => init(
+          type.verb,
+          { form, tam, conjugation },
+          { root, augmentation },
+          ctx
         )
           },
     {"name": "word", "symbols": ["stem"], "postprocess": ([{ value }]) => init(type.word, { was: null, augmentation: null }, value)},
     {"name": "word", "symbols": ["stem", "augmentation"], "postprocess": ([{ value }, augmentation]) => init(type.word, { augmentation }, value)},
+    {"name": "word", "symbols": [{"literal":"(ctx"}, "ctx_tags", "__", "word", {"literal":")"}], "postprocess": ([ , ctx ,, word]) => ctx.map(word.ctx)},
+    {"name": "ctx_tags$ebnf$1$subexpression$1", "symbols": ["__", (lexer.has("openCtx") ? {type: "openCtx"} : openCtx), (lexer.has("ctxItem") ? {type: "ctxItem"} : ctxItem), (lexer.has("closeCtx") ? {type: "closeCtx"} : closeCtx)], "postprocess": ([ ,, value]) => value},
+    {"name": "ctx_tags$ebnf$1", "symbols": ["ctx_tags$ebnf$1$subexpression$1"]},
+    {"name": "ctx_tags$ebnf$1$subexpression$2", "symbols": ["__", (lexer.has("openCtx") ? {type: "openCtx"} : openCtx), (lexer.has("ctxItem") ? {type: "ctxItem"} : ctxItem), (lexer.has("closeCtx") ? {type: "closeCtx"} : closeCtx)], "postprocess": ([ ,, value]) => value},
+    {"name": "ctx_tags$ebnf$1", "symbols": ["ctx_tags$ebnf$1", "ctx_tags$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "ctx_tags", "symbols": ["ctx_tags$ebnf$1"], "postprocess": 
+        ([ , values]) => values
+        },
     {"name": "stem", "symbols": ["consonant"], "postprocess": ([value]) => _.obj(type.stem, { stressedOn: null }, [_.obj(type.syllable, { stressed: null, weight: 0 }, value)])},
     {"name": "stem", "symbols": ["monosyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},
     {"name": "stem", "symbols": ["disyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},

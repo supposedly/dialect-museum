@@ -3,7 +3,7 @@ class Obj {
     this.type = type;
     this.meta = meta;
     this.value = value;
-    this.context = context;
+    this.context = new Set(context);
   }
 
   // Initialization is the process that'll turn e.g. (verb [...]) into a set of
