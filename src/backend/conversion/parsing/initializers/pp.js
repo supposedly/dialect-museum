@@ -161,9 +161,6 @@ function pp({
     postTransform: [[augment(augmentation)]],
     meta,
   });
-
-  const pickVoice = (active, passive) => (isActiveVoice ? active : passive);
-
   switch (form) {
     case ppForm.anyForm1:
       if (isActiveVoice) {
@@ -220,143 +217,124 @@ function pp({
       }
       return $`${$F}.a.${$3} ${$L}.aa.n`;
     case ppForm.fa33al:
-      return pickVoice(
-        [
+      return isActiveVoice
+        ? [
           ...$iy`m.${$F}.a.${$3} ${$3}.i.${$L}`,
           ...$`m.${$F}.a.${$3} ${$3}.a.${$L}`,
-        ],
-        $`m.${$F}.a.${$3} ${$3}.a.${$L}`,
-      );
+        ]
+        : $`m.${$F}.a.${$3} ${$3}.a.${$L}`;
     case ppForm.tfa33al:
-      return pickVoice(
-        [
+      return isActiveVoice
+        ? [
           ...$`m.${$F}.a.${$3} ${$3}.a.${$L}`,
           ...$`m.u.t ${$F}.a.${$3} ${$3}.a.${$L}`,
           // XXX: should these ones use a/i? i feel like they shouldn't
           // (like mit2akkid mit2ikkid, mitzakker mitzikkir...)
           ...$iy`m.u.t ${$F}.a.${$3} ${$3}.i.${$L}`,
           ...$iy`m.u.t ${$F}.i.${$3} ${$3}.i.${$L}`,
-        ],
-        $`m.u.t ${$F}.a.${$3} ${$3}.a.${$L}`,
-      );
+        ]
+        : $`m.u.t ${$F}.a.${$3} ${$3}.a.${$L}`;
     case ppForm.stfa33al:
       // stanna-yestanna
       if ($F.meta.weak) {
-        return pickVoice(
-          [
-            // intentionally not including misti33il here, no mistinni (...right?)
+        return isActiveVoice
+          ? [
+          // intentionally not including misti33il here, no mistinni (...right?)
             ...$iy`m.u.s t.a.${$3} ${$3}.i.${$L}`,
             ...$`m.u.s t.a.${$3} ${$3}.a.${$L}`,
-          ],
-          $`m.u.s t.a.${$3} ${$3}.a.${$L}`,
-        );
+          ]
+          : $`m.u.s t.a.${$3} ${$3}.a.${$L}`;
       }
-      return pickVoice(
-        [
-          // see XXX in tfa33al above
+      return isActiveVoice
+        ? [
+        // see XXX in tfa33al above
           ...$iy`m.u.s._.t ${$F}.a.${$3} ${$3}.i.${$L}`,
           ...$iy`m.u.s._.t ${$F}.i.${$3} ${$3}.i.${$L}`,
           ...$`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`,
-        ],
-        $`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`,
-      );
+        ]
+        : $`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`;
     case ppForm.fe3al:
-      return pickVoice(
-        [
+      return isActiveVoice
+        ? [
           ...$iy`m.${$F}.aa ${$3}.i.${$L}`,
           ...$`m.${$F}.aa ${$3}.a.${$L}`,
-        ],
-        $`m.${$F}.aa ${$3}.a.${$L}`,
-      );
+        ]
+        : $`m.${$F}.aa ${$3}.a.${$L}`;
     case ppForm.tfe3al:
-      return pickVoice(
-        [
+      return isActiveVoice
+        ? [
           ...$`m.${$F}.aa ${$3}.a.${$L}`,
           ...$iy`m.u.t ${$F}.aa ${$3}.i.${$L}`,
           ...$`m.u.t ${$F}.aa ${$3}.a.${$L}`,
-        ],
-        $`m.u.t ${$F}.aa ${$3}.a.${$L}`,
-      );
+        ]
+        : $`m.u.t ${$F}.aa ${$3}.a.${$L}`;
     case ppForm.stfe3al:
       // stehal-yistehal
       if ($F.meta.weak) {
-        return pickVoice(
-          [
+        return isActiveVoice
+          ? [
             ...$iy`m.u.s t.aa ${$3}.i.${$L}`,
             ...$`m.u.s t.aa ${$3}.a.${$L}`,
-          ],
-          $`m.u.s t.aa ${$3}.a.${$L}`,
-        );
+          ]
+          : $`m.u.s t.aa ${$3}.a.${$L}`;
       }
-      return pickVoice(
-        [
+      return isActiveVoice
+        ? [
           ...$iy`m.u.s._.t ${$F}.aa ${$3}.i.${$L}`,
           ...$`m.u.s._.t ${$F}.aa ${$3}.a.${$L}`,
-        ],
-        $`m.u.s._.t ${$F}.aa ${$3}.a.${$L}`,
-      );
+        ]
+        : $`m.u.s._.t ${$F}.aa ${$3}.a.${$L}`;
     case ppForm[`2af3al`]:
-      return pickVoice(
-        [
-          ...$iy`m.u.${$F} ${$3}.i.${$L}`,
-          ...$iy`m.2.a.${$F} ${$3}.i.${$L}`,
-          ...$`m.2.a.${$F} ${$3}.a.${$L}`,
-        ],
-        [
-          ...$`m.u.${$F} ${$3}.a.${$L}`,
-          ...$`m.2.a.${$F} ${$3}.a.${$L}`,
-        ],
-      );
+      return isActiveVoice ? [
+        ...$iy`m.u.${$F} ${$3}.i.${$L}`,
+        ...$iy`m.2.a.${$F} ${$3}.i.${$L}`,
+        ...$`m.2.a.${$F} ${$3}.a.${$L}`,
+      ] : [
+        ...$`m.u.${$F} ${$3}.a.${$L}`,
+        ...$`m.2.a.${$F} ${$3}.a.${$L}`,
+      ];
     case ppForm.nfa3al:
       if ($3.meta.weak) {
         return $`m.u.n ${$F}.aa.${$L}`;
       }
       if ($3.value === $L.value) {
-        return pickVoice(
-          [
+        return isActiveVoice
+          ? [
             ...$`m.a.${$F} ${$3}.uu.${$L}`,
             ...$`m.u.n ${$F}.a.${$3}.${$L}`,
-          ],
-          $`m.u.n ${$F}.a.${$3}.${$L}`,
-        );
+          ]
+          : $`m.u.n ${$F}.a.${$3}.${$L}`;
       }
-      return pickVoice(
-        [
-          ...$`m.a.${$F} ${$3}.uu.${$L}`,
-          ...$iy`-m.u.n +${$F}.i -${$3}.i.${$L}`,
-          ...$iy`m.u.n ${$F}.I ${$3}.i.${$L}`,
-          $`-m.u.n +${$F}.a -${$3}.a.${$L}`,
-        ],
-        [
-          ...$`-m.u.n +${$F}.a -${$3}.a.${$L}`,
-          ...$`m.u.n ${$F}.a ${$3}.a.${$L}`,
-        ],
-      );
+      return isActiveVoice ? [
+        ...$`m.a.${$F} ${$3}.uu.${$L}`,
+        ...$iy`-m.u.n +${$F}.i -${$3}.i.${$L}`,
+        ...$iy`m.u.n ${$F}.I ${$3}.i.${$L}`,
+        $`-m.u.n +${$F}.a -${$3}.a.${$L}`,
+      ] : [
+        ...$`-m.u.n +${$F}.a -${$3}.a.${$L}`,
+        ...$`m.u.n ${$F}.a ${$3}.a.${$L}`,
+      ];
     case ppForm.nfi3il:
       // same as nfa3al but can never be minfa3al when 'active', only minfi3il
       if ($3.meta.weak) {
         return $`m.u.n ${$F}.aa.${$L}`;
       }
       if ($3.value === $L.value) {
-        return pickVoice(
-          [
+        return isActiveVoice
+          ? [
             ...$`m.a.${$F} ${$3}.uu.${$L}`,
             ...$`m.u.n ${$F}.a.${$3}.${$L}`,
-          ],
-          $`m.u.n ${$F}.a.${$3}.${$L}`,
-        );
+          ]
+          : $`m.u.n ${$F}.a.${$3}.${$L}`;
       }
-      return pickVoice(
-        [
-          ...$`m.a.${$F} ${$3}.uu.${$L}`,
-          ...$iy`-m.u.n +${$F}.i -${$3}.i.${$L}`,
-          ...$iy`m.u.n ${$F}.I ${$3}.i.${$L}`,
-        ],
-        [
-          ...$`-m.u.n +${$F}.a -${$3}.a.${$L}`,
-          ...$`m.u.n ${$F}.a ${$3}.a.${$L}`,
-        ],
-      );
+      return isActiveVoice ? [
+        ...$`m.a.${$F} ${$3}.uu.${$L}`,
+        ...$iy`-m.u.n +${$F}.i -${$3}.i.${$L}`,
+        ...$iy`m.u.n ${$F}.I ${$3}.i.${$L}`,
+      ] : [
+        ...$`-m.u.n +${$F}.a -${$3}.a.${$L}`,
+        ...$`m.u.n ${$F}.a ${$3}.a.${$L}`,
+      ];
     case ppForm.fta3al:
       if ($3.meta.weak) {
         return $`m.u.${$F} t.aa.${$L}`;
@@ -364,17 +342,14 @@ function pp({
       if ($3.value === $L.value) {
         return $`m.u.${$F} t.a.${$3}.${$L}`;
       }
-      return pickVoice(
-        [
-          ...$iy`-m.u.${$F} +t.i -${$3}.i.${$L}`,
-          ...$iy`m.u.${$F} t.I ${$3}.i.${$L}`,
-          ...$`m.u.${$F} t.a ${$3}.a.${$L}`,
-        ],
-        [
-          ...$`-m.u.${$F} +t.a -${$3}.a.${$L}`,
-          ...$`m.u.${$F} t.a ${$3}.a.${$L}`,
-        ],
-      );
+      return isActiveVoice ? [
+        ...$iy`-m.u.${$F} +t.i -${$3}.i.${$L}`,
+        ...$iy`m.u.${$F} t.I ${$3}.i.${$L}`,
+        ...$`m.u.${$F} t.a ${$3}.a.${$L}`,
+      ] : [
+        ...$`-m.u.${$F} +t.a -${$3}.a.${$L}`,
+        ...$`m.u.${$F} t.a ${$3}.a.${$L}`,
+      ];
     case ppForm.fti3il:
       // same as fta3al but can never be mifta3al when 'active', only mifti3il
       if ($3.meta.weak) {
@@ -383,83 +358,67 @@ function pp({
       if ($3.value === $L.value) {
         return $`m.u.${$F} t.a.${$3}.${$L}`;
       }
-      return pickVoice(
-        [
-          ...$iy`-m.u.${$F} +t.i -${$3}.i.${$L}`,
-          ...$iy`m.u.${$F} t.I ${$3}.i.${$L}`,
-        ],
-        [
-          ...$`-m.u.${$F} +t.a -${$3}.a.${$L}`,
-          ...$`m.u.${$F} t.a ${$3}.a.${$L}`,
-        ],
-      );
+      return isActiveVoice ? [
+        ...$iy`-m.u.${$F} +t.i -${$3}.i.${$L}`,
+        ...$iy`m.u.${$F} t.I ${$3}.i.${$L}`,
+      ] : [
+        ...$`-m.u.${$F} +t.a -${$3}.a.${$L}`,
+        ...$`m.u.${$F} t.a ${$3}.a.${$L}`,
+      ];
     case ppForm.staf3al:
       if ($3.meta.weak) {
         // not including an "if $L.meta.weak" branch here because
         // the only verb possibly like that is sta7aa, and that
         // should actually be constructed as a fta3al verb
         // of the "root" s7y
-        return pickVoice(
-          [...$`m.u.s._.t ${$F}.ii.${$L}`, ...$`m.u.s t.a ${$F}.ii.${$L}`],
-          [...$`m.u.s._.t ${$F}.aa.${$L}`, ...$`m.u.s t.a ${$F}.aa.${$L}`],
-        );
+        return isActiveVoice ? [...$`m.u.s._.t ${$F}.ii.${$L}`, ...$`m.u.s t.a ${$F}.ii.${$L}`] : [...$`m.u.s._.t ${$F}.aa.${$L}`, ...$`m.u.s t.a ${$F}.aa.${$L}`];
       }
       // geminate root
       if ($3.value === $L.value) {
-        return pickVoice(
-          [...$`m.u.s._.t ${$F}.i.${$3}.${$L}`, ...$`m.u.s t.a ${$F}.i.${$3}.${$L}`],
-          [...$`m.u.s._.t ${$F}.a.${$3}.${$L}`, ...$`m.u.s t.a ${$F}.a.${$3}.${$L}`],
-        );
+        return isActiveVoice ? [...$`m.u.s._.t ${$F}.i.${$3}.${$L}`, ...$`m.u.s t.a ${$F}.i.${$3}.${$L}`] : [...$`m.u.s._.t ${$F}.a.${$3}.${$L}`, ...$`m.u.s t.a ${$F}.a.${$3}.${$L}`];
       }
-      return pickVoice(
-        $iy`m.u.s t.a.${$F} ${$3}.i.${$L}`,
-        $`m.u.s t.a.${$F} ${$3}.a.${$L}`,
-      );
+      return isActiveVoice ? $iy`m.u.s t.a.${$F} ${$3}.i.${$L}` : $`m.u.s t.a.${$F} ${$3}.a.${$L}`;
     case ppForm.f3all:
       if (isActiveVoice) {
         return $`m.u.${$F} ${$3}.a.${$L}.${$L}`;
       }
       throw new Error(`Can't use passive voice with f3all`);
     case ppForm.fa3la2:
-      return pickVoice(
-        [
+      return isActiveVoice
+        ? [
           ...$iy`m.${$F}.a.${$3} ${$L}.i.${$Q}`,
           ...$`m.${$F}.a.${$3} ${$L}.a.${$Q}`,
-        ],
-        $`m.${$F}.a.${$3} ${$L}.a.${$Q}`,
-      );
+        ]
+        : $`m.${$F}.a.${$3} ${$L}.a.${$Q}`;
     case ppForm.tfa3la2:
-      return pickVoice(
-        [
+      return isActiveVoice
+        ? [
           ...$`m.${$F}.a.${$3} ${$L}.a.${$Q}`,
           // see XXX in tfa33al above
           ...$iy`m.u.t ${$F}.a.${$3} ${$L}.i.${$Q}`,
           ...$iy`m.u.t ${$F}.i.${$3} ${$L}.i.${$Q}`,
-        ],
-        $`m.u.t ${$F}.a.${$3} ${$L}.a.${$Q}`,
-      );
+        ]
+        : $`m.u.t ${$F}.a.${$3} ${$L}.a.${$Q}`;
     case ppForm.stfa3la2:
       if ($F.meta.weak) {
         // doesn't exist B)
-        return pickVoice(
-          [
+        return isActiveVoice
+          ? [
           // see XXX in tfa33al above
             ...$iy`m.u.s t.a.${$3} ${$L}.i.${$Q}`,
             ...$iy`m.u.s t.i.${$3} ${$L}.i.${$Q}`,
             ...$`m.u.s t.a.${$3} ${$L}.a.${$Q}`,
-          ],
-          $`m.u.s t.a.${$3} ${$L}.a.${$Q}`,
-        );
+          ]
+          : $`m.u.s t.a.${$3} ${$L}.a.${$Q}`;
       }
-      return pickVoice(
-        [
-          // see XXX in tfa33al above
+      return isActiveVoice
+        ? [
+        // see XXX in tfa33al above
           ...$iy`m.u.s._.t ${$F}.a.${$3} ${$L}.i.${$Q}`,
           ...$iy`m.u.s._.t ${$F}.i.${$3} ${$L}.i.${$Q}`,
           ...$`m.u.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`,
-        ],
-        $`m.u.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`,
-      );
+        ]
+        : $`m.u.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`;
     default:
       return null;
   }
