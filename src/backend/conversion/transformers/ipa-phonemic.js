@@ -204,19 +204,58 @@ class Cap {
   constructor(word) {
     this.word = {...word};
     this.wordMap = mapWord(this.word.value);
-    this.trackers = this.word.map(syllable => Array.from(
-      {length: syllable.value.length},
-      () => ({
-        visible: true,
-        environment: null,
-        dependents: {},
-        currentChoiceIndices: [],
-        choices: [],
-        update(choicesIdx, newSubIdx) {
-          
-        },
-      }),
-    ));
+    this.trackers = this.word.map(seg => ({
+      visible: true,
+      environment: null,
+      dependents: {},
+      currentChoiceIndices: [],
+      choices: [],
+      handlers: [],
+      original: {
+        type: seg.type,
+        meta: {...seg.meta},
+        value: seg.value,
+        context: seg.context,
+      },
+    }));
+  }
+
+  update(idx, choicesIdx, newChoiceIdx) {
+    const tracker = this.trackers[idx];
+    tracker.currentChoiceIndices[choicesIdx] = newChoiceIdx;
+    tracker.choices.splice(choicesIdx + 1);
+    tracker.currentChoiceIndices.splice(choicesIdx + 1);
+    // each handler is at the same idx as the choice it produces
+    // so if we're only updating that choice and its consequences,
+    // we should only consequentially have to rerun the handlers that
+    // come after it
+    for (let i = choicesIdx + 1; i < tracker.choices.length; i += 1) {
+      tracker.choices.push(tracker.handlers[i]());
+      tracker.currentChoiceIndices.push(0);
+    }
+    Object.entries(tracker.dependents).forEach(([depIdx, relationships]) => {
+      this.invalidateDependencies(depIdx, relationships);
+    });
+  }
+
+  invalidateDependencies(idx, deps) {
+    const tracker = this.trackers[idx];
+    tracker.choices.clear();
+    tracker.currentChoiceIndices.clear();
+    this.wordMap[this.word[idx].value].delete(idx);
+    this.wordMap[tracker.original.value].add(idx);
+    deps.forEach(key => {
+      const depIdx = tracker.environment[key];
+      this.trackers[depIdx].dependents.delete(idx);
+      delete tracker.environment[key];
+    });
+    tracker.handlers.forEach(curriedHandler => {
+      tracker.choices.push(curriedHandler());
+      tracker.currentChoiceIndices.push(0);
+    });
+    Object.entries(tracker.dependents).forEach(([depIdx, relationships]) => {
+      this.invalidateDependencies(depIdx, relationships);
+    });
   }
 
   searchSegmentRight(idx, props) {
@@ -237,8 +276,13 @@ class Cap {
     return null;
   }
 
-  react(dep) {
-    this.trackers[dep].value.dependents.add(dep);
+  react(dep, relationship) {
+    const dependency = this.trackers[dep].value;
+    if (!dependency.dependents[dep]) {
+      dependency.dependents[dep] = new Set([relationship]);
+    } else {
+      dependency.dependents[dep].add(relationship);
+    }
     return dep;
   }
 
@@ -293,19 +337,20 @@ class Cap {
 
   wrap(filter, results) {
     if (filter) {
-      const filterDeps = extractDeps(filter);
+      const deps = extractDeps(filter);
       // filter by calling the filter function on the environment it requests
-      results = results.filter(idx => filter(this.updateEnv(idx, filterDeps)));
+      results = results.filter(idx => filter(this.updateEnv(idx, deps)));
     }
     if (!results || results.length === 0) {
       return () => {};
     }
     return handler => {
-      const handlerDeps = extractDeps(handler);
+      const deps = extractDeps(handler);
       results.forEach(idx => {
         const tracker = this.trackers[idx];
-        tracker.choices.push(handler(this.updateEnv(idx, handlerDeps)));
+        tracker.choices.push(handler(this.updateEnv(idx, deps)));
         tracker.currentChoiceIndices.push(0);
+        tracker.handlers.push(() => handler(this.updateEnv(idx, deps)));
       });
     };
   }
@@ -389,7 +434,7 @@ const rules = [
     return [abc.c.high];
   }],
   [_.i, (abc, ctx, {previousConsonant, nextConsonant, codaConsonant}) => {
-    // fuck this makes no sense
+    // f*** this makes no sense
   }]
 ];
 
