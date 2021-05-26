@@ -188,39 +188,14 @@ function extractDeps(arrowFunc) {
   return [...s.matchAll(/(\w+)(?:\s*:\s*\w+)?/g)].map(match => match[1]);
 }
 
-class ID {
-  constructor(word, sylIdx, valIdx) {
-    this.word = word;
-    this.sylIdx = sylIdx === null ? word.length - 1 : sylIdx;
-    this.syllable = this.word[this.sylIdx];
-    this.valIdx = valIdx === null ? this.syllable.length - 1 : valIdx;
-    this.value = this.syllable[this.valIdx];
-  }
-
-  toString() {
-    // idx
-    return `${this.sylIdx},${this.segIdx}`;
-  }
-
-  of(otherWord) {
-    return new ID(otherWord, this.sylIdx, this.valIdx);
-  }
-
-  at(newSyl, newSeg) {
-    return new ID(this.word, newSyl, newSeg);
-  }
-}
-
 function mapWord(word) {
   const segMap = {};
-  word.value.forEach((syllable, sylIdx) => {
-    syllable.value.forEach(({value: segment}, segIdx) => {
-      if (Array.isArray(segMap[segment])) {
-        segMap[segment][new ID(word.value, sylIdx, segIdx)] = true;
-      } else {
-        segMap[segment] = {[new ID(word.value, sylIdx, segIdx)]: true};
-      }
-    });
+  word.value.forEach(({value: segment}, idx) => {
+    if (segMap[segment] instanceof Set) {
+      segMap[segment].add(idx);
+    } else {
+      segMap[segment] = new Set([idx]);
+    }
   });
   return segMap;
 }
@@ -244,84 +219,72 @@ class Cap {
     ));
   }
 
-  searchSegmentRight(id, props) {
-    const syllable = id.syllable.value;
-
-    for (let i = id.valIdx - 1; i >= 0; i -= 1) {
-      if (props.matches(syllable[i])) {
-        /* return syllable[i]; */
-        return id.at(id.sylIdx, i);
+  searchSegmentRight(idx, props) {
+    for (let i = idx + 1; i < this.word.length; i += 1) {
+      if (props.matches(this.word[i])) {
+        return i;
       }
-    }
-    if (id.sylIdx > 0) {
-      return this.searchSegmentRight(id.at(id.sylIdx - 1, null), props);
     }
     return null;
   }
 
-  searchSegmentLeft(id, props) {
-    const syllable = id.syllable.value;
-    for (let i = id.valIdx + 1; i < syllable.length; i += 1) {
-      if (props.matches(syllable[i])) {
-        /* return syllable[i]; */
-        return id.at(id.sylIdx, i);
+  searchSegmentLeft(idx, props) {
+    for (let i = idx - 1; i >= 0; i -= 1) {
+      if (props.matches(this.word[i])) {
+        return i;
       }
-    }
-    if (id.sylIdx < this.word.value.length - 1) {
-      return this.searchSegmentLeft(id.at(id.sylIdx + 1, 0), props);
     }
     return null;
   }
 
-  depGetter(id) {
+  react(dep) {
+    this.trackers[dep].value.dependents.add(dep);
+    return dep;
+  }
+
+  depGetter(idx) {
     return key => {
       switch (key) {
         case depType.type:
-          return id.value.type;
+          return this.word[idx].type;
         case depType.meta:
-          return id.value.meta;
+          return this.word[idx].meta;
         case depType.wordType:
-          return id.word.type;
+          return this.word.type;
         case depType.wordMeta:
-          return id.word.meta;
+          return this.word.meta;
         case depType.word:
-          return id.word.value;
+          return this.word.value;
         case depType.prevConsonant:
-          return this.searchSegmentRight(id, consonantPred);
+          return this.react(this.searchSegmentRight(idx, consonantPred));
         case depType.nextConsonant:
-          return this.searchSegmentLeft(id, consonantPred);
+          return this.react(this.searchSegmentLeft(idx, consonantPred));
         case depType.prevVowel:
-          return this.searchSegmentRight(id, vowelPred);
+          return this.react(this.searchSegmentRight(idx, vowelPred));
         case depType.nextVowel:
-          return this.searchSegmentRight(id, vowelPred);
+          return this.react(this.searchSegmentRight(idx, vowelPred));
         default:
-          throw new Error(`Unknown dependency: ${key} (enum value ${depType.keys[key]})`);
+          throw new Error(
+            `Unknown dep: ${key} for ${idx}, ${this.word[idx]} (enum value ${depType.keys[key]})`
+          );
       }
     };
   }
 
   updateEnv(
-    id,
+    idx,
     dep
   ) {
-    const tracker = id.of(this.trackers);
+    const tracker = this.trackers[idx];
     if (tracker.environment === null) {
       tracker.environment = {};
     }
 
-    const getDependency = this.depGetter(id);
+    const getDependency = this.depGetter(idx);
     dep.forEach(key => {
       if (tracker.environment[key] === undefined) {
         const dependency = getDependency(key);
         tracker.environment[key] = dependency;
-        // XXX: should this be buried down here???
-        // (the part that assigns dependents)
-        if (dependency instanceof ID) {
-          // = true bc it has to be an object instead of a set due to
-          // sets not allowing you to customize equality
-          // (as an object it instead takes advantage of toString() which... meh)
-          dependency.of(this.trackers).value.dependents[dependency] = true;
-        }
       }
     });
 
@@ -331,17 +294,17 @@ class Cap {
   wrap(filter, results) {
     if (filter) {
       const filterDeps = extractDeps(filter);
-      // filter based on calling the filter function on the environment it requests
-      results = results.filter(id => filter(this.updateEnv(id, filterDeps)));
+      // filter by calling the filter function on the environment it requests
+      results = results.filter(idx => filter(this.updateEnv(idx, filterDeps)));
     }
     if (!results || results.length === 0) {
       return () => {};
     }
     return handler => {
       const handlerDeps = extractDeps(handler);
-      results.forEach(id => {
-        const tracker = id.of(this.trackers).value;
-        tracker.choices.push(handler(this.updateEnv(id, handlerDeps)));
+      results.forEach(idx => {
+        const tracker = this.trackers[idx];
+        tracker.choices.push(handler(this.updateEnv(idx, handlerDeps)));
         tracker.currentChoiceIndices.push(0);
       });
     };

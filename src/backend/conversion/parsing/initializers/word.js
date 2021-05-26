@@ -1,6 +1,13 @@
-const {type} = require(`../type`);
 const vowels = require(`../vowels`);
+const {type} = require(`../../objects`);
 const {misc: {lastOf}} = require(`../../utils`);
+
+function deSyllabify(syllables) {
+  syllables.forEach(s => {
+    s.value.find(seg => seg.type === type.vowel).meta.stressed = s.meta.stressed;
+  });
+  return syllables.map(s => s.value).flat();
+}
 
 function word({
   meta: {augmentation, was, ...rest},
@@ -10,7 +17,7 @@ function word({
   const a = lastOf(lastSyllable, 1);
   const b = lastOf(lastSyllable);
   // set (femsuffix).t = true with further suffixes
-  if (b.type === `suffix` && a.value === `fem`) {
+  if (b.type === type.suffix && a.value === `fem`) {
     a.meta.t = true;
   }
   // contract long vowels w/ dative L
@@ -28,7 +35,7 @@ function word({
   // but it's more sillum->sillumo than sillmo, etc
   // otherwise there would be code for that in here instead of
   // just in the verb-initializer
-  return {type: was, meta: {augmentation, ...rest}, value};
+  return {type: was, meta: {augmentation, ...rest}, value: deSyllabify(value)};
 }
 
 module.exports = {
