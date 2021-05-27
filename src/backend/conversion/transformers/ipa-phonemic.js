@@ -247,6 +247,8 @@ class Cap {
       () => new Set(),
       (set, val) => set.delete(val)
     );
+
+    this.globalHandlerID = 0;
     this.handlerMap = new DefaultObject(
       Object.fromEntries(this.wordMap.keys().map(k => [k])),
       () => [],
@@ -254,6 +256,7 @@ class Cap {
         throw new Error(`Shouldn't be trying to remove handlers (${val} from ${arr})`);
       },
     );
+
     this.trackers = this.word.map(seg => ({
       visible: true,
       environment: null,
@@ -271,7 +274,7 @@ class Cap {
 
   // run all handlers again, mutating both word[idx] and
   // trackers[idx].choices + trackers[idx].currentChoiceIndices
-  rerunAllHandlers(idx) {
+  rerunAllHandlers(idx, from) {
     let update = STAY;
     const tracker = this.trackers[idx];
 
@@ -281,10 +284,18 @@ class Cap {
       const current = new Props(this.word[idx]);
       let keepLooping = false;
 
-      for (let i = 0; i < handlers.length; i += 1) {
-        update = handlers[i](idx);
+      const first = handlers.findIndex(
+        h => h.order > tracker.choices[from][tracker.currentChoiceIndices[from]].order
+      );
+
+      for (
+        let i = first === -1 ? handlers.length : first;
+        i < handlers.length;
+        i += 1
+      ) {
+        update = handlers[i].f(idx);
         if (update !== STAY) {
-          tracker.choices.push(update);
+          tracker.choices.push({order: handlers[i].order, arr: update});
           tracker.currentChoiceIndices.push(0);
           // first update the segment in this.word
           this.word[idx] = update[0];
@@ -318,12 +329,12 @@ class Cap {
     // delete the index from the now-outdated segment in the wordmap
     this.wordMap.ensure(this.word[idx].value).delete(idx);
     // revert the segment in this.word to that choice for the handlers to operate on
-    this.word[idx] = tracker.choices[choicesIdx][newChoiceIdx];
+    this.word[idx] = tracker.choices[choicesIdx].arr[newChoiceIdx];
     // put the index in the now-correct segment's entry in the wordmap
     this.wordMap.ensure(this.word[idx].value).add(idx);
     tracker.choices.splice(choicesIdx + 1);
     tracker.currentChoiceIndices.splice(choicesIdx + 1);
-    this.rerunAllHandlers(idx);
+    this.rerunAllHandlers(idx, choicesIdx);
     tracker.dependents.entries().forEach(([depIdx, relationships]) => {
       this.invalidateDependencies(depIdx, relationships);
     });
@@ -352,7 +363,7 @@ class Cap {
       this.trackers[depIdx].dependents.delete(idx);
       delete tracker.environment[key];
     });
-    this.rerunAllHandlers(idx);
+    this.rerunAllHandlers(idx, 0);
     tracker.dependents.entries().forEach(([depIdx, relationships]) => {
       this.invalidateDependencies(depIdx, relationships);
     });
@@ -447,13 +458,17 @@ class Cap {
         if (update === STAY) {
           return;
         }
-        tracker.choices.push(update);
+        tracker.choices.push({order: this.globalHandlerID, arr: update});
         tracker.currentChoiceIndices.push(0);
         this.word[idx] = update[0];
         this.handlerMap
           .ensure(this.word[idx].value)
           // TODO: maybe cache this func idk since it doesn't have to worry abt being mutated
-          .add(index => handler(this.updateEnv(index, deps)));
+          .add({
+            order: this.globalHandlerID,
+            f: index => handler(this.updateEnv(index, deps)),
+          });
+        this.globalHandlerID += 1;
       });
     };
   }
