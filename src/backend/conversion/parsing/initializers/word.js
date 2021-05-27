@@ -35,7 +35,15 @@ function word({
   // but it's more sillum->sillumo than sillmo, etc
   // otherwise there would be code for that in here instead of
   // just in the verb-initializer
-  return {type: was, meta: {augmentation, ...rest}, value: deSyllabify(value)};
+  return {
+    type: was,
+    meta: {
+      syllableCount: value.length,  // verbs add to this later when prefix is chosen
+      augmentation,
+      ...rest,
+    },
+    value: deSyllabify(value),
+  };
 }
 
 module.exports = {
