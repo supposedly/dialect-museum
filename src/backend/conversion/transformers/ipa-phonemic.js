@@ -172,6 +172,7 @@ const consonantPred = new Props({type: objType.consonant});
 const vowelPred = new Props({type: objType.vowel}).or({type: objType.suffix, meta: {t: false}, value: `fem`});
 
 const depType = fenum([
+  `idx`,
   `type`,
   `meta`,
   `wordType`,
@@ -275,8 +276,15 @@ class Cap {
   // run all handlers again, mutating both word[idx] and
   // trackers[idx].choices + trackers[idx].currentChoiceIndices
   rerunAllHandlers(idx, from) {
-    let update = STAY;
     const tracker = this.trackers[idx];
+    const originalChoice = from > -1
+      ? tracker.choices[from][tracker.currentChoiceIndices[from]]
+      : {order: -1};
+    tracker.choices.splice(from + 1);
+    tracker.currentChoiceIndices.splice(from + 1);
+
+    let changed = false;
+    let update = STAY;
 
     // loop forever (why does eslint like this syntax more than while true lol)
     for (;;) {
@@ -285,7 +293,7 @@ class Cap {
       let keepLooping = false;
 
       const first = handlers.findIndex(
-        h => h.order > tracker.choices[from][tracker.currentChoiceIndices[from]].order
+        h => h.order > originalChoice.order
       );
 
       for (
@@ -302,6 +310,7 @@ class Cap {
           // if that handler returned a new kind of segment, we also have to
           // start over with that segment's handlers
           if (!current.matches(update[0])) {
+            changed = true;
             // this is here to avoid using a labeled loop per eslint,
             // altho honestly i find it a bit more confusing this way
             keepLooping = true;
@@ -319,6 +328,8 @@ class Cap {
         break;
       }
     }
+
+    return changed;
   }
 
   // call this when the user toggles a choice via the frontend
@@ -332,9 +343,8 @@ class Cap {
     this.word[idx] = tracker.choices[choicesIdx].arr[newChoiceIdx];
     // put the index in the now-correct segment's entry in the wordmap
     this.wordMap.ensure(this.word[idx].value).add(idx);
-    tracker.choices.splice(choicesIdx + 1);
-    tracker.currentChoiceIndices.splice(choicesIdx + 1);
     this.rerunAllHandlers(idx, choicesIdx);
+    // since the value was updated, it's now invalid for all of its dependents
     tracker.dependents.entries().forEach(([depIdx, relationships]) => {
       this.invalidateDependencies(depIdx, relationships);
     });
@@ -342,7 +352,7 @@ class Cap {
 
   // this is called from this.update() and from itself, signalling to the
   // segment at `idx` that its `deps` have changed and are now invalid
-  // so it needs to be recomputed with their new values
+  // meaning it needs to be recomputed with their new values
   invalidateDependencies(idx, deps) {
     const tracker = this.trackers[idx];
     if (tracker.currentlyInvalidating) {
@@ -363,10 +373,14 @@ class Cap {
       this.trackers[depIdx].dependents.delete(idx);
       delete tracker.environment[key];
     });
-    this.rerunAllHandlers(idx, 0);
-    tracker.dependents.entries().forEach(([depIdx, relationships]) => {
-      this.invalidateDependencies(depIdx, relationships);
-    });
+    // TODO: could maybe make this more efficient by figuring out a way to only
+    // rerun from the first handler that uses one of the invalidated deps
+    if (this.rerunAllHandlers(idx, -1)) {
+    // if this one changed, then invalidate it for all of its dependents too
+      tracker.dependents.entries().forEach(([depIdx, relationships]) => {
+        this.invalidateDependencies(depIdx, relationships);
+      });
+    }
     // IMPORTANT: this ensures that "this stops infinite recursion" works properly
     tracker.currentlyInvalidating = false;
   }
@@ -401,6 +415,8 @@ class Cap {
     const react = this.react(idx);
     return key => {
       switch (key) {
+        case depType.idx:
+          return idx;
         case depType.type:
           return this.word[idx].type;
         case depType.meta:
@@ -414,13 +430,25 @@ class Cap {
         case depType.word:
           return this.word.value;
         case depType.prevConsonant:
-          return react(this.searchSegmentRight(idx, consonantPred));
+          return react(
+            this.searchSegmentRight(idx, consonantPred),
+            depType.prevConsonant
+          );
         case depType.nextConsonant:
-          return react(this.searchSegmentLeft(idx, consonantPred));
+          return react(
+            this.searchSegmentLeft(idx, consonantPred),
+            depType.nextConsonant
+          );
         case depType.prevVowel:
-          return react(this.searchSegmentRight(idx, vowelPred));
+          return react(
+            this.searchSegmentRight(idx, vowelPred),
+            depType.prevVowel
+          );
         case depType.nextVowel:
-          return react(this.searchSegmentRight(idx, vowelPred));
+          return react(
+            this.searchSegmentRight(idx, vowelPred),
+            depType.nextVowel
+          );
         default:
           throw new Error(
             `Unknown dep: ${key} for ${idx}, ${this.word[idx]} (enum value ${depType.keys[key]})`
