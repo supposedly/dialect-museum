@@ -176,6 +176,7 @@ const depType = fenum([
   `meta`,
   `wordType`,
   `wordMeta`,
+  `wordContext`,
   `word`,
   `prevConsonant`,
   `nextConsonant`,
@@ -184,78 +185,179 @@ const depType = fenum([
 ]);
 
 function extractDeps(arrowFunc) {
+  if (!arrowFunc) {
+    return null;
+  }
   const [s] = String(arrowFunc).split(`=>`, 1);
   return [...s.matchAll(/(\w+)(?:\s*:\s*\w+)?/g)].map(match => match[1]);
 }
 
-function mapWord(word) {
-  const segMap = {};
-  word.value.forEach(({value: segment}, idx) => {
-    if (segMap[segment] instanceof Set) {
-      segMap[segment].add(idx);
-    } else {
-      segMap[segment] = new Set([idx]);
+class DefaultObject {
+  constructor(obj, creator, deleter) {
+    this.map = obj;
+    this.creator = creator;
+    this.deleter = deleter;
+  }
+
+  ensure(key) {
+    if (this.map[key] === undefined) {
+      this.map[key] = this.creator(key);
     }
-  });
-  return segMap;
+    return this.map[key];
+  }
+
+  keys() {
+    return Object.keys(this.map);
+  }
+
+  values() {
+    return Object.values(this.map);
+  }
+
+  entries() {
+    return Object.entries(this.map);
+  }
 }
+
+function copy(obj) {
+  return {
+    type: obj.type,
+    meta: {...obj.meta},
+    value: obj.value,
+    context: obj.context,
+  };
+}
+
+const STAY = {};
+const NOTHING = {};
 
 class Cap {
   constructor(word) {
     this.word = {...word};
-    this.wordMap = mapWord(this.word.value);
+    const segments = {};
+    word.value.forEach(({value: segment}, idx) => {
+      if (segments[segment] instanceof Set) {
+        segments[segment].add(idx);
+      } else {
+        segments[segment] = new Set([idx]);
+      }
+    });
+    this.wordMap = new DefaultObject(
+      segments,
+      () => new Set(),
+      (set, val) => set.delete(val)
+    );
+    this.handlerMap = new DefaultObject(
+      Object.fromEntries(this.wordMap.keys().map(k => [k])),
+      () => [],
+      (arr, val) => {
+        throw new Error(`Shouldn't be trying to remove handlers (${val} from ${arr})`);
+      },
+    );
     this.trackers = this.word.map(seg => ({
       visible: true,
       environment: null,
-      dependents: {},
+      currentlyInvalidating: false,
+      dependents: new DefaultObject(
+        {},
+        () => new Set(),
+        (set, val) => set.delete(val),
+      ),
       currentChoiceIndices: [],
       choices: [],
-      handlers: [],
-      original: {
-        type: seg.type,
-        meta: {...seg.meta},
-        value: seg.value,
-        context: seg.context,
-      },
+      original: copy(seg),
     }));
   }
 
+  // run all handlers again, mutating both word[idx] and
+  // trackers[idx].choices + trackers[idx].currentChoiceIndices
+  rerunAllHandlers(idx) {
+    let update = STAY;
+    const tracker = this.trackers[idx];
+
+    // loop forever (why does eslint like this syntax more than while true lol)
+    for (;;) {
+      const handlers = this.handlerMap.ensure(this.word[idx].value);
+      const current = new Props(this.word[idx]);
+      let keepLooping = false;
+
+      for (let i = 0; i < handlers.length; i += 1) {
+        update = handlers[i](idx);
+        if (update !== STAY) {
+          tracker.choices.push(update);
+          tracker.currentChoiceIndices.push(0);
+          // first update the segment in this.word
+          this.word[idx] = update[0];
+          // if that handler returned a new kind of segment, we also have to
+          // start over with that segment's handlers
+          if (!current.matches(update[0])) {
+            // this is here to avoid using a labeled loop per eslint,
+            // altho honestly i find it a bit more confusing this way
+            keepLooping = true;
+            break;
+          }
+        }
+      }
+
+      // if we've run thru all the handlers for this segment without it
+      // changing, we can leave
+      if (!keepLooping) {
+        if (update !== STAY) {
+          this.word[idx] = update;
+        }
+        break;
+      }
+    }
+  }
+
+  // call this when the user toggles a choice via the frontend
+  // but only AFTER all handlers have already been collected & used once via this.wrap() ofc
   update(idx, choicesIdx, newChoiceIdx) {
     const tracker = this.trackers[idx];
     tracker.currentChoiceIndices[choicesIdx] = newChoiceIdx;
+    // delete the index from the now-outdated segment in the wordmap
+    this.wordMap.ensure(this.word[idx].value).delete(idx);
+    // revert the segment in this.word to that choice for the handlers to operate on
+    this.word[idx] = tracker.choices[choicesIdx][newChoiceIdx];
+    // put the index in the now-correct segment's entry in the wordmap
+    this.wordMap.ensure(this.word[idx].value).add(idx);
     tracker.choices.splice(choicesIdx + 1);
     tracker.currentChoiceIndices.splice(choicesIdx + 1);
-    // each handler is at the same idx as the choice it produces
-    // so if we're only updating that choice and its consequences,
-    // we should only consequentially have to rerun the handlers that
-    // come after it
-    for (let i = choicesIdx + 1; i < tracker.choices.length; i += 1) {
-      tracker.choices.push(tracker.handlers[i]());
-      tracker.currentChoiceIndices.push(0);
-    }
-    Object.entries(tracker.dependents).forEach(([depIdx, relationships]) => {
+    this.rerunAllHandlers(idx);
+    tracker.dependents.entries().forEach(([depIdx, relationships]) => {
       this.invalidateDependencies(depIdx, relationships);
     });
   }
 
+  // this is called from this.update() and from itself, signalling to the
+  // segment at `idx` that its `deps` have changed and are now invalid
+  // so it needs to be recomputed with their new values
   invalidateDependencies(idx, deps) {
     const tracker = this.trackers[idx];
+    if (tracker.currentlyInvalidating) {
+      return;
+    }
+    // IMPORTANT: this stops infinite recursion
+    tracker.currentlyInvalidating = true;
     tracker.choices.clear();
     tracker.currentChoiceIndices.clear();
-    this.wordMap[this.word[idx].value].delete(idx);
-    this.wordMap[tracker.original.value].add(idx);
+    // delete idx from outdated wordmap segment
+    this.wordMap.ensure(this.word[idx].value).delete(idx);
+    // revert the segment in this.word so that the handlers can do it all over again
+    this.word[idx] = copy(tracker.original);
+    // put idx in new wordmap segment
+    this.wordMap.ensure(this.word[idx].value).add(idx);
     deps.forEach(key => {
       const depIdx = tracker.environment[key];
       this.trackers[depIdx].dependents.delete(idx);
       delete tracker.environment[key];
     });
-    tracker.handlers.forEach(curriedHandler => {
-      tracker.choices.push(curriedHandler());
-      tracker.currentChoiceIndices.push(0);
-    });
-    Object.entries(tracker.dependents).forEach(([depIdx, relationships]) => {
+    this.rerunAllHandlers(idx);
+    tracker.dependents.entries().forEach(([depIdx, relationships]) => {
       this.invalidateDependencies(depIdx, relationships);
     });
+    // IMPORTANT: this ensures that "this stops infinite recursion" works properly
+    tracker.currentlyInvalidating = false;
   }
 
   searchSegmentRight(idx, props) {
@@ -276,17 +378,16 @@ class Cap {
     return null;
   }
 
-  react(dep, relationship) {
-    const dependency = this.trackers[dep].value;
-    if (!dependency.dependents[dep]) {
-      dependency.dependents[dep] = new Set([relationship]);
-    } else {
-      dependency.dependents[dep].add(relationship);
-    }
-    return dep;
+  react(idx) {
+    const tracker = this.trackers[idx];
+    return (dep, relationship) => {
+      tracker.dependents.ensure(dep).add(relationship);
+      return dep;
+    };
   }
 
   depGetter(idx) {
+    const react = this.react(idx);
     return key => {
       switch (key) {
         case depType.type:
@@ -297,16 +398,18 @@ class Cap {
           return this.word.type;
         case depType.wordMeta:
           return this.word.meta;
+        case depType.wordContext:
+          return this.word.context;
         case depType.word:
           return this.word.value;
         case depType.prevConsonant:
-          return this.react(this.searchSegmentRight(idx, consonantPred));
+          return react(this.searchSegmentRight(idx, consonantPred));
         case depType.nextConsonant:
-          return this.react(this.searchSegmentLeft(idx, consonantPred));
+          return react(this.searchSegmentLeft(idx, consonantPred));
         case depType.prevVowel:
-          return this.react(this.searchSegmentRight(idx, vowelPred));
+          return react(this.searchSegmentRight(idx, vowelPred));
         case depType.nextVowel:
-          return this.react(this.searchSegmentRight(idx, vowelPred));
+          return react(this.searchSegmentRight(idx, vowelPred));
         default:
           throw new Error(
             `Unknown dep: ${key} for ${idx}, ${this.word[idx]} (enum value ${depType.keys[key]})`
@@ -335,41 +438,40 @@ class Cap {
     return tracker.environment;
   }
 
-  wrap(filter, results) {
-    if (filter) {
-      const deps = extractDeps(filter);
-      // filter by calling the filter function on the environment it requests
-      results = results.filter(idx => filter(this.updateEnv(idx, deps)));
-    }
-    if (!results || results.length === 0) {
-      return () => {};
-    }
+  wrap(results) {
     return handler => {
       const deps = extractDeps(handler);
       results.forEach(idx => {
         const tracker = this.trackers[idx];
-        tracker.choices.push(handler(this.updateEnv(idx, deps)));
+        const update = handler(this.updateEnv(idx, deps));
+        if (update === STAY) {
+          return;
+        }
+        tracker.choices.push(update);
         tracker.currentChoiceIndices.push(0);
-        tracker.handlers.push(() => handler(this.updateEnv(idx, deps)));
+        this.word[idx] = update[0];
+        this.handlerMap
+          .ensure(this.word[idx].value)
+          // TODO: maybe cache this func idk since it doesn't have to worry abt being mutated
+          .add(index => handler(this.updateEnv(index, deps)));
       });
     };
   }
 
-  just(obj, filter) {
-    return this.wrap(filter, this.wordMap[obj.value]);
+  just(obj) {
+    return this.wrap(this.wordMap.ensure(obj.value));
   }
 
-  segment(props, filter) {
+  segment(props) {
     props = props instanceof Props ? props : new Props(props);
     return this.wrap(
-      filter,
-      Object.values(this.wordMap)
-        .map(indices => indices.filter(id => props.matches(id.value)))
+      this.wordMap.values()
+        .map(indices => [...indices].filter(id => props.matches(id.value)))
         .flat()
     );
   }
 
-  segmentOfType(type, props, filter) {
+  segmentOfType(type, props) {
     props = props instanceof Props ? props : new Props(props);
     // don't think i'll allow type or value to be set
     const {meta: {intrinsic, ...rawMeta}} = props.obj;
@@ -378,30 +480,29 @@ class Cap {
       ? subAlphabets[type].filter(c => intrinsic.matches(c.meta.intrinsic))
       : subAlphabets[type];
     return this.wrap(
-      filter,
       searchSpace
-        .map(c => this.wordMap[c])
-        .map(indices => indices.filter(
+        .map(this.wordMap.ensure)
+        .map(indices => [...indices].filter(
           id => meta.matches(id.value.meta)
         ))
         .flat()
     );
   }
 
-  consonant(props, filter) {
-    return this.segmentOfType(objType.consonant, props, filter);
+  consonant(props) {
+    return this.segmentOfType(objType.consonant, props);
   }
 
-  vowel(props, filter) {
-    return this.segmentOfType(objType.vowel, props, filter);
+  vowel(props) {
+    return this.segmentOfType(objType.vowel, props);
   }
 
-  epenthetic(props, filter) {
-    return this.segmentOfType(objType.epenthetic, props, filter);
+  epenthetic(props) {
+    return this.segmentOfType(objType.epenthetic, props);
   }
 
-  suffix(props, filter) {
-    return this.segmentOfType(objType.suffix, props, filter);
+  suffix(props) {
+    return this.segmentOfType(objType.suffix, props);
   }
 }
 
