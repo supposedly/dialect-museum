@@ -1,16 +1,9 @@
-const {misc: {lastOf}, syllables: {newSyllable}} = require(`../../utils`);
-const {parseSyllable} = require(`../../parse-word`);
+const {misc: {lastOf}} = require(`../../utils`);
 const {type} = require(`../type`);
 
 function toConstruct(word) {
   if (word.type === type.idafe) {  // this shouldn't ever trigger but ykno...
     toConstruct(lastOf(word.value));
-  } else if (word.type === type.number && word.meta.endsIn === `sh`) {
-    const lastSyllable = lastOf(word.value).value;
-    lastSyllable.meta.weight -= 1;
-    word.value.push(parseSyllable`sh.a.r`);
-    lastSyllable.pop();  // sh
-    lastSyllable.pop();  // schwa
   } else {
     const lastSegment = lastOf(lastOf(word.value).value);
     if (lastSegment.value === `fem`) {
