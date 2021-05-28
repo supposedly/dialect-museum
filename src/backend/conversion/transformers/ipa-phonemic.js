@@ -170,15 +170,14 @@ function extractDeps(arrowFunc) {
 }
 
 class DefaultObject {
-  constructor(obj, creator, deleter) {
+  constructor(obj, newEntry) {
     this.map = obj;
-    this.creator = creator;
-    this.deleter = deleter;
+    this.newEntry = newEntry;
   }
 
   ensure(key) {
     if (this.map[key] === undefined) {
-      this.map[key] = this.creator(key);
+      this.map[key] = this.newEntry(key);
     }
     return this.map[key];
   }
@@ -202,27 +201,16 @@ const NOTHING = {};
 class Cap {
   constructor(word) {
     this.word = {...word};
-    const segments = {};
+    const segments = new DefaultObject({}, () => new Set());
     word.value.forEach(({value: segment}, idx) => {
-      if (segments[segment] instanceof Set) {
-        segments[segment].add(idx);
-      } else {
-        segments[segment] = new Set([idx]);
-      }
+      segments.ensure(segment).add(idx);
     });
-    this.wordMap = new DefaultObject(
-      segments,
-      () => new Set(),
-      (set, val) => set.delete(val)
-    );
+    this.wordMap = segments;
 
     this.globalHandlerID = 0;
     this.handlerMap = new DefaultObject(
       Object.fromEntries(this.wordMap.keys().map(k => [k])),
       () => [],
-      (arr, val) => {
-        throw new Error(`Shouldn't be trying to remove handlers (${val} from ${arr})`);
-      },
     );
 
     this.trackers = this.word.map(seg => ({
@@ -232,7 +220,6 @@ class Cap {
       dependents: new DefaultObject(
         {},
         () => new Set(),
-        (set, val) => set.delete(val),
       ),
       currentChoiceIndices: [],
       choices: [],
