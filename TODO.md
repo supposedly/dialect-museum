@@ -20,3 +20,9 @@
 * ~~Add metadata to consonants: place, manner, voicing **(grouped by articulator instead of place)**~~
 * ~~Update style: enforce commas on the last element of multiline lists, enforce curly-internal spaces only for blocks and not objects~~
 * ~~Create a module that exports string tags to map certain strings to numbers (basically what's currently in phoneme-properties.js) **(enums)**~~
+* Split `ipa-phonemic` into a few modules: `common` for utils and classes (might have submodules for diff classes), `iconophonemic`, `phonemic`, `phonetic`, and maybe `random`
+    * `iconophonemic`: for scripts that will have fixed iconic symbols for ة and stuff, and also adhere to archiphonemes like `aa` and `ay/aw`; can maybe specify which phoneme groups should be abstracted over in that way (eg i want -iin to be -iin instead of a symbol, and if not that then the transformer will maybe do something like `iconophonemicAlphabet.iin.contracted || iconophonemicAlphabet.iin.default, iconophonemicAlphabet.iin.full || iconophonemicAlphabet.iin.default, etc`
+    * `phonemic`: for scripts that are based on phonemes and have none of those icons^, so this transformer will translate `abc.c` into `[abc.e, abc.i]` or something and then surface it as whichever one of those two would surface -- instead of leaving it as `abc.c` and surfacing it as `iconophonemicAlphabet.c.lowered/raised || iconophonemicAlphabet.c.default`
+    * `phonetic`: this one is gonna be a pain in the neck and i'm probably gonna put it off
+    * `random`: not exactly sure how this will work but it's for 3arabizi and stuff where vowels might just disappear no matter what they are... also geminates need to be only randomly observed
+* Maybe let alphabets have transformers of their own, eg a meme ->katakana transformer could first do romaji like `abc.t abc.u` -> `"tu"` and then have the `"tu"` be processed into `"ツ"`
