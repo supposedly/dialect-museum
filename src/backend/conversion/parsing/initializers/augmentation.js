@@ -70,13 +70,13 @@ function cliticInContext(
 }
 
 // forcibly stress previous syllable
-function stress(syllable) {
-  return {syllable, stress: true};
+function stress(string) {
+  return {string, stress: true};
 }
 
 // don't forcibly stress previous syllable
-function natural(syllable) {
-  return {syllable, stress: false};
+function natural(string) {
+  return {string, stress: false};
 }
 
 // stress: true=stress the syllable before (even if it wouldn't naturally be stressed)

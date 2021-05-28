@@ -1,7 +1,8 @@
 /* eslint-disable max-classes-per-file */
 const symbols = require(`../symbols`);
-const {type: objType} = require(`../objs`);
+const {type: objType} = require(`../objects`);
 const {fenum} = require(`../enums`);
+const {misc: {lastOf}} = require(`../utils`);
 
 // fill an alphabet out with default values n stuff
 function makeAlphabet(alphabet) {
@@ -41,7 +42,7 @@ function copySeg(obj) {
 class Word {
   constructor(wordObj, augmentationChoice = 0, prefixChoice = 0) {
     const type = wordObj.type;
-    const meta = {...wordObj.meta};
+    const meta = {...wordObj.meta, stemStarts: 0};
     const value = wordObj.value.map(copySeg);
     const context = [...wordObj.context];
 
@@ -49,14 +50,23 @@ class Word {
       meta.syllableCount += meta.prefixes[prefixChoice].length;
       const choice = meta.prefixes[prefixChoice].flat();
       meta.prefixChoice = prefixChoice;
-      meta.prefixStarts = choice.length;
+      meta.stemStarts = choice.length;
       value.unshift(...choice);
     }
 
+    meta.stemEnds = value.length - 1;
+
     if (meta.augmentation) {
       meta.augmentationChoice = augmentationChoice;
-      meta.augmentationStarts = value.length - 1;
-      value.push(meta.augmentation[augmentationChoice]);
+      const augmentation = meta.augmentation[augmentationChoice];
+      if (augmentation.stress) {
+        const inefficientVowelCopyLol = value.filter(seg => seg.type === objType.vowel);
+        inefficientVowelCopyLol.forEach(vowel => {
+          vowel.meta.stressed = false;
+        });
+        lastOf(inefficientVowelCopyLol).meta.stressed = true;
+      }
+      value.push(augmentation.string);
     }
 
     this.type = type;
@@ -148,6 +158,10 @@ const consonantPred = new Props({type: objType.consonant});
 const vowelPred = new Props({type: objType.vowel}).or({type: objType.suffix, meta: {t: false}, value: `fem`});
 
 const depType = fenum([
+  /* filters */
+  `isPrefix`,
+  `isAugmentation`,
+  /* constant dependencies */
   `idx`,
   `type`,
   `meta`,
@@ -155,6 +169,7 @@ const depType = fenum([
   `wordMeta`,
   `wordContext`,
   `word`,
+  /* reactive dependencies */
   `prevConsonant`,
   `nextConsonant`,
   `prevVowel`,
@@ -369,6 +384,12 @@ class Cap {
     const react = this.react(idx);
     return key => {
       switch (key) {
+        /* filters */
+        case depType.isPrefix:
+          return idx < this.word.meta.stemStarts;
+        case depType.isAugmentation:
+          return idx > this.word.meta.stemEnds;
+        /* constant dependencies */
         case depType.idx:
           return idx;
         case depType.type:
@@ -383,6 +404,7 @@ class Cap {
           return this.word.context;
         case depType.word:
           return this.word.value;
+        /* reactive dependencies */
         case depType.prevConsonant:
           return react(
             this.searchSegmentRight(idx, consonantPred),

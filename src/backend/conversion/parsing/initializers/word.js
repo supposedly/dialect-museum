@@ -3,10 +3,10 @@ const {type} = require(`../../objects`);
 const {misc: {lastOf}} = require(`../../utils`);
 
 function deSyllabify(syllables) {
-  syllables.forEach(s => {
-    s.value.find(seg => seg.type === type.vowel).meta.stressed = s.meta.stressed;
+  syllables.forEach(syl => {
+    syl.value.find(seg => seg.type === type.vowel).meta.stressed = syl.meta.stressed;
   });
-  return syllables.map(s => s.value).flat();
+  return syllables.map(syl => syl.value).flat();
 }
 
 function word({
