@@ -59,12 +59,17 @@ function iyStrategize(conjugation) {
       // mishtiryiin, qaaryiin
       // aka: `*.i.y ii.n` => `*.i y.ii.n`
       bumpLastConsonant,
+      /*
+      // commenting this one out because it'll be handled later as
+      // a regular rule that alternates Cyii with Cii
+      // (maybe excluding e.g. byiibas which would instead be handled as a South Lev sorta thingy)
       base => {
         // mishtriin, qaariin
         // aka: `*.i.y ii.n` => `* ii.n`
         lastOf(base).value.splice(-2);
         base.push(newSyllable());
       },
+      */
       base => {
         // mishtriyyiin, qaariyyiin (yikes...)
         // aka: `*.i.y ii.n` => `*.i.y y.ii.n`

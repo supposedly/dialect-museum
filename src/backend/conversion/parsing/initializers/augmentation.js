@@ -1,11 +1,34 @@
 const {type} = require(`../type`);
-const {parseLetter} = require(`../../parse-word`);
+const {parseLetter, parseString: $} = require(`../../parse-word`);
 const {misc: {lastOf}} = require(`../../utils`);
 
 const L = Object.freeze(parseLetter`l`);
 
 // 0, 1, 2
 const N_VALUES = [`yFor1sg`, `bothFor1sg`, `nFor1sg`];
+
+const _ = {
+  NI: $`n.ii`,
+  I: $`ii`,
+  YI: $`y.ii`,
+  NA: $`n.aa`,
+  IK: $`i.k`,
+  KI: $`k.ii`,
+  AK: $`a.k`,
+  K: $`k`,
+  KUN: $`k.u.n`,
+  A: $`aa`,
+  HA: $`h.aa`,
+  YA: $`y.aa`,
+  WA: $`w.aa`,
+  O: $`o`,
+  YO: $`y.o`,
+  UN: $`u.n`,
+  HUN: $`h.u.n`,
+  YUN: $`y.u.n`,
+  WUN: $`w.u.n`,
+  _: $``,
+};
 
 // special = like in 'fiyyo'
 function cliticInContext(
@@ -65,28 +88,28 @@ function clitic(person, gender, number, n) {
         case 2:
           return cliticInContext(
             // -ni
-            {default: [stress(0)]},
+            {default: [stress(_.NI)]},
           );
         case 1:
           return cliticInContext(
             // -i, ni
-            {default: [natural(1), stress(0)]},
+            {default: [natural(_.I), stress(_.NI)]},
             // -yi, (-wi?), -ni
-            [stress(0)],
+            [stress(_.YI), stress(_.NI)],
           );
         default:
         case 0:
           return cliticInContext(
             // -i
-            {default: [natural(0)]},
+            {default: [natural(_.I)]},
             // -yi, (-wi?)
-            [stress(0)],
+            [stress(_.YI)],
           );
       }
     }
     return cliticInContext(
       // -na
-      {default: [stress(0)]},
+      {default: [stress(_.NA)]},
     );
   }
   if (person.second()) {
@@ -94,21 +117,21 @@ function clitic(person, gender, number, n) {
       if (gender.fem()) {
         return cliticInContext(
           // -ik
-          {default: [natural(1)]},
+          {default: [natural(_.IK)]},
           // -ki
-          [stress(0)],
+          [stress(_.KI)],
         );
       }
       return cliticInContext(
         // -ak
-        {default: [natural(1)]},
+        {default: [natural(_.AK)]},
         // -k
-        [stress(-1)],
+        [stress(_.K)],
       );
     }
     return cliticInContext(
       // -kun/-kin
-      {default: [stress(0)]},
+      {default: [natural(_.KUN)]},
     );
   }
   if (person.third()) {
@@ -118,40 +141,48 @@ function clitic(person, gender, number, n) {
           {
             default: [
               // -a
-              natural(1),
+              natural(_.A),  // aka stress
               // -ha
-              stress(0),
+              natural(_.HA),  // aka stress
             ],
             // -a
-            vc: [stress(1)],
+            vc: [stress(_.A), natural(_.A)],
           },
           // -ya, -wa, -ha
-          [stress(0)],
+          [stress(_.YA), stress(_.HA)],
+          {
+            // last one is e.g. "darabouyon" which is a thing
+            uu: [stress(_.WA), stress(_.HA), stress(_.YA)],
+          }
         );
       }
       return cliticInContext(
         // -o; -o
-        {default: [natural(1)], vc: [stress(1)]},
+        {default: [natural(_.O)], vc: [natural(_.O), stress(_.O)]},
         // -null
-        [stress(-1)],
+        [stress(_._)],
         {},
-        // -yo, (-wo?); e.g. fiyyo
-        [stress(0)],
+        // e.g. fiyyo (probably gonna need a -wo variant in a few generations)
+        [stress(_.YO)],
       );
     }
     return cliticInContext(
       {
         default: [
           // -un/-in
-          natural(1),
+          natural(_.UN),
           // -hun/-hin
-          stress(0),
+          natural(_.HUN),
         ],
         // -un/-in
-        vc: [stress(1)],
+        vc: [stress(_.UN), natural(_.UN), natural(_.HUN)],
       },
       // -yun/-yin, -wun/-win, -hun/-hin
-      [stress(0)],
+      [stress(_.YUN), stress(_.HUN)],
+      {
+        // last one is e.g. "darabouyon" which is a thing
+        uu: [stress(_.WUN), stress(_.HUN), stress(_.YUN)],
+      }
     );
   }
   throw new Error(

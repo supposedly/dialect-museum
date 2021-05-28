@@ -3,67 +3,6 @@ const symbols = require(`../symbols`);
 const {type: objType} = require(`../objs`);
 const {fenum} = require(`../enums`);
 
-const _ = {
-  h: `h`,
-  2: `2`,
-  7: `7`,
-  3: `3`,
-  5: `5`,
-  gh: `9`,
-  q: `q`,
-  k: `k`,
-  g: `g`,
-  y: `y`,
-  sh: `x`,
-  j: `j`,
-  r: `r`,
-  l: `l`,
-  s: `s`,
-  z: `z`,
-  n: `n`,
-  t: `t`,
-  d: `d`,
-  th: `8`,
-  dh: `6`,
-  f: `f`,
-  v: `v`,
-  w: `w`,
-  m: `m`,
-  b: `b`,
-  p: `p`,
-
-  a: `a`,
-  aa: `A`,
-  AA: `@`,  // lowered aa
-  ae: `&`,  // foreign ae
-  laxI: `1`,
-  i: `i`,
-  ii: `I`,
-  laxU: `0`,
-  u: `u`,
-  uu: `U`,
-  e: `e`,
-  ee: `E`,
-  o: `o`,
-  oo: `O`,
-  ay: `Y`,
-  aw: `W`,
-
-  _: `_`,  // no schwa
-  Schwa: `'`,
-  c: `c`,
-  FemPlural: `C`,
-  Dual: `=`,
-  Plural: `+`,
-  French: `N`,  // iunno about this one
-  Of: `-`,
-  Object: `.`,
-  PseudoSubject: `~`,
-  Dative: `|`,
-
-  // 3fs: ya ha etc ??
-};
-
 // fill an alphabet out with default values n stuff
 function makeAlphabet(alphabet) {
   return alphabet;
@@ -87,6 +26,43 @@ class Transformer {
         break;
       }
     }
+  }
+}
+
+function copySeg(obj) {
+  return {
+    type: obj.type,
+    meta: {...obj.meta},
+    value: obj.value,
+    context: {...obj.context},
+  };
+}
+
+class Word {
+  constructor(wordObj, augmentationChoice = 0, prefixChoice = 0) {
+    const type = wordObj.type;
+    const meta = {...wordObj.meta};
+    const value = wordObj.value.map(copySeg);
+    const context = [...wordObj.context];
+
+    if (meta.prefixes) {
+      meta.syllableCount += meta.prefixes[prefixChoice].length;
+      const choice = meta.prefixes[prefixChoice].flat();
+      meta.prefixChoice = prefixChoice;
+      meta.prefixStarts = choice.length;
+      value.unshift(...choice);
+    }
+
+    if (meta.augmentation) {
+      meta.augmentationChoice = augmentationChoice;
+      meta.augmentationStarts = value.length - 1;
+      value.push(meta.augmentation[augmentationChoice]);
+    }
+
+    this.type = type;
+    this.meta = meta;
+    this.value = value;
+    this.context = context;
   }
 }
 
@@ -220,15 +196,6 @@ class DefaultObject {
   }
 }
 
-function copy(obj) {
-  return {
-    type: obj.type,
-    meta: {...obj.meta},
-    value: obj.value,
-    context: obj.context,
-  };
-}
-
 const STAY = {};
 const NOTHING = {};
 
@@ -269,7 +236,7 @@ class Cap {
       ),
       currentChoiceIndices: [],
       choices: [],
-      original: copy(seg),
+      original: copySeg(seg),
     }));
   }
 
@@ -365,7 +332,7 @@ class Cap {
     // delete idx from outdated wordmap segment
     this.wordMap.ensure(this.word[idx].value).delete(idx);
     // revert the segment in this.word so that the handlers can do it all over again
-    this.word[idx] = copy(tracker.original);
+    this.word[idx] = copySeg(tracker.original);
     // put idx in new wordmap segment
     this.wordMap.ensure(this.word[idx].value).add(idx);
     deps.forEach(key => {
