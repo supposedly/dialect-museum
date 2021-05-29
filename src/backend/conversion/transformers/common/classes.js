@@ -1,17 +1,15 @@
 /* eslint-disable max-classes-per-file */
-const symbols = require(`../symbols`);
-const {type: objType} = require(`../objects`);
-const {fenum} = require(`../enums`);
-const {misc: {lastOf}} = require(`../utils`);
+const symbols = require(`../../symbols`);
+const {type: objType} = require(`../../objects`);
+const {misc: {lastOf}} = require(`../../utils`);
 
-// fill an alphabet out with default values n stuff
-function makeAlphabet(alphabet) {
-  return alphabet;
-}
+const {STAY} = require(`./consts`);
+const {Props} = require(`./classes`);
+const {dep: depType} = require(`./type`);
 
 class Transformer {
   constructor(alphabet) {
-    this.alphabet = makeAlphabet(alphabet);
+    this.alphabet = alphabet;
   }
 
   get(keys) {
@@ -82,99 +80,8 @@ const subAlphabets = Object.fromKeys(
   )
 );
 
-class Not {
-  constructor(value) {
-    this.value = value;
-  }
-
-  matches(other) {
-    // eslint-disable-next-line no-use-before-define
-    if (this.value instanceof Or || this.value instanceof Not) {
-      return this.value.matches(other);
-    }
-    return this.value !== other;
-  }
-}
-
-class Or {
-  constructor(...values) {
-    this.values = values;
-  }
-
-  matches(other) {
-    return this.values.some(value => {
-      if (value instanceof Not || value instanceof Or) {
-        return value.matches(other);
-      }
-      return value === other;
-    });
-  }
-}
-
-class Props {
-  constructor(...objs) {
-    if (objs === undefined || objs === null) {
-      objs = [];
-    }
-    this.objs = objs.map(obj => {
-      const objCopy = {...obj};
-      Object.entries(objCopy).forEach(([k, v]) => {
-        if (
-          !(v instanceof Props || v instanceof Not || v instanceof Or)
-          && v instanceof Object
-          && !Array.isArray(v)
-        ) {
-          objCopy[k] = new Props(v);
-        }
-      });
-      return objCopy;
-    });
-    this.empty = this.objs.length === 0;
-  }
-
-  matches(other) {
-    if (this.empty) {
-      return true;
-    }
-    return this.objs.some(
-      obj => Object.entries(obj).every(([k, v]) => {
-        if (Object.prototype.hasOwnProperty.call(other, k)) {
-          if (v instanceof Props || v instanceof Not || v instanceof Or) {
-            return v.matches(other[k]);
-          }
-          return v === other[k];
-        }
-        return false;
-      })
-    );
-  }
-
-  or(other) {
-    return new Props(...this.objs, ...other.objs);
-  }
-}
-
 const consonantPred = new Props({type: objType.consonant});
 const vowelPred = new Props({type: objType.vowel}).or({type: objType.suffix, meta: {t: false}, value: `fem`});
-
-const depType = fenum([
-  /* filters */
-  `isPrefix`,
-  `isAugmentation`,
-  /* constant dependencies */
-  `idx`,
-  `type`,
-  `meta`,
-  `wordType`,
-  `wordMeta`,
-  `wordContext`,
-  `word`,
-  /* reactive dependencies */
-  `prevConsonant`,
-  `nextConsonant`,
-  `prevVowel`,
-  `nextVowel`,
-]);
 
 function extractDeps(arrowFunc) {
   if (!arrowFunc) {
@@ -209,9 +116,6 @@ class DefaultObject {
     return Object.entries(this.map);
   }
 }
-
-const STAY = {};
-const NOTHING = {};
 
 class Cap {
   constructor(word) {
@@ -467,9 +371,9 @@ class Cap {
         this.word[idx] = update[0];
         this.handlerMap
           .ensure(this.word[idx].value)
-          // TODO: maybe cache this func idk since it doesn't have to worry abt being mutated
           .add({
             order: this.globalHandlerID,
+            // TODO: maybe cache this func idk since it doesn't have to worry abt being mutated
             f: index => handler(this.updateEnv(index, deps)),
           });
         this.globalHandlerID += 1;
@@ -525,39 +429,8 @@ class Cap {
   }
 }
 
-/*
-needs some way of separating "become this underlying internal thing-eme"
-from "become this surface form"
-e.g. يضطر should have the ض "become" [ظ ض] (after a rule that
-turns ظ into [ظ z*], not before), then have the ض variant be transformed by
-a rule that optionally turns (voiced consonant)(unvoiced with same articulator & manner)
-into a geminate
-but both of those are underlying internal transformations, and the surface choice
-should only come after all that
-*/
-
-const rules = [
-  [_.c, (abc, ctx, {previousVowel, previousConsonant}) => {
-    if (ctx.femA) {
-      return [abc.c.low];
-    }
-    if (previousConsonant.value === `r` && previousVowel.meta.intrinsic.ly.high && !previousVowel.meta.intrinsic.ly.rounded) {
-      return [abc.c.high];
-    }
-    if (previousConsonant.meta.intrinsic.ly.emphatic || previousConsonant.value === `r`) {
-      // maybe emphatics can sometimes have -e idk
-      return [abc.c.low];
-    }
-    if (ctx.type === `participle`) {
-      return [abc.c.high, abc.c.low];
-    }
-    return [abc.c.high];
-  }],
-  [_.i, (abc, ctx, {previousConsonant, nextConsonant, codaConsonant}) => {
-    // f*** this makes no sense
-  }]
-];
-
 module.exports = {
-  rules,
+  Word,
+  Cap,
+  Transformer,
 };
