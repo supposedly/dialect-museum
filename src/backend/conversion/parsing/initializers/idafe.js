@@ -1,15 +1,17 @@
 const {misc: {lastOf}} = require(`../../utils`);
 const {type} = require(`../type`);
+const {obj} = require(`../../objects`);
 
 function toConstruct(word) {
   if (word.type === type.idafe) {  // this shouldn't ever trigger but ykno...
     toConstruct(lastOf(word.value));
   } else {
-    const lastSegment = lastOf(lastOf(word.value).value);
-    if (lastSegment.value === `fem`) {
+    const lastSyllable = lastOf(word.value).value;
+    const lastSegment = lastOf(lastSyllable);
+    if (lastSegment.value === `fem` && !lastSegment.meta.t) {
       // technically since verbs are already t === true this makes
       // it okay not to check for verbs vs. nonverbs here
-      lastSegment.meta.t = true;
+      lastSyllable.splice(-1, obj.edit(lastSegment, {meta: {t: true}}));
     }
   }
   // mutates but also returns for convenience

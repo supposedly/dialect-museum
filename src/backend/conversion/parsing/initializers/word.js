@@ -1,5 +1,5 @@
 const vowels = require(`../vowels`);
-const {type} = require(`../../objects`);
+const {type, obj} = require(`../../objects`);
 const {misc: {lastOf}} = require(`../../utils`);
 
 function deSyllabify(syllables) {
@@ -17,8 +17,8 @@ function word({
   const a = lastOf(lastSyllable, 1);
   const b = lastOf(lastSyllable);
   // set (femsuffix).t = true with further suffixes
-  if (b.type === type.suffix && a.value === `fem`) {
-    a.meta.t = true;
+  if (b.type === type.suffix && a.value === `fem` && !a.meta.t) {
+    lastSyllable.splice(-2, 1, obj.edit(a, {meta: {t: true}}));
   }
   // contract long vowels w/ dative L
   // TODO: extend this to -X (-sh) suffix and -jiyy

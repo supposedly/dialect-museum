@@ -162,14 +162,14 @@ const alphabet = {
 
   ...v({})
   (`a/i`, null, {sub: `a_i`})  /* possibly-bad abstraction over a/i variation
-                                  * (e.g. in f@33al verbs or f@3laan participles)
+                                  * (e.g. in fa33al verbs participles)
                                   * ONLY meant to be used in backend code, not the grammar,
                                   * hence symbol being null
                                   */
   (`a`, `a`)
   (`aa`, `A`)
-  (`AA`, `@`)  // lowered aa, like in شاي
-  (`ae`, `&`)  // 'foreign' ae, like in نان or فادي
+  (`AA`, `&`)  // lowered aa, like in شاي
+  (`ae`, `{`)  // 'foreign' ae, like in نان or فادي (hate xsampa for making { a reasonable way to represent this lmao)
 
   (`I`, `1`)  /* lax i, specifically for unstressed open syllables
                * like null<i<a when still in the medial stage, e.g. for ppl with kitIr كتير
@@ -247,6 +247,11 @@ const alphabet = {
     type: type.suffix,
     symbol: `+`,
     value: `plural`,
+  },
+  An: {
+    type: type.suffix,
+    symbol: `@`,
+    value: `adverbial`,
   },
 
   Stressed: {  // goes after the stressed syllable; only use if the word's stress is not automatic

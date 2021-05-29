@@ -114,6 +114,7 @@
       plural: $`Plural`,
       // femDual: $`FemDual`,  # not sure if good idea?
       femPlural: $`FemPlural`,
+      an: $`An`,
 
       stressed: $`Stressed`,
       french: $`French`,
@@ -358,17 +359,36 @@ initial_heavy_syllable -> makeInitial[heavy_syllable {% id %}]  {% id %}
 initial_superheavy_syllable -> makeInitial[superheavy_syllable {% id %}]  {% id %}
 
 final_light_syllable -> consonant final_light_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 1, stressed: false }, [a, ...b]) %}
-final_heavy_syllable -> consonant final_heavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 2, stressed: false }, [a, ...b]) %}
+final_heavy_syllable ->
+    consonant final_heavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 2, stressed: false }, [a, ...b]) %}
+  # this will allow this sequence to be word-initial (bc monosyllables) but w/e probably not worth fixing lol
+  | FEM AN {%
+    ([a, b]) => _.obj(
+      type.syllable,
+      { weight: 2, stressed: false },
+      [
+        _.edit(a, { meta: { t: true }}),
+        b
+      ]
+    )
+  %}
 final_stressed_syllable -> consonant final_stressed_rime  {% ([a, b]) => _.obj(type.syllable, { weight: null, stressed: true }, [a, ...b]) %}
 final_superheavy_syllable ->
-    consonant final_superheavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: false }, [a, ...b]) %}
-  # this will allow this sequence to be word-initial (bc monosyllables) but w/e probably not worth fixing lol
+    consonant final_superheavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: null }, [a, ...b]) %}
+  # ditto ^
   | FEM DUAL  {%
-    ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: false }, [a, b])
+    ([a, b]) => _.obj(
+      type.syllable,
+      { weight: 3, stressed: null },
+      [
+        _.edit(a, { meta: { t: true }}),
+        b
+      ]
+    )
   %}
 
 final_light_rime -> final_short_vowel
-final_heavy_rime -> short_vowel consonant
+final_heavy_rime -> short_vowel consonant {% id %} | AN {% id %}
 final_stressed_rime -> (long_vowel  {% id %} | %a  {% id %} | %e  {% id %} | %o  {% id %}) (STRESSED {% id %} | FRENCH {% id %})
 final_superheavy_rime ->
     superheavy_rime  {% id %}
@@ -433,6 +453,7 @@ FEM -> %fem  {% processToken %}
 DUAL -> %dual  {% processToken %}
 PLURAL -> %plural  {% processToken %}
 FEM_PLURAL -> %femPlural  {% processToken %}
+AN -> %an {% processToken %}
 STRESSED -> %stressed  {% processToken %}
 FRENCH -> %french {% processToken %}
 __ -> %ws  {% () => null %}

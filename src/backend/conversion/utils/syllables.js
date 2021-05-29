@@ -31,6 +31,9 @@ function getSyllableWeight(s) {
         // meta.t === false: suffix is V
         // meta.t === true: suffix is VC (as in Vt)
         rimeLength += 1 + segment.meta.t;
+      } else if (segment.value === `adverbial`) {
+        // -an
+        rimeLength += 2;
       } else {
         // all the other suffixes are VVC
         rimeLength += 3;
