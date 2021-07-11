@@ -1,10 +1,10 @@
 <template>
   <h1>
-    Just kidding, still under constructɩon :)
+    Still under constructɩon :)
   </h1>
     <p>
       To make up for it a bit, here's a quick run-through of a
-      paragraph from that Romeo &amp; Juliet translation that
+      paragraph from a Romeo &amp; Juliet translation that
       Kamal Sharabi did with Said Akl:
     </p>
     <h2>English</h2>
@@ -95,12 +95,8 @@ export default {
 </script>
 
 <style scoped lang="scss">
-// Dunno if putting this here makes the page flicker-prone or anything
-@font-face {
-  font-family: 'Inter';
-  src: url('./assets/fonts/Inter.var.woff2') format('woff2'),
-       url('./assets/fonts/Inter.var.ttf') format('truetype');
-}
+// ik this is bad but whatever (for now)
+@import url('https://rsms.me/inter/inter.css');
 
 h1 {
   text-align: center;
