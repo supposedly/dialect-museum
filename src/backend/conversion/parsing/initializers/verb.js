@@ -406,7 +406,7 @@ function verb({
           // 7ikyit, 7ikit
           return [...$_`${$F}.i.${$3}.y`, ...$_`${$F}.i.${$3}`];
         }
-        // this will be postTransformed to convert the first ambiguous i to a tense I
+        // this will be postTransformed to convert the first ambiguous i to a lax I
         // if there's an augmentation [should be only if it stresses the 3iL syllable
         // but that specificity isn't implemented yet]
         return $_`${$F}.i ${$3}.i.${$L}`;
@@ -507,26 +507,27 @@ function verb({
       }
       if (tam === tamToken.imp) {
         return [
-          ...$_`+n.${$F}.i -${$3}.I.${$L}`,
+          ...$_`n.${$F}.I ${$3}.i.${$L}`,
           ...$_`2.i.n ${$F}.I ${$3}.i.${$L}`,
           ...(noSuffix ? [] : $_`n.${$F}.a ${$3}.a.${$L}`),
         ];
       }
       return [
-        ..._$_`+n.${$F}.i -${$3}.i.${$L}`,
+        ..._$_`+n.${$F}.I -${$3}.i.${$L}`,
         ..._$_`+n.${$F}.a -${$3}.a.${$L}`,
         ..._$_`n.${$F}.I ${$3}.i.${$L}`,
       ];
     case verbForm.nfi3il:
-      // almost the same as nfa3al except npst conj are always yinfi3il not yinfa3al
+      // npst conj are always yinfi3il not yinfa3al
+      // and (idk if this exists but) pst conj are nfi3il not nfa3al
       if ($3.meta.weak) {
         if (tam === tamToken.pst && conjugation.past.heavier()) {
           return $_`n.${$F}.a/i.${$L}`;
         }
-        return _$_`n.${$F}.aa.${$L}`;
+        return _$_`n.${$F}.aa.${$L}`;  // no way nfiil exists right...?
       }
       if (biliteral) {
-        return $_`n.${$F}.a.${$3}.${$L}`;
+        return $_`n.${$F}.i.${$3}.${$L}`;
       }
       if (tam === tamToken.pst) {
         if (
@@ -535,22 +536,22 @@ function verb({
           && conjugation.number.third()
           && (conjugation.gender.fem() || conjugation.number.plural())
         ) {
-          // lta2it, lta2yit (this is nfa3al not fta3al but same idea)
-          // lta2u, lta2yu
-          return [...$_`n.${$F}.a ${$3}.aa`, ...$_`n.${$F}.a.${$3}.y`];
+          // lti2it, lti2yit (this is nfi3il not fti3il but same idea)
+          // lti2u (sus), lti2yu
+          return [...$_`n.${$F}.I ${$3}.ii`, ...$_`n.${$F}.i.${$3}.y`];
         }
-        return $_`n.${$F}.a ${$3}.a.${$L}`;
+        return $_`n.${$F}.I ${$3}.i.${$L}`;
       }
       if (tam === tamToken.imp) {
         return [
-          ...$_`+n.${$F}.i -${$3}.i.${$L}`,
+          ...$_`n.${$F}.I ${$3}.i.${$L}`,
           ...$_`2.i.n ${$F}.I ${$3}.i.${$L}`,
         ];
       }
       // TODO: could possibly check noSuffix and stuff here
       // to cut down on duplicates
       return [
-        ..._$_`+n.${$F}.i -${$3}.i.${$L}`,
+        ..._$_`+n.${$F}.I -${$3}.i.${$L}`,
         ..._$_`n.${$F}.I ${$3}.i.${$L}`,
       ];
     case verbForm.fta3al:
@@ -578,48 +579,51 @@ function verb({
       }
       if (tam === tamToken.imp) {
         return [
-          ...$_`+${$F}.t.i -${$3}.i.${$L}`,
+          ...$_`${$F}.t.I ${$3}.i.${$L}`,
           ...$_`2.i.${$F} t.I ${$3}.i.${$L}`,
           ...(noSuffix ? [] : $_`${$F}.t.a ${$3}.a.${$L}`),
         ];
       }
       return [
-        ..._$_`+${$F}.t.i -${$3}.i.${$L}`,
+        ..._$_`+${$F}.t.I -${$3}.i.${$L}`,
         ..._$_`+${$F}.t.a -${$3}.a.${$L}`,
         ..._$_`${$F}.t.I ${$3}.i.${$L}`,
       ];
     case verbForm.fti3il:
-      // almost the same as fta3al except npst conj are always yifti3il not yifta3al
+      // npst conj are always yifti3il not yifta3al
+      // and (idk if this exists but) pst conj are fti3il not fta3al
       if ($3.meta.weak) {
         if (tam === tamToken.pst && conjugation.past.heavier()) {
           return $_`${$F}.t.a/i.${$L}`;
         }
-        return _$_`${$F}.t.aa.${$L}`;
+        return _$_`${$F}.t.aa.${$L}`;  // no way ftiil exists right...?
       }
       if (biliteral) {
-        return $_`${$F}.t.a.${$3}.${$L}`;
+        return $_`${$F}.t.i.${$3}.${$L}`;
       }
       if (tam === tamToken.pst) {
         if (
           !noSuffix
           && $L.meta.weak
-          && conjugation.number.third()
+          && conjugation.person.third()
           && (conjugation.gender.fem() || conjugation.number.plural())
         ) {
-          // lta2it, lta2yit
-          // lta2u, lta2yu
-          return [...$_`${$F}.t.a ${$3}.aa`, ...$_`${$F}.t.a.${$3}.y`];
+          // lti2it, lti2yit
+          // lti2u, lti2yu
+          return [...$_`${$F}.t.I ${$3}.ii`, ...$_`${$F}.t.i.${$3}.y`];
         }
-        return $_`${$F}.t.a ${$3}.a.${$L}`;
+        return $_`${$F}.t.I ${$3}.i.${$L}`;
       }
       if (tam === tamToken.imp) {
         return [
-          ...$_`+${$F}.t.i -${$3}.i.${$L}`,
+          ...$_`${$F}.t.I ${$3}.i.${$L}`,
           ...$_`2.i.${$F} t.I ${$3}.i.${$L}`,
         ];
       }
+      // TODO: could possibly check noSuffix and stuff here
+      // to cut down on duplicates
       return [
-        ..._$_`+${$F}.t.i -${$3}.i.${$L}`,
+        ..._$_`+${$F}.t.I -${$3}.i.${$L}`,
         ..._$_`${$F}.t.I ${$3}.i.${$L}`,
       ];
     case verbForm.staf3al:
