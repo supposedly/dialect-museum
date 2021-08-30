@@ -4,7 +4,10 @@ const {misc: {lastOf}} = require(`../../utils`);
 
 function deSyllabify(syllables) {
   syllables.forEach(syl => {
-    syl.value.find(seg => seg.type === type.vowel).meta.stressed = syl.meta.stressed;
+    const nucleus = syl.value.find(seg => seg.type === type.vowel);
+    if (nucleus) {
+      nucleus.meta.stressed = syl.meta.stressed;
+    }
   });
   return syllables.map(syl => syl.value).flat();
 }
@@ -22,7 +25,8 @@ function word({
   }
   // contract long vowels w/ dative L
   // TODO: extend this to -X (-sh) suffix and -jiyy
-  if (augmentation.delimiter.value === `dative`) {
+  if (augmentation && augmentation.delimiter.value === `dative`) {
+    //             ^ gdi shoulda sucked it up and gone with typescript early on
     if (
       a.type === type.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
       && b.type === type.consonant

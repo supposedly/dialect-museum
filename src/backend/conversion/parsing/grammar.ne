@@ -47,7 +47,7 @@
 
   const lexer = moo.states({
     main: {
-      openFilter: /\((?:[a-z]+|[^a-z\s])?)/,
+      openFilter: /\((?:[a-z0-9]+|[^a-z\s])?/,
       closeFilter: /\)/,
 
       openTag: { match: /\[/, push: `tag` },
@@ -109,11 +109,11 @@
       noSchwa: $`_`,
       schwa: $`Schwa`,
 
-      fem: $`Fem`,
+      fem: $`c`,
       dual: $`Dual`,
       plural: $`Plural`,
       // femDual: $`FemDual`,  # not sure if good idea?
-      femPlural: $`FemPlural`,
+      femPlural: $`C`,
       an: $`An`,
 
       stressed: $`Stressed`,
@@ -217,8 +217,31 @@ number -> "(#" ctx_tags:? %genderedNumber %numberGender ("-":? {% ([c]) => Boole
 
 af3al -> "(af3al" ctx_tags:? __ root augmentation:? ")" {% ([ , ctx ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }, ctx) %}
 
-tif3il -> "(tif3il" ctx_tags:? __ root (FEM {% id %} | FEM_PLURAL {% id %}):? augmentation:? ")" {%
-  ([ , ctx ,, root, fem, augmentation]) => init(type.tif3il, {}, { root, fem, augmentation }, ctx)
+tif3il -> "(tif3il"
+    ctx_tags:?
+    __ root
+    (
+      # the initializer prefers these as arrays so no {% id %}
+        FEM
+      | DUAL
+      | AN
+      | FEM DUAL {% ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b] %}
+      | FEM AN {% ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b] %}
+      | FEM_PLURAL
+      | FEM_PLURAL AN  # why not
+    ):?
+    augmentation:?
+  ")" {%
+  ([ , ctx ,, root, suffix, augmentation]) => init(
+    type.tif3il,
+    {},
+    {
+      root,
+      suffix: suffix || [],
+      augmentation
+    },
+    ctx
+  )
 %}
 
 # pp needs to be a thing because -c behaves funny in participles (fe3la and fe3ilt-/fe3lit-/fe3liit-),
@@ -275,7 +298,7 @@ ctx_tags -> (__ %openCtx %ctxItem %closeCtx {% ([ ,, value]) => value %}):+ {%
 
 # messy because of stressedOn :(
 stem ->
-    consonant  {% ([value]) => _.obj(type.stem, { stressedOn: null }, [_.obj(type.syllable, { stressed: null, weight: 0 }, value)]) %}
+    consonant  {% value => _.obj(type.stem, { stressedOn: null }, [_.obj(type.syllable, { stressed: null, weight: 0 }, value)]) %}
   | monosyllable  {% ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value) %}
   | disyllable  {% ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value) %}
   | trisyllable  {% ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value) %}
@@ -375,7 +398,7 @@ final_heavy_syllable ->
 final_stressed_syllable -> consonant final_stressed_rime  {% ([a, b]) => _.obj(type.syllable, { weight: null, stressed: true }, [a, ...b]) %}
 final_superheavy_syllable ->
     consonant final_superheavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: null }, [a, ...b]) %}
-  # ditto ^
+  # ditto ^^^^
   | FEM DUAL  {%
     ([a, b]) => _.obj(
       type.syllable,
@@ -388,7 +411,7 @@ final_superheavy_syllable ->
   %}
 
 final_light_rime -> final_short_vowel
-final_heavy_rime -> short_vowel consonant {% id %} | AN {% id %}
+final_heavy_rime -> short_vowel consonant | AN {% id %}
 final_stressed_rime -> (long_vowel  {% id %} | %a  {% id %} | %e  {% id %} | %o  {% id %}) (STRESSED {% id %} | FRENCH {% id %})
 final_superheavy_rime ->
     superheavy_rime  {% id %}

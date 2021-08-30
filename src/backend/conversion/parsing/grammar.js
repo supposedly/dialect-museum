@@ -51,7 +51,7 @@ function id(x) { return x[0]; }
 
   const lexer = moo.states({
     main: {
-      openFilter: /\((?:[a-z]+|[^a-z\s])?)/,
+      openFilter: /\((?:[a-z0-9]+|[^a-z\s])?/,
       closeFilter: /\)/,
 
       openTag: { match: /\[/, push: `tag` },
@@ -113,11 +113,12 @@ function id(x) { return x[0]; }
       noSchwa: $`_`,
       schwa: $`Schwa`,
 
-      fem: $`Fem`,
+      fem: $`c`,
       dual: $`Dual`,
       plural: $`Plural`,
       // femDual: $`FemDual`,  # not sure if good idea?
-      femPlural: $`FemPlural`,
+      femPlural: $`C`,
+      an: $`An`,
 
       stressed: $`Stressed`,
       french: $`French`,
@@ -223,14 +224,28 @@ var grammar = {
     {"name": "af3al", "symbols": [{"literal":"(af3al"}, "af3al$ebnf$1", "__", "root", "af3al$ebnf$2", {"literal":")"}], "postprocess": ([ , ctx ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }, ctx)},
     {"name": "tif3il$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "tif3il$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM"], "postprocess": id},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM_PLURAL"], "postprocess": id},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM"]},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["DUAL"]},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["AN"]},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM", "DUAL"], "postprocess": ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b]},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM", "AN"], "postprocess": ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b]},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM_PLURAL"]},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM_PLURAL", "AN"]},
     {"name": "tif3il$ebnf$2", "symbols": ["tif3il$ebnf$2$subexpression$1"], "postprocess": id},
     {"name": "tif3il$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "tif3il$ebnf$3", "symbols": ["augmentation"], "postprocess": id},
     {"name": "tif3il$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "tif3il", "symbols": [{"literal":"(tif3il"}, "tif3il$ebnf$1", "__", "root", "tif3il$ebnf$2", "tif3il$ebnf$3", {"literal":")"}], "postprocess": 
-        ([ , ctx ,, root, fem, augmentation]) => init(type.tif3il, {}, { root, fem, augmentation }, ctx)
+        ([ , ctx ,, root, suffix, augmentation]) => init(
+          type.tif3il,
+          {},
+          {
+            root,
+            suffix: suffix || [],
+            augmentation
+          },
+          ctx
+        )
         },
     {"name": "pp$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "pp$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
@@ -266,7 +281,7 @@ var grammar = {
     {"name": "ctx_tags", "symbols": ["ctx_tags$ebnf$1"], "postprocess": 
         ([ , values]) => values
         },
-    {"name": "stem", "symbols": ["consonant"], "postprocess": ([value]) => _.obj(type.stem, { stressedOn: null }, [_.obj(type.syllable, { stressed: null, weight: 0 }, value)])},
+    {"name": "stem", "symbols": ["consonant"], "postprocess": value => _.obj(type.stem, { stressedOn: null }, [_.obj(type.syllable, { stressed: null, weight: 0 }, value)])},
     {"name": "stem", "symbols": ["monosyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},
     {"name": "stem", "symbols": ["disyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},
     {"name": "stem", "symbols": ["trisyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},
@@ -334,13 +349,31 @@ var grammar = {
     {"name": "initial_superheavy_syllable", "symbols": ["initial_superheavy_syllable$macrocall$1"], "postprocess": id},
     {"name": "final_light_syllable", "symbols": ["consonant", "final_light_rime"], "postprocess": ([a, b]) => _.obj(type.syllable, { weight: 1, stressed: false }, [a, ...b])},
     {"name": "final_heavy_syllable", "symbols": ["consonant", "final_heavy_rime"], "postprocess": ([a, b]) => _.obj(type.syllable, { weight: 2, stressed: false }, [a, ...b])},
+    {"name": "final_heavy_syllable", "symbols": ["FEM", "AN"], "postprocess": 
+        ([a, b]) => _.obj(
+          type.syllable,
+          { weight: 2, stressed: false },
+          [
+            _.edit(a, { meta: { t: true }}),
+            b
+          ]
+        )
+          },
     {"name": "final_stressed_syllable", "symbols": ["consonant", "final_stressed_rime"], "postprocess": ([a, b]) => _.obj(type.syllable, { weight: null, stressed: true }, [a, ...b])},
-    {"name": "final_superheavy_syllable", "symbols": ["consonant", "final_superheavy_rime"], "postprocess": ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: false }, [a, ...b])},
+    {"name": "final_superheavy_syllable", "symbols": ["consonant", "final_superheavy_rime"], "postprocess": ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: null }, [a, ...b])},
     {"name": "final_superheavy_syllable", "symbols": ["FEM", "DUAL"], "postprocess": 
-        ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: false }, [a, b])
+        ([a, b]) => _.obj(
+          type.syllable,
+          { weight: 3, stressed: null },
+          [
+            _.edit(a, { meta: { t: true }}),
+            b
+          ]
+        )
           },
     {"name": "final_light_rime", "symbols": ["final_short_vowel"]},
     {"name": "final_heavy_rime", "symbols": ["short_vowel", "consonant"]},
+    {"name": "final_heavy_rime", "symbols": ["AN"], "postprocess": id},
     {"name": "final_stressed_rime$subexpression$1", "symbols": ["long_vowel"], "postprocess": id},
     {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("a") ? {type: "a"} : a)], "postprocess": id},
     {"name": "final_stressed_rime$subexpression$1", "symbols": [(lexer.has("e") ? {type: "e"} : e)], "postprocess": id},
@@ -447,6 +480,7 @@ var grammar = {
     {"name": "DUAL", "symbols": [(lexer.has("dual") ? {type: "dual"} : dual)], "postprocess": processToken},
     {"name": "PLURAL", "symbols": [(lexer.has("plural") ? {type: "plural"} : plural)], "postprocess": processToken},
     {"name": "FEM_PLURAL", "symbols": [(lexer.has("femPlural") ? {type: "femPlural"} : femPlural)], "postprocess": processToken},
+    {"name": "AN", "symbols": [(lexer.has("an") ? {type: "an"} : an)], "postprocess": processToken},
     {"name": "STRESSED", "symbols": [(lexer.has("stressed") ? {type: "stressed"} : stressed)], "postprocess": processToken},
     {"name": "FRENCH", "symbols": [(lexer.has("french") ? {type: "french"} : french)], "postprocess": processToken},
     {"name": "__", "symbols": [(lexer.has("ws") ? {type: "ws"} : ws)], "postprocess": () => null}
