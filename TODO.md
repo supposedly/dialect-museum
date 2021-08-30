@@ -23,7 +23,7 @@
 * a/i is weird and shouldn't exist... BUT it's useful on the backend side of things because it helps me avoid duplicating stuff. As a compromise between
   obliterating it and letting it fester and make everything gross, just find a way to make sure that anything containing a/i is always expanded out
   into two separate options (one with a, one with i) before it reaches the transformer stage
-* Remove meta.t attribute from feminine suffix
+* ~~Remove meta.t attribute from feminine suffix~~
 * deal with emphatic Z from ص vs. emphatic Z from ظ
 * Split `ipa-phonemic` into a few modules: `common` for utils and classes (might have submodules for diff classes), `iconophonemic`, `phonemic`, `phonetic`, and maybe `random`
     * `iconophonemic`: for scripts that will have fixed iconic symbols for ة and stuff, and also adhere to archiphonemes like `aa` and `ay/aw`; can maybe specify which phoneme groups should be abstracted over in that way (eg i want -iin to be -iin instead of a symbol, and if not that then the transformer will maybe do something like `iconophonemicAlphabet.iin.contracted || iconophonemicAlphabet.iin.default, iconophonemicAlphabet.iin.full || iconophonemicAlphabet.iin.default, etc`
