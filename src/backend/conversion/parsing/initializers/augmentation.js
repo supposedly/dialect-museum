@@ -80,7 +80,6 @@ function natural(string) {
 }
 
 // stress: true=stress the syllable before (even if it wouldn't naturally be stressed)
-// syllable: -1=attach to last syllable, 0=new syllable, 1=pull last consonant into new syllable
 function clitic(person, gender, number, n) {
   if (person.first()) {
     if (number.singular()) {
