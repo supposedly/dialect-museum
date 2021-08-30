@@ -225,8 +225,8 @@ tif3il -> "(tif3il"
         FEM
       | DUAL
       | AN
-      | FEM DUAL {% ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b] %}
-      | FEM AN {% ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b] %}
+      | FEM DUAL # {% ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b] %}
+      | FEM AN # {% ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b] %}
       | FEM_PLURAL
       | FEM_PLURAL AN  # why not
     ):?
@@ -390,7 +390,7 @@ final_heavy_syllable ->
       type.syllable,
       { weight: 2, stressed: false },
       [
-        _.edit(a, { meta: { t: true }}),
+        a, /* _.edit(a, { meta: { t: true }}), */
         b
       ]
     )
@@ -404,7 +404,7 @@ final_superheavy_syllable ->
       type.syllable,
       { weight: 3, stressed: null },
       [
-        _.edit(a, { meta: { t: true }}),
+        a, /* _.edit(a, { meta: { t: true }}), */
         b
       ]
     )

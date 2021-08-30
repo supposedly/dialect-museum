@@ -218,9 +218,6 @@ const alphabet = {
   // fem suffix is its own thing bc -a vs -e vs -i variation
   c: {
     type: type.suffix,
-    meta: {
-      t: false,  // may be changed with edit() in objects.js
-    },
     symbol: `c`,
     value: `fem`,
   },
@@ -230,7 +227,7 @@ const alphabet = {
   //   symbol: `<`,
   //   value: `fdual`
   // },
-  FemPlural: {
+  C: {
     type: type.suffix,
     symbol: `C`,
     value: `fplural`,
@@ -248,10 +245,11 @@ const alphabet = {
     symbol: `+`,
     value: `plural`,
   },
+  // adverbial -an, ـًا
   An: {
     type: type.suffix,
     symbol: `@`,
-    value: `adverbial`,
+    value: `an`,
   },
 
   Stressed: {  // goes after the stressed syllable; only use if the word's stress is not automatic

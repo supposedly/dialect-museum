@@ -28,9 +28,12 @@ function getSyllableWeight(s) {
       // be good to handle it "properly" lol
       // (that is 'bugged' because it uses the dual suffix, `=`, non-word-finally)
       if (segment.value === `fem`) {
+        /*
         // meta.t === false: suffix is V
         // meta.t === true: suffix is VC (as in Vt)
         rimeLength += 1 + segment.meta.t;
+        */
+        rimeLength += 1.5;  // screw it
       } else if (segment.value === `adverbial`) {
         // -an
         rimeLength += 2;

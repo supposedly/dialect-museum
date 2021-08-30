@@ -1,7 +1,8 @@
-const {misc: {lastOf}} = require(`../../utils`);
 const {type} = require(`../type`);
-const {obj} = require(`../../objects`);
+/* const {misc: {lastOf}} = require(`../../utils`);
+const {obj} = require(`../../objects`); */
 
+/*
 function toConstruct(word) {
   if (word.type === type.idafe) {  // this shouldn't ever trigger but ykno...
     toConstruct(lastOf(word.value));
@@ -17,12 +18,16 @@ function toConstruct(word) {
   // mutates but also returns for convenience
   return word;
 }
+*/
 
 function idafe({
   possessor,
   possessee,
 }) {
-  possessee = Array.isArray(possessee) ? possessee.map(toConstruct) : [toConstruct(possessee)];
+  /* possessee = Array.isArray(possessee)
+    ? possessee.map(toConstruct)
+    : [toConstruct(possessee)]; */
+  possessee = Array.isArray(possessee) ? possessee : [possessee];
   if (possessor.type === type.idafe) {
     return {
       type: type.idafe,

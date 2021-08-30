@@ -1,10 +1,10 @@
 const {type} = require(`../type`);
 const {parseString: $, parseLetter} = require(`../../parse-word`);
-const {obj} = require(`../../objects`);
+/* const {obj} = require(`../../objects`); */
 const {PERSON: P, GENDER: G, NUMBER: N} = require(`../../symbols`);
 
 const I = Object.freeze(parseLetter`i`);
-const FEM_T = Object.freeze(obj.edit(parseLetter`c`, {meta: {t: true}}));
+/* const FEM_T = Object.freeze(obj.edit(parseLetter`c`, {meta: {t: true}})); */
 
 const _ = {
   FEM: $`c`,
@@ -71,7 +71,7 @@ function verbSuffix(person, gender, number) {
   }
   if (person.third()) {
     if (number.singular()) {
-      if (gender.fem()) { return [FEM_T]; }  // -it/-at
+      if (gender.fem()) { return [_.FEM]; }  // -it/-at
       return _.NOTHING;
     }
     return _.UU;

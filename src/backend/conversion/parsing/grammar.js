@@ -227,8 +227,8 @@ var grammar = {
     {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM"]},
     {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["DUAL"]},
     {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["AN"]},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM", "DUAL"], "postprocess": ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b]},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM", "AN"], "postprocess": ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b]},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM", "DUAL"]},
+    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM", "AN"]},
     {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM_PLURAL"]},
     {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM_PLURAL", "AN"]},
     {"name": "tif3il$ebnf$2", "symbols": ["tif3il$ebnf$2$subexpression$1"], "postprocess": id},
@@ -354,7 +354,7 @@ var grammar = {
           type.syllable,
           { weight: 2, stressed: false },
           [
-            _.edit(a, { meta: { t: true }}),
+            a, /* _.edit(a, { meta: { t: true }}), */
             b
           ]
         )
@@ -366,7 +366,7 @@ var grammar = {
           type.syllable,
           { weight: 3, stressed: null },
           [
-            _.edit(a, { meta: { t: true }}),
+            a, /* _.edit(a, { meta: { t: true }}), */
             b
           ]
         )
