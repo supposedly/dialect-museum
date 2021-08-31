@@ -1,12 +1,13 @@
-const {type} = require(`../type`);
-const vowels = require(`../vowels`);
-const {parseWord, parseLetter} = require(`../../parse-word`);
-const {choice: {choice}} = require(`../../objects`);
-const {verbForm, tamToken} = require(`../../symbols`);
+import { type } from '../type';
+import { lax } from '../vowels';
+import { parseWord, parseLetter } from '../../parse-word';
+import objects from '../../objects';
+const { choice: { choice } } = objects;
+import { verbForm, tamToken } from '../../symbols';
+import utils from '../../utils';
 const {
-  misc: {lastOf /* , backup */},
-  syllables: {newSyllable},
-} = require(`../../utils`);
+  misc: { lastOf /* , backup */ }, syllables: { newSyllable },
+} = utils;
 
 const LAX_I = Object.freeze(parseLetter`I`);
 const I = Object.freeze(parseLetter`i`);
@@ -83,7 +84,7 @@ function fixFi3il(base, meta) {
         base.map(syllable => syllable.value.map(segment => segment.value).join()).join(`.`)
       }`);
     }
-    firstSyllable.value[1] = vowels.lax(firstSyllable.value[1]);
+    firstSyllable.value[1] = lax(firstSyllable.value[1]);
   }
 }
 
@@ -291,7 +292,7 @@ function getAffixes(tam, conjugation, isCV) {
   return {prefixes, suffix};
 }
 
-function verb({
+export default function verb({
   type: was,
   meta: {conjugation, form, tam},
   value: {root: [$F, $3, $L, $Q], augmentation},
@@ -676,7 +677,3 @@ function verb({
       return null;
   }
 }
-
-module.exports = {
-  verb,
-};

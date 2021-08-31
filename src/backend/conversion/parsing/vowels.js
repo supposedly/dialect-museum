@@ -1,4 +1,4 @@
-const {parseLetter} = require(`../parse-word`);
+import { parseLetter } from `../parse-word`;
 
 const I = Object.freeze(parseLetter`i`);
 const LAX_I = Object.freeze(parseLetter`I`);
@@ -8,7 +8,7 @@ const A = Object.freeze(parseLetter`a`);
 // const E = Object.freeze(parseLetter`e`);
 // const O = Object.freeze(parseLetter`o`);
 
-module.exports.contract = vowel => {
+export function contract(vowel) {
   if (vowel.meta.intrinsic.length < 2) {
     return vowel;
   }
@@ -28,9 +28,9 @@ module.exports.contract = vowel => {
     default:
       throw new Error(`Invalid long vowel for contraction: ${vowel.value}`);
   }
-};
+}
 
-module.exports.unlax = vowel => {
+export function unlax(vowel) {
   if (vowel.meta.intrinsic.length > 1) {
     throw new Error(`Attempt to unlax long vowel: ${vowel.value}`);
   }
@@ -44,9 +44,9 @@ module.exports.unlax = vowel => {
     default:
       throw new Error(`Invalid short vowel for unlaxing: ${vowel.value}`);
   }
-};
+}
 
-module.exports.lax = vowel => {
+export function lax(vowel) {
   if (vowel.meta.intrinsic.length > 1) {
     throw new Error(`Attempt to lax long vowel: ${vowel.value}`);
   }
@@ -58,4 +58,4 @@ module.exports.lax = vowel => {
     default:
       throw new Error(`Invalid short vowel for laxing: ${vowel.value}`);
   }
-};
+}

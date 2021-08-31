@@ -1,8 +1,9 @@
-const obj = require(`./obj`);
-const choice = require(`./choice`);
-const {fenum} = require(`../enums`);
+import { fenum } from '../enums';
 
-const type = fenum([
+export * as obj from './obj';
+export { default as choice } from './choice';
+
+export const type = fenum([
   `consonant`,
   `vowel`,
   `epenthetic`,
@@ -10,9 +11,3 @@ const type = fenum([
   `modifier`,
   `delimiter`,
 ]);
-
-module.exports = {
-  obj,
-  choice,
-  type,
-};

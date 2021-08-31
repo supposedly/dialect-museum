@@ -1,8 +1,7 @@
-const {obj} = require(`../objects`);
-const {type} = require(`../objects`);
-const {lastOf} = require(`./misc`);
+import { obj, type } from '../objects';
+import { lastOf } from './misc';
 
-function newSyllable(string = []) {
+export function newSyllable(string = []) {
   return obj.obj(
     `syllable`,
     {stressed: null, weight: null},
@@ -10,7 +9,7 @@ function newSyllable(string = []) {
   );
 }
 
-function getSyllableWeight(s) {
+export function getSyllableWeight(s) {
   // 0 segments in syllable = weight of -1
   // 1 segment in syllable = weight of 0
   if (s.value.length <= 1) {
@@ -58,7 +57,7 @@ function getSyllableWeight(s) {
 }
 
 // determine & set stressed syllable according to weights
-function setStressedSyllable(syllables, clearRest = false) {
+export function setStressedSyllable(syllables, clearRest = false) {
   if (clearRest) {
     syllables.forEach(s => { s.meta.stressed = false; });
   }
@@ -92,17 +91,10 @@ function setStressedSyllable(syllables, clearRest = false) {
   }
 }
 
-function copy(syllables) {
+export function copy(syllables) {
   return syllables.map(s => obj.obj(
     `syllable`,
     {...s.meta},
     [...s.value],
   ));
 }
-
-module.exports = {
-  newSyllable,
-  getSyllableWeight,
-  setStressedSyllable,
-  copy,
-};

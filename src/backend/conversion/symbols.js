@@ -19,8 +19,8 @@
 //   return true;
 // }
 
-const {fenum} = require(`./enums`);
-const {type} = require(`./objects`);
+import { fenum } from './enums';
+import { type } from './objects';
 
 const articulator = fenum([`throat`, `root`, `mid`, `crown`, `lips`]);
 const manner = fenum([`plosive`, `fricative`, `affricate`, `approximant`, `nasal`, `flap`]);
@@ -376,7 +376,7 @@ const pronoun = [
 
 const negative = `X`;  // dunno how to implement this
 
-module.exports = {
+export default {
   articulator,
   manner,
   type,

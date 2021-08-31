@@ -1,6 +1,7 @@
-const vowels = require(`../vowels`);
-const {type /* , obj */} = require(`../../objects`);
-const {misc: {lastOf}} = require(`../../utils`);
+import { contract } from '../vowels';
+import { type } from '../../objects';
+import utils from '../../utils';
+const { misc: { lastOf } } = utils;
 
 function deSyllabify(syllables) {
   syllables.forEach(syl => {
@@ -12,7 +13,7 @@ function deSyllabify(syllables) {
   return syllables.map(syl => syl.value).flat();
 }
 
-function word({
+export default function word({
   meta: {augmentation, was, ...rest},
   value,
 }) {
@@ -33,7 +34,7 @@ function word({
       a.type === type.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
       && b.type === type.consonant
     ) {
-      lastSyllable.splice(-2, 1, vowels.contract(a));
+      lastSyllable.splice(-2, 1, contract(a));
     }
   }
   // unfortunately have to restrict uC...#->iC...# to verbs because
@@ -51,7 +52,3 @@ function word({
     value: deSyllabify(value),
   };
 }
-
-module.exports = {
-  word,
-};

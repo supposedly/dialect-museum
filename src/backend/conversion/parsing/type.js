@@ -1,6 +1,6 @@
-const {fenum} = require(`../enums`);
+import { fenum } from '../enums';
 
-const type = fenum([
+export default type = fenum([
   `augmentation`,
   `pronoun`,
   `stem`,
@@ -15,7 +15,3 @@ const type = fenum([
   `af3al`,
   `number`,
 ]);
-
-module.exports = {
-  type,
-};

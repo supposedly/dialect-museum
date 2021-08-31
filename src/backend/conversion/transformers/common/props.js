@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 
-class Not {
+export class Not {
   constructor(value) {
     this.value = value;
   }
@@ -14,7 +14,7 @@ class Not {
   }
 }
 
-class Or {
+export class Or {
   constructor(...values) {
     this.values = values;
   }
@@ -29,7 +29,7 @@ class Or {
   }
 }
 
-class Props {
+export class Props {
   constructor(...objs) {
     if (objs === undefined || objs === null) {
       objs = [];
@@ -71,9 +71,3 @@ class Props {
     return new Props(...this.objs, ...other.objs);
   }
 }
-
-module.exports = {
-  Props,
-  Not,
-  Or,
-};

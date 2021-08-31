@@ -1,9 +1,9 @@
-const props = require(`./props`);
-const consts = require(`./consts`);
-const type = require(`./type`);
-const classes = require(`./classes`);
+export * as props from './props';
+export * as consts from './consts';
+export {default as type} from './type';
+export * as classes from './classes';
 
-module.exports = {
+export default {
   props,
   consts,
   type,

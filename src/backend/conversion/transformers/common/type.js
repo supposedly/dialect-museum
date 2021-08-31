@@ -1,6 +1,6 @@
 const {fenum} = require(`../../enums`);
 
-const dep = fenum([
+export default dep = fenum([
   /* filters */
   `isPrefix`,
   `isAugmentation`,
@@ -18,7 +18,3 @@ const dep = fenum([
   `prevVowel`,
   `nextVowel`,
 ]);
-
-module.exports = {
-  dep,
-};

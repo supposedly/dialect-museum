@@ -1,5 +1,6 @@
-const {misc: {lastOf}} = require(`../../utils`);
-const {parseWord, parseLetter} = require(`../../parse-word`);
+import utils from '../../utils';
+const { misc: { lastOf } } = utils;
+import { parseWord, parseLetter } from '../../parse-word';
 const AA = Object.freeze(parseLetter`aa`);
 
 // transformer: replace -ay with -aa
@@ -20,7 +21,7 @@ function augment(augmentation) {
   });
 }
 
-function af3al({root: [$F, $3, $L, $Q], augmentation}) {
+export default function af3al({root: [$F, $3, $L, $Q], augmentation}) {
   const $ = parseWord({
     preTransform: [[fixAy]],
     postTransform: [[augment(augmentation)]],
@@ -45,7 +46,3 @@ function af3al({root: [$F, $3, $L, $Q], augmentation}) {
 
   return $`2.a.${$F} ${$3}.a/i.${$L}`;
 }
-
-module.exports = {
-  af3al,
-};

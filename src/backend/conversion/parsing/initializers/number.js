@@ -1,7 +1,8 @@
 // const vowels = require(`../vowels`);
-const {/* type, */obj} = require(`../../objects`);
-const {parseWord: $, parseSyllable} = require(`../../parse-word`);
-const {misc: {lastOf}, syllables: {copy: copySyllable}} = require(`../../utils`);
+import { obj } from '../../objects';
+import { parseWord as $, parseSyllable } from '../../parse-word';
+import utils from '../../utils';
+const { misc: { lastOf }, syllables: { copy: copySyllable } } = utils;
 
 // twenty and under
 const uniqs = [
@@ -176,7 +177,7 @@ function copyResults(results) {
 
 // TODO: figure out -a in compound numbers (i.e. how to represent "wa7da w tletin" and stuff)
 // TODO: figure out a solution to construct-state form that doesn't make the user specify it smh
-function number({
+export default function number({
   type: was,
   meta: {isConstruct = false, gender},
   value: {quantity},
@@ -260,7 +261,3 @@ function number({
       throw new Error(`Can't construct arbitrary numbers with number tag, use idafah and "w"`);
   }
 }
-
-module.exports = {
-  number,
-};

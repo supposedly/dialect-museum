@@ -25,13 +25,9 @@ class Choice {
   }
 }
 
-function choice(...objs) {
+export default function choice(...objs) {
   if (objs.length === 1 && Array.isArray(objs[0])) {
     return new Choice(objs[0]);
   }
   return new Choice(objs);
 }
-
-module.exports = {
-  choice,
-};
