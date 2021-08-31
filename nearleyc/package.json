@@ -1,0 +1,14 @@
+{
+  "name": "nearleyc",
+  "version": "0.0.0",
+  "description": "nearleyc but different",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "replace-ext": "^2.0.0"
+  }
+}
