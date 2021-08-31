@@ -1,8 +1,10 @@
 /test.*
 
+# svelte
 .DS_Store
 node_modules
-/dist
+/node_modules/
+/public/build/
 
 # local env files
 .env.local
