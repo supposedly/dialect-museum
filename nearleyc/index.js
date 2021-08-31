@@ -16,7 +16,7 @@ var version = require('nearley/package.json').version;
 opts.version(version, '-v, --version')
     .arguments('<file.ne>')
     .option('-o, --out [filename.js]', 'File to output to (defaults to stdout)', false)
-    .option('-e, --ext [extension]', 'Extension for new file with same name in same directory as input file (if no --out)')
+    .option('-s, --suffix [extension]', 'Extension/suffix for new file with same name in same directory as input file (if no --out)')
     .option('-e, --export [name]', 'Variable to set parser to', 'grammar')
     .option('-q, --quiet', 'Suppress linter')
     .option('--nojs', 'Do not compile postprocessors')
@@ -28,8 +28,8 @@ var input = opts.args[0] ? fs.createReadStream(opts.args[0]) : process.stdin;
 /* var output = opts.out ? fs.createWriteStream(opts.out) : process.stdout; */
 var output = opts.out
   ? fs.createWriteStream(opts.out)
-  : (opts.ext
-    ? fs.createWriteStream(replaceExt(opts.args[0], opts.ext))
+  : (opts.suffix
+    ? fs.createWriteStream(replaceExt(opts.args[0], opts.suffix))
     : process.stdout
   );
 
@@ -51,4 +51,5 @@ input
         );
         if (!opts.quiet) lint(c, {'out': process.stderr, 'version': version});
         output.write(generate(c, opts.export));
+        output.end();
     });
