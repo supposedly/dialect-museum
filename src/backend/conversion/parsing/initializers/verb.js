@@ -177,7 +177,7 @@ function uToI(base) {
 function getAffixes(tam, conjugation, isCV) {
   let prefixes;
   let suffix;
-  switch (tam) {
+  switch (tam + 1) {
     case tamToken.sbjv:
       if (isCV) {
         prefixes = choice(

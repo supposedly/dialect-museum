@@ -1,15 +1,32 @@
 <script>
-    import nearley from 'nearley';
+    import {Parser, Grammar} from 'nearley';
     import * as grammar from './backend/conversion/parsing/grammar.js';
 
+	const compiledGrammar = Grammar.fromCompiled(grammar);
+
     let input = ``;
+	let res = [];
+	let err = ``;
+
+	$: try {
+		res = new Parser(compiledGrammar).feed(input).results;
+		err = ``;
+	} catch (e) {
+		err = e;
+	};
     
 </script>
 
 <main>
     <h1>Getting there...</h1>
 	<input type="text" bind:value={input} />
-    <p>{input}</p>
+	<p>{res.length}</p>
+
+	{#if err}
+		<pre style="color:red;" i>{err}</pre>
+	{:else}
+    	<pre>{JSON.stringify(res, null, 2)}</pre>
+	{/if}
 </main>
 
 <style>
@@ -18,6 +35,10 @@
 		padding: 1em;
 		max-width: 240px;
 		margin: 0 auto;
+	}
+
+	pre {
+		text-align: left;
 	}
 
 	h1 {
