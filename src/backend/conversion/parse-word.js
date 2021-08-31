@@ -1,4 +1,4 @@
-import utils from './utils';
+import * as utils from './utils';
 const {
   misc: { lastOf }, syllables: { newSyllable, getSyllableWeight, setStressedSyllable, copy },
 } = utils;
@@ -38,7 +38,7 @@ function interpolateAndParse(strings, rootConsonants) {
       lastSyllable.value.push(
         ...chunk.split(`.`)  // m.u.s._.t > [m, u, s, _, t, ...]
           .filter(c => abc[c])  // to avoid undefined later
-          .map(c => obj.process(abc[c])),  // -> corresponding objects
+          .map(c => obj.process.bind(obj)(abc[c])),  // -> corresponding objects
       );
     });
     if (rootConsonants.length) {
@@ -99,7 +99,7 @@ function addSchwa(syllables) {
 // return value: an array of all transformed parse results; if there were no transformers,
 // or if there was at most one subarray of preTransform and postTransform functions each,
 // returns a single-element array of the sole parse result
-function parseWord({
+function parseWordFunc({
   preTransform = [[]],
   postTransform = [[]],
   meta = {},
@@ -157,11 +157,11 @@ function createWordParserTag(postprocess = null) {
   return (first, ...rest) => {
     if (Array.isArray(first)) {
       // this means the caller just wants the template tag
-      const ret = parseWord()(first, ...rest);
+      const ret = parseWordFunc()(first, ...rest);
       return postprocess ? postprocess(ret) : ret;
     }
     // this means the caller wants to pass config params to the tag
-    const ret = parseWord(first);
+    const ret = parseWordFunc(first);
     return postprocess ? (...args) => postprocess(ret(...args)) : ret;
   };
 }

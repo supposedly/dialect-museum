@@ -1,4 +1,4 @@
-import utils from '../../utils';
+import * as utils from '../../utils';
 const { misc: { lastOf } } = utils;
 import { parseWord, parseLetter } from '../../parse-word';
 const AA = Object.freeze(parseLetter`aa`);

@@ -1,6 +1,6 @@
 <script>
     import nearley from 'nearley';
-    import * as grammar from 'src/backend/conversion/parsing/grammar.js';
+    import * as grammar from './backend/conversion/parsing/grammar.js';
 
     let input = ``;
     

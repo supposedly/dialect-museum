@@ -1,6 +1,6 @@
 import { fenum } from '../enums';
 
-export default type = fenum([
+export default fenum([
   `augmentation`,
   `pronoun`,
   `stem`,

@@ -1,6 +1,6 @@
 import { contract } from '../vowels';
 import { type } from '../../objects';
-import utils from '../../utils';
+import * as utils from '../../utils';
 const { misc: { lastOf } } = utils;
 
 function deSyllabify(syllables) {

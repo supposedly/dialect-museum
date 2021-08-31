@@ -1,4 +1,4 @@
-import { type } from '../type';
+import type from '../type';
 /* const {misc: {lastOf}} = require(`../../utils`);
 const {obj} = require(`../../objects`); */
 
