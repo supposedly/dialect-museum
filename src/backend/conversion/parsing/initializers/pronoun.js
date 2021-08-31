@@ -1,4 +1,4 @@
-import { type } from '../type';
+import type from '../type';
 import { parseString as $, parseLetter } from '../../parse-word';
 /* const {obj} = require('../../objects'); */
 import { PERSON as P, GENDER as G, NUMBER as N } from '../../symbols';

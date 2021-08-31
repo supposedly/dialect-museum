@@ -21,9 +21,10 @@
 
 import { fenum } from './enums';
 import { type } from './objects';
+export { type };
 
-const articulator = fenum([`throat`, `root`, `mid`, `crown`, `lips`]);
-const manner = fenum([`plosive`, `fricative`, `affricate`, `approximant`, `nasal`, `flap`]);
+export const articulator = fenum([`throat`, `root`, `mid`, `crown`, `lips`]);
+export const manner = fenum([`plosive`, `fricative`, `affricate`, `approximant`, `nasal`, `flap`]);
 
 function c(map, createEmphatics = true) {
   function createConsonant(
@@ -100,7 +101,7 @@ function v(map) {
 }
 
 // anything that isn't a letter is capitalized
-const alphabet = {
+export const alphabet = {
   ...c({
     emphatic: `*`,  // goes after the emphatic letter
   })
@@ -306,45 +307,45 @@ const higherVerbForms = [
 
 // technically this should be aa, ai, au, ia, ii, iu
 // but since verbs can only show up in one tense here fina nokhtser
-const verbForm = fenum([
+export const verbForm = fenum([
   `a`,
   `i`,
   `u`,
   ...higherVerbForms,
 ]);
 
-const ppForm = fenum([
+export const ppForm = fenum([
   `anyForm1`,
   `fa3len`,
   `fe3il`,
   ...higherVerbForms,
 ]);
 
-const tamToken = fenum([
+export const tamToken = fenum([
   `pst`,
   `sbjv`,
   `ind`,
   `imp`,
 ]);
 
-const voiceToken = fenum([
+export const voiceToken = fenum([
   `active`,
   `passive`,
 ]);
 
-const PERSON = {
+export const PERSON = {
   first: `1`,
   second: `2`,
   third: `3`,
 };
 
-const GENDER = {
+export const GENDER = {
   masc: `m`,
   fem: `f`,
   common: `c`,
 };
 
-const NUMBER = {
+export const NUMBER = {
   singular: `s`,
   dual: `d`,
   plural: `p`,
@@ -356,7 +357,7 @@ const [P, G, N] = [PERSON, GENDER, NUMBER];
 // could probably fix that by turning P/G/N into enums like
 // fenum([1, 2, 3]), fenum([`m`, `f`, `c`]), fenum([`s`, `d`, `p`])
 // but that would need some refactoring
-const pronoun = [
+export const pronoun = [
   P.first  + G.masc   + N.singular,   // -e according to loun
   P.first  + G.fem    + N.singular,   // -i according to loun
   P.first  + G.common + N.singular,   // the normal neutral one idk
@@ -374,20 +375,4 @@ const pronoun = [
   P.third  + G.common + N.plural,
 ];
 
-const negative = `X`;  // dunno how to implement this
-
-export default {
-  articulator,
-  manner,
-  type,
-  alphabet,
-  verbForm,
-  ppForm,
-  tamToken,
-  voiceToken,
-  PERSON,
-  GENDER,
-  NUMBER,
-  pronoun,
-  negative,
-};
+export const negative = `X`;  // dunno how to implement this

@@ -1,8 +1,8 @@
 import { contract } from '../vowels';
-import { type } from '../type';
+import type from '../type';
 import { parseWord, parseLetter } from '../../parse-word';
 import { ppForm, voiceToken } from '../../symbols';
-import utils from '../../utils';
+import * as utils from '../../utils';
 const {
   misc: {
     lastOf, newSyllable, backup,

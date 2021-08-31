@@ -1,10 +1,10 @@
 @{%
-  const obj = require(`../objects`);
-  const inits = require(`./initializers`);
-  const {type} = require(`.`);
+  import * as obj from '../objects';
+  import inits from './initializers';
+  import type from './type';
 
-  const moo = require(`moo`);
-  const sym = require(`../symbols`);
+  import * as moo from 'moo';
+  import * as sym from '../symbols';
 
   const abc = sym.alphabet;
   const _ = obj.obj;
@@ -167,6 +167,7 @@
 %}
 
 @lexer lexer
+@preprocessor esmodule
 
 makeInitial[Syllable] ->
     ST $Syllable  {% ([st, value]) => _.obj(type.syllable, value.meta, [...st, ...value.value]) %}

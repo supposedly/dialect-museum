@@ -1,10 +1,9 @@
-import { type } from '../type';
+import type from '../type';
 import { lax } from '../vowels';
 import { parseWord, parseLetter } from '../../parse-word';
-import objects from '../../objects';
-const { choice: { choice } } = objects;
+import { choice } from '../../objects';
 import { verbForm, tamToken } from '../../symbols';
-import utils from '../../utils';
+import * as utils from '../../utils';
 const {
   misc: { lastOf /* , backup */ }, syllables: { newSyllable },
 } = utils;

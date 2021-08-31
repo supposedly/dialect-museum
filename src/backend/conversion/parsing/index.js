@@ -1,7 +1,2 @@
-const grammar = require(`./grammar`);
-const {type} = require(`./type`);
-
-module.exports = {
-  grammar,
-  type,
-};
+export * as grammar from `./grammar`;
+export { default as type } from `./type`;

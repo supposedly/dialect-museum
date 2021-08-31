@@ -1,4 +1,4 @@
-import utils from '../../utils';
+import * as utils from '../../utils';
 const { misc: { lastOf }, syllables: { newSyllable } } = utils;
 /* const {obj} = require('../../objects'); */
 import { parseWord, parseLetter } from '../../parse-word';

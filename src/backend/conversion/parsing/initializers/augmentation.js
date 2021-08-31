@@ -1,6 +1,6 @@
-import { type } from '../type';
+import type from '../type';
 import { parseLetter, parseString as $ } from '../../parse-word';
-import utils from '../../utils';
+import * as utils from '../../utils';
 const { misc: { lastOf } } = utils;
 
 const L = Object.freeze(parseLetter`l`);
