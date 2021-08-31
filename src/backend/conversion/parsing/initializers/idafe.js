@@ -1,4 +1,4 @@
-const {type} = require(`../type`);
+import { type } from '../type';
 /* const {misc: {lastOf}} = require(`../../utils`);
 const {obj} = require(`../../objects`); */
 
@@ -20,7 +20,7 @@ function toConstruct(word) {
 }
 */
 
-function idafe({
+export default function idafe({
   possessor,
   possessee,
 }) {
@@ -41,7 +41,3 @@ function idafe({
     value: [...possessee, possessor],
   };
 }
-
-module.exports = {
-  idafe,
-};

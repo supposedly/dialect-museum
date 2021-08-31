@@ -1,6 +1,7 @@
-const {misc: {lastOf}, syllables: {newSyllable}} = require(`../../utils`);
-/* const {obj} = require(`../../objects`); */
-const {parseWord, parseLetter} = require(`../../parse-word`);
+import utils from '../../utils';
+const { misc: { lastOf }, syllables: { newSyllable } } = utils;
+/* const {obj} = require('../../objects'); */
+import { parseWord, parseLetter } from '../../parse-word';
 
 const AA = Object.freeze(parseLetter`aa`);
 const A = Object.freeze(parseLetter(`a`));
@@ -75,7 +76,7 @@ function augment(augmentation) {
 // this WILL NOT cater to forms like tajribe, which are fus7a loanwords and not
 // productively-formed verbal nouns
 // third-weak taf3iye vn's are fine tho
-function tif3il({
+export default function tif3il({
   type: was,
   value: {
     root: [$F, $3, $L, $Q],
@@ -132,7 +133,3 @@ function tif3il({
 
   return $`t.a/i.${$F} ${$3}.ii.${$L}`;
 }
-
-module.exports = {
-  tif3il,
-};

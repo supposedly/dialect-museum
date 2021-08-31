@@ -1,9 +1,9 @@
+import utils from './utils';
 const {
-  misc: {lastOf},
-  syllables: {newSyllable, getSyllableWeight, setStressedSyllable, copy},
-} = require(`./utils`);
-const {alphabet: abc} = require(`./symbols`);
-const {obj} = require(`./objects`);
+  misc: { lastOf }, syllables: { newSyllable, getSyllableWeight, setStressedSyllable, copy },
+} = utils;
+import { alphabet as abc } from './symbols';
+import { obj } from './objects';
 
 function interpolateAndParse(strings, rootConsonants) {
   const alreadyStressed = strings[0].startsWith(`+`) || strings[0].startsWith(`-`);
@@ -166,12 +166,10 @@ function createWordParserTag(postprocess = null) {
   };
 }
 
-module.exports = {
-  parseWord: createWordParserTag(),
-  parseSyllable: createWordParserTag(([word]) => {
-    word.value[0].meta.stressed = null;
-    return word.value[0];
-  }),
-  parseString: createWordParserTag(([word]) => word.value.map(s => s.value).flat()),
-  parseLetter: createWordParserTag(([word]) => word.value[0].value[0]),
-};
+export const parseWord = createWordParserTag();
+export const parseSyllable = createWordParserTag(([word]) => {
+  word.value[0].meta.stressed = null;
+  return word.value[0];
+});
+export const parseString = createWordParserTag(([word]) => word.value.map(s => s.value).flat());
+export const parseLetter = createWordParserTag(([word]) => word.value[0].value[0]);

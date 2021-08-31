@@ -1,6 +1,7 @@
-const {type} = require(`../type`);
-const {parseLetter, parseString: $} = require(`../../parse-word`);
-const {misc: {lastOf}} = require(`../../utils`);
+import { type } from '../type';
+import { parseLetter, parseString as $ } from '../../parse-word';
+import utils from '../../utils';
+const { misc: { lastOf } } = utils;
 
 const L = Object.freeze(parseLetter`l`);
 
@@ -205,7 +206,7 @@ function makeAugmentor(delimiter, person, gender, number, makeEnd = null, allN =
 }
 
 // not sure if this and pronouns.js should return { type, meta, value } objs or not
-function augmentation({
+export default function augmentation({
   meta: {delimiter},
   value: {person, gender, number},
 }) {
@@ -226,7 +227,3 @@ function augmentation({
     number,
   );
 }
-
-module.exports = {
-  augmentation,
-};

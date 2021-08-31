@@ -29,16 +29,16 @@ class Obj {
   }
 }
 
-function obj(type, meta, value, context) {
+export function obj(type, meta, value, context) {
   return new Obj(type, meta, value, context);
 }
 
 // gives an already-created object a resolver+transformer
-function process({type, meta, value, context}) {
+export function process({type, meta, value, context}) {
   return this.obj(type, meta, value, context);
 }
 
-function edit(og, {type, meta, value, context}) {
+export function edit(og, {type, meta, value, context}) {
   return this.obj(
     type || og.type,
     {...og.meta, ...meta},
@@ -46,9 +46,3 @@ function edit(og, {type, meta, value, context}) {
     context || og.context,
   );
 }
-
-module.exports = {
-  obj,
-  process,
-  edit,
-};

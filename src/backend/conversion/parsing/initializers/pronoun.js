@@ -1,7 +1,7 @@
-const {type} = require(`../type`);
-const {parseString: $, parseLetter} = require(`../../parse-word`);
-/* const {obj} = require(`../../objects`); */
-const {PERSON: P, GENDER: G, NUMBER: N} = require(`../../symbols`);
+import { type } from '../type';
+import { parseString as $, parseLetter } from '../../parse-word';
+/* const {obj} = require('../../objects'); */
+import { PERSON as P, GENDER as G, NUMBER as N } from '../../symbols';
 
 const I = Object.freeze(parseLetter`i`);
 /* const FEM_T = Object.freeze(obj.edit(parseLetter`c`, {meta: {t: true}})); */
@@ -121,7 +121,7 @@ function verbCircumfix(person, gender, number) {
 }
 
 // value is a string but we can still destructure it
-function pronoun({value: [person, gender, number]}) {
+export default function pronoun({value: [person, gender, number]}) {
   person = {
     value: person,
     first() { return this.value === P.first; },
@@ -160,7 +160,3 @@ function pronoun({value: [person, gender, number]}) {
     nonpast: verbCircumfix(person, gender, number),
   };
 }
-
-module.exports = {
-  pronoun,
-};

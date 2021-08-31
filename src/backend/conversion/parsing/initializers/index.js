@@ -1,15 +1,16 @@
-const {af3al} = require(`./af3al`);
-const {augmentation} = require(`./augmentation`);
-const {idafe} = require(`./idafe`);
-const {pp} = require(`./pp`);
-const {pronoun} = require(`./pronoun`);
-const {tif3il} = require(`./tif3il`);
-const {verb} = require(`./verb`);
-const {word} = require(`./word`);
+import type from '../type';
 
-const {type} = require(`../type`);
+import af3al from './af3al';
+import augmentation from './augmentation';
+import idafe from './idafe';
+import pp from './pp';
+import pronoun from './pronoun';
+import tif3il from './tif3il';
+import verb from './verb';
+import word from './word';
 
-module.exports = {
+
+export default {
   [type.af3al]: af3al,
   [type.augmentation]: augmentation,
   [type.idafe]: idafe,

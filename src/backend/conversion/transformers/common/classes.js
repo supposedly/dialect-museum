@@ -1,13 +1,14 @@
 /* eslint-disable max-classes-per-file */
-const symbols = require(`../../symbols`);
-const {type: objType} = require(`../../objects`);
-const {misc: {lastOf}} = require(`../../utils`);
+import symbols from '../../symbols';
+import {type as objType} from '../../objects';
+import {misc} from '../../utils';
+const {lastOf} = misc;
 
-const {STAY} = require(`./consts`);
-const {Props} = require(`./classes`);
-const {dep: depType} = require(`./type`);
+import {STAY} from './consts';
+import {Props} from './props';
+import depType from './type';
 
-class Transformer {
+export class Transformer {
   constructor(alphabet) {
     this.alphabet = alphabet;
   }
@@ -37,7 +38,7 @@ function copySeg(obj) {
   };
 }
 
-class Word {
+export class Word {
   constructor(wordObj, augmentationChoice = 0, prefixChoice = 0) {
     const type = wordObj.type;
     const meta = {...wordObj.meta, stemStarts: 0};
@@ -117,7 +118,7 @@ class DefaultObject {
   }
 }
 
-class Cap {
+export class Cap {
   constructor(word) {
     this.word = {...word};
     const segments = new DefaultObject({}, () => new Set());
@@ -428,9 +429,3 @@ class Cap {
     return this.segmentOfType(objType.suffix, props);
   }
 }
-
-module.exports = {
-  Word,
-  Cap,
-  Transformer,
-};

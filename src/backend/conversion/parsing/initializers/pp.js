@@ -1,14 +1,13 @@
-const vowels = require(`../vowels`);
-const {type} = require(`../type`);
-const {parseWord, parseLetter} = require(`../../parse-word`);
-const {ppForm, voiceToken} = require(`../../symbols`);
+import { contract } from '../vowels';
+import { type } from '../type';
+import { parseWord, parseLetter } from '../../parse-word';
+import { ppForm, voiceToken } from '../../symbols';
+import utils from '../../utils';
 const {
   misc: {
-    lastOf,
-    newSyllable,
-    backup,
+    lastOf, newSyllable, backup,
   },
-} = require(`../../utils`);
+} = utils;
 
 const I = Object.freeze(parseLetter`i`);
 const Y = Object.freeze(parseLetter`y`);
@@ -110,13 +109,13 @@ function augment(augmentation) {
         a.type === type.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
         && b.type === type.consonant
       ) {
-        lastSyllable.splice(-2, 1, vowels.contract(a));
+        lastSyllable.splice(-2, 1, contract(a));
       }
     }
   });
 }
 
-function pp({
+export default function pp({
   type: was,
   meta: {conjugation, form, voice},
   value: {
@@ -428,7 +427,3 @@ function pp({
       return null;
   }
 }
-
-module.exports = {
-  pp,
-};
