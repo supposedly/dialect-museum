@@ -413,7 +413,7 @@ final_superheavy_syllable ->
   %}
 
 final_light_rime -> final_short_vowel
-final_heavy_rime -> short_vowel consonant | AN {% id %}
+final_heavy_rime -> short_vowel consonant | long_vowel | AN {% id %}
 final_stressed_rime -> (long_vowel  {% id %} | %a  {% id %} | %e  {% id %} | %o  {% id %}) (STRESSED {% id %} | FRENCH {% id %})
 final_superheavy_rime ->
     superheavy_rime  {% id %}

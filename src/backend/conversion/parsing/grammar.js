@@ -372,6 +372,7 @@ export const ParserRules = [
           },
     {"name": "final_light_rime", "symbols": ["final_short_vowel"]},
     {"name": "final_heavy_rime", "symbols": ["short_vowel", "consonant"]},
+    {"name": "final_heavy_rime", "symbols": ["long_vowel"]},
     {"name": "final_heavy_rime", "symbols": ["AN"], "postprocess": id},
     {"name": "final_stressed_rime$subexpression$1", "symbols": ["long_vowel"], "postprocess": id},
     {"name": "final_stressed_rime$subexpression$1", "symbols": [({type: "a"})], "postprocess": id},
