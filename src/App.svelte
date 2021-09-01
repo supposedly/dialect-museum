@@ -9,7 +9,7 @@
 	let err = ``;
 
 	$: try {
-		res = new Parser(compiledGrammar).feed(input).results;
+		res = new Parser(compiledGrammar).feed(input).results[0] || [];
 		err = ``;
 	} catch (e) {
 		err = e;
@@ -21,7 +21,8 @@
 <main>
     <h1>Getting there...</h1>
 	<textarea bind:value={input} />
-	<p>{res.length}</p>
+	<!-- <p>{res.length}</p> -->
+	<!-- <p>{res.map(word => word.value.map(letter => letter.value === `schwa` ? `ᵊ` : letter.value).join(``))}</p> -->
 
 	{#if err}
 		<pre style="color:red;" i>{err}</pre>

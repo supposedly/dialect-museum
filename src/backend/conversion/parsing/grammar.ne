@@ -50,9 +50,9 @@
       openFilter: /\((?:[a-z0-9]+|\\)?/,
       closeFilter: /\)/,
 
+      number: /#\d{2,4}|#[03-9]/,
       genderedNumber: /#[12]/,
       numberGender: /M|F/,
-      number: /#0|#[12]0{1,3}|#[3-9]0?/,
 
       openTag: { match: /\[/, push: `tag` },
       openCtx: { match: /</, push: `ctxTag` },
@@ -210,11 +210,12 @@ expr ->
   | number {% initWordChoices %}
 
 # XXX TODO: this sucks
-number -> "(" ctx_tags:? %genderedNumber %numberGender ("-":? {% ([c]) => Boolean(c) %}) ")" {%
-  ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
-%}
-  | "(" ctx_tags:? %number ("-":? {% ([c]) => Boolean(c) %}) ")" {%
+number ->
+  "(" ctx_tags:? %number ("-":? {% ([c]) => Boolean(c) %}) ")" {%
     ([ , ctx , { value: quantity }, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
+  %}
+  | "(" ctx_tags:? %genderedNumber %numberGender ("-":? {% ([c]) => Boolean(c) %}) ")" {%
+    ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
   %}
 
 af3al -> "(af3al" ctx_tags:? __ root augmentation:? ")" {% ([ , ctx ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }, ctx) %}
@@ -291,7 +292,7 @@ verb ->
 # here and change `([value]) =>` to `([{ value }])) =>`
 word ->
     stem  {% ([{ value }]) => init(type.word, { was: null, augmentation: null }, value) %}
-  | stem augmentation  {% ([{ value }, augmentation]) => init(type.word, { augmentation }, value) %}
+  | stem augmentation  {% ([{ value }, augmentation]) => init(type.word, { augmentation: augmentation(value) }, value) %}
   | "(ctx" ctx_tags __ word ")" {% ([ , ctx ,, word]) => ctx.map(word.ctx) %}
 
 ctx_tags -> (__ %openCtx %ctxItem %closeCtx {% ([ ,, value]) => value %}):+ {%

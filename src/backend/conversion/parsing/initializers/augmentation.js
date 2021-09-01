@@ -6,7 +6,7 @@ const { misc: { lastOf } } = utils;
 const L = Object.freeze(parseLetter`l`);
 
 // 0, 1, 2
-const N_VALUES = [`yFor1sg`, `bothFor1sg`, `nFor1sg`];
+const N_VALUES = {yFor1sg: 0, bothFor1sg: 1, nFor1sg: 2};
 
 const _ = {
   NI: $`n.ii`,
@@ -190,19 +190,29 @@ function clitic(person, gender, number, n) {
   );
 }
 
-function makeAugmentor(delimiter, person, gender, number, makeEnd = null, allN = null) {
-  return base => Object.fromEntries(N_VALUES.map((n, i) => [
-    n,
-    {
+function makeAugmentor(delimiter, person, gender, number, makeEnd = null) {
+  // TODO: make this an enum or find a better way to select the n-value or something
+  let n;
+  switch (delimiter.value) {
+    case `dative`:
+    case `genitive`:
+      n = N_VALUES.yFor1sg;
+      break;
+    case `object`:
+      n = N_VALUES.nFor1sg;
+    case `pseudo-subject`:
+      n = N_VALUES.bothFor1sg;
+  }
+
+  return base => ({
       delimiter,
       pronoun: {person, gender, number},
-      clitics: clitic(person, gender, number, allN || i).afterEndOf(
+      clitics: clitic(person, gender, number, n).afterEndOf(
         makeEnd
           ? makeEnd(base)
           : lastOf(base).value,
       ),
-    },
-  ]));
+    });
 }
 
 // not sure if this and pronouns.js should return { type, meta, value } objs or not

@@ -61,7 +61,7 @@ function fixGeminate(base) {
 // and contracts long vowel VVC in base if augmentation is dative -l-
 function augment(augmentation) {
   return augmentation && ((base, meta) => {
-    meta.augmentation = augmentation(base).nFor1sg;
+    meta.augmentation = augmentation(base);
     // not contracting vowel for dative here because that's instead
     // being done in the word-initializer
   });

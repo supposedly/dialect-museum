@@ -69,7 +69,7 @@ function aiToA(base) {
 // TODO: error on dative
 function augment(augmentation) {
   return augmentation && ((base, meta) => {
-    meta.augmentation = augmentation(base).yFor1sg;
+    meta.augmentation = augmentation(base);
   });
 }
 

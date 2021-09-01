@@ -15,9 +15,7 @@ function fixAy(base) {
 // and contracts long vowel VVC in base if augmentation is dative -l-
 function augment(augmentation) {
   return augmentation && ((base, meta) => {
-    const result = augmentation(base);
-    // "2asra3li" vs. "ma 2asra3ni" (etymology doesn't matter for the 2nd one)
-    meta.augmentation = result.delimiter === `dative` ? result.yFor1sg : result.nFor1sg;
+    meta.augmentation = augmentation(base);
   });
 }
 

@@ -182,7 +182,9 @@ export default function number({
   meta: {isConstruct = false, gender},
   value: {quantity},
 }) {
-  gender = gender.toLowerCase();
+  if (gender) {
+    gender = gender.toLowerCase();
+  }
   const wrap = (baseForms, constructForms) => {
     const forms = isConstruct ? baseForms : (constructForms || baseForms);
     forms.forEach(

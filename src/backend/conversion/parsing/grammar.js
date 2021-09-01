@@ -53,9 +53,9 @@ function id(x) { return x[0]; }
       openFilter: /\((?:[a-z0-9]+|\\)?/,
       closeFilter: /\)/,
 
+      number: /#\d{2,4}|#[03-9]/,
       genderedNumber: /#[12]/,
       numberGender: /M|F/,
-      number: /#0|#[12]0{1,3}|#[3-9]0?/,
 
       openTag: { match: /\[/, push: `tag` },
       openCtx: { match: /</, push: `ctxTag` },
@@ -205,16 +205,16 @@ export const ParserRules = [
     {"name": "number$subexpression$1$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},
     {"name": "number$subexpression$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$1", "symbols": ["number$subexpression$1$ebnf$1"], "postprocess": ([c]) => Boolean(c)},
-    {"name": "number", "symbols": [{"literal":"("}, "number$ebnf$1", ({type: "genderedNumber"}), ({type: "numberGender"}), "number$subexpression$1", {"literal":")"}], "postprocess": 
-        ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
-        },
+    {"name": "number", "symbols": [{"literal":"("}, "number$ebnf$1", ({type: "number"}), "number$subexpression$1", {"literal":")"}], "postprocess": 
+        ([ , ctx , { value: quantity }, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
+          },
     {"name": "number$ebnf$2", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "number$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$2$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},
     {"name": "number$subexpression$2$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$2", "symbols": ["number$subexpression$2$ebnf$1"], "postprocess": ([c]) => Boolean(c)},
-    {"name": "number", "symbols": [{"literal":"("}, "number$ebnf$2", ({type: "number"}), "number$subexpression$2", {"literal":")"}], "postprocess": 
-        ([ , ctx , { value: quantity }, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
+    {"name": "number", "symbols": [{"literal":"("}, "number$ebnf$2", ({type: "genderedNumber"}), ({type: "numberGender"}), "number$subexpression$2", {"literal":")"}], "postprocess": 
+        ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
           },
     {"name": "af3al$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "af3al$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
@@ -271,7 +271,7 @@ export const ParserRules = [
         )
           },
     {"name": "word", "symbols": ["stem"], "postprocess": ([{ value }]) => init(type.word, { was: null, augmentation: null }, value)},
-    {"name": "word", "symbols": ["stem", "augmentation"], "postprocess": ([{ value }, augmentation]) => init(type.word, { augmentation }, value)},
+    {"name": "word", "symbols": ["stem", "augmentation"], "postprocess": ([{ value }, augmentation]) => init(type.word, { augmentation: augmentation(value) }, value)},
     {"name": "word", "symbols": [{"literal":"(ctx"}, "ctx_tags", "__", "word", {"literal":")"}], "postprocess": ([ , ctx ,, word]) => ctx.map(word.ctx)},
     {"name": "ctx_tags$ebnf$1$subexpression$1", "symbols": ["__", ({type: "openCtx"}), ({type: "ctxItem"}), ({type: "closeCtx"})], "postprocess": ([ ,, value]) => value},
     {"name": "ctx_tags$ebnf$1", "symbols": ["ctx_tags$ebnf$1$subexpression$1"]},

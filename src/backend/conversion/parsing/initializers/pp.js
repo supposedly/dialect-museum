@@ -97,7 +97,7 @@ function iyStrategize(conjugation) {
 // and contracts long vowel VVC in base if augmentation is dative -l-
 function augment(augmentation) {
   return augmentation && ((base, meta) => {
-    meta.augmentation = augmentation(base).nFor1sg;
+    meta.augmentation = augmentation(base);
     if (meta.augmentation.delimiter.value === `dative`) {
       // this part needs to be in a post-transformer because it doesn't make sense
       // for the contracted syllable to be temporarily unstressed
