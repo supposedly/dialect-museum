@@ -27,6 +27,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Lebanese</title>
+</svelte:head>
+
 <main>
     <h1>Getting there...</h1>
 	<textarea bind:value={input} />
