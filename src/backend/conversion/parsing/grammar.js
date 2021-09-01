@@ -148,11 +148,11 @@ function id(x) { return x[0]; }
       }
     },
     tag: {
+      pronoun: new RegExp(sym.pronoun.join(`|`)),
       tam: fromEnum(sym.tamToken),
       voice: fromEnum(sym.voiceToken),
       verbForm: fromEnum(sym.verbForm),
       ppForm: fromEnum(sym.ppForm),
-      pronoun: new RegExp(sym.pronoun.join(`|`)),
       closeTag: { match: /]/, pop: 1 }
     },
     ctxTag: {
@@ -164,9 +164,6 @@ function id(x) { return x[0]; }
   const processToken = ([{ value }]) => _.process(value);
 
   const init = (...args) => _.obj(...args).init(inits);
-  /* const initAs = type => ([value]) => value.init(inits, type); */
-  /* const reInit = ([value]) => value.init(inits) */
-  const initWordChoices = ([value]) => value.map(word => word.init(inits));
 export const Lexer = lexer;
 export const ParserRules = [
     {"name": "passage$ebnf$1", "symbols": []},
@@ -199,7 +196,7 @@ export const ParserRules = [
     {"name": "expr", "symbols": ["verb"]},
     {"name": "expr", "symbols": ["tif3il"]},
     {"name": "expr", "symbols": ["af3al"]},
-    {"name": "expr", "symbols": ["number"], "postprocess": initWordChoices},
+    {"name": "expr", "symbols": ["number"]},
     {"name": "number$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "number$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$1$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},

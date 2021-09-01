@@ -145,11 +145,11 @@
       }
     },
     tag: {
-      verbForm: fromEnum(sym.verbForm),
-      ppForm: fromEnum(sym.ppForm),
       pronoun: new RegExp(sym.pronoun.join(`|`)),
       tam: fromEnum(sym.tamToken),
       voice: fromEnum(sym.voiceToken),
+      verbForm: fromEnum(sym.verbForm),
+      ppForm: fromEnum(sym.ppForm),
       closeTag: { match: /]/, pop: 1 }
     },
     ctxTag: {
@@ -161,9 +161,6 @@
   const processToken = ([{ value }]) => _.process(value);
 
   const init = (...args) => _.obj(...args).init(inits);
-  /* const initAs = type => ([value]) => value.init(inits, type); */
-  /* const reInit = ([value]) => value.init(inits) */
-  const initWordChoices = ([value]) => value.map(word => word.init(inits));
 %}
 
 @lexer lexer
@@ -203,11 +200,11 @@ l -> "(l" __ expr ")"  {% ([ ,, value]) => init(type.l, {}, value) %}
 
 expr ->
     word  {% id %}
-  | pp  #{% initWordChoices %}
-  | verb  #{% initWordChoices %}
-  | tif3il #{% initWordChoices %}
-  | af3al #{% initWordChoices %}
-  | number {% initWordChoices %}
+  | pp
+  | verb
+  | tif3il
+  | af3al
+  | number
 
 # XXX TODO: this sucks
 number ->

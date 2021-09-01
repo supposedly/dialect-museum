@@ -199,7 +199,20 @@ function getAffixes(tam, conjugation, isCV) {
     case tamToken.ind:
       if (isCV) {
         const cv = conjugation.nonpast.prefix.subjunctive.cv;
-        if (cv[0].value === `y`) {
+        if (cv.length == 0) {
+          prefixes = choice(
+            // b.kuun
+            {
+              syllables: [conjugation.nonpast.prefix.indicative],
+              rest: [],
+            },
+            // bkuun (...maybe this one is too much to have idk)
+            {
+              syllables: [],
+              rest: conjugation.nonpast.prefix.indicative,
+            }
+          );
+        } else if (cv[0].value === `y`) {
           prefixes = choice(
             {
               // "bikuun", tense i

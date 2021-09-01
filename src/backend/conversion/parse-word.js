@@ -3,8 +3,8 @@ const {
   misc: { lastOf }, syllables: { newSyllable, getSyllableWeight, setStressedSyllable, copy },
 } = utils;
 import { alphabet as abc } from './symbols';
-import { obj } from './objects';
-import type from './parsing/type';
+import { obj, type as segType } from './objects';
+import objType from './parsing/type';
 
 function interpolateAndParse(strings, rootConsonants) {
   const alreadyStressed = strings[0].startsWith(`+`) || strings[0].startsWith(`-`);
@@ -74,6 +74,7 @@ function addSchwa(syllables) {
       s.meta.weight === 3
       && s.value.length === 4
       && lastOf(s.value).value !== lastOf(s.value, 1).value
+      && lastOf(s.value, 1).type === segType.consonant
     ) {
       s.value.push(abc.Schwa, s.value.pop());
     }
@@ -150,7 +151,7 @@ function parseWordFunc({
       ),
     ).flat();
 
-    return postTransformed.map(({result, localMeta}) => obj.obj(type.word, localMeta, result));
+    return postTransformed.map(({result, localMeta}) => obj.obj(objType.word, localMeta, result));
   };
 }
 
