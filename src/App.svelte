@@ -15,14 +15,23 @@
 		err = e;
 		console.error(e);
 	};
-    
+
+	function join(res, delim=` `, pre=``, post=``) {
+		const joined = res.map(word => {
+			if (Array.isArray(word)) {
+				return join(word, `/`, ...(word.length > 1 ? [`(`, `)`] : []));
+			}
+			return word.value.map(letter => letter.value === `schwa` ? `ᵊ` : letter.value).join(``);
+		}).join(delim);
+		return `${pre}${joined}${post}`;
+	}
 </script>
 
 <main>
     <h1>Getting there...</h1>
 	<textarea bind:value={input} />
 	<!-- <p>{res.length}</p> -->
-	<!-- <p>{res.map(word => word.value.map(letter => letter.value === `schwa` ? `ᵊ` : letter.value).join(``))}</p> -->
+	<p>{join(res)}</p>
 
 	{#if err}
 		<pre style="color:red;" i>{err}</pre>

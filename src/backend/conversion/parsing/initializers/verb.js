@@ -177,7 +177,7 @@ function uToI(base) {
 function getAffixes(tam, conjugation, isCV) {
   let prefixes;
   let suffix;
-  switch (tam + 1) {
+  switch (tam) {
     case tamToken.sbjv:
       if (isCV) {
         prefixes = choice(
@@ -452,18 +452,33 @@ export default function verb({
       return _$_`${$F}.${$3}.u.${$L}`;
     case verbForm.fa33al:
       if (tam === tamToken.pst) {
-        return $_`${$F}.a/i.${$3} ${$3}.a.${$L}`;
+        return [
+          ...$_`${$F}.a.${$3} ${$3}.a.${$L}`,
+          ...$_`${$F}.i.${$3} ${$3}.a.${$L}`,
+        ];
       }
       // no need for "if imp" case bc this handles imperative too (right?)
-      return _$_`${$F}.a/i.${$3} ${$3}.i.${$L}`;
+      return [
+        ..._$_`${$F}.a.${$3} ${$3}.i.${$L}`,
+        ..._$_`${$F}.i.${$3} ${$3}.i.${$L}`,
+      ];
     case verbForm.tfa33al:
-      return _$_`t.${$F}.a/i.${$3} ${$3}.a.${$L}`;
+      return [
+        ..._$_`t.${$F}.a.${$3} ${$3}.a.${$L}`,
+        ..._$_`t.${$F}.i.${$3} ${$3}.a.${$L}`,
+      ];
     case verbForm.stfa33al:
       // stanna-yistanna
       if ($F.meta.weak) {
-        return _$_`s.t.a/i.${$3} ${$3}.a.${$L}`;
+        return [
+          ..._$_`s.t.a.${$3} ${$3}.a.${$L}`,
+          ..._$_`s.t.i.${$3} ${$3}.a.${$L}`,
+        ];
       }
-      return _$_`s.t.${$F}.a/i.${$3} ${$3}.a.${$L}`;
+      return [
+        ..._$_`s.t.${$F}.a.${$3} ${$3}.a.${$L}`,
+        ..._$_`s.t.${$F}.i.${$3} ${$3}.a.${$L}`,
+      ];
     case verbForm.fe3al:
       if (tam === tamToken.pst) {
         return $_`${$F}.aa ${$3}.a.${$L}`;
@@ -479,13 +494,23 @@ export default function verb({
       return _$_`s.t.${$F}.aa ${$3}.a.${$L}`;
     case verbForm[`2af3al`]:
       if (tam === tamToken.pst) {
-        return $_`2.a/i.${$F} ${$3}.a.${$L}`;
+        return [
+          ...$_`2.a.${$F} ${$3}.a.${$L}`,
+          ...$_`2.i.${$F} ${$3}.a.${$L}`,
+        ];
       }
-      return [...$`${$F}.${$3}.i.${$L}`, ...$`2.a/i.${$F} ${$3}.i.${$L}`];
+      return [
+        ...$`${$F}.${$3}.i.${$L}`,
+        ...$`2.a.${$F} ${$3}.i.${$L}`,
+        ...$`2.i.${$F} ${$3}.i.${$L}`,
+      ];
     case verbForm.nfa3al:
       if ($3.meta.weak) {
         if (tam === tamToken.pst && conjugation.past.heavier()) {
-          return $_`n.${$F}.a/i.${$L}`;
+          return [
+            ...$_`n.${$F}.a.${$L}`,
+            ...$_`n.${$F}.i.${$L}`,
+          ];
         }
         return _$_`n.${$F}.aa.${$L}`;
       }
@@ -522,7 +547,10 @@ export default function verb({
       // and (idk if this exists but) pst conj are nfi3il not nfa3al
       if ($3.meta.weak) {
         if (tam === tamToken.pst && conjugation.past.heavier()) {
-          return $_`n.${$F}.a/i.${$L}`;
+          return [
+            ...$_`n.${$F}.a.${$L}`,
+            ...$_`n.${$F}.i.${$L}`,
+          ];
         }
         return _$_`n.${$F}.aa.${$L}`;  // no way nfiil exists right...?
       }
@@ -557,7 +585,10 @@ export default function verb({
     case verbForm.fta3al:
       if ($3.meta.weak) {
         if (tam === tamToken.pst && conjugation.past.heavier()) {
-          return $_`${$F}.t.a/i.${$L}`;
+          return [
+            ...$_`${$F}.t.a.${$L}`,
+            ...$_`${$F}.t.i.${$L}`,
+          ];
         }
         return _$_`${$F}.t.aa.${$L}`;
       }
@@ -594,7 +625,10 @@ export default function verb({
       // and (idk if this exists but) pst conj are fti3il not fta3al
       if ($3.meta.weak) {
         if (tam === tamToken.pst && conjugation.past.heavier()) {
-          return $_`${$F}.t.a/i.${$L}`;
+          return [
+            ...$_`${$F}.t.a.${$L}`,
+            ...$_`${$F}.t.i.${$L}`,
+          ];
         }
         return _$_`${$F}.t.aa.${$L}`;  // no way ftiil exists right...?
       }
@@ -636,7 +670,10 @@ export default function verb({
       }
       if ($3.meta.weak) {
         if (tam === tamToken.pst && conjugation.past.heavier()) {
-          return $_`s.t.${$F}.a/i.${$L}`;
+          return [
+            ...$_`s.t.${$F}.a.${$L}`,
+            ...$_`s.t.${$F}.i.${$L}`,
+          ];
         }
         return tam === tamToken.pst
           ? [...$_`s.t.${$F}.aa.${$L}`, ...$_`s.t.a ${$F}.aa.${$L}`]
@@ -660,18 +697,33 @@ export default function verb({
       return _$_`${$F}.${$3}.a.${$L}.${$L}`;
     case verbForm.fa3la2:
       if (tam === tamToken.pst) {
-        return $_`${$F}.a/i.${$3} ${$L}.a.${$Q}`;
+        return [
+          ...$_`${$F}.a.${$3} ${$L}.a.${$Q}`,
+          ...$_`${$F}.i.${$3} ${$L}.a.${$Q}`,
+        ];
       }
-      return _$_`${$F}.a/i.${$3} ${$L}.i.${$Q}`;
+      return [
+        ..._$_`${$F}.a.${$3} ${$L}.i.${$Q}`,
+        ..._$_`${$F}.i.${$3} ${$L}.i.${$Q}`,
+      ];
     case verbForm.tfa3la2:
-      return _$_`s.t.${$F}.a/i.${$3} ${$L}.a.${$Q}`;
+      return [
+        ..._$_`s.t.${$F}.a.${$3} ${$L}.a.${$Q}`,
+        ..._$_`s.t.${$F}.i.${$3} ${$L}.a.${$Q}`,
+      ];
     case verbForm.stfa3la2:
       // doesn't exist B)
       // XXX: idunno about these /a/ variants btw
       if ($F.meta.weak) {
-        return _$_`s.t.a/i.${$3} ${$L}.a.${$Q}`;
+        return [
+          ..._$_`s.t.a.${$3} ${$L}.a.${$Q}`,
+          ..._$_`s.t.i.${$3} ${$L}.a.${$Q}`,
+        ];
       }
-      return _$_`s.t.${$F}.a/i.${$3} ${$L}.a.${$Q}`;
+      return [
+        ..._$_`s.t.${$F}.a.${$3} ${$L}.a.${$Q}`,
+        ..._$_`s.t.${$F}.i.${$3} ${$L}.a.${$Q}`,
+      ];
     default:
       return null;
   }

@@ -232,8 +232,6 @@ export default function pp({
         ? [
           ...$`m.${$F}.a.${$3} ${$3}.a.${$L}`,
           ...$`m.u.t ${$F}.a.${$3} ${$3}.a.${$L}`,
-          // XXX: should these ones use a/i? i feel like they shouldn't
-          // (like mit2akkid mit2ikkid, mitzakker mitzikkir...)
           ...$iy`m.u.t ${$F}.a.${$3} ${$3}.i.${$L}`,
           ...$iy`m.u.t ${$F}.i.${$3} ${$3}.i.${$L}`,
         ]

@@ -19,14 +19,17 @@ function augment(augmentation) {
   });
 }
 
-export default function af3al({root: [$F, $3, $L, $Q], augmentation}) {
+export default function af3al({value: {root: [$F, $3, $L, $Q], augmentation}}) {
   const $ = parseWord({
     preTransform: [[fixAy]],
     postTransform: [[augment(augmentation)]],
   });
 
   if ($Q) {
-    return $`2.a ${$F}.a.${$3} ${$L}.a/i.${$Q}`;
+    return [
+      ...$`2.a ${$F}.a.${$3} ${$L}.a.${$Q}`,
+      ...$`2.a ${$F}.a.${$3} ${$L}.i.${$Q}`
+    ];
   }
 
   if ($3.value === $L.value) {
@@ -38,9 +41,13 @@ export default function af3al({root: [$F, $3, $L, $Q], augmentation}) {
     return [
       ...$`2.a ${$F}.a.${$3}.${$L}`,
       ...$`2.a ${$F}.a.${$3} ${$L}.a`,
-      ...$`2.a.${$F} ${$3}.a/i.${$L}`,
+      ...$`2.a.${$F} ${$3}.a.${$L}`,
+      ...$`2.a.${$F} ${$3}.i.${$L}`,
     ];
   }
 
-  return $`2.a.${$F} ${$3}.a/i.${$L}`;
+  return [
+    ...$`2.a.${$F} ${$3}.a.${$L}`,
+    ...$`2.a.${$F} ${$3}.i.${$L}`
+  ];
 }

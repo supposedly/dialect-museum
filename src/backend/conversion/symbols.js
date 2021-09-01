@@ -162,11 +162,6 @@ export const alphabet = {
   (null),
 
   ...v({})
-  (`a/i`, null, {sub: `a_i`})  /* possibly-bad abstraction over a/i variation
-                                  * (e.g. in fa33al verbs participles)
-                                  * ONLY meant to be used in backend code, not the grammar,
-                                  * hence symbol being null
-                                  */
   (`a`, `a`)
   (`aa`, `A`)
   (`AA`, `&`)  // lowered aa, like in شاي

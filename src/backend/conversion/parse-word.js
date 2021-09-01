@@ -4,6 +4,7 @@ const {
 } = utils;
 import { alphabet as abc } from './symbols';
 import { obj } from './objects';
+import type from './parsing/type';
 
 function interpolateAndParse(strings, rootConsonants) {
   const alreadyStressed = strings[0].startsWith(`+`) || strings[0].startsWith(`-`);
@@ -149,7 +150,7 @@ function parseWordFunc({
       ),
     ).flat();
 
-    return postTransformed.map(({result, localMeta}) => obj.obj(`word`, localMeta, result));
+    return postTransformed.map(({result, localMeta}) => obj.obj(type.word, localMeta, result));
   };
 }
 

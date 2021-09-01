@@ -203,10 +203,10 @@ l -> "(l" __ expr ")"  {% ([ ,, value]) => init(type.l, {}, value) %}
 
 expr ->
     word  {% id %}
-  | pp  {% initWordChoices %}
-  | verb  {% initWordChoices %}
-  | tif3il {% initWordChoices %}
-  | af3al {% initWordChoices %}
+  | pp  #{% initWordChoices %}
+  | verb  #{% initWordChoices %}
+  | tif3il #{% initWordChoices %}
+  | af3al #{% initWordChoices %}
   | number {% initWordChoices %}
 
 # XXX TODO: this sucks
@@ -458,10 +458,10 @@ strong_consonant -> (
 
 # ditto
 pronoun -> %openTag %pronoun %closeTag  {% ([ , { value }]) => init(type.pronoun, {}, value) %}
-tam -> %openTag %tam %closeTag  {% ([ , value]) => value %}
-voice -> %openTag %voice %closeTag  {% ([ , value]) => value %}
-pp_form -> %openTag %ppForm %closeTag  {% ([ , value]) => value %}
-verb_form -> %openTag %verbForm %closeTag  {% ([ , value]) => value %}
+tam -> %openTag %tam %closeTag  {% ([ , { value }]) => value %}
+voice -> %openTag %voice %closeTag  {% ([ , { value }]) => value %}
+pp_form -> %openTag %ppForm %closeTag  {% ([ , { value }]) => value %}
+verb_form -> %openTag %verbForm %closeTag  {% ([ , { value }]) => value %}
 
 augmentation -> delimiter %pronoun  {% ([delimiter, { value }]) => init(type.augmentation, { delimiter }, init(type.pronoun, {}, value)) %}
 
