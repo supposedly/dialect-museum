@@ -13,6 +13,7 @@
 		err = ``;
 	} catch (e) {
 		err = e;
+		console.error(e);
 	};
     
 </script>
