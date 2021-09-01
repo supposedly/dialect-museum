@@ -20,7 +20,7 @@
 
 <main>
     <h1>Getting there...</h1>
-	<input type="text" bind:value={input} />
+	<textarea bind:value={input} />
 	<p>{res.length}</p>
 
 	{#if err}
@@ -47,6 +47,10 @@
 		/* text-transform: uppercase; */
 		font-size: 4em;
 		font-weight: 100;
+	}
+
+	textarea {
+		font-family: Consolas, 'Courier New', Courier, monospace;
 	}
 
 	@media (min-width: 640px) {
