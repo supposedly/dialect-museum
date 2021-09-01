@@ -50,18 +50,18 @@ function id(x) { return x[0]; }
 
   const lexer = moo.states({
     main: {
-      openFilter: /\((?:[a-z0-9]+|[^a-z\s])?/,
+      openFilter: /\((?:[a-z0-9]+|\\)?/,
       closeFilter: /\)/,
+
+      genderedNumber: /#[12]/,
+      numberGender: /m|f/,
+      number: /#0|#[12]0{1,3}|#[3-9]0?/,
 
       openTag: { match: /\[/, push: `tag` },
       openCtx: { match: /</, push: `ctxTag` },
 
       openWeakConsonant: /\{/,
       closeWeakConsonant: /\}/,
-
-      genderedNumber: /[12]/,
-      numberGender: /m|f/,
-      number: /0|[12]0{1,3}|[3-9]0?/,
 
       2: c`2`,
       3: c`3`,
@@ -199,21 +199,22 @@ export const ParserRules = [
     {"name": "expr", "symbols": ["verb"], "postprocess": initWordChoices},
     {"name": "expr", "symbols": ["tif3il"], "postprocess": initWordChoices},
     {"name": "expr", "symbols": ["af3al"], "postprocess": initWordChoices},
+    {"name": "expr", "symbols": ["number"], "postprocess": initWordChoices},
     {"name": "number$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "number$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$1$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},
     {"name": "number$subexpression$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$1", "symbols": ["number$subexpression$1$ebnf$1"], "postprocess": ([c]) => Boolean(c)},
-    {"name": "number", "symbols": [{"literal":"(#"}, "number$ebnf$1", ({type: "genderedNumber"}), ({type: "numberGender"}), "number$subexpression$1", {"literal":")"}], "postprocess": 
-        ([ , ctx ,, quantity, gender, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity }, ctx)
+    {"name": "number", "symbols": [{"literal":"("}, "number$ebnf$1", ({type: "genderedNumber"}), ({type: "numberGender"}), "number$subexpression$1", {"literal":")"}], "postprocess": 
+        ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
         },
     {"name": "number$ebnf$2", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "number$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$2$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},
     {"name": "number$subexpression$2$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "number$subexpression$2", "symbols": ["number$subexpression$2$ebnf$1"], "postprocess": ([c]) => Boolean(c)},
-    {"name": "number", "symbols": [{"literal":"(#"}, "number$ebnf$2", ({type: "number"}), "number$subexpression$2", {"literal":")"}], "postprocess": 
-        ([ , ctx ,, quantity, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity }, ctx)
+    {"name": "number", "symbols": [{"literal":"("}, "number$ebnf$2", ({type: "number"}), "number$subexpression$2", {"literal":")"}], "postprocess": 
+        ([ , ctx , { value: quantity }, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
           },
     {"name": "af3al$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "af3al$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},

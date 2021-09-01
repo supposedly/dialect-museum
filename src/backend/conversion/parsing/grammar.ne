@@ -47,18 +47,18 @@
 
   const lexer = moo.states({
     main: {
-      openFilter: /\((?:[a-z0-9]+|[^a-z\s])?/,
+      openFilter: /\((?:[a-z0-9]+|\\)?/,
       closeFilter: /\)/,
+
+      genderedNumber: /#[12]/,
+      numberGender: /m|f/,
+      number: /#0|#[12]0{1,3}|#[3-9]0?/,
 
       openTag: { match: /\[/, push: `tag` },
       openCtx: { match: /</, push: `ctxTag` },
 
       openWeakConsonant: /\{/,
       closeWeakConsonant: /\}/,
-
-      genderedNumber: /[12]/,
-      numberGender: /m|f/,
-      number: /0|[12]0{1,3}|[3-9]0?/,
 
       2: c`2`,
       3: c`3`,
@@ -207,13 +207,14 @@ expr ->
   | verb  {% initWordChoices %}
   | tif3il {% initWordChoices %}
   | af3al {% initWordChoices %}
+  | number {% initWordChoices %}
 
 # XXX TODO: this sucks
-number -> "(#" ctx_tags:? %genderedNumber %numberGender ("-":? {% ([c]) => Boolean(c) %}) ")" {%
-  ([ , ctx ,, quantity, gender, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity }, ctx)
+number -> "(" ctx_tags:? %genderedNumber %numberGender ("-":? {% ([c]) => Boolean(c) %}) ")" {%
+  ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
 %}
-  | "(#" ctx_tags:? %number ("-":? {% ([c]) => Boolean(c) %}) ")" {%
-    ([ , ctx ,, quantity, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity }, ctx)
+  | "(" ctx_tags:? %number ("-":? {% ([c]) => Boolean(c) %}) ")" {%
+    ([ , ctx , { value: quantity }, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
   %}
 
 af3al -> "(af3al" ctx_tags:? __ root augmentation:? ")" {% ([ , ctx ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }, ctx) %}
