@@ -54,7 +54,7 @@ function id(x) { return x[0]; }
       closeFilter: /\)/,
 
       genderedNumber: /#[12]/,
-      numberGender: /m|f/,
+      numberGender: /M|F/,
       number: /#0|#[12]0{1,3}|#[3-9]0?/,
 
       openTag: { match: /\[/, push: `tag` },
