@@ -6,6 +6,12 @@ import { alphabet as abc } from './symbols';
 import { obj, type as segType } from './objects';
 import objType from './parsing/type';
 
+const PRUNE = {};
+class Prune extends Error {};
+const REJECT = function reject() {
+  throw Prune;
+};
+
 function interpolateAndParse(strings, rootConsonants) {
   const alreadyStressed = strings[0].startsWith(`+`) || strings[0].startsWith(`-`);
   const syllables = [newSyllable()];
@@ -123,11 +129,14 @@ function parseWordFunc({
       // the resulting necessity of avoiding mutation in EVERY
       // interaction with the syllables array made the code rly rly rly
       // landminey and easy to mess up and frustrating to write
+      if (!transforms) {
+        return PRUNE;
+      }
       const syllables = copy(initialResult);
       // stuff like `false`, `null`, etc. is allowed and will just be skipped
       transforms.forEach(f => f && f(syllables));
       return syllables;
-    });
+    }).filter(res => res !== PRUNE);
 
     preTransformed.forEach(setWeights);
 
@@ -142,13 +151,16 @@ function parseWordFunc({
     const postTransformed = preTransformed.map(
       transformedSyllables => postTransform.map(
         transforms => {
+          if (!transforms) {
+            return PRUNE;
+          }
           const newCopy = copy(transformedSyllables);
           const localMeta = {...meta};
           // stuff like `false`, `null`, etc. is allowed and will just be skipped
           transforms.forEach(f => f && f(newCopy, localMeta));
           return {result: newCopy, localMeta};
         },
-      ),
+      ).filter(res => res !== PRUNE),
     ).flat();
 
     return postTransformed.map(({result, localMeta}) => obj.obj(objType.word, localMeta, result));

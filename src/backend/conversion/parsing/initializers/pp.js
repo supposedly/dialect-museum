@@ -134,7 +134,7 @@ export default function pp({
   const isActiveVoice = voice === voiceToken.active;
   const suffix = conjugation.participle.suffix;
   const lastRadical = $Q || $L;
-  const useMu = context.has(`mu`);
+  const onlyMu = context.has(`mu`);
 
   const ayFixer = (!suffix.length && lastRadical.meta.weak) && fixAy;
 
@@ -153,7 +153,12 @@ export default function pp({
       strategize(conjugation),
       pushSuffix(suffix),
     ],
-    !useMu && [muToMi]],
+    !onlyMu && [
+      muToMi,
+      ayFixer,
+      strategize(conjugation),
+      pushSuffix(suffix),
+    ]],
     meta,
   });
 
