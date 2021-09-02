@@ -289,6 +289,9 @@ function getAffixes(tam, conjugation, isCV) {
       suffix = [...conjugation.nonpast.suffix];
       break;
     case tamToken.imp:
+      if (!conjugation.person.second()) {
+        throw new Error(`Can't use an imperative verb on persons other than second; try sbjv`);
+      }
       prefixes = [];
       suffix = [...conjugation.nonpast.suffix];
       break;
@@ -330,7 +333,7 @@ export default function verb({
   // true if a verb is above form 1 and has no TAM suffix
   const noSuffix = tam === tamToken.pst
     ? conjugation.person.third() && conjugation.gender.masc()
-    : (!conjugation.gender.fem() || conjugation.number.third()) && !conjugation.number.plural();
+    : (!conjugation.gender.fem() || conjugation.person.third()) && !conjugation.number.plural();
 
   const biliteral = $Q ? $L.value === $Q.value : $3.value === $L.value;
   const lastRadical = $Q || $L;
