@@ -4,38 +4,60 @@
 
 	const compiledGrammar = Grammar.fromCompiled(grammar);
 
-    let input = ``;
-	let res = [];
-	let err = ``;
-
-	$: try {
-		res = new Parser(compiledGrammar).feed(input).results[0] || [];
-		err = ``;
-	} catch (e) {
-		err = e;
-		console.error(e);
-	};
-
 	function join(res, delim=` `, pre=``, post=``) {
 		const joined = res.map(word => {
 			if (Array.isArray(word)) {
 				return join(word, `/`, ...(word.length > 1 ? [`(`, `)`] : []));
 			}
-			return word.value.map(letter => letter.value === `schwa` ? `ᵊ` : letter.value).join(``);
+			return word.value.map(letter => {
+				switch (letter.value) {
+					case `noschwa`:
+						return ``;
+					case `schwa`:
+						return `ᵊ`;
+					case `fem`:
+						return `c`;
+					case `fplural`:
+						return `aat`;
+					case `dual`:
+						return `ayn`;
+					case `plural`:
+						return `iin`;
+					case `stressed`:
+						return `\u0301`;
+					case `nasalized`:
+						return `\u0303`;
+					default:
+						return letter.value;
+				}
+			}).join(``);
 		}).join(delim);
 		return `${pre}${joined}${post}`;
 	}
+
+    let input = ``;
+	let res = [];
+	let joined = ``;
+	let err = ``;
+
+	$: try {
+		res = new Parser(compiledGrammar).feed(input).results[0] || [];
+		joined = join(res);
+		err = ``;
+	} catch (e) {
+		err = e;
+		console.error(e);
+	};
 </script>
 
 <svelte:head>
-	<title>Lebanese</title>
+	<title>Bruh</title>
 </svelte:head>
 
 <main>
     <h1>Getting there...</h1>
 	<textarea bind:value={input} />
-	<!-- <p>{res.length}</p> -->
-	<p>{join(res)}</p>
+	<p>{joined}</p>
 
 	{#if err}
 		<pre style="color:red;" i>{err}</pre>
