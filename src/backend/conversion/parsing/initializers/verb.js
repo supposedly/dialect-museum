@@ -2,7 +2,7 @@ import { type as segType } from '../../objects';
 import { lax } from '../vowels';
 import { parseWord, parseLetter } from '../../parse-word';
 import { choice } from '../../objects';
-import { verbForm, tamToken } from '../../symbols';
+import { wazn, tamToken } from '../../symbols';
 import * as utils from '../../utils';
 const {
   misc: { lastOf /* , backup */ }, syllables: { newSyllable },
@@ -13,6 +13,7 @@ const I = Object.freeze(parseLetter`i`);
 const AA = Object.freeze(parseLetter`aa`);
 const II = Object.freeze(parseLetter`ii`);
 const AY = Object.freeze(parseLetter`ay`);
+const SCHWA = Object.freeze(parseLetter`Schwa`);
 // const AI = Object.freeze(parseLetter`a/i`);  // see final comment in fixGeminate
 
 // transformer: replace -a.y in a parsed word with -aa if npst or no suffix (3ms pst),
@@ -155,7 +156,11 @@ function makeSuffixer(suffix) {
       // (btw this could also have been an if-else with the
       // first branch instead doing `.splice(-1, 1, ...suffix);`)
     } else if (lastSegment.type === segType.consonant) {
-      base.push(newSyllable([lastSyllable.pop(), ...suffix]));
+      base.push(newSyllable([
+        lastSyllable.pop(),
+        ...(suffix[0].type === segType.consonant ? [SCHWA] : []),
+        ...suffix
+      ]));
     }
   };
 }
@@ -312,7 +317,7 @@ export default function verb({
   meta: {conjugation, form, tam},
   value: {root: [$F, $3, $L, $Q], augmentation},
 }) {
-  const stringForm = verbForm.keys[form];
+  const stringForm = wazn.keys[form];
   // xor but being extra-explicit about it
   // (if form is quadriliteral then $Q must be given, and if not then not)
   if (Boolean($Q) !== Boolean(stringForm.endsWith(`2`))) {
@@ -378,7 +383,7 @@ export default function verb({
   const _$_ = $;
 
   switch (form) {
-    case verbForm.a:
+    case wazn.a:
       if (biliteral) {
         return _$_`${$F}.a.${$3}.${$L}`;
       }
@@ -409,7 +414,7 @@ export default function verb({
         ];
       }
       return _$_`${$F}.${$3}.a.${$L}`;
-    case verbForm.i:
+    case wazn.i:
       if (biliteral) {
         return _$_`${$F}.i.${$3}.${$L}`;
       }
@@ -441,7 +446,7 @@ export default function verb({
         return $_`2.i.${$F} ${$3}.i.${$L}`;
       }
       return _$_`${$F}.${$3}.i.${$L}`;
-    case verbForm.u:
+    case wazn.u:
       if (tam === tamToken.pst) {
         throw new Error(`No past-tense Form 1 conjugation in /u/ exists: ${$F}${$3}${$L}`);
       }
@@ -466,7 +471,7 @@ export default function verb({
         ];
       }
       return _$_`${$F}.${$3}.u.${$L}`;
-    case verbForm.fa33al:
+    case wazn.fa33al:
       if (tam === tamToken.pst) {
         return [
           ...$_`${$F}.a.${$3} ${$3}.a.${$L}`,
@@ -478,12 +483,12 @@ export default function verb({
         ..._$_`${$F}.a.${$3} ${$3}.i.${$L}`,
         ..._$_`${$F}.i.${$3} ${$3}.i.${$L}`,
       ];
-    case verbForm.tfa33al:
+    case wazn.tfa33al:
       return [
         ..._$_`t.${$F}.a.${$3} ${$3}.a.${$L}`,
         ..._$_`t.${$F}.i.${$3} ${$3}.a.${$L}`,
       ];
-    case verbForm.stfa33al:
+    case wazn.stfa33al:
       // stanna-yistanna
       if ($F.meta.weak) {
         return [
@@ -495,20 +500,20 @@ export default function verb({
         ..._$_`s.t.${$F}.a.${$3} ${$3}.a.${$L}`,
         ..._$_`s.t.${$F}.i.${$3} ${$3}.a.${$L}`,
       ];
-    case verbForm.fe3al:
+    case wazn.fe3al:
       if (tam === tamToken.pst) {
         return $_`${$F}.aa ${$3}.a.${$L}`;
       }
       return _$_`${$F}.aa ${$3}.i.${$L}`;
-    case verbForm.tfe3al:
+    case wazn.tfe3al:
       return _$_`t.${$F}.aa ${$3}.a.${$L}`;
-    case verbForm.stfe3al:
+    case wazn.stfe3al:
       // stehal-yistehal
       if ($F.meta.weak) {
         return _$_`s.t.aa ${$3}.a.${$L}`;
       }
       return _$_`s.t.${$F}.aa ${$3}.a.${$L}`;
-    case verbForm[`2af3al`]:
+    case wazn[`2af3al`]:
       if (tam === tamToken.pst) {
         return [
           ...$_`2.a.${$F} ${$3}.a.${$L}`,
@@ -520,7 +525,7 @@ export default function verb({
         ...$`2.a.${$F} ${$3}.i.${$L}`,
         ...$`2.i.${$F} ${$3}.i.${$L}`,
       ];
-    case verbForm.nfa3al:
+    case wazn.nfa3al:
       if ($3.meta.weak) {
         if (tam === tamToken.pst && conjugation.past.heavier()) {
           return [
@@ -558,7 +563,7 @@ export default function verb({
         ..._$_`+n.${$F}.a -${$3}.a.${$L}`,
         ..._$_`n.${$F}.I ${$3}.i.${$L}`,
       ];
-    case verbForm.nfi3il:
+    case wazn.nfi3il:
       // npst conj are always yinfi3il not yinfa3al
       // and (idk if this exists but) pst conj are nfi3il not nfa3al
       if ($3.meta.weak) {
@@ -598,7 +603,7 @@ export default function verb({
         ..._$_`+n.${$F}.I -${$3}.i.${$L}`,
         ..._$_`n.${$F}.I ${$3}.i.${$L}`,
       ];
-    case verbForm.fta3al:
+    case wazn.fta3al:
       if ($3.meta.weak) {
         if (tam === tamToken.pst && conjugation.past.heavier()) {
           return [
@@ -636,7 +641,7 @@ export default function verb({
         ..._$_`+${$F}.t.a -${$3}.a.${$L}`,
         ..._$_`${$F}.t.I ${$3}.i.${$L}`,
       ];
-    case verbForm.fti3il:
+    case wazn.fti3il:
       // npst conj are always yifti3il not yifta3al
       // and (idk if this exists but) pst conj are fti3il not fta3al
       if ($3.meta.weak) {
@@ -676,7 +681,7 @@ export default function verb({
         ..._$_`+${$F}.t.I -${$3}.i.${$L}`,
         ..._$_`${$F}.t.I ${$3}.i.${$L}`,
       ];
-    case verbForm.staf3al:
+    case wazn.staf3al:
       // stehal-yistehil
       if ($F.meta.weak) {
         if (tam === tamToken.pst) {
@@ -709,9 +714,9 @@ export default function verb({
       }
       // yista3mil, *yista3mul* (spelled yesta3mol)
       return [..._$_`s.t.a.${$F} ${$3}.i.${$L}`, ..._$_`s.t.a.${$F} ${$3}.u.${$L}`];
-    case verbForm.f3all:
+    case wazn.f3all:
       return _$_`${$F}.${$3}.a.${$L}.${$L}`;
-    case verbForm.fa3la2:
+    case wazn.fa3la2:
       if (tam === tamToken.pst) {
         return [
           ...$_`${$F}.a.${$3} ${$L}.a.${$Q}`,
@@ -722,12 +727,12 @@ export default function verb({
         ..._$_`${$F}.a.${$3} ${$L}.i.${$Q}`,
         ..._$_`${$F}.i.${$3} ${$L}.i.${$Q}`,
       ];
-    case verbForm.tfa3la2:
+    case wazn.tfa3la2:
       return [
         ..._$_`s.t.${$F}.a.${$3} ${$L}.a.${$Q}`,
         ..._$_`s.t.${$F}.i.${$3} ${$L}.a.${$Q}`,
       ];
-    case verbForm.stfa3la2:
+    case wazn.stfa3la2:
       // doesn't exist B)
       // XXX: idunno about these /a/ variants btw
       if ($F.meta.weak) {
@@ -741,6 +746,6 @@ export default function verb({
         ..._$_`s.t.${$F}.i.${$3} ${$L}.a.${$Q}`,
       ];
     default:
-      return null;
+      throw new Error(`Unknown verb form ${form} ('${wazn.keys[form]}')`);
   }
 }

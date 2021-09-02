@@ -281,7 +281,16 @@ export const alphabet = {
   },
 };
 
-const higherVerbForms = [
+export const wazn = fenum([
+  /* form 1: participles */
+  `anyForm1`,
+  `fe3il`,
+  `fa3len`,
+  /* form 1: verbs */
+  `a`,
+  `i`,
+  `u`,
+  /* all other forms */
   `fa33al`,
   `tfa33al`,
   `stfa33al`,
@@ -298,22 +307,6 @@ const higherVerbForms = [
   `fa3la2`,
   `tfa3la2`,
   `stfa3la2`,  // probably only theoretically exists lol
-];
-
-// technically this should be aa, ai, au, ia, ii, iu
-// but since verbs can only show up in one tense here fina nokhtser
-export const verbForm = fenum([
-  `a`,
-  `i`,
-  `u`,
-  ...higherVerbForms,
-]);
-
-export const ppForm = fenum([
-  `anyForm1`,
-  `fa3len`,
-  `fe3il`,
-  ...higherVerbForms,
 ]);
 
 export const tamToken = fenum([

@@ -148,8 +148,7 @@
       pronoun: new RegExp(sym.pronoun.join(`|`)),
       tam: fromEnum(sym.tamToken),
       voice: fromEnum(sym.voiceToken),
-      verbForm: fromEnum(sym.verbForm),
-      ppForm: fromEnum(sym.ppForm),
+      wazn: fromEnum(sym.wazn),
       closeTag: { match: /]/, pop: 1 }
     },
     ctxTag: {
@@ -250,7 +249,7 @@ tif3il -> "(tif3il"
 pp -> "(pp"
     ctx_tags:?
     __ pronoun
-    __ pp_form
+    __ wazn
     __ voice
     __ root
     augmentation:?
@@ -269,7 +268,7 @@ verb ->
   "(verb"
     ctx_tags:?
     __ pronoun
-    __ verb_form
+    __ wazn
     __ tam
     __ root
     augmentation:?
@@ -292,8 +291,8 @@ word ->
   | stem augmentation  {% ([{ value }, augmentation]) => init(type.word, { augmentation: augmentation(value) }, value) %}
   | "(ctx" ctx_tags __ word ")" {% ([ , ctx ,, word]) => ctx.map(word.ctx) %}
 
-ctx_tags -> (__ %openCtx %ctxItem %closeCtx {% ([ ,, value]) => value %}):+ {%
-  ([ , values]) => values
+ctx_tags -> (__ %openCtx %ctxItem %closeCtx {% ([ ,, { value }]) => value %}):+ {%
+  ([values]) => values
 %}
 
 # messy because of stressedOn :(
@@ -412,7 +411,7 @@ final_superheavy_syllable ->
 
 final_light_rime -> final_short_vowel
 final_heavy_rime -> short_vowel consonant | long_vowel | AN {% id %}
-final_stressed_rime -> (long_vowel  {% id %} | %a  {% id %} | %e  {% id %} | %o  {% id %}) (STRESSED {% id %} | FRENCH {% id %})
+final_stressed_rime -> (long_vowel  {% id %} | %a  {% processToken %} | %e  {% processToken %} | %o  {% processToken %}) (STRESSED {% id %} | FRENCH {% id %})
 final_superheavy_rime ->
     superheavy_rime  {% id %}
   | PLURAL
@@ -430,11 +429,11 @@ superheavy_rime ->
   | short_vowel consonant NO_SCHWA consonant
   | short_vowel consonant consonant
      {% ([a, b, c]) => (
-      b === c ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
+      b.value === c.value ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
     ) %}
   | long_vowel consonant consonant  # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
       {% ([a, b, c]) => (
-        b === c ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
+        b.value === c.value ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
       ) %}
   | long_vowel consonant NO_SCHWA consonant  # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
 
@@ -460,8 +459,7 @@ strong_consonant -> (
 pronoun -> %openTag %pronoun %closeTag  {% ([ , { value }]) => init(type.pronoun, {}, value) %}
 tam -> %openTag %tam %closeTag  {% ([ , { value }]) => value %}
 voice -> %openTag %voice %closeTag  {% ([ , { value }]) => value %}
-pp_form -> %openTag %ppForm %closeTag  {% ([ , { value }]) => value %}
-verb_form -> %openTag %verbForm %closeTag  {% ([ , { value }]) => value %}
+wazn -> %openTag %wazn %closeTag  {% ([ , { value }]) => value %}
 
 augmentation -> delimiter %pronoun  {% ([delimiter, { value }]) => init(type.augmentation, { delimiter }, init(type.pronoun, {}, value)) %}
 

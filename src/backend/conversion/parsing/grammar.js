@@ -151,8 +151,7 @@ function id(x) { return x[0]; }
       pronoun: new RegExp(sym.pronoun.join(`|`)),
       tam: fromEnum(sym.tamToken),
       voice: fromEnum(sym.voiceToken),
-      verbForm: fromEnum(sym.verbForm),
-      ppForm: fromEnum(sym.ppForm),
+      wazn: fromEnum(sym.wazn),
       closeTag: { match: /]/, pop: 1 }
     },
     ctxTag: {
@@ -247,7 +246,7 @@ export const ParserRules = [
     {"name": "pp$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "pp$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
     {"name": "pp$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "pp", "symbols": [{"literal":"(pp"}, "pp$ebnf$1", "__", "pronoun", "__", "pp_form", "__", "voice", "__", "root", "pp$ebnf$2", {"literal":")"}], "postprocess": 
+    {"name": "pp", "symbols": [{"literal":"(pp"}, "pp$ebnf$1", "__", "pronoun", "__", "wazn", "__", "voice", "__", "root", "pp$ebnf$2", {"literal":")"}], "postprocess": 
         ([ , ctx ,, conjugation ,, form ,, voice ,, root, augmentation]) => init(
           type.pp,
           { conjugation, form, voice },
@@ -259,7 +258,7 @@ export const ParserRules = [
     {"name": "verb$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "verb$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
     {"name": "verb$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "verb", "symbols": [{"literal":"(verb"}, "verb$ebnf$1", "__", "pronoun", "__", "verb_form", "__", "tam", "__", "root", "verb$ebnf$2", {"literal":")"}], "postprocess": 
+    {"name": "verb", "symbols": [{"literal":"(verb"}, "verb$ebnf$1", "__", "pronoun", "__", "wazn", "__", "tam", "__", "root", "verb$ebnf$2", {"literal":")"}], "postprocess": 
         ([ , ctx ,, conjugation ,, form ,, tam ,, root, augmentation]) => init(
           type.verb,
           { form, tam, conjugation },
@@ -270,12 +269,12 @@ export const ParserRules = [
     {"name": "word", "symbols": ["stem"], "postprocess": ([{ value }]) => init(type.word, { was: null, augmentation: null }, value)},
     {"name": "word", "symbols": ["stem", "augmentation"], "postprocess": ([{ value }, augmentation]) => init(type.word, { augmentation: augmentation(value) }, value)},
     {"name": "word", "symbols": [{"literal":"(ctx"}, "ctx_tags", "__", "word", {"literal":")"}], "postprocess": ([ , ctx ,, word]) => ctx.map(word.ctx)},
-    {"name": "ctx_tags$ebnf$1$subexpression$1", "symbols": ["__", ({type: "openCtx"}), ({type: "ctxItem"}), ({type: "closeCtx"})], "postprocess": ([ ,, value]) => value},
+    {"name": "ctx_tags$ebnf$1$subexpression$1", "symbols": ["__", ({type: "openCtx"}), ({type: "ctxItem"}), ({type: "closeCtx"})], "postprocess": ([ ,, { value }]) => value},
     {"name": "ctx_tags$ebnf$1", "symbols": ["ctx_tags$ebnf$1$subexpression$1"]},
-    {"name": "ctx_tags$ebnf$1$subexpression$2", "symbols": ["__", ({type: "openCtx"}), ({type: "ctxItem"}), ({type: "closeCtx"})], "postprocess": ([ ,, value]) => value},
+    {"name": "ctx_tags$ebnf$1$subexpression$2", "symbols": ["__", ({type: "openCtx"}), ({type: "ctxItem"}), ({type: "closeCtx"})], "postprocess": ([ ,, { value }]) => value},
     {"name": "ctx_tags$ebnf$1", "symbols": ["ctx_tags$ebnf$1", "ctx_tags$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "ctx_tags", "symbols": ["ctx_tags$ebnf$1"], "postprocess": 
-        ([ , values]) => values
+        ([values]) => values
         },
     {"name": "stem", "symbols": ["consonant"], "postprocess": value => _.obj(type.stem, { stressedOn: null }, [_.obj(type.syllable, { stressed: null, weight: 0 }, value)])},
     {"name": "stem", "symbols": ["monosyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},
@@ -372,9 +371,9 @@ export const ParserRules = [
     {"name": "final_heavy_rime", "symbols": ["long_vowel"]},
     {"name": "final_heavy_rime", "symbols": ["AN"], "postprocess": id},
     {"name": "final_stressed_rime$subexpression$1", "symbols": ["long_vowel"], "postprocess": id},
-    {"name": "final_stressed_rime$subexpression$1", "symbols": [({type: "a"})], "postprocess": id},
-    {"name": "final_stressed_rime$subexpression$1", "symbols": [({type: "e"})], "postprocess": id},
-    {"name": "final_stressed_rime$subexpression$1", "symbols": [({type: "o"})], "postprocess": id},
+    {"name": "final_stressed_rime$subexpression$1", "symbols": [({type: "a"})], "postprocess": processToken},
+    {"name": "final_stressed_rime$subexpression$1", "symbols": [({type: "e"})], "postprocess": processToken},
+    {"name": "final_stressed_rime$subexpression$1", "symbols": [({type: "o"})], "postprocess": processToken},
     {"name": "final_stressed_rime$subexpression$2", "symbols": ["STRESSED"], "postprocess": id},
     {"name": "final_stressed_rime$subexpression$2", "symbols": ["FRENCH"], "postprocess": id},
     {"name": "final_stressed_rime", "symbols": ["final_stressed_rime$subexpression$1", "final_stressed_rime$subexpression$2"]},
@@ -392,10 +391,10 @@ export const ParserRules = [
     {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant"]},
     {"name": "superheavy_rime", "symbols": ["short_vowel", "consonant", "NO_SCHWA", "consonant"]},
     {"name": "superheavy_rime", "symbols": ["short_vowel", "consonant", "consonant"], "postprocess":  ([a, b, c]) => (
-          b === c ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
+          b.value === c.value ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
         ) },
     {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant", "consonant"], "postprocess":  ([a, b, c]) => (
-          b === c ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
+          b.value === c.value ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
         ) },
     {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant", "NO_SCHWA", "consonant"]},
     {"name": "vowel$subexpression$1", "symbols": ["long_vowel"]},
@@ -466,8 +465,7 @@ export const ParserRules = [
     {"name": "pronoun", "symbols": [({type: "openTag"}), ({type: "pronoun"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => init(type.pronoun, {}, value)},
     {"name": "tam", "symbols": [({type: "openTag"}), ({type: "tam"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => value},
     {"name": "voice", "symbols": [({type: "openTag"}), ({type: "voice"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => value},
-    {"name": "pp_form", "symbols": [({type: "openTag"}), ({type: "ppForm"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => value},
-    {"name": "verb_form", "symbols": [({type: "openTag"}), ({type: "verbForm"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => value},
+    {"name": "wazn", "symbols": [({type: "openTag"}), ({type: "wazn"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => value},
     {"name": "augmentation", "symbols": ["delimiter", ({type: "pronoun"})], "postprocess": ([delimiter, { value }]) => init(type.augmentation, { delimiter }, init(type.pronoun, {}, value))},
     {"name": "delimiter", "symbols": [({type: "objectDelimiter"})], "postprocess": processToken},
     {"name": "delimiter", "symbols": [({type: "genitiveDelimiter"})], "postprocess": processToken},
