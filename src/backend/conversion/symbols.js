@@ -62,13 +62,6 @@ function c(map, createEmphatics = true) {
       value: name,
     };
     names.forEach(n => { map[n] = obj; });
-    if (createEmphatic) {
-      const emphatic = {...obj};
-      emphatic.meta.intrinsic.ly.emphatic = true;
-      names.forEach(n => {
-        map[`${n}${map.emphatic}`] = emphatic;
-      });
-    }
     return createConsonant;
   }
   return createConsonant;

@@ -22,15 +22,10 @@
     match: new RegExp(
       `${abc[s].symbol}\\${abc.emphatic}?`
     ),
-    // since i'm currently including emphatics as their own k-v entries
-    // in symbols.alphabet, this will work fine
-    // if i ever change that decision, then will switch to the commented
-    // version of this function below
-    value: () => abc[s]
-    // value: match => (match.endsWith(abc.emphatic)
-    //   ? { ...abc[s], meta: { ...abc[s].meta, emphatic: true }}
-    //   : abc[s]
-    // )
+    value: match => (match.endsWith(abc.emphatic)
+      ? { ...abc[s], meta: { ...abc[s].meta, intrinsic: {...abc[s].intrinsic, ly: { ...abc[s].ly, emphatic: true }}}}
+      : abc[s]
+    )
   });
 
   // generate everything else
@@ -445,7 +440,7 @@ short_vowel -> (%a | %iTense | %i | %uTense | %u | %e | %o)  {% ([[{ value }]]) 
 long_vowel -> (%aa | %aaLowered | %ae | %ii | %uu | %ee | %oo | %ay | %aw)  {% ([[{ value }]]) => _.process(value) %}
 
 root -> consonant consonant consonant consonant:?
-consonant -> strong_consonant  {% id %} | weak_consonant  {% id %}
+consonant -> strong_consonant  {% id %} | weak_consonant {% id %}
 weak_consonant -> %openWeakConsonant strong_consonant %closeWeakConsonant  {%
   ([ , value]) => _.edit(value, { meta: { weak: true }})
 %}

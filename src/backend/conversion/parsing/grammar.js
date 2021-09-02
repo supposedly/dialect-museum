@@ -25,15 +25,10 @@ function id(x) { return x[0]; }
     match: new RegExp(
       `${abc[s].symbol}\\${abc.emphatic}?`
     ),
-    // since i'm currently including emphatics as their own k-v entries
-    // in symbols.alphabet, this will work fine
-    // if i ever change that decision, then will switch to the commented
-    // version of this function below
-    value: () => abc[s]
-    // value: match => (match.endsWith(abc.emphatic)
-    //   ? { ...abc[s], meta: { ...abc[s].meta, emphatic: true }}
-    //   : abc[s]
-    // )
+    value: match => (match.endsWith(abc.emphatic)
+      ? { ...abc[s], meta: { ...abc[s].meta, intrinsic: {...abc[s].intrinsic, ly: { ...abc[s].ly, emphatic: true }}}}
+      : abc[s]
+    )
   });
 
   // generate everything else
