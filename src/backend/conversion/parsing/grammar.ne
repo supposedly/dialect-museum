@@ -433,6 +433,9 @@ superheavy_rime ->
       b === c ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
     ) %}
   | long_vowel consonant consonant  # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
+      {% ([a, b, c]) => (
+        b === c ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
+      ) %}
   | long_vowel consonant NO_SCHWA consonant  # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
 
 # the {value} here ISN'T the {value} from my own schema -- it's instead from moo,

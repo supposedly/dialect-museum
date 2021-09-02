@@ -394,7 +394,9 @@ export const ParserRules = [
     {"name": "superheavy_rime", "symbols": ["short_vowel", "consonant", "consonant"], "postprocess":  ([a, b, c]) => (
           b === c ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
         ) },
-    {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant", "consonant"]},
+    {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant", "consonant"], "postprocess":  ([a, b, c]) => (
+          b === c ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
+        ) },
     {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant", "NO_SCHWA", "consonant"]},
     {"name": "vowel$subexpression$1", "symbols": ["long_vowel"]},
     {"name": "vowel$subexpression$1", "symbols": ["short_vowel"]},

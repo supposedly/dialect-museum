@@ -124,7 +124,6 @@ function makePrefixers(prefixes) {
 */
 
 function makeSuffixer(suffix) {
-  console.log('hi', suffix);
   if (!suffix.length) {
     return _base => {};
   }
