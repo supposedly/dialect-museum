@@ -1,5 +1,5 @@
 /* eslint-disable max-classes-per-file */
-import symbols from '../../symbols';
+import {alphabet as abc} from '../../symbols';
 import {type as objType} from '../../objects';
 import {misc} from '../../utils';
 const {lastOf} = misc;
@@ -43,21 +43,23 @@ export class Word {
     const type = wordObj.type;
     const meta = {...wordObj.meta, stemStarts: 0};
     const value = wordObj.value.map(copySeg);
-    const context = [...wordObj.context];
+    const context = [...(wordObj.context || [])];
 
     if (meta.prefixes) {
-      meta.syllableCount += meta.prefixes[prefixChoice].length;
-      const choice = meta.prefixes[prefixChoice].flat();
+      // TODO: find a way to actually respect the syllables :/
+      const choice = meta.prefixes.choices[prefixChoice];
+      const flat = [...choice.syllables.flat(), ...choice.rest];
+      meta.syllableCount += flat.length;
       meta.prefixChoice = prefixChoice;
-      meta.stemStarts = choice.length;
-      value.unshift(...choice);
+      meta.stemStarts = flat.length;
+      value.unshift(...flat);
     }
 
     meta.stemEnds = value.length - 1;
 
     if (meta.augmentation) {
       meta.augmentationChoice = augmentationChoice;
-      const augmentation = meta.augmentation[augmentationChoice];
+      const augmentation = meta.augmentation.clitics[augmentationChoice];
       if (augmentation.stress) {
         const inefficientVowelCopyLol = value.filter(seg => seg.type === objType.vowel);
         inefficientVowelCopyLol.forEach(vowel => {
@@ -65,7 +67,7 @@ export class Word {
         });
         lastOf(inefficientVowelCopyLol).meta.stressed = true;
       }
-      value.push(augmentation.string);
+      value.push(...augmentation.string);
     }
 
     this.type = type;
@@ -75,9 +77,9 @@ export class Word {
   }
 }
 
-const subAlphabets = Object.fromKeys(
+const subAlphabets = Object.fromEntries(
   Object.values(objType).map(
-    type => [type, Object.values(symbols.alphabet).filter(v => v.type === type)]
+    type => [type, Object.values(abc).filter(v => v.type === type)]
   )
 );
 
@@ -350,8 +352,7 @@ export class Cap {
     const getDependency = this.depGetter(idx);
     dep.forEach(key => {
       if (tracker.environment[key] === undefined) {
-        const dependency = getDependency(key);
-        tracker.environment[key] = dependency;
+        tracker.environment[key] = getDependency(key);
       }
     });
 

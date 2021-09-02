@@ -1,6 +1,7 @@
 <script>
     import {Parser, Grammar} from 'nearley';
     import * as grammar from './backend/conversion/parsing/grammar.js';
+	import {Word} from './backend/conversion/transformers/common/classes';
 
 	const compiledGrammar = Grammar.fromCompiled(grammar);
 
@@ -9,6 +10,7 @@
 			if (Array.isArray(word)) {
 				return join(word, `/`, ...(word.length > 1 ? [`(`, `)`] : []));
 			}
+			word = new Word(word);
 			return word.value.map(letter => {
 				switch (letter.value) {
 					case `noschwa`:

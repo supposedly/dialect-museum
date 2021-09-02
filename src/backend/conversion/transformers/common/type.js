@@ -1,6 +1,6 @@
-const {fenum} = require(`../../enums`);
+import {fenum} from '../../enums';
 
-export default dep = fenum([
+export default fenum([
   /* filters */
   `isPrefix`,
   `isAugmentation`,

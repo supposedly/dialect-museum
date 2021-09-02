@@ -8,7 +8,7 @@ export class Not {
   matches(other) {
     // eslint-disable-next-line no-use-before-define
     if (this.value instanceof Or || this.value instanceof Not) {
-      return this.value.matches(other);
+      return !this.value.matches(other);
     }
     return this.value !== other;
   }
@@ -68,6 +68,9 @@ export class Props {
   }
 
   or(other) {
+    if (!(other instanceof Props)) {
+      other = new Props(other);
+    }
     return new Props(...this.objs, ...other.objs);
   }
 }
