@@ -186,7 +186,7 @@ export default function number({
     gender = gender.toLowerCase();
   }
   const wrap = (baseForms, constructForms) => {
-    const forms = isConstruct ? baseForms : (constructForms || baseForms);
+    const forms = isConstruct ? (constructForms || baseForms) : baseForms;
     forms.forEach(
       result => {
         result.meta = {was, quantity, gender};
