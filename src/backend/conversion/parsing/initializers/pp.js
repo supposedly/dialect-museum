@@ -1,5 +1,5 @@
 import { contract } from '../vowels';
-import type from '../type';
+import { type as segType } from '../../objects';
 import { parseWord, parseLetter } from '../../parse-word';
 import { ppForm, voiceToken } from '../../symbols';
 import * as utils from '../../utils';
@@ -20,7 +20,7 @@ const pushSuffix = suffix => base => lastOf(base).value.push(...suffix);
 // if last syllable's last segment isn't a consonant, just make an empty new syllable
 function bumpLastConsonant(base) {
   const lastSyllable = lastOf(base).value;
-  if (lastOf(lastSyllable).type === type.consonant) {
+  if (lastOf(lastSyllable).type === segType.consonant) {
     base.push(newSyllable([lastSyllable.pop()]));
   } else {
     base.push(newSyllable());
@@ -106,8 +106,8 @@ function augment(augmentation) {
       const a = lastOf(lastSyllable, 1);
       const b = lastOf(lastSyllable);
       if (
-        a.type === type.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
-        && b.type === type.consonant
+        a.type === segType.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
+        && b.type === segType.consonant
       ) {
         lastSyllable.splice(-2, 1, contract(a));
       }

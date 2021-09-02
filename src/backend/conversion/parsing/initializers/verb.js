@@ -1,4 +1,4 @@
-import type from '../type';
+import { type as segType } from '../../objects';
 import { lax } from '../vowels';
 import { parseWord, parseLetter } from '../../parse-word';
 import { choice } from '../../objects';
@@ -124,10 +124,11 @@ function makePrefixers(prefixes) {
 */
 
 function makeSuffixer(suffix) {
+  console.log('hi', suffix);
   if (!suffix.length) {
     return _base => {};
   }
-  if (suffix[0].type === type.consonant && suffix.length > 1) {
+  if (suffix[0].type === segType.consonant && suffix.length > 1) {
     return base => {
       base.push(newSyllable([...suffix]));
     };
@@ -137,11 +138,11 @@ function makeSuffixer(suffix) {
     const lastSegment = lastOf(lastSyllable);
     // the .meta.weak is a lame compensation for not yet having
     // collapsed a.y into the diphthong ay at this point
-    if (lastSegment.type === type.vowel || lastSegment.meta.weak) {
+    if (lastSegment.type === segType.vowel || lastSegment.meta.weak) {
       if (
         // $`fem` is the only `type: suffix` object that can be found on verbs here
         // and its initial segment is in fact a vowel
-        suffix[0].type === type.vowel || suffix[0].value === `fem`
+        suffix[0].type === segType.vowel || suffix[0].value === `fem`
       ) {
         // if we have an ending like $`.aa`, delete it before adding a
         // vowel-initial suffix
@@ -154,7 +155,7 @@ function makeSuffixer(suffix) {
       lastSyllable.push(...suffix);
       // (btw this could also have been an if-else with the
       // first branch instead doing `.splice(-1, 1, ...suffix);`)
-    } else if (lastSegment.type === type.consonant) {
+    } else if (lastSegment.type === segType.consonant) {
       base.push(newSyllable([lastSyllable.pop(), ...suffix]));
     }
   };
@@ -169,7 +170,7 @@ function uToI(base) {
   const a = lastOf(lastSyllable, 1);
   const b = lastOf(lastSyllable);
 
-  if (b.type === type.consonant && a.value === `u`) {
+  if (b.type === segType.consonant && a.value === `u`) {
     lastSyllable[lastSyllable.length - 2] = I;
   }
 }

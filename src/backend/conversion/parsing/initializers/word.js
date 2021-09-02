@@ -1,11 +1,11 @@
 import { contract } from '../vowels';
-import { type } from '../../objects';
+import { type as segType } from '../../objects';
 import * as utils from '../../utils';
 const { misc: { lastOf } } = utils;
 
 function deSyllabify(syllables) {
   syllables.forEach(syl => {
-    const nucleus = syl.value.find(seg => seg.type === type.vowel);
+    const nucleus = syl.value.find(seg => seg.type === segType.vowel);
     if (nucleus) {
       nucleus.meta.stressed = syl.meta.stressed;
     }
@@ -31,8 +31,8 @@ export default function word({
   if (augmentation && augmentation.delimiter.value === `dative`) {
     //             ^ gdi shoulda sucked it up and gone with typescript early on
     if (
-      a.type === type.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
-      && b.type === type.consonant
+      a.type === segType.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
+      && b.type === segType.consonant
     ) {
       lastSyllable.splice(-2, 1, contract(a));
     }

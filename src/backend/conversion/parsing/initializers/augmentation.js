@@ -1,4 +1,4 @@
-import type from '../type';
+import { type as segType } from '../../objects';
 import { parseLetter, parseString as $ } from '../../parse-word';
 import * as utils from '../../utils';
 const { misc: { lastOf } } = utils;
@@ -55,12 +55,12 @@ function cliticInContext(
     afterEndOf(segments) {
       const a = lastOf(segments);
       const b = lastOf(segments, 1);
-      if (b.type === type.vowel && b.length === 2) {
+      if (b.type === segType.vowel && b.length === 2) {
         return this.after[b.value];
       }
       if (
-        a.type === type.vowel && a.length === 1
-        && b.type === type.consonant && !b.meta.intrinsic.ly.semivocalic
+        a.type === segType.vowel && a.length === 1
+        && b.type === segType.consonant && !b.meta.intrinsic.ly.semivocalic
       ) {
         return this.after.vc;
       }
