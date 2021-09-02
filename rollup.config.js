@@ -4,6 +4,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
 import css from 'rollup-plugin-css-only';
+import open from 'open';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -21,6 +22,7 @@ function serve() {
 				stdio: ['ignore', 'inherit', 'inherit'],
 				shell: true
 			});
+			open('http://localhost:5000');
 
 			process.on('SIGTERM', toExit);
 			process.on('exit', toExit);
