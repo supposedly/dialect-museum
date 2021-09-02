@@ -71,7 +71,7 @@ function verbSuffix(person, gender, number) {
   }
   if (person.third()) {
     if (number.singular()) {
-      if (gender.fem()) { return [_.FEM]; }  // -it/-at
+      if (gender.fem()) { return _.FEM; }  // -it/-at
       return _.NOTHING;
     }
     return _.UU;
