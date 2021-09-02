@@ -91,7 +91,7 @@ function extractDeps(arrowFunc) {
     return null;
   }
   const [s] = String(arrowFunc).split(`=>`, 1);
-  return [...s.matchAll(/(\w+)(?:\s*:\s*\w+)?/g)].map(match => match[1]);
+  return [...s.matchAll(/(\w+)(?:\s*:\s*[\w$]+)?/g)].map(match => depType[match[1]]);
 }
 
 class DefaultObject {
@@ -135,7 +135,7 @@ export class Cap {
       () => [],
     );
 
-    this.trackers = this.word.map(seg => ({
+    this.trackers = this.word.value.map(seg => ({
       visible: true,
       environment: null,
       currentlyInvalidating: false,
@@ -164,8 +164,8 @@ export class Cap {
 
     // loop forever (why does eslint like this syntax more than while true lol)
     for (;;) {
-      const handlers = this.handlerMap.ensure(this.word[idx].value);
-      const current = new Props(this.word[idx]);
+      const handlers = this.handlerMap.ensure(this.word.value[idx].value);
+      const current = new Props(this.word.value[idx]);
       let keepLooping = false;
 
       const first = handlers.findIndex(
@@ -182,7 +182,7 @@ export class Cap {
           tracker.choices.push({order: handlers[i].order, arr: update});
           tracker.currentChoiceIndices.push(0);
           // first update the segment in this.word
-          this.word[idx] = update[0];
+          this.word.value[idx] = update[0];
           // if that handler returned a new kind of segment, we also have to
           // start over with that segment's handlers
           if (!current.matches(update[0])) {
@@ -199,7 +199,7 @@ export class Cap {
       // changing, we can leave
       if (!keepLooping) {
         if (update !== STAY) {
-          this.word[idx] = update;
+          this.word.value[idx] = update;
         }
         break;
       }
@@ -214,11 +214,11 @@ export class Cap {
     const tracker = this.trackers[idx];
     tracker.currentChoiceIndices[choicesIdx] = newChoiceIdx;
     // delete the index from the now-outdated segment in the wordmap
-    this.wordMap.ensure(this.word[idx].value).delete(idx);
+    this.wordMap.ensure(this.word.value[idx].value).delete(idx);
     // revert the segment in this.word to that choice for the handlers to operate on
-    this.word[idx] = tracker.choices[choicesIdx].arr[newChoiceIdx];
+    this.word.value[idx] = tracker.choices[choicesIdx].arr[newChoiceIdx];
     // put the index in the now-correct segment's entry in the wordmap
-    this.wordMap.ensure(this.word[idx].value).add(idx);
+    this.wordMap.ensure(this.word.value[idx].value).add(idx);
     this.rerunAllHandlers(idx, choicesIdx);
     // since the value was updated, it's now invalid for all of its dependents
     tracker.dependents.entries().forEach(([depIdx, relationships]) => {
@@ -239,11 +239,11 @@ export class Cap {
     tracker.choices.clear();
     tracker.currentChoiceIndices.clear();
     // delete idx from outdated wordmap segment
-    this.wordMap.ensure(this.word[idx].value).delete(idx);
+    this.wordMap.ensure(this.word.value[idx].value).delete(idx);
     // revert the segment in this.word so that the handlers can do it all over again
-    this.word[idx] = copySeg(tracker.original);
+    this.word.value[idx] = copySeg(tracker.original);
     // put idx in new wordmap segment
-    this.wordMap.ensure(this.word[idx].value).add(idx);
+    this.wordMap.ensure(this.word.value[idx].value).add(idx);
     deps.forEach(key => {
       const depIdx = tracker.environment[key];
       this.trackers[depIdx].dependents.delete(idx);
@@ -263,7 +263,7 @@ export class Cap {
 
   searchSegmentRight(idx, props) {
     for (let i = idx + 1; i < this.word.length; i += 1) {
-      if (props.matches(this.word[i])) {
+      if (props.matches(this.word.value[i])) {
         return i;
       }
     }
@@ -271,8 +271,8 @@ export class Cap {
   }
 
   searchSegmentLeft(idx, props) {
-    for (let i = idx - 1; i >= 0; i -= 1) {
-      if (props.matches(this.word[i])) {
+      for (let i = idx - 1; i >= 0; i -= 1) {
+      if (props.matches(this.word.value[i])) {
         return i;
       }
     }
@@ -300,9 +300,9 @@ export class Cap {
         case depType.idx:
           return idx;
         case depType.type:
-          return this.word[idx].type;
+          return this.word.value[idx].type;
         case depType.meta:
-          return this.word[idx].meta;
+          return this.word.value[idx].meta;
         case depType.wordType:
           return this.word.type;
         case depType.wordMeta:
@@ -312,19 +312,29 @@ export class Cap {
         case depType.word:
           return this.word.value;
         /* reactive dependencies */
+        case depType.prev:
+          return react(
+            idx - 1,
+            depType.prev
+          );
+        case depType.next:
+          return react(
+            idx + 1,
+            depType.next
+          );
         case depType.prevConsonant:
           return react(
-            this.searchSegmentRight(idx, consonantPred),
+            this.searchSegmentLeft(idx, consonantPred),
             depType.prevConsonant
           );
         case depType.nextConsonant:
           return react(
-            this.searchSegmentLeft(idx, consonantPred),
+            this.searchSegmentRight(idx, consonantPred),
             depType.nextConsonant
           );
         case depType.prevVowel:
           return react(
-            this.searchSegmentRight(idx, vowelPred),
+            this.searchSegmentLeft(idx, vowelPred),
             depType.prevVowel
           );
         case depType.nextVowel:
@@ -334,7 +344,7 @@ export class Cap {
           );
         default:
           throw new Error(
-            `Unknown dep: ${key} for ${idx}, ${this.word[idx]} (enum value ${depType.keys[key]})`
+            `Unknown dep: ${key} for ${idx}, ${this.word.value[idx]} (enum value ${depType.keys[key]})`
           );
       }
     };
@@ -351,11 +361,10 @@ export class Cap {
 
     const getDependency = this.depGetter(idx);
     dep.forEach(key => {
-      if (tracker.environment[key] === undefined) {
-        tracker.environment[key] = getDependency(key);
+      if (tracker.environment[depType.keys[key]] === undefined) {
+        tracker.environment[depType.keys[key]] = getDependency(key);
       }
     });
-
     return tracker.environment;
   }
 
@@ -370,10 +379,10 @@ export class Cap {
         }
         tracker.choices.push({order: this.globalHandlerID, arr: update});
         tracker.currentChoiceIndices.push(0);
-        this.word[idx] = update[0];
+        this.word.value[idx] = update[0];
         this.handlerMap
-          .ensure(this.word[idx].value)
-          .add({
+          .ensure(this.word.value[idx].value)
+          .push({
             order: this.globalHandlerID,
             // TODO: maybe cache this func idk since it doesn't have to worry abt being mutated
             f: index => handler(this.updateEnv(index, deps)),

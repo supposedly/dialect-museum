@@ -13,6 +13,8 @@ export default fenum([
   `wordContext`,
   `word`,
   /* reactive dependencies */
+  `prev`,
+  `next`,
   `prevConsonant`,
   `nextConsonant`,
   `prevVowel`,

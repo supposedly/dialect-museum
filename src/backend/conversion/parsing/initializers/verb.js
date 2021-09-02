@@ -297,11 +297,11 @@ function getAffixes(tam, conjugation, isCV) {
       if (!conjugation.person.second()) {
         throw new Error(`Can't use an imperative verb on persons other than second; try sbjv`);
       }
-      prefixes = [];
+      prefixes = null;
       suffix = [...conjugation.nonpast.suffix];
       break;
     case tamToken.pst:
-      prefixes = [];
+      prefixes = null;
       suffix = [...conjugation.past.suffix];
       break;
     default:  // error?

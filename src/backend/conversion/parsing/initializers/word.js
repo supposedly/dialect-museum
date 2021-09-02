@@ -1,5 +1,6 @@
 import { contract } from '../vowels';
 import { type as segType } from '../../objects';
+import wordType from '../type';
 import * as utils from '../../utils';
 const { misc: { lastOf } } = utils;
 
@@ -43,7 +44,7 @@ export default function word({
   // otherwise there would be code for that in here instead of
   // just in the verb-initializer
   return {
-    type: was,
+    type: was || wordType.word,
     meta: {
       syllableCount: value.length,  // verbs add to this later when prefix is chosen
       augmentation,

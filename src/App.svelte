@@ -1,7 +1,10 @@
 <script>
     import {Parser, Grammar} from 'nearley';
     import * as grammar from './backend/conversion/parsing/grammar.js';
-	import {Word} from './backend/conversion/transformers/common/classes';
+	import {Cap, Word} from './backend/conversion/transformers/common/classes';
+	import wordType from './backend/conversion/parsing/type';
+	import {type as segType} from './backend/conversion/objects';
+	import {alphabet as abc} from './backend/conversion/symbols';
 
 	const compiledGrammar = Grammar.fromCompiled(grammar);
 
@@ -11,6 +14,27 @@
 				return join(word, `/`, ...(word.length > 1 ? [`(`, `)`] : []));
 			}
 			word = new Word(word);
+			const cap = new Cap(word);
+
+			cap.just({value: `fem`})(({word, wordType: type, prevVowel, prevConsonant, next}) => {
+				prevConsonant = word[prevConsonant];
+				prevVowel = word[prevVowel];
+				next = word[next];
+				if (type === wordType.verb) {
+					return [{value: prevVowel.value === `i` ? `it` : `at`}];
+				}
+				if (next) {
+					return [{value: `it`}];
+				}
+				if (prevConsonant.value === `r` && (prevVowel.value === `i` || prevVowel.value === `ii`)) {
+					return [abc.e, abc.I];
+				}
+				if (prevConsonant.value === `r` || prevConsonant.meta.intrinsic.ly.emphatic) {
+					return [abc.a];
+				}
+				return [abc.e, abc.I];
+			});
+			// XXX TODO: the fact that this works means i'm accidentally shallow-copying the word in Word, fix that lol
 			return word.value.map(letter => {
 				switch (letter.value) {
 					case `noschwa`:
