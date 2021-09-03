@@ -4,7 +4,7 @@
 	import {Cap, Word} from './backend/conversion/transformers/common/classes';
 	import wordType from './backend/conversion/parsing/type';
 	import {type as segType} from './backend/conversion/objects';
-	import {alphabet as abc} from './backend/conversion/symbols';
+	import {alphabet as abc, articulator} from './backend/conversion/symbols';
 
 	const compiledGrammar = Grammar.fromCompiled(grammar);
 
@@ -27,12 +27,16 @@
 					return [{value: `it`}];
 				}
 				if (prevConsonant.value === `r` && (prevVowel.value === `i` || prevVowel.value === `ii`)) {
-					return [abc.e, abc.I];
+					return [abc.e, abc.i];
 				}
-				if (prevConsonant.value === `r` || prevConsonant.meta.intrinsic.ly.emphatic) {
+				if (
+                                  prevConsonant.value === `r`
+                                  || prevConsonant.meta.intrinsic.ly.emphatic
+                                  || prevConsonant.articulator < articulator.back
+                                ) {
 					return [abc.a];
 				}
-				return [abc.e, abc.I];
+				return [abc.e, abc.i];
 			});
 			// XXX TODO: the fact that this works means i'm accidentally shallow-copying the word in Word, fix that lol
 			return word.value.map(letter => {
