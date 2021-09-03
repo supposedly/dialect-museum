@@ -44,8 +44,27 @@ function interpolateAndParse(strings, rootConsonants) {
       }
       lastSyllable.value.push(
         ...chunk.split(`.`)  // m.u.s._.t > [m, u, s, _, t, ...]
-          .filter(c => abc[c])  // to avoid undefined later
-          .map(c => obj.process.bind(obj)(abc[c])),  // -> corresponding objects
+          .map(c => {
+            let emphatic = false;
+            let weak = false;
+            if (c.startsWith(`{`) && c.endsWith(`}`)) {
+              c = c.slice(1, -1);
+              weak = true;
+            }
+            if (c.endsWith(`*`)) {
+              c = c.slice(0, -1);
+              emphatic = true;
+            }
+            const o = abc[c];
+            if (o) {
+              const processed = obj.process(o);
+              processed.meta.weak = weak;
+              processed.meta.intrinsic.ly.emphatic = emphatic;
+              return processed;
+            }
+            return undefined;
+          })
+          .filter(o => o)
       );
     });
     if (rootConsonants.length) {
