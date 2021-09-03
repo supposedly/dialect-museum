@@ -1,7 +1,7 @@
 <script>
     import {Parser, Grammar} from 'nearley';
     import * as grammar from './backend/conversion/parsing/grammar.js';
-  import {Cap, Word} from './backend/conversion/transformers/common/classes';
+  import {Capture, Word} from './backend/conversion/transformers/common/classes';
   import wordType from './backend/conversion/parsing/type';
   import {type as segType} from './backend/conversion/objects';
   import {alphabet as abc, articulator} from './backend/conversion/symbols';
@@ -14,9 +14,9 @@
         return join(word, `/`, ...(word.length > 1 ? [`(`, `)`] : []));
       }
       word = new Word(word);
-      const cap = new Cap(word);
+      const capture = new Capture(word);
 
-      cap.just({value: `fem`})(({word, wordType: type, prevVowel, prevConsonant, next}) => {
+      capture.only({value: `fem`})(({word, wordType: type, prevVowel, prevConsonant, next}) => {
         prevConsonant = word[prevConsonant];
         prevVowel = word[prevVowel];
         next = word[next];

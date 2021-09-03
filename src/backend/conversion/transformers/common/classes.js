@@ -120,7 +120,7 @@ class DefaultObject {
   }
 }
 
-export class Cap {
+export class Capture {
   constructor(word) {
     this.word = {...word};
     const segments = new DefaultObject({}, () => new Set());
@@ -392,7 +392,7 @@ export class Cap {
     };
   }
 
-  just(obj) {
+  only(obj) {
     return this.wrap(this.wordMap.ensure(obj.value));
   }
 
