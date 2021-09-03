@@ -16,10 +16,7 @@
       word = new Word(word);
       const capture = new Capture(word);
 
-      capture.only({value: `fem`})(({word, wordType: type, prevVowel, prevConsonant, next}) => {
-        prevConsonant = word[prevConsonant];
-        prevVowel = word[prevVowel];
-        next = word[next];
+      capture.only({value: `fem`})(({wordType: type, prevVowel, prevConsonant, next}) => {
         if (type === wordType.verb) {
           return [{value: prevVowel.value === `i` ? `it` : `at`}];
         }

@@ -91,7 +91,8 @@ function extractDeps(arrowFunc) {
     return null;
   }
   const [s] = String(arrowFunc).split(`=>`, 1);
-  return [...s.matchAll(/(\w+)(?:\s*:\s*[\w$]+)?/g)].map(match => depType[match[1]]);
+  // XXX: doesn't account for destructuring with commas... can't use a regex for this
+  return [...s.matchAll(/(\w+)(?:\s*:\s*[^,)]+)?/g)].map(match => depType[match[1]]);
 }
 
 class DefaultObject {
@@ -283,7 +284,7 @@ export class Capture {
     const tracker = this.trackers[idx];
     return (dep, relationship) => {
       tracker.dependents.ensure(dep).add(relationship);
-      return dep;
+      return {...this.word.value[dep], idx: dep};
     };
   }
 
