@@ -58,8 +58,13 @@ function interpolateAndParse(strings, rootConsonants) {
             const o = abc[c];
             if (o) {
               const processed = obj.process(o);
-              processed.meta.weak = weak;
-              processed.meta.intrinsic.ly.emphatic = emphatic;
+              if (processed.meta) {
+                processed.meta.weak = weak;
+              }
+              // typescript...
+              if (processed.meta && processed.meta.intrinsic && processed.meta.intrinsic.ly) {
+                processed.meta.intrinsic.ly.emphatic = emphatic;
+              }
               return processed;
             }
             return undefined;
