@@ -23,14 +23,16 @@ import { fenum } from './enums';
 import { type } from './objects';
 export { type };
 
-export const articulator = fenum([`throat`, `root`, `back`, `mid`, `crown`, `ridge`, `teeth`, `lips`]);
+export const articulator = fenum([`throat`, `tongue`, `lips`]);
+export const location = fenum([`glottis`, `pharynx`, `uvula`, `velum`, `palate`, `bridge`, `ridge`, `teeth`, `lips`]);
 export const manner = fenum([`plosive`, `fricative`, `affricate`, `approximant`, `nasal`, `flap`]);
 
-function c(map, createEmphatics = true) {
+function c(map) {
   function createConsonant(
     name,
     symbol,
-    {sub = null, createEmphatic = createEmphatics, intrinsic = {}} = {},
+    features = {},
+    sub = null
   ) {
     if (name === null) {
       // terminate chain
@@ -44,18 +46,15 @@ function c(map, createEmphatics = true) {
       type: type.consonant,
       meta: {
         weak: false,
-        intrinsic: {
-          ...intrinsic,
-          articulator: intrinsic.articulator,
-          voicing: intrinsic.voicing,
-          manner: intrinsic.manner,
-          ly: {  // yes ik it's -ally
-            emphatic: false,
-            semivocalic: false,
-            rounded: false,
-            ...intrinsic.ly,
-            null: name === `null`,
-          },
+        features: {
+          emphatic: false,
+          semivocalic: false,
+          rounded: false,
+          ...features,
+          articulator: articulator.location,
+          voicing: features.voicing,
+          manner: features.manner,
+          isNull: name === `null`
         },
       },
       symbol,
@@ -68,7 +67,7 @@ function c(map, createEmphatics = true) {
 }
 
 function v(map) {
-  function createVowel(name, symbol, {intrinsic = {}} = {}) {
+  function createVowel(name, symbol, features = {}) {
     if (name === null) {
       // terminate chain
       return map;
@@ -76,18 +75,18 @@ function v(map) {
     map[name] = {
       type: type.vowel,
       meta: {
-        intrinsic: {
+        features: {
           length: name.length,
-          ...intrinsic,
-          ly: {
-            diphthongal: false,
-            ...intrinsic.ly,
-          },
+          diphthongal: false,
+          ...features,
         },
       },
       symbol,
       value: name,
     };
+    if (name === `ii`) {
+      console.log(map[name]);
+    }
     return createVowel;
   }
   return createVowel;
@@ -99,59 +98,191 @@ export const alphabet = {
     emphatic: `*`,  // goes after the emphatic letter
   })
   // glottal
-  (`h`, `h`, {intrinsic: {articulator: articulator.throat, voicing: false, manner: manner.fricative}})
-  (`2`, `2`, {intrinsic: {articulator: articulator.throat, voicing: false, manner: manner.plosive}})
+  (`h`, `h`, {
+    location: location.glottis,
+    articulator: articulator.throat,
+    manner: manner.fricative,
+    voicing: false,
+  })
+  (`2`, `2`, {
+    location: location.glottis,
+    articulator: articulator.throat,
+    manner: manner.plosive,
+    voicing: false,
+  })
   // pharyngeal
-  (`7`, `7`, {intrinsic: {articulator: articulator.throat, voicing: false, manner: manner.fricative}})
-  (`3`, `3`, {intrinsic: {articulator: articulator.throat, voicing: true, manner: manner.approximant}})
+  (`7`, `7`, {
+    location: location.pharynx,
+    articulator: articulator.throat,
+    manner: manner.fricative,
+    voicing: false,
+  })
+  (`3`, `3`, {
+    location: location.pharynx,
+    articulator: articulator.throat,
+    voicing: true,
+    manner: manner.approximant
+  })
   // uvular
-  (`5`, `5`, {intrinsic: {articulator: articulator.root, voicing: false, manner: manner.fricative}})
-  (`gh`, `9`, {intrinsic: {articulator: articulator.root, voicing: true, manner: manner.fricative}})
-  (`q`, `q`, {intrinsic: {articulator: articulator.root, voicing: false, manner: manner.plosive}})
+  (`5`, `5`, {
+    location: location.uvula,
+    articulator: articulator.tongue,
+    manner: manner.fricative,
+    voicing: false,
+  })
+  (`gh`, `9`, {
+    location: location.uvula,
+    articulator: articulator.tongue,
+    voicing: true,
+    manner: manner.fricative
+  })
+  (`q`, `q`, {
+    location: location.uvula,
+    articulator: articulator.tongue,
+    manner: manner.plosive,
+    voicing: false,
+  })
   // velar
-  (`k`, `k`, {intrinsic: {articulator: articulator.back, voicing: false, manner: manner.plosive}})
-  (`g`, `g`, {intrinsic: {articulator: articulator.back, voicing: true, manner: manner.plosive}})
+  (`k`, `k`, {
+    location: location.velum,
+    articulator: articulator.tongue,
+    manner: manner.plosive,
+    voicing: false,
+  })
+  (`g`, `g`, {
+    location: location.velum,
+    articulator: articulator.tongue,
+    voicing: true,
+    manner: manner.plosive
+  })
   // palatal
   (`y`, `y`, {
-    intrinsic: {
-      articulator: articulator.mid,
+    features: {
+      location: location.palate,
+      articulator: articulator.tongue,
       voicing: true,
       manner: manner.approximant,
-      ly: {semivocalic: true},
+      semivocalic: true,
     },
   })
   // postalveolar
-  (`sh`, `x`, {intrinsic: {articulator: articulator.crown, voicing: false, manner: manner.fricative}})
-  (`j`, `j`, {intrinsic: {articulator: articulator.crown, voicing: true, manner: manner.fricative}})
+  (`sh`, `x`, {
+    location: location.bridge,
+    articulator: articulator.tongue,
+    manner: manner.fricative,
+    voicing: false,
+  })
+  (`j`, `j`, {
+    location: location.bridge,
+    articulator: articulator.tongue,
+    voicing: true,
+    manner: manner.fricative
+  })
   // alveolar
-  (`r`, `r`, {intrinsic: {articulator: articulator.ridge, voicing: true, manner: manner.flap}})  // trill...
+  (`r`, `r`, {
+    location: location.ridge,
+    articulator: articulator.tongue,
+    voicing: true,
+    manner: manner.flap
+  })  // trill...
   // denti-alveolar idk
-  (`l`, `l`, {intrinsic: {articulator: articulator.ridge, voicing: true, manner: manner.approximant}})  // lateral don't real
-  (`s`, `s`, {intrinsic: {articulator: articulator.ridge, voicing: false, manner: manner.fricative}})
-  (`z`, `z`, {intrinsic: {articulator: articulator.ridge, voicing: true, manner: manner.fricative}})
-  (`n`, `n`, {intrinsic: {articulator: articulator.ridge, voicing: true, manner: manner.nasal}})
-  (`t`, `t`, {intrinsic: {articulator: articulator.ridge, voicing: false, manner: manner.plosive}})
-  (`d`, `d`, {intrinsic: {articulator: articulator.ridge, voicing: true, manner: manner.plosive}})
+  (`l`, `l`, {
+    location: location.ridge,
+    articulator: articulator.tongue,
+    voicing: true,
+    manner: manner.approximant  // lateral don't real
+  })
+  (`s`, `s`, {
+    location: location.ridge,
+    articulator: articulator.tongue,
+    manner: manner.fricative,
+    voicing: false,
+  })
+  (`z`, `z`, {
+    location: location.ridge,
+    articulator: articulator.tongue,
+    voicing: true,
+    manner: manner.fricative
+  })
+  (`n`, `n`, {
+    location: location.ridge,
+    articulator: articulator.tongue,
+    voicing: true,
+    manner: manner.nasal
+  })
+  (`t`, `t`, {
+    location: location.ridge,
+    articulator: articulator.tongue,
+    manner: manner.plosive,
+    voicing: false,
+  })
+  (`d`, `d`, {
+    location: location.ridge,
+    articulator: articulator.tongue,
+    voicing: true,
+    manner: manner.plosive
+  })
   // interdental
-  (`th`, `8`, {intrinsic: {articulator: articulator.teeth, voicing: false, manner: manner.fricative}})
-  (`dh`, `6`, {intrinsic: {articulator: articulator.teeth, voicing: true, manner: manner.fricative}})
+  (`th`, `8`, {
+    location: location.teeth,
+    articulator: articulator.tongue,
+    manner: manner.fricative,
+    voicing: false,
+  })
+  (`dh`, `6`, {
+    location: location.teeth,
+    articulator: articulator.tongue,
+    voicing: true,
+    manner: manner.fricative
+  })
   // labiodental
-  (`f`, `f`, {intrinsic: {articulator: articulator.lips, voicing: false, manner: manner.fricative}})
-  (`v`, `v`, {intrinsic: {articulator: articulator.lips, voicing: true, manner: manner.fricative}})
+  (`f`, `f`, {
+    location: location.teeth,
+    articulator: articulator.lips,
+    manner: manner.fricative,
+    voicing: false,
+  })
+  (`v`, `v`, {
+    location: location.teeth,
+    articulator: articulator.lips,
+    voicing: true,
+    manner: manner.fricative
+  })
   // bilabial
   (`w`, `w`, {
-    intrinsic: {
+    features: {
+      location: location.lips,
       articulator: articulator.lips,
       voicing: true,
       manner: manner.approximant,
-      ly: {semivocalic: true, rounded: true},
+      semivocalic: true, rounded: true,
     },
   })
-  (`m`, `m`, {intrinsic: {articulator: articulator.lips, voicing: true, manner: manner.nasal}})  // nasal???
-  (`b`, `b`, {intrinsic: {articulator: articulator.lips, voicing: true, manner: manner.plosive}})
-  (`p`, `p`, {intrinsic: {articulator: articulator.lips, voicing: false, manner: manner.plosive}})
+  (`m`, `m`, {
+    location: location.lips,
+    articulator: articulator.lips,
+    voicing: true,
+    manner: manner.nasal
+  })  // nasal???
+  (`b`, `b`, {
+    location: location.lips,
+    articulator: articulator.lips,
+    voicing: true,
+    manner: manner.plosive
+  })
+  (`p`, `p`, {
+    location: null,
+    articulator: null,
+    manner: manner.plosive,
+    voicing: false,
+  })
   // null
-  (`null`, `0`, {createEmphatic: false, intrinsic: {articulator: null, voicing: true, manner: null}})
+  (`null`, `0`, {
+    location: location.bruh,
+    articulator: articulator,
+    voicing: true,
+    manner: null
+  })
   (null),
 
   ...v({})
@@ -183,8 +314,8 @@ export const alphabet = {
   (`o`, `o`)  // motEr?
   (`oo`, `O`)
 
-  (`ay`, `Y`, {intrinsic: {ly: {diphthongal: true}}})
-  (`aw`, `W`, {intrinsic: {ly: {diphthongal: true}}})
+  (`ay`, `Y`, {diphthongal: true})
+  (`aw`, `W`, {diphthongal: true})
   (null),
 
   _: {  // no schwa

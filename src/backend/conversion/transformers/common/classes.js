@@ -409,10 +409,10 @@ export class Capture {
   segmentOfType(type, props) {
     props = props instanceof Props ? props : new Props(props);
     // don't think i'll allow type or value to be set
-    const {meta: {intrinsic, ...rawMeta}} = props.obj;
+    const {meta: rawMeta, features} = props.obj;
     const meta = new Props(rawMeta);
-    const searchSpace = props && intrinsic
-      ? subAlphabets[type].filter(c => intrinsic.matches(c.meta.intrinsic))
+    const searchSpace = props && features
+      ? subAlphabets[type].filter(c => features.matches(c.meta.features))
       : subAlphabets[type];
     return this.wrap(
       searchSpace

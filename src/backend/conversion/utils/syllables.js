@@ -44,7 +44,7 @@ export function getSyllableWeight(s) {
     }
     // long vowels add 2, short vowels add 1
     if (segment.type === type.vowel) {
-      rimeLength += segment.meta.intrinsic.length;
+      rimeLength += segment.meta.features.length;
       break;
     }
     if (segment.type === type.consonant) {

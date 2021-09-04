@@ -26,7 +26,7 @@ function id(x) { return x[0]; }
       `${abc[s].symbol}\\${abc.emphatic}?`
     ),
     value: match => (match.endsWith(abc.emphatic)
-      ? { ...abc[s], meta: { ...abc[s].meta, intrinsic: {...abc[s].intrinsic, ly: { ...abc[s].ly, emphatic: true }}}}
+      ? {...abc[s], meta: {...abc[s].meta}, features: {...abc[s].meta.features, emphatic: true}}
       : abc[s]
     )
   });

@@ -4,7 +4,7 @@
   import {Capture, Word} from './backend/conversion/transformers/common/classes';
   import wordType from './backend/conversion/parsing/type';
   import {type as segType} from './backend/conversion/objects';
-  import {alphabet as abc, articulator} from './backend/conversion/symbols';
+  import {alphabet as abc, location} from './backend/conversion/symbols';
 
   const compiledGrammar = Grammar.fromCompiled(grammar);
 
@@ -28,8 +28,8 @@
         }
         if (
           prevConsonant.value === `r`
-          || prevConsonant.meta.intrinsic.ly.emphatic
-          || prevConsonant.meta.intrinsic.articulator < articulator.back
+          || prevConsonant.meta.features.emphatic
+          || prevConsonant.meta.features.location < location.velum
         ) {
           return [abc.a];
         }

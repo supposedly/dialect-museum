@@ -107,7 +107,7 @@ function augment(augmentation) {
       const a = lastOf(lastSyllable, 1);
       const b = lastOf(lastSyllable);
       if (
-        a.type === segType.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
+        a.type === segType.vowel && a.meta.features.length === 2 && !a.meta.features.diphthongal
         && b.type === segType.consonant
       ) {
         lastSyllable.splice(-2, 1, contract(a));

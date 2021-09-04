@@ -60,7 +60,7 @@ function cliticInContext(
       }
       if (
         a.type === segType.vowel && a.length === 1
-        && b.type === segType.consonant && !b.meta.intrinsic.ly.semivocalic
+        && b.type === segType.consonant && !b.meta.features.semivocalic
       ) {
         return this.after.vc;
       }

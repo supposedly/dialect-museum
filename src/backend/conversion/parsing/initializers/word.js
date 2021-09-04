@@ -32,7 +32,7 @@ export default function word({
   if (augmentation && augmentation.delimiter.value === `dative`) {
     //             ^ gdi shoulda sucked it up and gone with typescript early on
     if (
-      a.type === segType.vowel && a.meta.intrinsic.length === 2 && !a.meta.intrinsic.ly.diphthongal
+      a.type === segType.vowel && a.meta.features.length === 2 && !a.meta.features.diphthongal
       && b.type === segType.consonant
     ) {
       lastSyllable.splice(-2, 1, contract(a));

@@ -9,10 +9,10 @@ const A = Object.freeze(parseLetter`a`);
 // const O = Object.freeze(parseLetter`o`);
 
 export function contract(vowel) {
-  if (vowel.meta.intrinsic.length < 2) {
+  if (vowel.meta.features.length < 2) {
     return vowel;
   }
-  if (vowel.meta.intrinsic.ly.diphthongal) {
+  if (vowel.meta.features.diphthongal) {
     throw new Error(`Attempt to contract a diphthong: ${vowel.value}`);
   }
   // sloppy impl lul
@@ -31,7 +31,7 @@ export function contract(vowel) {
 }
 
 export function unlax(vowel) {
-  if (vowel.meta.intrinsic.length > 1) {
+  if (vowel.meta.features.length > 1) {
     throw new Error(`Attempt to unlax long vowel: ${vowel.value}`);
   }
   switch (vowel.value) {
@@ -47,7 +47,7 @@ export function unlax(vowel) {
 }
 
 export function lax(vowel) {
-  if (vowel.meta.intrinsic.length > 1) {
+  if (vowel.meta.features.length > 1) {
     throw new Error(`Attempt to lax long vowel: ${vowel.value}`);
   }
   switch (vowel.value) {
