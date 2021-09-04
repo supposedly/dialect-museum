@@ -20,7 +20,7 @@
         if (type === wordType.verb) {
           return [{value: prevVowel.value === `i` ? `it` : `at`}];
         }
-        if (next) {
+        if (next.$.exists) {
           return [{value: `it`}];
         }
         if (prevConsonant.value === `r` && (prevVowel.value === `i` || prevVowel.value === `ii`)) {

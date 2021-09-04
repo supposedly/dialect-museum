@@ -284,7 +284,7 @@ export class Capture {
     const tracker = this.trackers[idx];
     return (dep, relationship) => {
       tracker.dependents.ensure(dep).add(relationship);
-      return {...this.word.value[dep], idx: dep};
+      return {...this.word.value[dep], $: {idx: dep, exists: this.word.value[dep] !== undefined}};
     };
   }
 

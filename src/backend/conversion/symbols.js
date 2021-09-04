@@ -84,9 +84,6 @@ function v(map) {
       symbol,
       value: name,
     };
-    if (name === `ii`) {
-      console.log(map[name]);
-    }
     return createVowel;
   }
   return createVowel;
