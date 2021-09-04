@@ -1,6 +1,7 @@
 /* eslint-disable max-classes-per-file */
 import {alphabet as abc} from '../../symbols';
 import {type as objType} from '../../objects';
+import {extractDeps} from './helpers';
 import {misc} from '../../utils';
 const {lastOf} = misc;
 
@@ -85,15 +86,6 @@ const subAlphabets = Object.fromEntries(
 
 const consonantPred = new Props({type: objType.consonant});
 const vowelPred = new Props({type: objType.vowel}).or({type: objType.suffix, meta: {t: false}, value: `fem`});
-
-function extractDeps(arrowFunc) {
-  if (!arrowFunc) {
-    return null;
-  }
-  const [s] = String(arrowFunc).split(`=>`, 1);
-  // XXX: doesn't account for destructuring with commas... can't use a regex for this
-  return [...s.matchAll(/(\w+)(?:\s*:\s*[^,)]+)?/g)].map(match => depType[match[1]]);
-}
 
 class DefaultObject {
   constructor(obj, newEntry) {
