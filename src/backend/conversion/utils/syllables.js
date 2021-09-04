@@ -72,7 +72,7 @@ export function setStressedSyllable(syllables, clearRest = false) {
   const antepenult = lastOf(syllables, 2);
 
   if (syllables.length === 2) {
-    if (final.meta.weight >= 3) {
+    if (final.meta.weight > 2) {
       final.meta.stressed = true;
     } else {
       penult.meta.stressed = true;
@@ -81,9 +81,9 @@ export function setStressedSyllable(syllables, clearRest = false) {
   }
 
   if (syllables.length >= 3) {
-    if (final.meta.weight >= 3) {
+    if (final.meta.weight > 2) {
       final.meta.stressed = true;
-    } else if (penult.meta.weight >= 2) {
+    } else if (penult.meta.weight > 1) {
       penult.meta.stressed = true;
     } else {
       antepenult.meta.stressed = true;
