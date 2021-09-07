@@ -77,10 +77,6 @@
   };
 </script>
 
-<svelte:head>
-  <title>Bruh</title>
-</svelte:head>
-
 <main>
     <h1>Getting there...</h1>
   <textarea bind:value={input} />
