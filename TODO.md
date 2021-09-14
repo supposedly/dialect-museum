@@ -25,9 +25,29 @@
   into two separate options (one with a, one with i) before it reaches the transformer stage~~
 * ~~Remove meta.t attribute from feminine suffix~~
 * deal with emphatic Z from ص vs. emphatic Z from ظ
+* add nisbe (with the symbol % lol) to grammar
+* remove schwa from alphabet & grammar
+  * can't figure out how to replace schwa, maybe one of these options:
+    * in Word (before Capture is even a thing), add nulls or noschwas between all consonant pairs in order to make space for future possible schwas (including ones that aren't originally necessary but arise out of vowel-deletion)
+    * or: figure out a way to capture the space **between** segments with a Capture.between() method... hmph
+  * either figure out how to let noschwa be added between syllables (as in CVC_Ci...) or remove it too
+    * if removed, replace it with a specific transform rule that allows schwa not to be inserted between two consonants AB where (1) A's articulator is within distance 1 of B's, and (2) A is more sonorous than B; this covers most cases like إنت، الهند، دست، يستناول, etc... even tho it doesn't allow special-casing كرفس and نفس  (maybe those are iffy anyway)
+* figure out some kind of pre-handler stage where suffixes (`%` nisbe, `c` fsg, `C` fpl, `=` dual, `+` plural) and verb-conjugation prefixes are expanded into normal letters... in a way that both lets them be toggled and also lets their individual letters be toggled/behave as normal parts of the word
+* probably remove the index-caching stuff from Capture, schwa-insertion and the pre-handler thingy makes it tough to deal with (can always try to work out a similar efficiency solution later)
+* NO MORE TRANSFORM FUNCS!!!
+  * instead of a method chain like `capture.segment().handle(({envParam}) => { if (envParam === value) return [bruh, bruv]; })`,
+    make it `transform.segment().where({envParam: value}).into([bruh, bruv]).because(reason)`
+    * this means transforms and deps are no longer black boxes, making them easier to analyze and modify programmatically
+    * it also forces transforms to only go one-to-one, making it easy to tie a specific reason to each transform
+  * this obviates the whole overengineered (even if kinda cool) param-grabby thingy 😔
+  * the `reason` should apply to the transformation and all of its options, not individual options like I was originally thinking  
+    (e.g. instead of "some people pronounce alif as O around emphatics" "some people pronounce alif as A around emphatics" just do "emphatics change the pronunciation of nearby alifs. some people round to O etc")
+  * possibly do `{bruh: 0.5, bruv: 0.5}` instead of an array to handle probabilistic outputs
 * Split `ipa-phonemic` into a few modules: `common` for utils and classes (might have submodules for diff classes), `iconophonemic`, `phonemic`, `phonetic`, and maybe `random`
     * `iconophonemic`: for scripts that will have fixed iconic symbols for ة and stuff, and also adhere to archiphonemes like `aa` and `ay/aw`; can maybe specify which phoneme groups should be abstracted over in that way (eg i want -iin to be -iin instead of a symbol, and if not that then the transformer will maybe do something like `iconophonemicAlphabet.iin.contracted || iconophonemicAlphabet.iin.default, iconophonemicAlphabet.iin.full || iconophonemicAlphabet.iin.default, etc`
     * `phonemic`: for scripts that are based on phonemes and have none of those icons^, so this transformer will translate `abc.c` into `[abc.e, abc.i]` or something and then surface it as whichever one of those two would surface -- instead of leaving it as `abc.c` and surfacing it as `iconophonemicAlphabet.c.lowered/raised || iconophonemicAlphabet.c.default`
     * `phonetic`: this one is gonna be a pain in the neck and i'm probably gonna put it off
     * `random`: not exactly sure how this will work but it's for 3arabizi and stuff where vowels might just disappear no matter what they are... also geminates need to be only randomly observed
 * Maybe let alphabets have transformers of their own, eg a meme ->katakana transformer could first do romaji like `abc.t abc.u` -> `"tu"` and then have the `"tu"` be processed into `"ツ"`
+* for the fabled U(n)I(corn): when you click on a letter in a word it gives you both the list of options and the probability slider for each option. the sliders affect all instances of that segment in that environment, not just that particular segment; correspondingly, you can click on any one of the options to test it out even if its slider value is at 0% probability
+  * also, touching a slider causes it to reroll for all words, overwriting/forgetting your particular choice for that word
