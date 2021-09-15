@@ -6,12 +6,12 @@
     * ~~make sure f3ii and f3aa imperatives are in place~~
     * ~~add all of fa3yit, fi3yit, fi3it, fa3it~~
     * ~~make sure parseWord is upholding the stress in stuff like `` $`+nFi -3iL` ``~~
-    * Figure out how to vary between tinsaani~tinsiini (both for masc), 2it7addaak~2it7addiik, etc.
+    * Figure out how to vary between tinsaani\~tinsiini (both for masc), 2it7addaak\~2it7addiik, etc.
 * ~~delete stAf3al from verb and pp (probably)~~
 * ~~account for final-vowel-plus-suffix combos like mfa33aa+c == mfa33aayc in pp's initializer~~
 * ~~add `(2af3al ...)` tag to grammar~~
-* ~~add `(taf3il ...)` tag to grammar (takes a root and generates $`t.a/i.${$F} ${$3}.ii.${$L}`) **plus t.a/i.F.3.i.y.c ~ t.a/i.F.3.aa.y.c**~~
-* ~~Add `(ctx ...)` tag to grammar, e.g. `(ctx [proper noun] [tense final vowel] jOni)` or `` (ctx [self] s`arr~1ms) ``, `ma (ctx [stress] (verb [3ms] [u] [pst] q{w}l|2fs))`~~
+* ~~add `(taf3il ...)` tag to grammar (takes a root and generates $`t.a/i.${$F} ${$3}.ii.${$L}`) **plus t.a/i.F.3.i.y.c \~ t.a/i.F.3.aa.y.c**~~
+* ~~Add `(ctx ...)` tag to grammar, e.g. `(ctx [proper noun] [tense final vowel] jOni)` or `(ctx [self] s*arr~1ms)`, `ma (ctx [stress] (verb [3ms] [u] [pst] q{w}l|2fs))`~~
 * implement the other tags smh
 * ~~change mu- to mi- in pp~~
 * ~~turn pronoun objects' boolean attrs into methods~~
