@@ -114,7 +114,7 @@
       iyy: $`Nisbe`,
 
       stressed: $`Stressed`,
-      nasal: $`French`,
+      nasal: $`Nasalized`,
 
       genitiveDelimiter: {
         ...$`Of`,

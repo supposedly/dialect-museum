@@ -117,7 +117,7 @@ function id(x) { return x[0]; }
       iyy: $`Nisbe`,
 
       stressed: $`Stressed`,
-      nasal: $`French`,
+      nasal: $`Nasalized`,
 
       genitiveDelimiter: {
         ...$`Of`,

@@ -387,7 +387,7 @@ export const alphabet = {
     symbol: `"`,
     value: `stressed`,
   },
-  French: {  // nasalized and, if final, stressed; 2ONrI" lOsyON kappitAN
+  Nasalized: {  // nasalized and, if final, stressed; 2ONrI" lOsyON kappitAN
     type: type.modifier,
     symbol: `N`,
     value: `nasalized`,

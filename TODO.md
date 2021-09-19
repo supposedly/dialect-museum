@@ -54,5 +54,6 @@
 
 ## Random whiteboardstorming
 
-* UI and transformer stuff ![image](https://user-images.githubusercontent.com/32081933/133937172-7fca4a2f-55fb-4dd8-b1e7-2b8e6615eace.png)  
+* UI and transformer stuff  
+  ![image](https://user-images.githubusercontent.com/32081933/133937172-7fca4a2f-55fb-4dd8-b1e7-2b8e6615eace.png)  
   There's another newer note to the left giving `abc.funcs = {delete(letter), stress(vowel), stressWord(word), nasalize(word), emphaticize(letter)}` and noting that `nasalize` should maybe get the whole word so it can match it to an alternative spelling if necessary (e.g. `lOsyON"` should prob match `lotion` in 3arabizi, not `losyon`)
