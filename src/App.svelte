@@ -35,8 +35,20 @@
         }
         return [abc.e, abc.i];
       });
-      // XXX TODO: the fact that this works means i'm accidentally shallow-copying the word in Word, fix that lol
-      return word.value.map(letter => {
+      /*
+      const transform = new Capture(word);
+
+      transform.only({value: abc.c.value})
+        .where({wordType: wordType.verb, prevVowel: {value: `i`}})
+        .into(it, at)
+        .because(`Verbs on the pattern 'hiyye fi3lit' end in -it for most Lebanese speakers, even the ones `)
+
+      transform.only({value: `fem`})
+        .where({wordType: wordType.verb, prevVowel: {value: `i`}})
+        .into(it, at)
+        .because(`Verbs on the pattern 'hiyye fi3lit' end in -it for most Lebanese speakers, even the ones `)
+      */
+      return capture.word.value.map(letter => {
         switch (letter.value) {
           case `noschwa`:
             return ``;

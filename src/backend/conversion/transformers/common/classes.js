@@ -33,7 +33,7 @@ export class Transformer {
 function copySeg(obj) {
   return {
     type: obj.type,
-    meta: {...obj.meta},
+    meta: {...obj.meta, features: {...(obj.meta ? obj.meta.features : null)} },
     value: obj.value,
     context: {...obj.context},
   };
@@ -115,7 +115,7 @@ class DefaultObject {
 
 export class Capture {
   constructor(word) {
-    this.word = {...word};
+    this.word = new Word(word);
     const segments = new DefaultObject({}, () => new Set());
     word.value.forEach(({value: segment}, idx) => {
       segments.ensure(segment).add(idx);
