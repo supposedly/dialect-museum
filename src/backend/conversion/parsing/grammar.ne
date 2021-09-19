@@ -88,10 +88,10 @@
       aa: $`aa`,
       aaLowered: $`AA`,
       ae: $`ae`,
-      iTense: $`I`,
+      iLax: $`I`,
       i: $`i`,
       ii: $`ii`,
-      uTense: $`U`,
+      uLax: $`U`,
       u: $`u`,
       uu: $`uu`,
       e: $`e`,
@@ -109,10 +109,12 @@
       plural: $`Plural`,
       // femDual: $`FemDual`,  # not sure if good idea?
       femPlural: $`C`,
+      ayn: $`DualPlural`,
       an: $`An`,
+      iyy: $`Nisbe`,
 
       stressed: $`Stressed`,
-      french: $`French`,
+      nasal: $`French`,
 
       genitiveDelimiter: {
         ...$`Of`,
@@ -155,6 +157,8 @@
   const processToken = ([{ value }]) => _.process(value);
 
   const init = (...args) => _.obj(...args).init(inits);
+
+  const processSuffixes = stressedIdx => value => value.map((suf, idx) => _.edit(suf, {type: type.suffix, meta: {stressed: stressedIdx === idx}}));
 %}
 
 @lexer lexer
@@ -214,26 +218,13 @@ af3al -> "(af3al" ctx_tags:? __ root augmentation:? ")" {% ([ , ctx ,, root, aug
 tif3il -> "(tif3il"
     ctx_tags:?
     __ root
-    (
-      # the initializer prefers these as arrays so no {% id %}
-        FEM
-      | DUAL
-      | AN
-      | FEM DUAL # {% ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b] %}
-      | FEM AN # {% ([a, b]) => [_.edit(a, { meta: { t: true }}).value, b] %}
-      | FEM_PLURAL
-      | FEM_PLURAL AN  # why not
-    ):?
+    suffix:?
     augmentation:?
   ")" {%
   ([ , ctx ,, root, suffix, augmentation]) => init(
     type.tif3il,
     {},
-    {
-      root,
-      suffix: suffix || [],
-      augmentation
-    },
+    {root, suffix: suffix || [], augmentation},
     ctx
   )
 %}
@@ -282,13 +273,48 @@ verb ->
 # a lot of the rest of the backend, none of which i thought to use stems in, so i had to go back
 # here and change `([value]) =>` to `([{ value }])) =>`
 word ->
-    stem  {% ([{ value }]) => init(type.word, { was: null, augmentation: null }, value) %}
-  | stem augmentation  {% ([{ value }, augmentation]) => init(type.word, { augmentation: augmentation(value) }, value) %}
+    stem suffix:? augmentation:? {%
+      ([{value}, suffix, augmentation]) => init(
+        type.word,
+        { was: null, augmentation: augmentation ? augmentation(augmentation) : null },
+        [...(suffix && suffix.some(o => o.meta.stressed) ? value.map(syl => _.edit(syl, {meta: {stressed: false}})) : value), ...(suffix || [])]
+      )
+    %}
   | "(ctx" ctx_tags __ word ")" {% ([ , ctx ,, word]) => ctx.map(word.ctx) %}
 
 ctx_tags -> (__ %openCtx %ctxItem %closeCtx {% ([ ,, { value }]) => value %}):+ {%
   ([values]) => values
 %}
+
+suffix ->
+    suffix_not_iyy {% id %}
+  | IYY suffix_not_iyy:?  {%
+    ([{value: iyy}, suffix]) => suffix
+      // -iyy-
+      ? [_.obj(type.suffix, {stressed: !suffix.some(o => o.meta.stressed)}, iyy), ...suffix]
+      // -iy
+      : [_.obj(type.suffix, {stressed: false}, iyy)]
+    %}
+
+suffix_not_iyy ->
+    FEM  {% processSuffixes(-1) %}
+  | AN  {% processSuffixes(-1) %}
+  | DUAL  {% processSuffixes(0) %}
+  | PLURAL  {% processSuffixes(0) %}
+  | FEM_PLURAL  {% processSuffixes(0) %}
+  | AYN  {% processSuffixes(0) %}
+  | FEM AN  {% processSuffixes(-1) %}
+  | FEM DUAL  {% processSuffixes(1) %}
+  | FEM_PLURAL IYY suffix_not_iyy:?  {%
+    ([fp, iyy, suffix]) => suffix
+      ? [...processSuffixes(suffix.some(o => o.meta.stressed) ? -1 : 1)([fp, iyy]), ...suffix]
+      : processSuffixes(0)([fp, iyy])
+    %}
+  | DUAL IYY suffix_not_iyy:?  {%
+    ([dual, iyy, suffix]) => suffix
+      ? [...processSuffixes(suffix.some(o => o.meta.stressed) ? -1 : 1)([dual, iyy]), ...suffix]
+      : processSuffixes(0)([dual, iyy])
+    %}
 
 # messy because of stressedOn :(
 stem ->
@@ -349,8 +375,7 @@ heavier_syllable ->
     heavy_syllable  {% id %}
   | superheavy_syllable  {% id %}
 final_lighter_syllable ->
-    final_light_syllable  {% id %}
-  | final_heavy_syllable  {% id %}
+    final_heavy_syllable  {% id %}
 
 initial_syllable ->
     initial_light_syllable  {% id %}
@@ -362,8 +387,7 @@ final_syllable ->
   | final_stressed_syllable  {% id %}
 
 final_unstressed_syllable ->
-    final_light_syllable  {% id %}
-  | final_heavy_syllable  {% id %}
+   final_heavy_syllable  {% id %}
   | final_superheavy_syllable  {% id %}
 
 medial_syllable ->
@@ -375,7 +399,6 @@ initial_light_syllable -> makeInitial[light_syllable {% id %}]  {% id %}
 initial_heavy_syllable -> makeInitial[heavy_syllable {% id %}]  {% id %}
 initial_superheavy_syllable -> makeInitial[superheavy_syllable {% id %}]  {% id %}
 
-final_light_syllable -> consonant final_light_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 1, stressed: false }, [a, ...b]) %}
 final_heavy_syllable ->
     consonant final_heavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 2, stressed: false }, [a, ...b]) %}
   # this will allow this sequence to be word-initial (bc monosyllables) but w/e probably not worth fixing lol
@@ -404,39 +427,27 @@ final_superheavy_syllable ->
     )
   %}
 
-final_light_rime -> final_short_vowel
-final_heavy_rime -> short_vowel consonant | long_vowel | AN {% id %}
-final_stressed_rime -> (long_vowel  {% id %} | %a  {% processToken %} | %e  {% processToken %} | %o  {% processToken %}) (STRESSED {% id %} | FRENCH {% id %})
-final_superheavy_rime ->
-    superheavy_rime  {% id %}
-  | PLURAL
-  | FEM_PLURAL
-  | DUAL
+final_heavy_rime -> short_vowel consonant | long_vowel | AN
+final_stressed_rime -> (long_vowel  {% id %} | %a  {% processToken %} | %e  {% processToken %} | %o  {% processToken %}) STRESSED
+final_superheavy_rime -> superheavy_rime  {% id %}
 
 light_syllable -> consonant light_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 1, stressed: false }, [a, ...b]) %}
 heavy_syllable -> consonant heavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 2, stressed: false }, [a, ...b]) %}
 superheavy_syllable -> consonant superheavy_rime  {% ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: false }, [a, ...b]) %}
 
 light_rime -> short_vowel
-heavy_rime -> (long_vowel | short_vowel consonant)  {% id %}
+heavy_rime -> long_vowel | short_vowel consonant
 superheavy_rime ->
     long_vowel consonant
   | short_vowel consonant NO_SCHWA consonant
   | short_vowel consonant consonant
-     {% ([a, b, c]) => (
-      b.value === c.value ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
-    ) %}
-  | long_vowel consonant consonant  # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
-      {% ([a, b, c]) => (
-        b.value === c.value ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
-      ) %}
-  | long_vowel consonant NO_SCHWA consonant  # technically superduperheavy but no difference; found in maarktayn although that's spelled mArkc=
+  | long_vowel consonant consonant  # technically superduperheavy but no difference; found in maarktayn, 2aarmtayn although they're spelled -c=
+  | long_vowel consonant NO_SCHWA consonant  # technically superduperheavy but see ^
 
 # the {value} here ISN'T the {value} from my own schema -- it's instead from moo,
 # which provides us our own object as the {value} of its own lex-result object
-vowel -> (long_vowel | short_vowel)  {% ([[value]]) => value %}
-final_short_vowel -> (%a | %iTense | %uTense | %e | %o | %fem)  {% ([[{ value }]]) => _.process(value) %}
-short_vowel -> (%a | %iTense | %i | %uTense | %u | %e | %o)  {% ([[{ value }]]) => _.process(value) %}
+vowel -> (long_vowel | short_vowel) NASAL:?  {% ([[value], nasal]) => (nasal ? _.edit(value, {meta: {features: {nasalized: true}}}) : value) %}
+short_vowel -> (%a | %iLax | %i | %uLax | %u | %e | %o)  {% ([[{ value }]]) => _.process(value) %}
 long_vowel -> (%aa | %aaLowered | %ae | %ii | %uu | %ee | %oo | %ay | %aw)  {% ([[{ value }]]) => _.process(value) %}
 
 root -> consonant consonant consonant consonant:?
@@ -465,16 +476,17 @@ delimiter ->
   | %pseudoSubjectDelimiter {% processToken %}
   | %dativeDelimiter {% processToken %}
 
-
 ST -> %s %t  {% ([{ value: a }, { value: b }]) => [_.process(a), _.process(b)] %}
 NO_SCHWA -> %noSchwa  {% processToken %}
 FEM -> %fem  {% processToken %}
 DUAL -> %dual  {% processToken %}
 PLURAL -> %plural  {% processToken %}
 FEM_PLURAL -> %femPlural  {% processToken %}
+AYN -> %ayn {% processToken %}
 AN -> %an {% processToken %}
+IYY -> %iyy {% processToken %}
 STRESSED -> %stressed  {% processToken %}
-FRENCH -> %french {% processToken %}
+NASAL -> %nasal {% processToken %}
 __ -> %ws  {% () => null %}
 
 # a good example of <e> and <*>: hexxa* for donkeys (alternative form: hixx)

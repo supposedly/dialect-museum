@@ -91,10 +91,10 @@ function id(x) { return x[0]; }
       aa: $`aa`,
       aaLowered: $`AA`,
       ae: $`ae`,
-      iTense: $`I`,
+      iLax: $`I`,
       i: $`i`,
       ii: $`ii`,
-      uTense: $`U`,
+      uLax: $`U`,
       u: $`u`,
       uu: $`uu`,
       e: $`e`,
@@ -112,10 +112,12 @@ function id(x) { return x[0]; }
       plural: $`Plural`,
       // femDual: $`FemDual`,  # not sure if good idea?
       femPlural: $`C`,
+      ayn: $`DualPlural`,
       an: $`An`,
+      iyy: $`Nisbe`,
 
       stressed: $`Stressed`,
-      french: $`French`,
+      nasal: $`French`,
 
       genitiveDelimiter: {
         ...$`Of`,
@@ -158,6 +160,8 @@ function id(x) { return x[0]; }
   const processToken = ([{ value }]) => _.process(value);
 
   const init = (...args) => _.obj(...args).init(inits);
+
+  const processSuffixes = stressedIdx => value => value.map((suf, idx) => _.edit(suf, {type: type.suffix, meta: {stressed: stressedIdx === idx}}));
 export const Lexer = lexer;
 export const ParserRules = [
     {"name": "passage$ebnf$1", "symbols": []},
@@ -214,14 +218,7 @@ export const ParserRules = [
     {"name": "af3al", "symbols": [{"literal":"(af3al"}, "af3al$ebnf$1", "__", "root", "af3al$ebnf$2", {"literal":")"}], "postprocess": ([ , ctx ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }, ctx)},
     {"name": "tif3il$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "tif3il$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM"]},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["DUAL"]},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["AN"]},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM", "DUAL"]},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM", "AN"]},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM_PLURAL"]},
-    {"name": "tif3il$ebnf$2$subexpression$1", "symbols": ["FEM_PLURAL", "AN"]},
-    {"name": "tif3il$ebnf$2", "symbols": ["tif3il$ebnf$2$subexpression$1"], "postprocess": id},
+    {"name": "tif3il$ebnf$2", "symbols": ["suffix"], "postprocess": id},
     {"name": "tif3il$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "tif3il$ebnf$3", "symbols": ["augmentation"], "postprocess": id},
     {"name": "tif3il$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
@@ -229,11 +226,7 @@ export const ParserRules = [
         ([ , ctx ,, root, suffix, augmentation]) => init(
           type.tif3il,
           {},
-          {
-            root,
-            suffix: suffix || [],
-            augmentation
-          },
+          {root, suffix: suffix || [], augmentation},
           ctx
         )
         },
@@ -261,8 +254,17 @@ export const ParserRules = [
           ctx
         )
           },
-    {"name": "word", "symbols": ["stem"], "postprocess": ([{ value }]) => init(type.word, { was: null, augmentation: null }, value)},
-    {"name": "word", "symbols": ["stem", "augmentation"], "postprocess": ([{ value }, augmentation]) => init(type.word, { augmentation: augmentation(value) }, value)},
+    {"name": "word$ebnf$1", "symbols": ["suffix"], "postprocess": id},
+    {"name": "word$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "word$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "word$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "word", "symbols": ["stem", "word$ebnf$1", "word$ebnf$2"], "postprocess": 
+        ([{value}, suffix, augmentation]) => init(
+          type.word,
+          { was: null, augmentation: augmentation ? augmentation(augmentation) : null },
+          [...(suffix && suffix.some(o => o.meta.stressed) ? value.map(syl => _.edit(syl, {meta: {stressed: false}})) : value), ...(suffix || [])]
+        )
+            },
     {"name": "word", "symbols": [{"literal":"(ctx"}, "ctx_tags", "__", "word", {"literal":")"}], "postprocess": ([ , ctx ,, word]) => ctx.map(word.ctx)},
     {"name": "ctx_tags$ebnf$1$subexpression$1", "symbols": ["__", ({type: "openCtx"}), ({type: "ctxItem"}), ({type: "closeCtx"})], "postprocess": ([ ,, { value }]) => value},
     {"name": "ctx_tags$ebnf$1", "symbols": ["ctx_tags$ebnf$1$subexpression$1"]},
@@ -270,6 +272,38 @@ export const ParserRules = [
     {"name": "ctx_tags$ebnf$1", "symbols": ["ctx_tags$ebnf$1", "ctx_tags$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "ctx_tags", "symbols": ["ctx_tags$ebnf$1"], "postprocess": 
         ([values]) => values
+        },
+    {"name": "suffix", "symbols": ["suffix_not_iyy"], "postprocess": id},
+    {"name": "suffix$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
+    {"name": "suffix$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix", "symbols": ["IYY", "suffix$ebnf$1"], "postprocess": 
+        ([{value: iyy}, suffix]) => suffix
+          // -iyy-
+          ? [_.obj(type.suffix, {stressed: !suffix.some(o => o.meta.stressed)}, iyy), ...suffix]
+          // -iy
+          : [_.obj(type.suffix, {stressed: false}, iyy)]
+        },
+    {"name": "suffix_not_iyy", "symbols": ["FEM"], "postprocess": processSuffixes(-1)},
+    {"name": "suffix_not_iyy", "symbols": ["AN"], "postprocess": processSuffixes(-1)},
+    {"name": "suffix_not_iyy", "symbols": ["DUAL"], "postprocess": processSuffixes(0)},
+    {"name": "suffix_not_iyy", "symbols": ["PLURAL"], "postprocess": processSuffixes(0)},
+    {"name": "suffix_not_iyy", "symbols": ["FEM_PLURAL"], "postprocess": processSuffixes(0)},
+    {"name": "suffix_not_iyy", "symbols": ["AYN"], "postprocess": processSuffixes(0)},
+    {"name": "suffix_not_iyy", "symbols": ["FEM", "AN"], "postprocess": processSuffixes(-1)},
+    {"name": "suffix_not_iyy", "symbols": ["FEM", "DUAL"], "postprocess": processSuffixes(1)},
+    {"name": "suffix_not_iyy$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
+    {"name": "suffix_not_iyy$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix_not_iyy", "symbols": ["FEM_PLURAL", "IYY", "suffix_not_iyy$ebnf$1"], "postprocess": 
+        ([fp, iyy, suffix]) => suffix
+          ? [...processSuffixes(suffix.some(o => o.meta.stressed) ? -1 : 1)([fp, iyy]), ...suffix]
+          : processSuffixes(0)([fp, iyy])
+        },
+    {"name": "suffix_not_iyy$ebnf$2", "symbols": ["suffix_not_iyy"], "postprocess": id},
+    {"name": "suffix_not_iyy$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix_not_iyy", "symbols": ["DUAL", "IYY", "suffix_not_iyy$ebnf$2"], "postprocess": 
+        ([dual, iyy, suffix]) => suffix
+          ? [...processSuffixes(suffix.some(o => o.meta.stressed) ? -1 : 1)([dual, iyy]), ...suffix]
+          : processSuffixes(0)([dual, iyy])
         },
     {"name": "stem", "symbols": ["consonant"], "postprocess": value => _.obj(type.stem, { stressedOn: null }, [_.obj(type.syllable, { stressed: null, weight: 0 }, value)])},
     {"name": "stem", "symbols": ["monosyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},
@@ -309,14 +343,12 @@ export const ParserRules = [
     {"name": "final_iamb", "symbols": ["medial_syllable", "final_stressed_syllable"]},
     {"name": "heavier_syllable", "symbols": ["heavy_syllable"], "postprocess": id},
     {"name": "heavier_syllable", "symbols": ["superheavy_syllable"], "postprocess": id},
-    {"name": "final_lighter_syllable", "symbols": ["final_light_syllable"], "postprocess": id},
     {"name": "final_lighter_syllable", "symbols": ["final_heavy_syllable"], "postprocess": id},
     {"name": "initial_syllable", "symbols": ["initial_light_syllable"], "postprocess": id},
     {"name": "initial_syllable", "symbols": ["initial_heavy_syllable"], "postprocess": id},
     {"name": "initial_syllable", "symbols": ["initial_superheavy_syllable"], "postprocess": id},
     {"name": "final_syllable", "symbols": ["final_unstressed_syllable"], "postprocess": id},
     {"name": "final_syllable", "symbols": ["final_stressed_syllable"], "postprocess": id},
-    {"name": "final_unstressed_syllable", "symbols": ["final_light_syllable"], "postprocess": id},
     {"name": "final_unstressed_syllable", "symbols": ["final_heavy_syllable"], "postprocess": id},
     {"name": "final_unstressed_syllable", "symbols": ["final_superheavy_syllable"], "postprocess": id},
     {"name": "medial_syllable", "symbols": ["light_syllable"], "postprocess": id},
@@ -337,7 +369,6 @@ export const ParserRules = [
     {"name": "initial_superheavy_syllable$macrocall$1", "symbols": ["consonant", "initial_superheavy_syllable$macrocall$2"], "postprocess": ([c, value]) => _.obj(type.syllable, value.meta, [c, ...value.value])},
     {"name": "initial_superheavy_syllable$macrocall$1", "symbols": ["initial_superheavy_syllable$macrocall$2"], "postprocess": ([value]) => value},
     {"name": "initial_superheavy_syllable", "symbols": ["initial_superheavy_syllable$macrocall$1"], "postprocess": id},
-    {"name": "final_light_syllable", "symbols": ["consonant", "final_light_rime"], "postprocess": ([a, b]) => _.obj(type.syllable, { weight: 1, stressed: false }, [a, ...b])},
     {"name": "final_heavy_syllable", "symbols": ["consonant", "final_heavy_rime"], "postprocess": ([a, b]) => _.obj(type.syllable, { weight: 2, stressed: false }, [a, ...b])},
     {"name": "final_heavy_syllable", "symbols": ["FEM", "AN"], "postprocess": 
         ([a, b]) => _.obj(
@@ -361,51 +392,35 @@ export const ParserRules = [
           ]
         )
           },
-    {"name": "final_light_rime", "symbols": ["final_short_vowel"]},
     {"name": "final_heavy_rime", "symbols": ["short_vowel", "consonant"]},
     {"name": "final_heavy_rime", "symbols": ["long_vowel"]},
-    {"name": "final_heavy_rime", "symbols": ["AN"], "postprocess": id},
+    {"name": "final_heavy_rime", "symbols": ["AN"]},
     {"name": "final_stressed_rime$subexpression$1", "symbols": ["long_vowel"], "postprocess": id},
     {"name": "final_stressed_rime$subexpression$1", "symbols": [({type: "a"})], "postprocess": processToken},
     {"name": "final_stressed_rime$subexpression$1", "symbols": [({type: "e"})], "postprocess": processToken},
     {"name": "final_stressed_rime$subexpression$1", "symbols": [({type: "o"})], "postprocess": processToken},
-    {"name": "final_stressed_rime$subexpression$2", "symbols": ["STRESSED"], "postprocess": id},
-    {"name": "final_stressed_rime$subexpression$2", "symbols": ["FRENCH"], "postprocess": id},
-    {"name": "final_stressed_rime", "symbols": ["final_stressed_rime$subexpression$1", "final_stressed_rime$subexpression$2"]},
+    {"name": "final_stressed_rime", "symbols": ["final_stressed_rime$subexpression$1", "STRESSED"]},
     {"name": "final_superheavy_rime", "symbols": ["superheavy_rime"], "postprocess": id},
-    {"name": "final_superheavy_rime", "symbols": ["PLURAL"]},
-    {"name": "final_superheavy_rime", "symbols": ["FEM_PLURAL"]},
-    {"name": "final_superheavy_rime", "symbols": ["DUAL"]},
     {"name": "light_syllable", "symbols": ["consonant", "light_rime"], "postprocess": ([a, b]) => _.obj(type.syllable, { weight: 1, stressed: false }, [a, ...b])},
     {"name": "heavy_syllable", "symbols": ["consonant", "heavy_rime"], "postprocess": ([a, b]) => _.obj(type.syllable, { weight: 2, stressed: false }, [a, ...b])},
     {"name": "superheavy_syllable", "symbols": ["consonant", "superheavy_rime"], "postprocess": ([a, b]) => _.obj(type.syllable, { weight: 3, stressed: false }, [a, ...b])},
     {"name": "light_rime", "symbols": ["short_vowel"]},
-    {"name": "heavy_rime$subexpression$1", "symbols": ["long_vowel"]},
-    {"name": "heavy_rime$subexpression$1", "symbols": ["short_vowel", "consonant"]},
-    {"name": "heavy_rime", "symbols": ["heavy_rime$subexpression$1"], "postprocess": id},
+    {"name": "heavy_rime", "symbols": ["long_vowel"]},
+    {"name": "heavy_rime", "symbols": ["short_vowel", "consonant"]},
     {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant"]},
     {"name": "superheavy_rime", "symbols": ["short_vowel", "consonant", "NO_SCHWA", "consonant"]},
-    {"name": "superheavy_rime", "symbols": ["short_vowel", "consonant", "consonant"], "postprocess":  ([a, b, c]) => (
-          b.value === c.value ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
-        ) },
-    {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant", "consonant"], "postprocess":  ([a, b, c]) => (
-          b.value === c.value ? [a, b, c] : [a, b, _.process(abc.Schwa), c]
-        ) },
+    {"name": "superheavy_rime", "symbols": ["short_vowel", "consonant", "consonant"]},
+    {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant", "consonant"]},
     {"name": "superheavy_rime", "symbols": ["long_vowel", "consonant", "NO_SCHWA", "consonant"]},
     {"name": "vowel$subexpression$1", "symbols": ["long_vowel"]},
     {"name": "vowel$subexpression$1", "symbols": ["short_vowel"]},
-    {"name": "vowel", "symbols": ["vowel$subexpression$1"], "postprocess": ([[value]]) => value},
-    {"name": "final_short_vowel$subexpression$1", "symbols": [({type: "a"})]},
-    {"name": "final_short_vowel$subexpression$1", "symbols": [({type: "iTense"})]},
-    {"name": "final_short_vowel$subexpression$1", "symbols": [({type: "uTense"})]},
-    {"name": "final_short_vowel$subexpression$1", "symbols": [({type: "e"})]},
-    {"name": "final_short_vowel$subexpression$1", "symbols": [({type: "o"})]},
-    {"name": "final_short_vowel$subexpression$1", "symbols": [({type: "fem"})]},
-    {"name": "final_short_vowel", "symbols": ["final_short_vowel$subexpression$1"], "postprocess": ([[{ value }]]) => _.process(value)},
+    {"name": "vowel$ebnf$1", "symbols": ["NASAL"], "postprocess": id},
+    {"name": "vowel$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "vowel", "symbols": ["vowel$subexpression$1", "vowel$ebnf$1"], "postprocess": ([[value], nasal]) => (nasal ? _.edit(value, {meta: {features: {nasalized: true}}}) : value)},
     {"name": "short_vowel$subexpression$1", "symbols": [({type: "a"})]},
-    {"name": "short_vowel$subexpression$1", "symbols": [({type: "iTense"})]},
+    {"name": "short_vowel$subexpression$1", "symbols": [({type: "iLax"})]},
     {"name": "short_vowel$subexpression$1", "symbols": [({type: "i"})]},
-    {"name": "short_vowel$subexpression$1", "symbols": [({type: "uTense"})]},
+    {"name": "short_vowel$subexpression$1", "symbols": [({type: "uLax"})]},
     {"name": "short_vowel$subexpression$1", "symbols": [({type: "u"})]},
     {"name": "short_vowel$subexpression$1", "symbols": [({type: "e"})]},
     {"name": "short_vowel$subexpression$1", "symbols": [({type: "o"})]},
@@ -472,9 +487,11 @@ export const ParserRules = [
     {"name": "DUAL", "symbols": [({type: "dual"})], "postprocess": processToken},
     {"name": "PLURAL", "symbols": [({type: "plural"})], "postprocess": processToken},
     {"name": "FEM_PLURAL", "symbols": [({type: "femPlural"})], "postprocess": processToken},
+    {"name": "AYN", "symbols": [({type: "ayn"})], "postprocess": processToken},
     {"name": "AN", "symbols": [({type: "an"})], "postprocess": processToken},
+    {"name": "IYY", "symbols": [({type: "iyy"})], "postprocess": processToken},
     {"name": "STRESSED", "symbols": [({type: "stressed"})], "postprocess": processToken},
-    {"name": "FRENCH", "symbols": [({type: "french"})], "postprocess": processToken},
+    {"name": "NASAL", "symbols": [({type: "nasal"})], "postprocess": processToken},
     {"name": "__", "symbols": [({type: "ws"})], "postprocess": () => null}
 ];
 export const ParserStart = "passage";

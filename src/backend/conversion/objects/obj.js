@@ -34,7 +34,7 @@ export function obj(type, meta, value, context) {
 }
 
 // gives an already-created object a resolver+transformer
-export function process({type, meta, value, context}) {
+export function process({type, meta = {}, value, context}) {
   return obj(type, meta, value, context);
 }
 

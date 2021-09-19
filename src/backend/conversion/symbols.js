@@ -51,7 +51,8 @@ function c(map) {
           semivocalic: false,
           rounded: false,
           ...features,
-          articulator: articulator.location,
+          // ensure these three aren't `undefined`
+          articulator: features.location,
           voicing: features.voicing,
           manner: features.manner,
           isNull: name === `null`
@@ -75,9 +76,11 @@ function v(map) {
     map[name] = {
       type: type.vowel,
       meta: {
+        lengthOffset: 0,  // 1 = elongated, -1 = contracted
         features: {
           length: name.length,
           diphthongal: false,
+          nasalized: false,
           ...features,
         },
       },
@@ -117,8 +120,8 @@ export const alphabet = {
   (`3`, `3`, {
     location: location.pharynx,
     articulator: articulator.throat,
+    manner: manner.approximant,
     voicing: true,
-    manner: manner.approximant
   })
   // uvular
   (`5`, `5`, {
@@ -130,8 +133,8 @@ export const alphabet = {
   (`gh`, `9`, {
     location: location.uvula,
     articulator: articulator.tongue,
+    manner: manner.fricative,
     voicing: true,
-    manner: manner.fricative
   })
   (`q`, `q`, {
     location: location.uvula,
@@ -149,18 +152,16 @@ export const alphabet = {
   (`g`, `g`, {
     location: location.velum,
     articulator: articulator.tongue,
+    manner: manner.plosive,
     voicing: true,
-    manner: manner.plosive
   })
   // palatal
   (`y`, `y`, {
-    features: {
-      location: location.palate,
-      articulator: articulator.tongue,
-      voicing: true,
-      manner: manner.approximant,
-      semivocalic: true,
-    },
+    location: location.palate,
+    articulator: articulator.tongue,
+    manner: manner.approximant,
+    voicing: true,
+    semivocalic: true,
   })
   // postalveolar
   (`sh`, `x`, {
@@ -172,22 +173,22 @@ export const alphabet = {
   (`j`, `j`, {
     location: location.bridge,
     articulator: articulator.tongue,
+    manner: manner.fricative,
     voicing: true,
-    manner: manner.fricative
   })
   // alveolar
   (`r`, `r`, {
     location: location.ridge,
     articulator: articulator.tongue,
+    manner: manner.flap,
     voicing: true,
-    manner: manner.flap
   })  // trill...
   // denti-alveolar idk
   (`l`, `l`, {
     location: location.ridge,
     articulator: articulator.tongue,
+    manner: manner.approximant,  // lateral don't real
     voicing: true,
-    manner: manner.approximant  // lateral don't real
   })
   (`s`, `s`, {
     location: location.ridge,
@@ -198,14 +199,14 @@ export const alphabet = {
   (`z`, `z`, {
     location: location.ridge,
     articulator: articulator.tongue,
+    manner: manner.fricative,
     voicing: true,
-    manner: manner.fricative
   })
   (`n`, `n`, {
     location: location.ridge,
     articulator: articulator.tongue,
+    manner: manner.nasal,
     voicing: true,
-    manner: manner.nasal
   })
   (`t`, `t`, {
     location: location.ridge,
@@ -216,8 +217,8 @@ export const alphabet = {
   (`d`, `d`, {
     location: location.ridge,
     articulator: articulator.tongue,
+    manner: manner.plosive,
     voicing: true,
-    manner: manner.plosive
   })
   // interdental
   (`th`, `8`, {
@@ -229,8 +230,8 @@ export const alphabet = {
   (`dh`, `6`, {
     location: location.teeth,
     articulator: articulator.tongue,
+    manner: manner.fricative,
     voicing: true,
-    manner: manner.fricative
   })
   // labiodental
   (`f`, `f`, {
@@ -242,30 +243,29 @@ export const alphabet = {
   (`v`, `v`, {
     location: location.teeth,
     articulator: articulator.lips,
+    manner: manner.fricative,
     voicing: true,
-    manner: manner.fricative
   })
   // bilabial
   (`w`, `w`, {
-    features: {
-      location: location.lips,
-      articulator: articulator.lips,
-      voicing: true,
-      manner: manner.approximant,
-      semivocalic: true, rounded: true,
-    },
+    location: location.lips,
+    articulator: articulator.lips,
+    manner: manner.approximant,
+    voicing: true,
+    semivocalic: true,
+    rounded: true,
   })
   (`m`, `m`, {
     location: location.lips,
     articulator: articulator.lips,
+    manner: manner.nasal,
     voicing: true,
-    manner: manner.nasal
   })  // nasal???
   (`b`, `b`, {
     location: location.lips,
     articulator: articulator.lips,
+    manner: manner.plosive,
     voicing: true,
-    manner: manner.plosive
   })
   (`p`, `p`, {
     location: null,
@@ -277,8 +277,8 @@ export const alphabet = {
   (`null`, `0`, {
     location: location.bruh,
     articulator: articulator,
+    manner: null,
     voicing: true,
-    manner: null
   })
   (null),
 
@@ -352,29 +352,42 @@ export const alphabet = {
   // dual suffix is its own thing bc -ayn/-een vs -aan variation (per Mekki 1984)
   Dual: {
     type: type.suffix,
-    symbol: `=`,
+    symbol: `=`,  // equals sign bc it's two lines
     value: `dual`,
   },
   // plural suffix is its own thing bc -iin-l- vs -in-l- variation, or stuff
   // like meshteryiin vs meshtriyyiin vs meshtriin
   Plural: {
     type: type.suffix,
-    symbol: `+`,
+    symbol: `+`,  // plus because plural is uhh... more
     value: `plural`,
+  },
+  // fossilized "dual" suffix like 3YnYn => 3Yn# and 7awAlYn => 7awAl#
+  DualPlural: {
+    type: type.suffix,
+    symbol: `#`,  // kindasortamaybenot like a mix between + and = lol
+    value: `ayn`,
   },
   // adverbial -an, ـًا
   An: {
     type: type.suffix,
-    symbol: `@`,
+    symbol: `@`,  // bc i needed an unused symbol that still resembles an A
     value: `an`,
+  },
+  // necessary bc it alternates between -i and -iyy-
+  // (and maybe -(consonant)%= can become -yIn ~ -In instead of -iyyIn too?)
+  Nisbe: {
+    type: type.suffix,
+    symbol: `%`,  // ahahahaha get it
+    value: `iyy`
   },
 
   Stressed: {  // goes after the stressed syllable; only use if the word's stress is not automatic
-    type: type.modifier,  // idk lol
+    type: type.modifier,
     symbol: `"`,
     value: `stressed`,
   },
-  French: {  // stressed and nasalized; lOsyON kappitAN
+  French: {  // nasalized and, if final, stressed; 2ONrI" lOsyON kappitAN
     type: type.modifier,
     symbol: `N`,
     value: `nasalized`,

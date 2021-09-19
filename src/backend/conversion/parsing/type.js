@@ -6,6 +6,7 @@ export default fenum([
   `stem`,
   `word`,
   `syllable`,
+  `suffix`,
   // tag types
   `pp`,
   `verb`,

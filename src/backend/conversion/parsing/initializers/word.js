@@ -4,14 +4,18 @@ import wordType from '../type';
 import * as utils from '../../utils';
 const { misc: { lastOf } } = utils;
 
-function deSyllabify(syllables) {
-  syllables.forEach(syl => {
-    const nucleus = syl.value.find(seg => seg.type === segType.vowel);
+function deSyllabify(sections) {
+  sections.forEach(sec => {
+    if (sec.type === wordType.suffix) {
+      return;
+    }
+    // otherwise it's a syllable
+    const nucleus = sec.value.find(seg => seg.type === segType.vowel);
     if (nucleus) {
-      nucleus.meta.stressed = syl.meta.stressed;
+      nucleus.meta.stressed = sec.meta.stressed;
     }
   });
-  return syllables.map(syl => syl.value).flat();
+  return sections.map(sec => sec.type === wordType.suffix ? sec : sec.value).flat();
 }
 
 export default function word({

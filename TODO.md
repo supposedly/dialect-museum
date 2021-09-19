@@ -36,7 +36,7 @@
 * probably remove the index-caching stuff from Capture, schwa-insertion and the pre-handler thingy makes it tough to deal with (can always try to work out a similar efficiency solution later)
 * NO MORE TRANSFORM FUNCS!!!
   * instead of a method chain like `capture.segment().handle(({envParam}) => { if (envParam === value) return [bruh, bruv]; })`,
-    make it `transform.segment().where({envParam: value}).into([bruh, bruv]).because(reason)`
+    make it `transform.segment().into([bruh, bruv]).where({envParam: value}).because(reason)`
     * this means transforms and deps are no longer black boxes, making them easier to analyze and modify programmatically
     * it also forces transforms to only go one-to-one, making it easy to tie a specific reason to each transform
   * this obviates the whole overengineered (even if kinda cool) param-grabby thingy 😔
