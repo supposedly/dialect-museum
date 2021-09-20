@@ -112,9 +112,11 @@ function id(x) { return x[0]; }
       plural: $`Plural`,
       // femDual: $`FemDual`,  # not sure if good idea?
       femPlural: $`C`,
-      ayn: $`DualPlural`,
+      ayn: $`AynPlural`,
       an: $`An`,
-      iyy: $`Nisbe`,
+      iyy: $`Iyy`,
+      jiyy: $`Jiyy`,
+      negative: $`Negative`,
 
       stressed: $`Stressed`,
       nasal: $`Nasalized`,
@@ -211,19 +213,28 @@ export const ParserRules = [
     {"name": "number", "symbols": [{"literal":"("}, "number$ebnf$2", ({type: "genderedNumber"}), ({type: "numberGender"}), "number$subexpression$2", {"literal":")"}], "postprocess": 
         ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
           },
-    {"name": "af3al$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
+    {"name": "af3al$ebnf$1", "symbols": ["filter_suffix"], "postprocess": id},
     {"name": "af3al$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "af3al$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "af3al$ebnf$2", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "af3al$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "af3al", "symbols": [{"literal":"(af3al"}, "af3al$ebnf$1", "__", "root", "af3al$ebnf$2", {"literal":")"}], "postprocess": ([ , ctx ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }, ctx)},
-    {"name": "tif3il$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
+    {"name": "af3al$ebnf$3", "symbols": ["augmentation"], "postprocess": id},
+    {"name": "af3al$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "af3al", "symbols": [{"literal":"(af3al"}, "af3al$ebnf$1", "af3al$ebnf$2", "__", "root", "af3al$ebnf$3", {"literal":")"}], "postprocess": 
+        ([ , suffix, ctx ,, root, augmentation]) => init(
+          type.af3al,
+          {},
+          {root, suffix: suffix || [], augmentation},
+          ctx
+        )
+        },
+    {"name": "tif3il$ebnf$1", "symbols": ["filter_suffix"], "postprocess": id},
     {"name": "tif3il$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "tif3il$ebnf$2", "symbols": ["suffix"], "postprocess": id},
+    {"name": "tif3il$ebnf$2", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "tif3il$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "tif3il$ebnf$3", "symbols": ["augmentation"], "postprocess": id},
     {"name": "tif3il$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "tif3il", "symbols": [{"literal":"(tif3il"}, "tif3il$ebnf$1", "__", "root", "tif3il$ebnf$2", "tif3il$ebnf$3", {"literal":")"}], "postprocess": 
-        ([ , ctx ,, root, suffix, augmentation]) => init(
+    {"name": "tif3il", "symbols": [{"literal":"(tif3il"}, "tif3il$ebnf$1", "tif3il$ebnf$2", "__", "root", "tif3il$ebnf$3", {"literal":")"}], "postprocess": 
+        ([ , suffix, ctx ,, root, augmentation]) => init(
           type.tif3il,
           {},
           {root, suffix: suffix || [], augmentation},
@@ -234,11 +245,11 @@ export const ParserRules = [
     {"name": "pp$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "pp$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
     {"name": "pp$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "pp", "symbols": [{"literal":"(pp"}, "pp$ebnf$1", "__", "pronoun", "__", "wazn", "__", "voice", "__", "root", "pp$ebnf$2", {"literal":")"}], "postprocess": 
-        ([ , ctx ,, conjugation ,, form ,, voice ,, root, augmentation]) => init(
+    {"name": "pp", "symbols": [{"literal":"(pp"}, "pp$ebnf$1", "__", "suffixed_wazn", "__", "pronoun", "__", "voice", "__", "root", "pp$ebnf$2", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, {form, suffix} ,, conjugation ,, voice ,, root, augmentation]) => init(
           type.pp,
           { conjugation, form, voice },
-          { root, augmentation },
+          { root, suffix: suffix || [], augmentation },
           ctx
         )
           },
@@ -254,6 +265,10 @@ export const ParserRules = [
           ctx
         )
           },
+    {"name": "suffixed_wazn$ebnf$1", "symbols": ["filter_suffix"], "postprocess": id},
+    {"name": "suffixed_wazn$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffixed_wazn", "symbols": [({type: "openTag"}), ({type: "wazn"}), "suffixed_wazn$ebnf$1", ({type: "closeTag"})], "postprocess": ([, {value: form}, suffix]) => ({form, suffix})},
+    {"name": "filter_suffix", "symbols": [{"literal":"_"}, "suffix"], "postprocess": ([ , suffix]) => suffix},
     {"name": "word$ebnf$1", "symbols": ["suffix"], "postprocess": id},
     {"name": "word$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "word$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
@@ -274,15 +289,36 @@ export const ParserRules = [
         ([values]) => values
         },
     {"name": "suffix", "symbols": ["suffix_not_iyy"], "postprocess": id},
-    {"name": "suffix$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
-    {"name": "suffix$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "suffix", "symbols": ["IYY", "suffix$ebnf$1"], "postprocess": 
-        ([{value: iyy}, suffix]) => suffix
-          // -iyy-
-          ? [_.obj(type.suffix, {stressed: !suffix.some(o => o.meta.stressed)}, iyy), ...suffix]
-          // -iy
-          : [_.obj(type.suffix, {stressed: false}, iyy)]
-        },
+    {"name": "suffix$macrocall$2", "symbols": ["IYY"]},
+    {"name": "suffix$macrocall$1$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
+    {"name": "suffix$macrocall$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix$macrocall$1", "symbols": ["suffix$macrocall$2", "suffix$macrocall$1$ebnf$1"], "postprocess": 
+        ([suffixChain, nesteds]) => {
+          // XXX: the suffixChain.length stuff is bad hardcoding
+          // (basically works bc the only options are C%, CG, =%, =G, and % or G on its own, so do the math)
+          // will bite me later if i wanna use this for a recursable suffix that isn't % or G and doesn't have their stress behavior
+          // or maybe if i wanna use this for a chain of more than 2 initial suffixes
+          return nesteds
+            ? [...processSuffixes(nesteds.some(o => o.meta.stressed) ? -1 : suffixChain.length - 1)(suffixChain), ...nesteds]
+            : processSuffixes(suffixChain.length - 2)(suffixChain);
+        }
+          },
+    {"name": "suffix", "symbols": ["suffix$macrocall$1"], "postprocess": id},
+    {"name": "suffix$macrocall$4", "symbols": ["JIYY"]},
+    {"name": "suffix$macrocall$3$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
+    {"name": "suffix$macrocall$3$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix$macrocall$3", "symbols": ["suffix$macrocall$4", "suffix$macrocall$3$ebnf$1"], "postprocess": 
+        ([suffixChain, nesteds]) => {
+          // XXX: the suffixChain.length stuff is bad hardcoding
+          // (basically works bc the only options are C%, CG, =%, =G, and % or G on its own, so do the math)
+          // will bite me later if i wanna use this for a recursable suffix that isn't % or G and doesn't have their stress behavior
+          // or maybe if i wanna use this for a chain of more than 2 initial suffixes
+          return nesteds
+            ? [...processSuffixes(nesteds.some(o => o.meta.stressed) ? -1 : suffixChain.length - 1)(suffixChain), ...nesteds]
+            : processSuffixes(suffixChain.length - 2)(suffixChain);
+        }
+          },
+    {"name": "suffix", "symbols": ["suffix$macrocall$3"], "postprocess": id},
     {"name": "suffix_not_iyy", "symbols": ["FEM"], "postprocess": processSuffixes(-1)},
     {"name": "suffix_not_iyy", "symbols": ["AN"], "postprocess": processSuffixes(-1)},
     {"name": "suffix_not_iyy", "symbols": ["DUAL"], "postprocess": processSuffixes(0)},
@@ -291,20 +327,66 @@ export const ParserRules = [
     {"name": "suffix_not_iyy", "symbols": ["AYN"], "postprocess": processSuffixes(0)},
     {"name": "suffix_not_iyy", "symbols": ["FEM", "AN"], "postprocess": processSuffixes(-1)},
     {"name": "suffix_not_iyy", "symbols": ["FEM", "DUAL"], "postprocess": processSuffixes(1)},
-    {"name": "suffix_not_iyy$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
-    {"name": "suffix_not_iyy$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "suffix_not_iyy", "symbols": ["FEM_PLURAL", "IYY", "suffix_not_iyy$ebnf$1"], "postprocess": 
-        ([fp, iyy, suffix]) => suffix
-          ? [...processSuffixes(suffix.some(o => o.meta.stressed) ? -1 : 1)([fp, iyy]), ...suffix]
-          : processSuffixes(0)([fp, iyy])
-        },
-    {"name": "suffix_not_iyy$ebnf$2", "symbols": ["suffix_not_iyy"], "postprocess": id},
-    {"name": "suffix_not_iyy$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "suffix_not_iyy", "symbols": ["DUAL", "IYY", "suffix_not_iyy$ebnf$2"], "postprocess": 
-        ([dual, iyy, suffix]) => suffix
-          ? [...processSuffixes(suffix.some(o => o.meta.stressed) ? -1 : 1)([dual, iyy]), ...suffix]
-          : processSuffixes(0)([dual, iyy])
-        },
+    {"name": "suffix_not_iyy$macrocall$2", "symbols": ["FEM_PLURAL", "IYY"]},
+    {"name": "suffix_not_iyy$macrocall$1$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
+    {"name": "suffix_not_iyy$macrocall$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix_not_iyy$macrocall$1", "symbols": ["suffix_not_iyy$macrocall$2", "suffix_not_iyy$macrocall$1$ebnf$1"], "postprocess": 
+        ([suffixChain, nesteds]) => {
+          // XXX: the suffixChain.length stuff is bad hardcoding
+          // (basically works bc the only options are C%, CG, =%, =G, and % or G on its own, so do the math)
+          // will bite me later if i wanna use this for a recursable suffix that isn't % or G and doesn't have their stress behavior
+          // or maybe if i wanna use this for a chain of more than 2 initial suffixes
+          return nesteds
+            ? [...processSuffixes(nesteds.some(o => o.meta.stressed) ? -1 : suffixChain.length - 1)(suffixChain), ...nesteds]
+            : processSuffixes(suffixChain.length - 2)(suffixChain);
+        }
+          },
+    {"name": "suffix_not_iyy", "symbols": ["suffix_not_iyy$macrocall$1"], "postprocess": id},
+    {"name": "suffix_not_iyy$macrocall$4", "symbols": ["FEM_PLURAL", "JIYY"]},
+    {"name": "suffix_not_iyy$macrocall$3$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
+    {"name": "suffix_not_iyy$macrocall$3$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix_not_iyy$macrocall$3", "symbols": ["suffix_not_iyy$macrocall$4", "suffix_not_iyy$macrocall$3$ebnf$1"], "postprocess": 
+        ([suffixChain, nesteds]) => {
+          // XXX: the suffixChain.length stuff is bad hardcoding
+          // (basically works bc the only options are C%, CG, =%, =G, and % or G on its own, so do the math)
+          // will bite me later if i wanna use this for a recursable suffix that isn't % or G and doesn't have their stress behavior
+          // or maybe if i wanna use this for a chain of more than 2 initial suffixes
+          return nesteds
+            ? [...processSuffixes(nesteds.some(o => o.meta.stressed) ? -1 : suffixChain.length - 1)(suffixChain), ...nesteds]
+            : processSuffixes(suffixChain.length - 2)(suffixChain);
+        }
+          },
+    {"name": "suffix_not_iyy", "symbols": ["suffix_not_iyy$macrocall$3"], "postprocess": id},
+    {"name": "suffix_not_iyy$macrocall$6", "symbols": ["DUAL", "IYY"]},
+    {"name": "suffix_not_iyy$macrocall$5$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
+    {"name": "suffix_not_iyy$macrocall$5$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix_not_iyy$macrocall$5", "symbols": ["suffix_not_iyy$macrocall$6", "suffix_not_iyy$macrocall$5$ebnf$1"], "postprocess": 
+        ([suffixChain, nesteds]) => {
+          // XXX: the suffixChain.length stuff is bad hardcoding
+          // (basically works bc the only options are C%, CG, =%, =G, and % or G on its own, so do the math)
+          // will bite me later if i wanna use this for a recursable suffix that isn't % or G and doesn't have their stress behavior
+          // or maybe if i wanna use this for a chain of more than 2 initial suffixes
+          return nesteds
+            ? [...processSuffixes(nesteds.some(o => o.meta.stressed) ? -1 : suffixChain.length - 1)(suffixChain), ...nesteds]
+            : processSuffixes(suffixChain.length - 2)(suffixChain);
+        }
+          },
+    {"name": "suffix_not_iyy", "symbols": ["suffix_not_iyy$macrocall$5"], "postprocess": id},
+    {"name": "suffix_not_iyy$macrocall$8", "symbols": ["DUAL", "JIYY"]},
+    {"name": "suffix_not_iyy$macrocall$7$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
+    {"name": "suffix_not_iyy$macrocall$7$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix_not_iyy$macrocall$7", "symbols": ["suffix_not_iyy$macrocall$8", "suffix_not_iyy$macrocall$7$ebnf$1"], "postprocess": 
+        ([suffixChain, nesteds]) => {
+          // XXX: the suffixChain.length stuff is bad hardcoding
+          // (basically works bc the only options are C%, CG, =%, =G, and % or G on its own, so do the math)
+          // will bite me later if i wanna use this for a recursable suffix that isn't % or G and doesn't have their stress behavior
+          // or maybe if i wanna use this for a chain of more than 2 initial suffixes
+          return nesteds
+            ? [...processSuffixes(nesteds.some(o => o.meta.stressed) ? -1 : suffixChain.length - 1)(suffixChain), ...nesteds]
+            : processSuffixes(suffixChain.length - 2)(suffixChain);
+        }
+          },
+    {"name": "suffix_not_iyy", "symbols": ["suffix_not_iyy$macrocall$7"], "postprocess": id},
     {"name": "stem", "symbols": ["consonant"], "postprocess": value => _.obj(type.stem, { stressedOn: null }, [_.obj(type.syllable, { stressed: null, weight: 0 }, value)])},
     {"name": "stem", "symbols": ["monosyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},
     {"name": "stem", "symbols": ["disyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},
@@ -490,6 +572,8 @@ export const ParserRules = [
     {"name": "AYN", "symbols": [({type: "ayn"})], "postprocess": processToken},
     {"name": "AN", "symbols": [({type: "an"})], "postprocess": processToken},
     {"name": "IYY", "symbols": [({type: "iyy"})], "postprocess": processToken},
+    {"name": "JIYY", "symbols": [({type: "jiyy"})], "postprocess": processToken},
+    {"name": "NEGATIVE", "symbols": [({type: "negative"})], "postprocess": processToken},
     {"name": "STRESSED", "symbols": [({type: "stressed"})], "postprocess": processToken},
     {"name": "NASAL", "symbols": [({type: "nasal"})], "postprocess": processToken},
     {"name": "__", "symbols": [({type: "ws"})], "postprocess": () => null}

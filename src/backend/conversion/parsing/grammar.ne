@@ -109,9 +109,11 @@
       plural: $`Plural`,
       // femDual: $`FemDual`,  # not sure if good idea?
       femPlural: $`C`,
-      ayn: $`DualPlural`,
+      ayn: $`AynPlural`,
       an: $`An`,
-      iyy: $`Nisbe`,
+      iyy: $`Iyy`,
+      jiyy: $`Jiyy`,
+      negative: $`Negative`,
 
       stressed: $`Stressed`,
       nasal: $`Nasalized`,
@@ -169,6 +171,18 @@ makeInitial[Syllable] ->
   | consonant $Syllable  {% ([c, value]) => _.obj(type.syllable, value.meta, [c, ...value.value]) %}
   | $Syllable  {% ([value]) => value %}
 
+nonFinalSuffix[InitialSuffixes] -> $InitialSuffixes suffix_not_iyy:?  {%
+    ([suffixChain, nesteds]) => {
+      // XXX: the suffixChain.length stuff is bad hardcoding
+      // (basically works bc the only options are C%, CG, =%, =G, and % or G on its own, so do the math)
+      // will bite me later if i wanna use this for a recursable suffix that isn't % or G and doesn't have their stress behavior
+      // or maybe if i wanna use this for a chain of more than 2 initial suffixes
+      return nesteds
+        ? [...processSuffixes(nesteds.some(o => o.meta.stressed) ? -1 : suffixChain.length - 1)(suffixChain), ...nesteds]
+        : processSuffixes(suffixChain.length - 2)(suffixChain);
+    }
+  %}
+
 passage -> term (__ term {% ([ , term]) => term %}):* {% ([a, b]) => [a, ...b] %}
 
 term ->
@@ -213,15 +227,22 @@ number ->
     ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
   %}
 
-af3al -> "(af3al" ctx_tags:? __ root augmentation:? ")" {% ([ , ctx ,, root, augmentation]) => init(type.af3al, {}, { root, augmentation }, ctx) %}
+af3al -> "(af3al" filter_suffix:? ctx_tags:? __ root augmentation:? ")" {%
+  ([ , suffix, ctx ,, root, augmentation]) => init(
+    type.af3al,
+    {},
+    {root, suffix: suffix || [], augmentation},
+    ctx
+  )
+%}
 
 tif3il -> "(tif3il"
+    filter_suffix:?
     ctx_tags:?
     __ root
-    suffix:?
     augmentation:?
   ")" {%
-  ([ , ctx ,, root, suffix, augmentation]) => init(
+  ([ , suffix, ctx ,, root, augmentation]) => init(
     type.tif3il,
     {},
     {root, suffix: suffix || [], augmentation},
@@ -234,16 +255,16 @@ tif3il -> "(tif3il"
 # and the first vowel in fa3len participles is a~i
 pp -> "(pp"
     ctx_tags:?
+    __ suffixed_wazn
     __ pronoun
-    __ wazn
     __ voice
     __ root
     augmentation:?
   ")"  {%
-    ([ , ctx ,, conjugation ,, form ,, voice ,, root, augmentation]) => init(
+    ([ , ctx ,, {form, suffix} ,, conjugation ,, voice ,, root, augmentation]) => init(
       type.pp,
       { conjugation, form, voice },
-      { root, augmentation },
+      { root, suffix: suffix || [], augmentation },
       ctx
     )
   %}
@@ -267,6 +288,9 @@ verb ->
     )
   %}
 
+suffixed_wazn -> %openTag %wazn filter_suffix:? %closeTag {% ([, {value: form}, suffix]) => ({form, suffix}) %}
+filter_suffix -> "_" suffix {% ([ , suffix]) => suffix %}
+
 # TODO figure out a better way of including the augmentation?
 # TODO since I'm not using stems, maybe remove them
 # (what specifically happened was that i didn't look at this part of the grammar until i'd finished
@@ -288,13 +312,8 @@ ctx_tags -> (__ %openCtx %ctxItem %closeCtx {% ([ ,, { value }]) => value %}):+ 
 
 suffix ->
     suffix_not_iyy {% id %}
-  | IYY suffix_not_iyy:?  {%
-    ([{value: iyy}, suffix]) => suffix
-      // -iyy-
-      ? [_.obj(type.suffix, {stressed: !suffix.some(o => o.meta.stressed)}, iyy), ...suffix]
-      // -iy
-      : [_.obj(type.suffix, {stressed: false}, iyy)]
-    %}
+  | nonFinalSuffix[IYY] {% id %}
+  | nonFinalSuffix[JIYY] {% id %}
 
 suffix_not_iyy ->
     FEM  {% processSuffixes(-1) %}
@@ -305,16 +324,10 @@ suffix_not_iyy ->
   | AYN  {% processSuffixes(0) %}
   | FEM AN  {% processSuffixes(-1) %}
   | FEM DUAL  {% processSuffixes(1) %}
-  | FEM_PLURAL IYY suffix_not_iyy:?  {%
-    ([fp, iyy, suffix]) => suffix
-      ? [...processSuffixes(suffix.some(o => o.meta.stressed) ? -1 : 1)([fp, iyy]), ...suffix]
-      : processSuffixes(0)([fp, iyy])
-    %}
-  | DUAL IYY suffix_not_iyy:?  {%
-    ([dual, iyy, suffix]) => suffix
-      ? [...processSuffixes(suffix.some(o => o.meta.stressed) ? -1 : 1)([dual, iyy]), ...suffix]
-      : processSuffixes(0)([dual, iyy])
-    %}
+  | nonFinalSuffix[FEM_PLURAL IYY] {% id %}
+  | nonFinalSuffix[FEM_PLURAL JIYY] {% id %}
+  | nonFinalSuffix[DUAL IYY] {% id %}
+  | nonFinalSuffix[DUAL JIYY] {% id %}
 
 # messy because of stressedOn :(
 stem ->
@@ -485,6 +498,8 @@ FEM_PLURAL -> %femPlural  {% processToken %}
 AYN -> %ayn {% processToken %}
 AN -> %an {% processToken %}
 IYY -> %iyy {% processToken %}
+JIYY -> %jiyy {% processToken %}
+NEGATIVE -> %negative {% processToken %}
 STRESSED -> %stressed  {% processToken %}
 NASAL -> %nasal {% processToken %}
 __ -> %ws  {% () => null %}

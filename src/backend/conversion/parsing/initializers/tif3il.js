@@ -131,5 +131,8 @@ export default function tif3il({
       meta,
     });
 
-  return $`t.a/i.${$F} ${$3}.ii.${$L}`;
+  return [
+    ...$`t.i.${$F} ${$3}.ii.${$L}`,
+    ...$`t.a.${$F} ${$3}.ii.${$L}`,
+  ];
 }

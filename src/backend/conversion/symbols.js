@@ -363,7 +363,7 @@ export const alphabet = {
     value: `plural`,
   },
   // fossilized "dual" suffix like 3YnYn => 3Yn# and 7awAlYn => 7awAl#
-  DualPlural: {
+  AynPlural: {
     type: type.suffix,
     symbol: `#`,  // kindasortamaybenot like a mix between + and = lol
     value: `ayn`,
@@ -374,12 +374,26 @@ export const alphabet = {
     symbol: `@`,  // bc i needed an unused symbol that still resembles an A
     value: `an`,
   },
+  // nisbe suffix ـي
   // necessary bc it alternates between -i and -iyy-
   // (and maybe -(consonant)%= can become -yIn ~ -In instead of -iyyIn too?)
-  Nisbe: {
+  // also bc it has effects like معمار mi3mar => معماري mi3meri (still don't know how to handle """emphatic""" R...)
+  Iyy: {
     type: type.suffix,
     symbol: `%`,  // ahahahaha get it
     value: `iyy`
+  },
+  // -ji suffix... has to be separate from $`j.Iyy` because this one shortens vowels before it
+  Jiyy: {
+    type: type.suffix,
+    symbol: `G`, // ha
+    value: `jiyy`
+  },
+  // -sh suffix
+  Negative: {
+    type: type.suffix,
+    symbol: `X`,  // capital X because lowercase x is a normal sh
+    value: `negative`
   },
 
   Stressed: {  // goes after the stressed syllable; only use if the word's stress is not automatic
@@ -496,5 +510,3 @@ export const pronoun = [
   P.third  + G.fem    + N.plural,     // ditto but -(h)Vn
   P.third  + G.common + N.plural,
 ];
-
-export const negative = `X`;  // dunno how to implement this
