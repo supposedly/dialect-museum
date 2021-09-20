@@ -113,6 +113,20 @@ class DefaultObject {
   }
 }
 
+// see comments above Capture.keys() and Capture.keys.with()
+function makeObjectKeyParser(emptyValue, givenValue = v => v) {
+  return function parse(keys, ...values) {
+    values.reverse();
+    return JSON.parse(keys.map((string, idx) => [
+      string
+        .replace(/\w+/g, `"$&"`)
+        // this should just be a lookbehind thanks safari
+        .replace(/[^,{}:](?=[},])/g, `$&: ${emptyValue(values)}`),
+      givenValue(values.pop()),
+    ]).flat().join(``));
+  };
+}
+
 export class Capture {
   constructor(word) {
     this.word = new Word(word);
@@ -141,6 +155,44 @@ export class Capture {
       original: copySeg(seg),
     }));
   }
+
+  // use this as a template-string tag to select specific keys for use with capture
+  // specifically if you're passing an object that's not of your own definition and
+  // you don't need the entire thing to be matched
+  // usage: keys`{bruh: {test}, bruv}` -> {bruh: {test: {}}, bruv: {}}
+  // - for example, capture.only(symbols.c, Capture.keys`{value}`)
+  // - is just like capture.only(symbols.c, {value: {}})
+  // - which equals capture.only({value: symbols.c.value})
+  // but isn't as redundant, which gets pretty important the more keys you get
+  // - e.g. capture.only({meta: {features: {something: symbols.e.something, otherThing: symbols.e.otherThing}}})
+  // - can just be capture.only(symbols.e, Capture.keys`{meta: {features: {something, otherThing}}}`)
+  // ALSO you can use this to edit specific values of the object in a similar way to obj.edit()
+  // - e.g. instead of capture.only({value: symbols.w.value, meta: {weak: true, features: {emphatic: true}}})
+  // - you can also do capture.only(symbols.w, Capture.keys`{value, meta: {weak: ${true}, features: {emphatic: ${true}}}})
+  // that part is definitely not much of a space-saver and you'll likely end up doing this instead:
+  // capture.only(symbols.w, Capture.keys`{value}`, Capture.keys.with(true)`{meta: {weak}, features: {emphatic}}`)
+  // or just:
+  // capture.only(symbols.w, Capture.keys`{value}`, {meta: {weak: true, features: {emphatic: true}}})
+  // but having the option to do it in this one function is still nice
+  static keys = Object.assign(
+    // just an empty match object for when no match is given, signaling to the capture functions that
+    // they should match everything for this key
+    makeObjectKeyParser(() => `{}`),
+    {
+      // Capture.keys.with(true)`{meta: {weak, features: {emphatic}}}` => {meta: {weak: true, features: {emphatic: true}}},
+      // Capture.keys.with(true, false)`{meta: {weak, features: {emphatic}}` => {meta: {weak: true, features: {emphatic: false}}}
+      // Capture.keys.with(true, false)`{meta: {weak: ${1}}, features: {emphatic: ${0}, etc: ${1}}}` => they're indices, you get it
+      // overkill? yes
+      // having fun tho? heck yes
+      with(...options) {
+        const poppableOptions = options.slice().reverse();
+        return makeObjectKeyParser(
+          options.length === 1 ? () => options[0] : () => poppableOptions.pop(),
+          idx => options[idx]
+        )
+      }
+    }
+  );
 
   // run all handlers again, mutating both word[idx] and
   // trackers[idx].choices + trackers[idx].currentChoiceIndices
