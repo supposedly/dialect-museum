@@ -15,6 +15,9 @@ function deSyllabify(sections) {
       nucleus.meta.stressed = sec.meta.stressed;
     }
   });
+  // both wordType.suffix and segType.suffix have the same value so this is 'safe':
+  // they're interpreted as syllable-level thingies before this and they'll be
+  // interpreted as segment-level thingies after this
   return sections.map(sec => sec.type === wordType.suffix ? sec : sec.value).flat();
 }
 
