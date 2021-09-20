@@ -437,7 +437,7 @@ export class Capture {
     };
   }
 
-  only(obj) {
+  only(obj, ...props) {
     return this.wrap(this.wordMap.ensure(obj.value));
   }
 
