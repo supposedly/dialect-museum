@@ -217,9 +217,11 @@ function makeAugmentor(delimiter, person, gender, number, makeEnd = null) {
 
 // not sure if this and pronouns.js should return { type, meta, value } objs or not
 export default function augmentation({
-  meta: {delimiter},
+  type,
+  meta: {delimiter: {value: delimiter}},
   value: {person, gender, number},
 }) {
+  /*
   if (delimiter.value === `dative`) {
     return makeAugmentor(
       delimiter,
@@ -236,4 +238,6 @@ export default function augmentation({
     gender,
     number,
   );
+  */
+ return {type, value: {delimiter, pronoun: {person, gender, number}}};
 }

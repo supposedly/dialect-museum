@@ -1,6 +1,6 @@
 import type from '../type';
 import { parseString as $, parseLetter } from '../../parse-word';
-/* const {obj} = require('../../objects'); */
+import {obj, type as segType} from '../../objects';
 import { PERSON as P, GENDER as G, NUMBER as N } from '../../symbols';
 
 const I = Object.freeze(parseLetter`i`);
@@ -145,18 +145,29 @@ export default function pronoun({value: [person, gender, number]}) {
     person,
     gender,
     number,
-    participle: {
-      suffix: ppSuffix(person, gender, number),
+    suffix() {
+      return obj.obj(segType.suffix, {}, {person, gender, number});
     },
-    past: {
-      suffix: verbSuffix(person, gender, number),
-      // returns true if this suffix creates a "heavier" syllable than CV at the end of the stem
-      // in other words, returns true if this suffix has -ay- before it in a geminate past verb
-      heavier() {
-        const initial = this.suffix[0];
-        return initial && (initial.type === type.consonant || initial.type === type.epenthetic);
-      },
+    prefix(indicative=null) {
+      return obj.obj(segType.prefix, {indicative}, {person, gender, number});
     },
-    nonpast: verbCircumfix(person, gender, number),
+    // returns true if this suffix creates a "heavier" syllable than CV at the end of the stem
+    // in other words, returns true if this suffix has -ay- before it in a geminate past verb
+    // in OTHER-other words, returns true if this suffix starts with a consonant lol
+    heavierPastSuffix() {
+      return person.first() || person.second();
+    },
+    // XXX: see these methods are bad to have here, i have to figure out how to remove them
+    // because for example what if we go maghrebi with our 1pl
+    // this one will become invalid
+    noNonpastSuffix() {
+      return (person.third() && number.plural()) || (person.second() && !(number.singular() && gender.masc()))
+    },
+    vowelInitialSuffix(isPast) {
+      if (isPast) {
+        return !this.heavierPastSuffix();
+      }
+      return this.noNonpastSuffix();
+    }
   };
 }

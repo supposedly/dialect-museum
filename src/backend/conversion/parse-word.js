@@ -1,6 +1,6 @@
 import * as utils from './utils';
 const {
-  misc: { lastOf }, syllables: { newSyllable, getSyllableWeight, setStressedSyllable, copy },
+  misc: { lastOf }, syllables: { isSyllable, newSyllable, getSyllableWeight, setStressedSyllable, copy },
 } = utils;
 import { alphabet as abc } from './symbols';
 import { obj, type as segType } from './objects';
@@ -80,7 +80,7 @@ function interpolateAndParse(strings, rootConsonants) {
 }
 
 function setWeights(syllables) {
-  syllables.forEach(s => { s.meta.weight = getSyllableWeight(s); });
+  syllables.filter(isSyllable).forEach(s => { s.meta.weight = getSyllableWeight(s); });
 }
 
 // mark all not-stressed syllables as unstressed
@@ -89,7 +89,7 @@ function setWeights(syllables) {
 // or as a cover for if i forget my convention and
 // only mark a + syllable without marking any -)
 function setBooleanStress(syllables) {
-  syllables.forEach(s => {
+  syllables.filter(isSyllable).forEach(s => {
     s.meta.stressed = !!s.meta.stressed;
     // if (s.meta.stressed !== true) {
     //   s.meta.stressed = false;
@@ -99,7 +99,7 @@ function setBooleanStress(syllables) {
 
 // add schwa to CVCC syllables
 function addSchwa(syllables) {
-  syllables.forEach(s => {
+  syllables.filter(isSyllable).forEach(s => {
     if (
       s.meta.weight === 3
       && s.value.length === 4

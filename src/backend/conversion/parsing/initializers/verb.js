@@ -124,13 +124,10 @@ function makePrefixers(prefixes) {
 }
 */
 
-function makeSuffixer(suffix) {
-  if (!suffix.length) {
-    return _base => {};
-  }
-  if (suffix[0].type === segType.consonant && suffix.length > 1) {
+function makeSuffixer(suffix, conjugation, tam) {
+  if (!conjugation.vowelInitialSuffix(tam === tamToken.pst)) {
     return base => {
-      base.push(newSyllable([...suffix]));
+      base.push(suffix);
     };
   }
   return base => {
@@ -139,44 +136,12 @@ function makeSuffixer(suffix) {
     // the .meta.weak is a lame compensation for not yet having
     // collapsed a.y into the diphthong ay at this point
     if (lastSegment.type === segType.vowel || lastSegment.meta.weak) {
-      if (
-        // $`fem` is the only `type: suffix` object that can be found on verbs here
-        // and its initial segment is in fact a vowel
-        suffix[0].type === segType.vowel || suffix[0].value === `fem`
-      ) {
-        // if we have an ending like $`.aa`, delete it before adding a
-        // vowel-initial suffix
-        lastSyllable.splice(-1, 1);
-      }
-      // this is valid because suffixes are monosyllabic as implemented rn
-      // if they weren't then this would need to be like ...suffix[0]
-      // and the rest of the suffix's syllables would need to be
-      // added to base afterwards
-      lastSyllable.push(...suffix);
-      // (btw this could also have been an if-else with the
-      // first branch instead doing `.splice(-1, 1, ...suffix);`)
-    } else if (lastSegment.type === segType.consonant) {
-      base.push(newSyllable([
-        lastSyllable.pop(),
-        ...(suffix[0].type === segType.consonant ? [SCHWA] : []),
-        ...suffix
-      ]));
+      // if we have an ending like $`.aa`, delete it before adding a
+      // vowel-initial suffix
+      lastSyllable.splice(-1, 1);
     }
+    base.push(suffix);
   };
-}
-
-// pre-transformer, tiktub => tiktib
-// ONLY to be used with npst & when there's a suffix conjugation
-// (or an augmentation, actually - see comment in word-initializer)
-// applies before the suffix/augmentation is added
-function uToI(base) {
-  const lastSyllable = lastOf(base).value;
-  const a = lastOf(lastSyllable, 1);
-  const b = lastOf(lastSyllable);
-
-  if (b.type === segType.consonant && a.value === `u`) {
-    lastSyllable[lastSyllable.length - 2] = I;
-  }
 }
 
 function getAffixes(tam, conjugation, isCV) {
@@ -324,16 +289,10 @@ export default function verb({
     throw new Error(`Didn't expect fourth radical ${$Q} with form ${stringForm}`);
   }
 
-  const {prefixes, suffix} = getAffixes(
-    tam,
-    conjugation,
-    // either the 2nd segment of the form is a vowel
-    // or the verb is form-1 with a weak medial consonant
-    `aeiou`.includes(stringForm[1]) || (`aiu`.includes(stringForm) && $3.meta.weak),
-  );
+  const prefix = tam === tamToken.pst ? null : conjugation.prefix(tam === tamToken.ind);
+  const suffix = conjugation.suffix();
 
-  // const prefixers = makePrefixers(prefixes);
-  const suffixer = makeSuffixer(suffix);
+  const suffixer = makeSuffixer(suffix, conjugation, tam);
 
   // true if a verb is above form 1 and has no TAM suffix
   const noSuffix = tam === tamToken.pst
@@ -362,18 +321,18 @@ export default function verb({
     preTransform: [[
       (finalWeak) && fixAy(noSuffix || nonpast),
       (nonpast && finalWeak) && fixIy,
-      (biliteral && !nonpast && conjugation.past.heavier()) && fixGeminate,
+      (biliteral && !nonpast && conjugation.heavierPastSuffix()) && fixGeminate,
       (nonpast && (!noSuffix || augmentation)) && uToI,
       // suffixer doesn't have a condition attached because both pst AND npst suffixes are very
       // strongly attached to the verb (unlike npst prefixes and also clitic pronouns),
       // meaning the conjugation suffix can always just be attached
       // maybe this is a bad move and i should allow transformers to access the stem of the
       // verb but ah well
+      prefix && (base => { base.unshift(prefix); }),
       suffixer,
     ]],
-    // see XXX above at `const transformers = [...]`
+    // see XXX above
     postTransform: [[
-      (_, localMeta) => { localMeta.prefixes = prefixes; },
       augment(augmentation),
       (form === `i` && tam === tamToken.pst && conjugation.person.third() && conjugation.gender.masc()) && fixFi3il,
     ]],
@@ -391,7 +350,7 @@ export default function verb({
         return _$_`${$F}.aa.${$L}`;
       }
       if (tam === tamToken.pst) {
-        if ($L.meta.weak && !conjugation.gender.masc() && !conjugation.past.heavier()) {
+        if ($L.meta.weak && !conjugation.gender.masc() && !conjugation.heavierPastSuffix()) {
           // 3atit, 3atyit
           return [...$_`${$F}.a.${$3}`, ...$_`${$F}.a.${$3}.y`];
         }
@@ -423,7 +382,7 @@ export default function verb({
         return _$_`${$F}.ii.${$L}`;
       }
       if (tam === tamToken.pst) {
-        if ($L.meta.weak && !conjugation.gender.masc() && !conjugation.past.heavier()) {
+        if ($L.meta.weak && !conjugation.gender.masc() && !conjugation.heavierPastSuffix()) {
           // 7ikyit, 7ikit
           return [...$_`${$F}.i.${$3}.y`, ...$_`${$F}.i.${$3}`];
         }
@@ -527,7 +486,7 @@ export default function verb({
       ];
     case wazn.nfa3al:
       if ($3.meta.weak) {
-        if (tam === tamToken.pst && conjugation.past.heavier()) {
+        if (tam === tamToken.pst && conjugation.heavierPastSuffix()) {
           return [
             ...$_`n.${$F}.a.${$L}`,
             ...$_`n.${$F}.i.${$L}`,
@@ -567,7 +526,7 @@ export default function verb({
       // npst conj are always yinfi3il not yinfa3al
       // and (idk if this exists but) pst conj are nfi3il not nfa3al
       if ($3.meta.weak) {
-        if (tam === tamToken.pst && conjugation.past.heavier()) {
+        if (tam === tamToken.pst && conjugation.heavierPastSuffix()) {
           return [
             ...$_`n.${$F}.a.${$L}`,
             ...$_`n.${$F}.i.${$L}`,
@@ -605,7 +564,7 @@ export default function verb({
       ];
     case wazn.fta3al:
       if ($3.meta.weak) {
-        if (tam === tamToken.pst && conjugation.past.heavier()) {
+        if (tam === tamToken.pst && conjugation.heavierPastSuffix()) {
           return [
             ...$_`${$F}.t.a.${$L}`,
             ...$_`${$F}.t.i.${$L}`,
@@ -645,7 +604,7 @@ export default function verb({
       // npst conj are always yifti3il not yifta3al
       // and (idk if this exists but) pst conj are fti3il not fta3al
       if ($3.meta.weak) {
-        if (tam === tamToken.pst && conjugation.past.heavier()) {
+        if (tam === tamToken.pst && conjugation.heavierPastSuffix()) {
           return [
             ...$_`${$F}.t.a.${$L}`,
             ...$_`${$F}.t.i.${$L}`,
@@ -690,7 +649,7 @@ export default function verb({
         return _$_`s.t.aa ${$3}.I.${$L}`;
       }
       if ($3.meta.weak) {
-        if (tam === tamToken.pst && conjugation.past.heavier()) {
+        if (tam === tamToken.pst && conjugation.heavierPastSuffix()) {
           return [
             ...$_`s.t.${$F}.a.${$L}`,
             ...$_`s.t.${$F}.i.${$L}`,

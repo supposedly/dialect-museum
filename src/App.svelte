@@ -5,6 +5,7 @@
   import wordType from './backend/conversion/parsing/type';
   import {type as segType} from './backend/conversion/objects';
   import {alphabet as abc, location} from './backend/conversion/symbols';
+import type from './backend/conversion/parsing/type';
 
   const compiledGrammar = Grammar.fromCompiled(grammar);
 
@@ -13,7 +14,11 @@
       if (Array.isArray(word)) {
         return join(word, `/`, ...(word.length > 1 ? [`(`, `)`] : []));
       }
-      word = new Word(word);
+      word = new Word(word, {underlying: abc, surface: null});
+      // word.capture.underlying.segment(word.alphabets.underlying.c)
+      //   .promote({
+      //     into: [surface.c]
+      //   });
       const capture = new Capture(word);
 
       capture.only({value: `fem`})(({wordType: type, prevVowel, prevConsonant, next}) => {
@@ -35,6 +40,24 @@
         }
         return [abc.e, abc.i];
       });
+
+      /*
+      capture.only({value: `fem`})
+      */
+
+      // capture.only(abc.c, Capture.keys`{value, meta: {features: {emphatic: ${true}}}}`)
+      //   .transform({
+      //     into: [[abc.I, abc.t]],
+      //     where: {prevConsonant: {value: 1}},
+      //     because: `you know`,
+      //   });
+
+      // capture.only(abc.c)
+      //   .transform({
+      //     into: [[abc.I, abc.t]],
+      //     where: {prevConsonant: {value: 1}},
+      //     because: `you know`,
+      //   });
 
       return capture.word.value.map(letter => {
         switch (letter.value) {

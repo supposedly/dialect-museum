@@ -15,7 +15,13 @@ const Y = Object.freeze(parseLetter`y`);
 const AA = Object.freeze(parseLetter`aa`);
 
 // push suffix onto last syllable of base
-const pushSuffix = suffix => base => lastOf(base).value.push(...suffix);
+// XXX TODO: technically they should be added at syllable level instead of
+// segment level (bc word.js is what makes suffixes segment-level)
+// but i think that would mess stress up and generally be annoying yikes
+const pushSuffix = suffix => base => lastOf(base).value.push(suffix);
+
+// add suffixes passed in from elsewhere
+const addWordSuffixes = suffixes => base => base.push(...suffixes);
 
 // bump last consonant of last syllable into a new syllable
 // if last syllable's last segment isn't a consonant, just make an empty new syllable
@@ -114,7 +120,7 @@ function augment(augmentation) {
       }
     }
   });
-}
+}//
 
 export default function pp({
   type: was,
@@ -122,6 +128,7 @@ export default function pp({
   value: {
     root: [$F, $3, $L, $Q],
     augmentation,
+    suffix: suffixes
   },
   context,
 }) {
@@ -132,11 +139,11 @@ export default function pp({
   }
 
   const isActiveVoice = voice === voiceToken.active;
-  const suffix = conjugation.participle.suffix;
+  const conjugationSuffix = conjugation.suffix;
   const lastRadical = $Q || $L;
   const onlyMu = context.has(`mu`);
 
-  const ayFixer = (!suffix.length && lastRadical.meta.weak) && fixAy;
+  const ayFixer = (!conjugationSuffix.length && lastRadical.meta.weak) && fixAy;
 
   const meta = {
     was,
@@ -151,13 +158,15 @@ export default function pp({
     preTransform: [[
       ayFixer,
       strategize(conjugation),
-      pushSuffix(suffix),
+      pushSuffix(conjugationSuffix),
+      suffixes && addWordSuffixes(suffixes),
     ],
     !onlyMu && [
       muToMi,
       ayFixer,
       strategize(conjugation),
-      pushSuffix(suffix),
+      pushSuffix(conjugationSuffix),
+      suffixes && addWordSuffixes(suffixes),
     ]],
     meta,
   });
@@ -166,7 +175,13 @@ export default function pp({
     preTransform: backup(
       iyStrategize(conjugation),
     ).map(
-      preSuffix => [!useMu && muToMi, ayFixer, preSuffix, pushSuffix(suffix)],
+      preSuffix => [
+        !useMu && muToMi,
+        ayFixer,
+        preSuffix,
+        pushSuffix(conjugationSuffix),
+        suffixes && addWordSuffixes(suffixes),
+      ],
     ).or([/* ayFixer */]),  // commented out because $iy shouldn't be used on -ay words
     postTransform: [[augment(augmentation)]],
     meta,

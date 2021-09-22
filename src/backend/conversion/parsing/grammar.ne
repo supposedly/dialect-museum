@@ -148,6 +148,17 @@
       tam: fromEnum(sym.tamToken),
       voice: fromEnum(sym.voiceToken),
       wazn: fromEnum(sym.wazn),
+      suffixDelim: /_/,
+      fem: $`c`,
+      dual: $`Dual`,
+      plural: $`Plural`,
+      // femDual: $`FemDual`,  # not sure if good idea?
+      femPlural: $`C`,
+      ayn: $`AynPlural`,
+      an: $`An`,
+      iyy: $`Iyy`,
+      jiyy: $`Jiyy`,
+      negative: $`Negative`,
       closeTag: { match: /]/, pop: 1 }
     },
     ctxTag: {
@@ -256,12 +267,12 @@ tif3il -> "(tif3il"
 pp -> "(pp"
     ctx_tags:?
     __ suffixed_wazn
-    __ pronoun
     __ voice
+    __ pronoun
     __ root
     augmentation:?
   ")"  {%
-    ([ , ctx ,, {form, suffix} ,, conjugation ,, voice ,, root, augmentation]) => init(
+    ([ , ctx ,, {form, suffix} ,, voice ,, conjugation ,, root, augmentation]) => init(
       type.pp,
       { conjugation, form, voice },
       { root, suffix: suffix || [], augmentation },
@@ -274,13 +285,13 @@ pp -> "(pp"
 verb ->
   "(verb"
     ctx_tags:?
-    __ pronoun
     __ wazn
     __ tam
+    __ pronoun
     __ root
     augmentation:?
   ")"  {%
-    ([ , ctx ,, conjugation ,, form ,, tam ,, root, augmentation]) => init(
+    ([ , ctx ,, form ,, tam ,, conjugation ,, root, augmentation]) => init(
       type.verb,
       { form, tam, conjugation },
       { root, augmentation },
@@ -300,8 +311,12 @@ word ->
     stem suffix:? augmentation:? {%
       ([{value}, suffix, augmentation]) => init(
         type.word,
-        { was: null, augmentation: augmentation ? augmentation(augmentation) : null },
-        [...(suffix && suffix.some(o => o.meta.stressed) ? value.map(syl => _.edit(syl, {meta: {stressed: false}})) : value), ...(suffix || [])]
+        { was: null },
+        [
+          ...(suffix && suffix.some(o => o.meta.stressed) ? value.map(syl => _.edit(syl, {meta: {stressed: false}})) : value),
+          ...(suffix || []),
+          ...(augmentation ? [augmentation] : [])
+        ]
       )
     %}
   | "(ctx" ctx_tags __ word ")" {% ([ , ctx ,, word]) => ctx.map(word.ctx) %}

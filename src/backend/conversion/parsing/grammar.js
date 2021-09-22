@@ -151,6 +151,17 @@ function id(x) { return x[0]; }
       tam: fromEnum(sym.tamToken),
       voice: fromEnum(sym.voiceToken),
       wazn: fromEnum(sym.wazn),
+      suffixDelim: /_/,
+      fem: $`c`,
+      dual: $`Dual`,
+      plural: $`Plural`,
+      // femDual: $`FemDual`,  # not sure if good idea?
+      femPlural: $`C`,
+      ayn: $`AynPlural`,
+      an: $`An`,
+      iyy: $`Iyy`,
+      jiyy: $`Jiyy`,
+      negative: $`Negative`,
       closeTag: { match: /]/, pop: 1 }
     },
     ctxTag: {
@@ -245,8 +256,8 @@ export const ParserRules = [
     {"name": "pp$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "pp$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
     {"name": "pp$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "pp", "symbols": [{"literal":"(pp"}, "pp$ebnf$1", "__", "suffixed_wazn", "__", "pronoun", "__", "voice", "__", "root", "pp$ebnf$2", {"literal":")"}], "postprocess": 
-        ([ , ctx ,, {form, suffix} ,, conjugation ,, voice ,, root, augmentation]) => init(
+    {"name": "pp", "symbols": [{"literal":"(pp"}, "pp$ebnf$1", "__", "suffixed_wazn", "__", "voice", "__", "pronoun", "__", "root", "pp$ebnf$2", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, {form, suffix} ,, voice ,, conjugation ,, root, augmentation]) => init(
           type.pp,
           { conjugation, form, voice },
           { root, suffix: suffix || [], augmentation },
@@ -257,8 +268,8 @@ export const ParserRules = [
     {"name": "verb$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "verb$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
     {"name": "verb$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "verb", "symbols": [{"literal":"(verb"}, "verb$ebnf$1", "__", "pronoun", "__", "wazn", "__", "tam", "__", "root", "verb$ebnf$2", {"literal":")"}], "postprocess": 
-        ([ , ctx ,, conjugation ,, form ,, tam ,, root, augmentation]) => init(
+    {"name": "verb", "symbols": [{"literal":"(verb"}, "verb$ebnf$1", "__", "wazn", "__", "tam", "__", "pronoun", "__", "root", "verb$ebnf$2", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, form ,, tam ,, conjugation ,, root, augmentation]) => init(
           type.verb,
           { form, tam, conjugation },
           { root, augmentation },
@@ -276,8 +287,12 @@ export const ParserRules = [
     {"name": "word", "symbols": ["stem", "word$ebnf$1", "word$ebnf$2"], "postprocess": 
         ([{value}, suffix, augmentation]) => init(
           type.word,
-          { was: null, augmentation: augmentation ? augmentation(augmentation) : null },
-          [...(suffix && suffix.some(o => o.meta.stressed) ? value.map(syl => _.edit(syl, {meta: {stressed: false}})) : value), ...(suffix || [])]
+          { was: null },
+          [
+            ...(suffix && suffix.some(o => o.meta.stressed) ? value.map(syl => _.edit(syl, {meta: {stressed: false}})) : value),
+            ...(suffix || []),
+            ...(augmentation ? [augmentation] : [])
+          ]
         )
             },
     {"name": "word", "symbols": [{"literal":"(ctx"}, "ctx_tags", "__", "word", {"literal":")"}], "postprocess": ([ , ctx ,, word]) => ctx.map(word.ctx)},

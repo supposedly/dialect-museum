@@ -1,9 +1,14 @@
 import { obj, type } from '../objects';
+import objType from '../parsing/type';
 import { lastOf } from './misc';
+
+export function isSyllable(s) {
+  return s.type === objType.syllable;
+}
 
 export function newSyllable(string = []) {
   return obj.obj(
-    `syllable`,
+    objType.syllable,
     {stressed: null, weight: null},
     string,
   );
@@ -58,6 +63,7 @@ export function getSyllableWeight(s) {
 
 // determine & set stressed syllable according to weights
 export function setStressedSyllable(syllables, clearRest = false) {
+  syllables = syllables.filter(isSyllable);
   if (clearRest) {
     syllables.forEach(s => { s.meta.stressed = false; });
   }
@@ -93,8 +99,8 @@ export function setStressedSyllable(syllables, clearRest = false) {
 
 export function copy(syllables) {
   return syllables.map(s => obj.obj(
-    `syllable`,
+    s.type,
     {...s.meta},
-    [...s.value],
+    s.type === objType.syllable ? [...s.value] : {...s.value},
   ));
 }

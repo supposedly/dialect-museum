@@ -70,19 +70,19 @@
   There's another newer note to the left giving `abc.funcs = {delete(letter), stress(vowel), stressWord(word), nasalize(word), emphaticize(letter)}` and noting that `nasalize` should maybe get the whole word so it can match it to an alternative spelling if necessary (e.g. `lOsyON"` should prob match `lotion` in 3arabizi, not `losyon`)
 
 ## Roadmap for getting the Capture rewrite underway and beyond
-1. fix prefix and pronoun-initializer and whatever else to just return objects like {type: prefix, meta: {person: etc, gender: etc, number; etc}}
-2. then fix pp-initializer and verb-initializer so that they use that type of return value instead of literal segments
+1. ~~fix prefix and pronoun-initializer and whatever else to just return objects like {type: prefix, meta: {person: etc, gender: etc, number; etc}}~~
+2. ~~then fix pp-initializer and verb-initializer so that they use that type of return value instead of literal segments~~
 3. then go into classes and fix the Word constructor so that it doesn't treat prefixes as anything special (since now they'll just be a normal
-4. segment of the word)
-5. then add a this.capture attribute to Word in the constructor so that the below works
-6. then possibly do the same thing for augmentations idk what do i know
+   segment of the word)
+5. then possibly do the same thing for augmentations idk what do i know
+6. then add a this.capture attribute to Word in the constructor so that you can do `word.capture.underlying.segment()` or `word.capture.surface.segment()` or etc
 7. the ultimate idea is to have prefixes (and maybe augmentations) all handled by .expand()
 8. on that topic, replace the `handler =>` thingy in Capture with three methods: .transform(), .expand(), .promote()  
    where transform transforms, expand transforms into multiple thingies, promote goes up a level in the alphabet hierarchy
 10. then update all the indexing to be able to recurse to handle the result of .expand()
 11. then also replace extractDeps and stuff with a simple method that checks the `{where}` key passed to those three methods
 12. then update the dep-handling to be more specific about only looking at the exact deps requested (since we can inspect
-13. them now unlike with black-box functions)
+    them now unlike with black-box functions)
 14. then hopefully figure out a way to handle schwa-insertion...
 15. then work on creating alphabets
 16. then have nothing but fun with the frontend
