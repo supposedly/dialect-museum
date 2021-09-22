@@ -196,6 +196,12 @@ export const alphabet = {
     manner: manner.fricative,
     voicing: false,
   })
+  (`Z`, `Z`, {  // to be used for z <- ص
+    location: location.ridge,
+    articulator: articulator.tongue,
+    manner: manner.fricative,
+    voicing: true,
+  })
   (`z`, `z`, {
     location: location.ridge,
     articulator: articulator.tongue,

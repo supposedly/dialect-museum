@@ -80,6 +80,7 @@
       w: c`w`,
       y: c`y`,
       z: c`z`,
+      Z: c`Z`,
       th: c`th`,
       dh: c`dh`,
       nullConsonant: c`null`,
@@ -486,7 +487,7 @@ weak_consonant -> %openWeakConsonant strong_consonant %closeWeakConsonant  {%
 # ditto above re {value}
 strong_consonant -> (
   %2 | %3 | %b | %d | %f | %g | %gh | %h | %7 | %5 | %j | %k | %q | %l | %m |
-  %n | %p | %r | %s | %sh | %t | %v | %z | %th | %dh | %w | %y | %nullConsonant
+  %n | %p | %r | %s | %S | %sh | %t | %v | %z | %th | %dh | %w | %y | %nullConsonant
 )  {% ([[{ value }]]) => _.process(value) %}
 
 # ditto
