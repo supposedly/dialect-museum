@@ -13,7 +13,8 @@ class MatchOne extends Match {
     super(obj);
   
     if (obj instanceof Match) {
-      this.matcher = obj.matches;
+      // this was a nasty bug... TODO: see if can make do without the .bind()
+      this.matcher = obj.matches.bind(obj);
     } else if (Array.isArray(obj)) {
       this.matcher = new All(...obj).matches;
     } else if (obj instanceof Function) {

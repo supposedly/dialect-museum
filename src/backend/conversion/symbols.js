@@ -52,7 +52,8 @@ function c(map) {
           rounded: false,
           ...features,
           // ensure these three aren't `undefined`
-          articulator: features.location,
+          articulator: features.articulator,
+          location: features.location,
           voicing: features.voicing,
           manner: features.manner,
           isNull: name === `null`

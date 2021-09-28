@@ -23,7 +23,7 @@
       `${abc[s].symbol}\\${abc.emphatic}?`
     ),
     value: match => (match.endsWith(abc.emphatic)
-      ? {...abc[s], meta: {...abc[s].meta}, features: {...abc[s].meta.features, emphatic: true}}
+      ? {...abc[s], meta: {...abc[s].meta, features: {...abc[s].meta.features, emphatic: true}}}
       : abc[s]
     )
   });
