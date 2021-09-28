@@ -19,16 +19,23 @@
       word = new Word(word, {underlying: abc, phonic: abc, surface: {}});
 
       word.capture.underlying.suffix(p => p.gender.fem() && p.number.singular() && p.person.third())
-        .transform({
-          into: [word.abc.underlying.t],
+        .expand({
+          into: [[word.abc.phonic.t]],
           where: {
             word: {was: type.verb, tam: tamToken.pst}
           }
         });
 
       word.capture.underlying.segment(word.abc.underlying.c, keys`{value}`)
-        .transform({
-          into: [word.abc.underlying.a],
+        .expand({
+          into: [[word.abc.phonic.i, word.abc.phonic.t]],
+          where: match.any(
+            {next: {$exists: true}},
+            {word: {was: type.idafe}}
+          )
+        })
+        .expand({
+          into: [[word.abc.phonic.a]],
           where: {
             prevConsonant: {
               meta: {
@@ -41,15 +48,17 @@
           },
           because: `just testin`,
         })
-        .transform({
-          into: [word.abc.underlying.e, word.abc.underlying.i],
+        .expand({
+          into: [[word.abc.phonic.e], [word.abc.phonic.i]],
           odds: [0.5, 0.5],
           because: `The ة's default pronunciation in Lebanon, like most of the Levant, is a high unrounded vowel.`,
         });
 
       word.init();
 
-      return word.collect(0).map(segment => segment.value).join(``);
+      return `\
+      layer 0: ${word.collect(0).map(segment => (segment ? segment.value : `-`)).join(``)},
+      layer 1: ${word.collect(1).map(segment => (segment ? (Array.isArray(segment) ? segment[0].value : segment.value) : `-`)).join(``)}`;
     }).join(delim);
    return `${pre}${joined}${post}`;
   }

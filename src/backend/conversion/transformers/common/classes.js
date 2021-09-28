@@ -140,6 +140,33 @@ class TrackerList {
     }
     return this.head === null;
   }
+
+  forEach(f) {
+    let node = this.head;
+    if (node) {
+      do {
+        f(node);
+      } while (node = node.next);
+    }
+  }
+
+  /*
+  reduce(initial, f) {
+    let node = this.head;
+    if (!node) {
+      return initial;
+    }
+    let accumulator = initial;
+    do {
+      accumulator = f(node, accumulator);
+    } while (node = node.next);
+    return accumulator;
+  }
+
+  forEach(f) {
+    return this.reduce(null, f);
+  }
+  */
 }
 
 class TrackerChoices {
@@ -420,7 +447,7 @@ class Tracker {
   expand(layer, ruleIdx, {into, odds, where: environment, because}) {
     this.history[layer + 1].revert(-1);
     this.history[layer + 1].insertOne(
-      into.map(seq => new TrackerList(seq, this.rules, this.layers, layer + 1, this)),
+      into.map(value => new TrackerList({value}, this.rules, this.layers, layer + 1, this)),
       because,
       ruleIdx,
       environment,
@@ -430,7 +457,13 @@ class Tracker {
   }
 
   getCurrentChoice(layer) {
-    return this.history[layer].getCurrentChoice();
+    const currentChoice = this.history[layer].getCurrentChoice();
+    if (!(currentChoice instanceof TrackerList)) {
+      return currentChoice;
+    }
+    const arr = [];
+    currentChoice.forEach(node => arr.push(node.getCurrentChoice(layer)));
+    return arr;
   }
 }
 
@@ -493,24 +526,12 @@ export class WordManager {
   }
 
   init() {
-    let node = this.trackers.head;
-    if (!node) {
-      return;
-    }
-    do {
-      node.applyRules(0);
-    } while (node = node.next);
+    return this.trackers.forEach(node => node.applyRules(0));
   }
 
   collect(layer) {
-    let node = this.trackers.head;
-    if (!node) {
-      return;
-    }
     const arr = [];
-    do {
-      arr.push(node.getCurrentChoice(layer));
-    } while (node = node.next);
+    this.trackers.forEach(node => arr.push(node.getCurrentChoice(layer)));
     return arr;
   }
 }
