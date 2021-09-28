@@ -204,10 +204,10 @@ class TrackerHistory {
 
 class Tracker {
   static DEP_FILTERS = {
-    [depType.prevConsonant]: {type: objType.consonant},
-    [depType.nextConsonant]: {type: objType.consonant},
-    [depType.prevVowel]: {type: objType.vowel},
-    [depType.nextVowel]: {type: objType.vowel},
+    [depType.prevConsonant]: match({type: objType.consonant}),
+    [depType.nextConsonant]: match({type: objType.consonant}),
+    [depType.prevVowel]: match({type: objType.vowel}),
+    [depType.nextVowel]: match({type: objType.vowel}),
   }
 
   constructor(segment, rules, layers, wordInfo, {prev = null, next = null, minLayer = 0, parent = null}) {
@@ -222,13 +222,13 @@ class Tracker {
     this.dependents = new DefaultObject({}, () => new Map());
 
     // update environment/dependencies on demand
-    this.environmentCache = layerNames.map(() => {}); // don't neeeed => Object.fromKeys(deptype...etc) since i just test for undefined lol
+    this.environmentCache = layerNames.map(() => ({})); // don't neeeed => Object.fromKeys(deptype...etc) since i just test for undefined lol
     this.environment = layerNames.map(
       (_, layer) => depType.keys.reduce(
         (o, dep) => layer < this.minLayer ? {} : Object.defineProperty(o, dep, {
           get: () => {
             if (this.environmentCache[layer][dep] === undefined) {
-              this.environmentCache[layer][dep] = this.findDependency(layer, dep)
+              this.environmentCache[layer][dep] = this.findDependency(layer, depType[dep])
             }
             return this.environmentCache[layer][dep];
           }
@@ -274,7 +274,6 @@ class Tracker {
     const currentChoice = this.getCurrentChoice(layer);
     if (dep > depType.type && currentChoice instanceof TrackerList) {
       const recurse = tracker => this.findRecursiveDependency(layer, tracker, dep, Tracker.DEP_FILTERS[dep]);
-
       switch (dep) {
         case depType.prev:
         case depType.prevVowel:
@@ -287,12 +286,11 @@ class Tracker {
           return recurse(currentChoice.head);
       }
     }
-    return this.environment[layer][dep];
+    return this.environment[layer][depType.keys[dep]];
   }
 
   findDependency(layer, dep) {
     const recurse = tracker => this.findRecursiveDependency(layer, tracker, dep, Tracker.DEP_FILTERS[dep]);
-
     switch (dep) {
       /* constant dependencies */
       case depType.word:
@@ -373,7 +371,7 @@ class Tracker {
       if (
         layer === rule.layer
         && rule.value.matches(value)
-        && (rule.where === null || rule.where.matches(this.environment[layer]))
+        && (rule.spec.where === null || rule.spec.where.matches(this.environment[layer]))
       ) {
         switch (rule.do) {
           case transformType.transformation:
@@ -408,25 +406,25 @@ class Tracker {
     });
   }
 
-  transform(layer, ruleIdx, {into, weights, where: environment, because}) {
-    this.history[layer].insertOne(into, because, ruleIdx, environment, weighted(weights));
+  transform(layer, ruleIdx, {into, odds, where: environment, because}) {
+    this.history[layer].insertOne(into, because, ruleIdx, environment, weighted(odds));
     this.invalidateDependents(layer);
   }
 
-  promote(layer, ruleIdx, {into, weights, because}) {
+  promote(layer, ruleIdx, {into, odds, because}) {
     this.history[layer + 1].revert(-1);
-    this.history[layer + 1].insertOne(into, because, ruleIdx, environment, weighted(weights));
+    this.history[layer + 1].insertOne(into, because, ruleIdx, environment, weighted(odds));
     this.invalidateDependents(layer);
   }
 
-  expand(layer, ruleIdx, {into, weights, where: environment, because}) {
+  expand(layer, ruleIdx, {into, odds, where: environment, because}) {
     this.history[layer + 1].revert(-1);
     this.history[layer + 1].insertOne(
       into.map(seq => new TrackerList(seq, this.rules, this.layers, layer + 1, this)),
       because,
       ruleIdx,
       environment,
-      weighted(weights)
+      weighted(odds)
     );
     this.invalidateDependents(layer);
   }
@@ -438,16 +436,19 @@ class Tracker {
 
 class Rules {
   constructor() {
-    this.raw = [];
+    // this.raw = [];
     this.matchers = [];
   }
 
-  add(spec) {
-    this.raw.push(spec);
+  add(rule) {
+    // this.raw.push(rule);
     this.matchers.push({
-      ...spec,
-      value: match(spec.value),
-      where: spec.where && match(spec.where)
+      ...rule,
+      value: match(rule.value),
+      spec: {
+        ...rule.spec,
+        where: rule.spec.where && match(rule.spec.where)
+      }
     });
   }
 }
@@ -475,16 +476,18 @@ export class WordManager {
   addRule(rule) {
     rule = {...rule, spec: {...rule.spec}};
     rule.layer = this.layerIndices[rule.layer];
-    if (!rule.where) {
-      rule.where = null;
+    if (!rule.spec.where) {
+      rule.spec.where = null;
     }
     if (!Array.isArray(rule.spec.into)) {
-      rule.spec.weights = Object.fromEntries(
+      rule.spec.odds = Object.fromEntries(
         Object.values(rule.spec.into).map((weight, idx) => [idx, weight])
       );
       rule.spec.into = Object.keys(rule.spec.into);
-    } else {
-      rule.spec.weights = Object.fromEntries(rule.spec.into.map((_, idx) => [idx, +!idx]));
+    } else if (!rule.spec.odds) {
+      rule.spec.odds = Object.fromEntries(rule.spec.into.map((_, idx) => [idx, +!idx]));
+    } else if (Array.isArray(rule.spec.odds)) {
+      rule.spec.odds = Object.fromEntries(rule.spec.odds.map((weight, idx) => [idx, weight]));
     }
     return this.rules.add(rule);
   }

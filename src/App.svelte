@@ -1,11 +1,12 @@
 <script>
-    import {Parser, Grammar} from 'nearley';
-    import * as grammar from './backend/conversion/parsing/grammar.js';
+  import {Parser, Grammar} from 'nearley';
+  import * as grammar from './backend/conversion/parsing/grammar.js';
   import {Word, keys} from './backend/conversion/transformers/common/classes';
   import wordType from './backend/conversion/parsing/type';
   import {type as segType} from './backend/conversion/objects';
-  import {alphabet as abc, location} from './backend/conversion/symbols';
+  import {alphabet as abc, location, tamToken} from './backend/conversion/symbols';
   import type from './backend/conversion/parsing/type';
+  import match from './backend/conversion/transformers/common/match.js';
 
   const compiledGrammar = Grammar.fromCompiled(grammar);
 
@@ -14,13 +15,40 @@
       if (Array.isArray(word)) {
         return join(word, `/`, ...(word.length > 1 ? [`(`, `)`] : []));
       }
+
       word = new Word(word, {underlying: abc, phonic: abc, surface: {}});
+
+      word.capture.underlying.suffix(p => p.gender.fem() && p.number.singular() && p.person.third())
+        .transform({
+          into: [word.abc.underlying.t],
+          where: {
+            word: {was: type.verb, tam: tamToken.pst}
+          }
+        });
+
       word.capture.underlying.segment(word.abc.underlying.c, keys`{value}`)
         .transform({
           into: [word.abc.underlying.a],
+          where: {
+            prevConsonant: {
+              meta: {
+                features: match.any(
+                  {emphatic: true},
+                  {location: val => val < location.velum}
+                )
+              }
+            }
+          },
           because: `just testin`,
+        })
+        .transform({
+          into: [word.abc.underlying.e, word.abc.underlying.i],
+          odds: [0.5, 0.5],
+          because: `The ة's default pronunciation in Lebanon, like most of the Levant, is a high unrounded vowel.`,
         });
+
       word.init();
+
       return word.collect(0).map(segment => segment.value).join(``);
     }).join(delim);
    return `${pre}${joined}${post}`;
