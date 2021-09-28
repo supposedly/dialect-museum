@@ -297,7 +297,6 @@ class Tracker {
       /* constant dependencies */
       case depType.word:
         return this.wordInfo;
-
       case depType.type:
         return this.getCurrentChoice(layer).type;
 
@@ -369,12 +368,12 @@ class Tracker {
   }
 
   applyRules(layer, minIdx = 0) {
-    this.rules.matchers.splice(minIdx).forEach((rule, idx) => {
-      let value = this.history[layer].getCurrentChoice();
+    this.rules.matchers.slice(minIdx).forEach((rule, idx) => {
+      let value = this.getCurrentChoice(layer);
       if (
         layer === rule.layer
         && rule.value.matches(value)
-        && rule.where.matches(this.environment[layer])
+        && (rule.where === null || rule.where.matches(this.environment[layer]))
       ) {
         switch (rule.do) {
           case transformType.transformation:
@@ -439,13 +438,17 @@ class Tracker {
 
 class Rules {
   constructor() {
-    // this.raw = [];
+    this.raw = [];
     this.matchers = [];
   }
 
   add(spec) {
-    // this.raw.push(spec);
-    this.matchers.push({...spec, value: match(spec.value), where: match(spec.where)});
+    this.raw.push(spec);
+    this.matchers.push({
+      ...spec,
+      value: match(spec.value),
+      where: spec.where && match(spec.where)
+    });
   }
 }
 
@@ -470,7 +473,11 @@ export class WordManager {
   }
 
   addRule(rule) {
-    rule.spec = {...rule.spec};
+    rule = {...rule, spec: {...rule.spec}};
+    rule.layer = this.layerIndices[rule.layer];
+    if (!rule.where) {
+      rule.where = null;
+    }
     if (!Array.isArray(rule.spec.into)) {
       rule.spec.weights = Object.fromEntries(
         Object.values(rule.spec.into).map((weight, idx) => [idx, weight])
@@ -479,7 +486,6 @@ export class WordManager {
     } else {
       rule.spec.weights = Object.fromEntries(rule.spec.into.map((_, idx) => [idx, +!idx]));
     }
-    rule.layer = this.layerIndices[rule.layer];
     return this.rules.add(rule);
   }
 
@@ -507,14 +513,14 @@ export class WordManager {
 }
 
 class CaptureApplier {
-  constructor(layer, capture, capturedSpec) {
+  constructor(layer, manager, capturedSpec) {
     this.layer = layer;
-    this.capture = capture;
+    this.manager = manager;
     this.captured = capturedSpec;
   }
 
   apply(type, spec) {
-    this.capture.addRule({
+    this.manager.addRule({
       layer: this.layer,
       value: this.captured,
       do: type,
@@ -536,10 +542,10 @@ class CaptureApplier {
   }
 }
 
-class CaptureProxy {
-  constructor(alphabet, alphabetName, capture) {
+class Capture {
+  constructor(alphabet, alphabetName, manager) {
     this.alphabet = {name: alphabetName, alphabet};
-    this.capture = capture;
+    this.manager = manager;
   }
 
   between() {
@@ -549,7 +555,7 @@ class CaptureProxy {
   segment(obj, ...specifiers) {
     return new CaptureApplier(
       this.alphabet.name,
-      this.capture,
+      this.manager,
       moldObject(obj, ...specifiers)
     );
   }
@@ -595,7 +601,7 @@ export class Word {
     this.manager = new WordManager(this.word, alphabets);
     this.capture = Object.fromEntries([
       ...Object.entries(alphabets).map(
-        ([name, abc]) => [name, new CaptureProxy(abc, name, this.manager)]
+        ([name, abc]) => [name, new Capture(abc, name, this.manager)]
       ),
     ]);
     this.abc = alphabets;

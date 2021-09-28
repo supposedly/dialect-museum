@@ -18,7 +18,6 @@
       word.capture.underlying.segment(word.abc.underlying.c, keys`{value}`)
         .transform({
           into: [word.abc.underlying.a],
-          where: {},
           because: `just testin`,
         });
       word.init();
