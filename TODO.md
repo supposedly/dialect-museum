@@ -1,5 +1,15 @@
 # TODO
 
+## After rewriting Capture
+* try not to use so many classes
+* rename new Capture class to something fitting
+* ~~Convert layers to indices in Capture so that each Tracker doesn't do it individually~~
+* be smarter about invalidating dependencies (see XXX comment in classes.js)
+* update MatchOne (and other classes that forward to it) to let a custom arg (or args) be passed to matched functions
+  * this is useful for e.g. checking that next and prev have the same value -- can't do that easily without a function
+
+## Before rewriting capture
+
 * Make everything less hardcoded:
   * Initialize verb prefixes with just their literal pronoun value (like 3ms or whatever) to be .expanded() into actual segments way later, in the transformer stage
   * Have initializers take an alphabet instead of using a global one
@@ -63,18 +73,18 @@
 * for the fabled U(n)I(corn): when you click on a letter in a word it gives you both the list of options and the probability slider for each option. the sliders affect all instances of that segment in that environment, not just that particular segment; correspondingly, you can click on any one of the options to test it out even if its slider value is at 0% probability
   * also, touching a slider causes it to reroll for all words, overwriting/forgetting your particular choice for that word
 
-## Random whiteboardstorming
+### Random whiteboardstorming
 
 * UI and transformer stuff  
   ![image](https://user-images.githubusercontent.com/32081933/133937172-7fca4a2f-55fb-4dd8-b1e7-2b8e6615eace.png)  
   There's another newer note to the left giving `abc.funcs = {delete(letter), stress(vowel), stressWord(word), nasalize(word), emphaticize(letter)}` and noting that `nasalize` should maybe get the whole word so it can match it to an alternative spelling if necessary (e.g. `lOsyON"` should prob match `lotion` in 3arabizi, not `losyon`)
 
-## Roadmap for getting the Capture rewrite underway and beyond
+### Roadmap for getting the Capture rewrite underway and beyond
 1. ~~fix prefix and pronoun-initializer and whatever else to just return objects like {type: prefix, meta: {person: etc, gender: etc, number; etc}}~~
 2. ~~then fix pp-initializer and verb-initializer so that they use that type of return value instead of literal segments~~
 3. then go into classes and fix the Word constructor so that it doesn't treat prefixes as anything special (since now they'll just be a normal
    segment of the word)
-5. then possibly do the same thing for augmentations idk what do i know
+5. ~~then possibly do the same thing for augmentations idk what do i know~~
 6. then add a this.capture attribute to Word in the constructor so that you can do `word.capture.underlying.segment()` or `word.capture.surface.segment()` or etc
 7. the ultimate idea is to have prefixes (and maybe augmentations) all handled by .expand()
 8. on that topic, replace the `handler =>` thingy in Capture with three methods: .transform(), .expand(), .promote()  

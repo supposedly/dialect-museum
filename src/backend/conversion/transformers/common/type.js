@@ -1,17 +1,9 @@
 import {fenum} from '../../enums';
 
-export default fenum([
-  /* filters */
-  `isPrefix`,
-  `isAugmentation`,
+export const depType = fenum([
   /* constant dependencies */
-  `idx`,
-  `type`,
-  `meta`,
-  `wordType`,
-  `wordMeta`,
-  `wordContext`,
   `word`,
+  `type`,
   /* reactive dependencies */
   `prev`,
   `next`,
@@ -19,4 +11,10 @@ export default fenum([
   `nextConsonant`,
   `prevVowel`,
   `nextVowel`,
+]);
+
+export const transformType = fenum([
+  `transformation`,
+  `expansion`,
+  `promotion`,
 ]);

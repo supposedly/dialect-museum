@@ -1,34 +1,66 @@
 /* eslint-disable max-classes-per-file */
 import {alphabet as abc} from '../../symbols';
 import {type as objType} from '../../objects';
-import {extractDeps} from './helpers';
+import {extractDeps, moldObject, qualifyKeys} from './helpers';
 import {misc} from '../../utils';
 const {lastOf} = misc;
 
 import {STAY} from './consts';
-import {Props} from './props';
-import depType from './type';
+import match from './match';
+import {depType, transformType} from './type';
+import weighted from 'weighted';
 
-export class Transformer {
-  constructor(alphabet) {
-    this.alphabet = alphabet;
-  }
+// see comments above keys() and keys.with()
+function makeObjectKeyParser(emptyValue, givenValue = v => v) {
+  return function parse(keys, ...values) {
+    values.reverse();
+    return JSON.parse(keys.map((string, idx) => [
+      string
+        .replace(/\w+/g, `"$&"`)
+        // this should just be a lookbehind thanks safari
+        .replace(/[^,{}:](?=[},])/g, `$&: ${emptyValue(values)}`),
+      givenValue(values.pop()),
+    ]).flat().join(``));
+  };
+}
 
-  get(keys) {
-    let obj = this.alphabet;
-    // ugly loop, have to avoid for..of bc of lint reasons that i don't understand xd
-    // at least it's fast tho
-    for (let i = 0; i < keys.length; i += 1) {
-      const key = keys[i];
-      if (obj[key]) {
-        obj = obj[key];
-      } else {
-        obj = obj.default;
-        break;
-      }
+// use this as a template-string tag to select specific keys for use with capture
+// specifically if you're passing an object that's not of your own definition and
+// you don't need the entire thing to be matched
+// usage: keys`{bruh: {test}, bruv}` -> {bruh: {test: {}}, bruv: {}}
+// - for example, capture.only(symbols.c, Capture.keys`{value}`)
+// - is just like capture.only(symbols.c, {value: {}})
+// - which equals capture.only({value: symbols.c.value})
+// but isn't as redundant, which gets pretty important the more keys you get
+// - e.g. capture.only({meta: {features: {something: symbols.e.something, otherThing: symbols.e.otherThing}}})
+// - can just be capture.only(symbols.e, Capture.keys`{meta: {features: {something, otherThing}}}`)
+// ALSO you can use this to edit specific values of the object in a similar way to obj.edit()
+// - e.g. instead of capture.only({value: symbols.w.value, meta: {weak: true, features: {emphatic: true}}})
+// - you can also do capture.only(symbols.w, Capture.keys`{value, meta: {weak: ${true}, features: {emphatic: ${true}}}})
+// that part is definitely not much of a space-saver and you'll likely end up doing this instead:
+// capture.only(symbols.w, Capture.keys`{value}`, Capture.keys.with(true)`{meta: {weak}, features: {emphatic}}`)
+// or just:
+// capture.only(symbols.w, Capture.keys`{value}`, {meta: {weak: true, features: {emphatic: true}}})
+// but having the option to do it in this one function is still nice
+export const keys = Object.assign(
+  // just an empty match object for when no match is given, signaling to the capture functions that
+  // they should match everything for this key
+  makeObjectKeyParser(() => `{}`),
+  {
+    // Capture.keys.with(true)`{meta: {weak, features: {emphatic}}}` => {meta: {weak: true, features: {emphatic: true}}},
+    // Capture.keys.with(true, false)`{meta: {weak, features: {emphatic}}` => {meta: {weak: true, features: {emphatic: false}}}
+    // Capture.keys.with(true, false)`{meta: {weak: ${1}}, features: {emphatic: ${0}, etc: ${1}}}` => they're indices, you get it
+    // overkill? yes
+    // having fun tho? heck yes
+    with(...options) {
+      const poppableOptions = options.slice().reverse();
+      return makeObjectKeyParser(
+        options.length === 1 ? () => options[0] : () => poppableOptions.pop(),
+        idx => options[idx]
+      )
     }
   }
-}
+);
 
 function copySeg(obj) {
   return {
@@ -38,54 +70,6 @@ function copySeg(obj) {
     context: {...obj.context},
   };
 }
-
-export class Word {
-  constructor(wordObj, augmentationChoice = 0, prefixChoice = 0) {
-    const type = wordObj.type;
-    const meta = {...wordObj.meta, stemStarts: 0};
-    const value = wordObj.value.map(copySeg);
-    const context = [...(wordObj.context || [])];
-
-    if (meta.prefixes) {
-      // TODO: find a way to actually respect the syllables :/
-      const choice = meta.prefixes.choices[prefixChoice];
-      const flat = [...choice.syllables.flat(), ...choice.rest];
-      meta.syllableCount += flat.length;
-      meta.prefixChoice = prefixChoice;
-      meta.stemStarts = flat.length;
-      value.unshift(...flat);
-    }
-
-    meta.stemEnds = value.length - 1;
-
-    if (meta.augmentation) {
-      meta.augmentationChoice = augmentationChoice;
-      const augmentation = meta.augmentation.clitics[augmentationChoice];
-      if (augmentation.stress) {
-        const inefficientVowelCopyLol = value.filter(seg => seg.type === objType.vowel);
-        inefficientVowelCopyLol.forEach(vowel => {
-          vowel.meta.stressed = false;
-        });
-        lastOf(inefficientVowelCopyLol).meta.stressed = true;
-      }
-      value.push(...augmentation.string);
-    }
-
-    this.type = type;
-    this.meta = meta;
-    this.value = value;
-    this.context = context;
-  }
-}
-
-const subAlphabets = Object.fromEntries(
-  Object.values(objType).map(
-    type => [type, Object.values(abc).filter(v => v.type === type)]
-  )
-);
-
-const consonantPred = new Props({type: objType.consonant});
-const vowelPred = new Props({type: objType.vowel}).or({type: objType.suffix, meta: {t: false}, value: `fem`});
 
 class DefaultObject {
   constructor(obj, newEntry) {
@@ -113,374 +97,478 @@ class DefaultObject {
   }
 }
 
-// see comments above Capture.keys() and Capture.keys.with()
-function makeObjectKeyParser(emptyValue, givenValue = v => v) {
-  return function parse(keys, ...values) {
-    values.reverse();
-    return JSON.parse(keys.map((string, idx) => [
-      string
-        .replace(/\w+/g, `"$&"`)
-        // this should just be a lookbehind thanks safari
-        .replace(/[^,{}:](?=[},])/g, `$&: ${emptyValue(values)}`),
-      givenValue(values.pop()),
-    ]).flat().join(``));
-  };
+// XXX: this feels like a bad idea bc recursive dependency...
+// (TrackerList contains Trackers and Tracker can contain TrackerLists)
+class TrackerList {
+  constructor(word, rules, layers, minLayer = 0, parent = null) {
+    const head = last = null;
+    for (const segment of word) {
+      if (head === null) {
+        head = last = new Tracker(segment, rules, layers, word.meta, {minLayer, parent: this});
+      } else {
+        last.next = new Tracker(segment, rules, layers, word.meta, {prev: last, minLayer, parent: this});
+      }
+    }
+
+    this._head = head;
+    this._tail = last;
+
+    this.parent = parent;
+    this.prev = this.parent.prev;
+    this.next = this.parent.next;
+  }
+
+  get head() {
+    if (this._head && this._head.node.prev !== null) {
+      this._head = this._head.node.prev;
+    }
+    return this._head;
+  }
+
+  get tail() {
+    if (this._tail && this._tail.node.next !== null) {
+      this._tail = this._tail.node.next;
+    }
+    return this._tail;
+  }
+
+  isEmpty() {
+    if ((this.head === null) !== (this.tail === null)) {
+      throw new Error(`only one end of this TrackerList is empty`);
+    }
+    return this.head === null;
+  }
+}
+
+class TrackerChoices {
+  constructor(choices = [], reason, current = 0) {
+    this.choices = choices;
+    this.reason = reason;
+    this.current = current;
+  }
+
+  choose(idx) {
+    this.current = idx;
+  }
+
+  getCurrentChoice() {
+    return this.choices[this.current];
+  }
+}
+
+class TrackerHistory {
+  constructor() {
+    this.history = [];
+    this.current = -1;
+  }
+
+  revert(idx) {
+    this.current = idx;
+  }
+
+  insert(...newHistory) {
+    this.history.splice(this.current + 1, this.history.length);
+    this.history.push(...newHistory);
+    this.current = this.history.length - 1;
+  }
+
+  insertOne(choice) {
+    this.insert(new TrackerChoices([choice]));
+  }
+
+  choose(idx) {
+    if (idx === this.history[this.current].current) {
+      this.revert(this.current + 1);
+      return false;
+    } else {
+      this.history[this.current].choose(idx);
+      this.insert();
+      // caller now has to call this.insert() to update
+      return true;
+    }
+  }
+
+  getChoice(idx) {
+    return this.history[idx].getCurrentChoice();
+  }
+
+  getCurrentChoice() {
+    const currentChoices = this.history[this.current];
+    return currentChoices && currentChoices.getCurrentChoice();
+  }
+}
+
+class Tracker {
+  static DEP_FILTERS = {
+    [depType.prevConsonant]: {type: objType.consonant},
+    [depType.nextConsonant]: {type: objType.consonant},
+    [depType.prevVowel]: {type: objType.vowel},
+    [depType.nextVowel]: {type: objType.vowel},
+  }
+
+  constructor(segment, rules, layers, wordInfo, {prev = null, next = null, minLayer = 0, parent = null}) {
+    this.node = {prev, next};
+    this.rules = rules;
+    this.wordInfo = wordInfo;
+    this.parent = parent;
+    this.minLayer = minLayer;
+
+    const layerNames = Object.keys(layers);
+    this.layers = layers;
+    this.dependents = new DefaultObject({}, () => new Map());
+
+    // update environment/dependencies on demand
+    this.environmentCache = layerNames.map(() => {}); // don't neeeed => Object.fromKeys(deptype...etc) since i just test for undefined lol
+    this.environment = layerNames.map(
+      (_, layer) => depType.keys.reduce(
+        (o, dep) => layer < this.minLayer ? {} : Object.defineProperty(o, dep, {
+          get: () => {
+            if (this.environmentCache[layer][dep] === undefined) {
+              this.environmentCache[layer][dep] = this.findDependency(layer, dep)
+            }
+            return this.environmentCache[layer][dep];
+          }
+        })
+      )
+    );
+
+    this.history = layerNames.map(() => new TrackerHistory());
+    // insert underlying segment to kick things off
+    this.history[this.minLayer].insertOne(segment);
+  }
+
+  get prev() {
+    return this.node.prev || (this.parent && this.parent.prev);
+  }
+
+  set prev(item) {
+    item.prev = this.node.prev;
+    this.node.prev = item;
+  }
+
+  get next() {
+    return this.node.next || (this.parent && this.parent.next);
+  }
+
+  set next(item) {
+    item.next = this.next;
+    this.node.next = item;
+  }
+
+  invalidateDependencies(layer, ...keys) {
+    keys.forEach(key => {
+      this.environmentCache[layer][key] === undefined;
+    });
+  }
+
+  retrieveDependency(layer, dep) {
+    const currentChoice = this.getCurrentChoice(layer);
+    if (dep > depType.type && currentChoice instanceof TrackerList) {
+      const recurse = tracker => this.findRecursiveDependency(layer, tracker, dep, Tracker.DEP_FILTERS[dep]);
+
+      switch (dep) {
+        case depType.prev:
+        case depType.prevVowel:
+        case depType.prevConsonant:
+          return recurse(currentChoice.tail);
+
+        case depType.next:
+        case depType.nextVowel:
+        case depType.nextConsonant:
+          return recurse(currentChoice.head);
+      }
+    }
+    return this.environment[layer][dep];
+  }
+
+  findDependency(layer, dep) {
+    const recurse = tracker => this.findRecursiveDependency(layer, tracker, dep, Tracker.DEP_FILTERS[dep]);
+
+    switch (dep) {
+      /* constant dependencies */
+      case depType.word:
+        return this.wordInfo;
+
+      case depType.type:
+        return this.getCurrentChoice(layer).type;
+
+      /* reactive dependencies */
+      case depType.prev:
+      case depType.prevVowel:
+      case depType.prevConsonant:
+        return recurse(this.prev);
+
+      case depType.next:
+      case depType.nextVowel:
+      case depType.nextConsonant:
+        return recurse(this.next);
+
+      default:
+        throw new Error(
+          `Unknown dep: ${dep} for ${this} (enum value ${depType.keys[dep]})`
+        );
+    }
+  }
+
+  findRecursiveDependency(layer, neighbor, relationship, constraint) {
+    if (!constraint) {
+      return this.react(layer, neighbor, relationship);
+    }
+    if (!neighbor) {
+      return null;
+    }
+    if (neighbor.matches(layer, constraint)) {
+      return this.react(layer, neighbor, relationship);
+    }
+    return this.react(layer, neighbor.retrieveDependency(layer, relationship), relationship);
+  }
+
+  react(layer, tracker, relationship) {
+    if (!tracker) {
+      return {$exists: false};
+    }
+    // TODO: can do better than just `relationship` now that deps aren't in a black box,
+    // use helpers.qualifyKeys() here instead (this will likely help with recognizing
+    // infinite recursion)
+    tracker.addDependent(layer, this, relationship);
+    return {
+      ...tracker.getCurrentChoice(layer),
+      $deps: tracker.environment[layer],
+      $exists: true
+    };
+  }
+
+  addDependent(layer, tracker, relationship) {
+    const dependentsAtLayer = this.dependents.ensure(layer);
+    if (!dependentsAtLayer.has(tracker)) {
+      dependentsAtLayer.set(tracker, new Set());
+    }
+    dependentsAtLayer.get(tracker).add(relationship);
+  }
+
+  matches(layer, props) {
+    const currentChoice = this.getCurrentChoice(layer);
+    return !(currentChoice instanceof TrackerList) && props.matches(currentChoice);
+  }
+
+  updateChoice(layer, choicesIdx, newChoiceIdx) {
+    const history = this.history[layer];
+    history.revert(choicesIdx);
+    if (history.choose(newChoiceIdx)) {
+      this.applyRules(layer);
+    }
+  }
+
+  applyRules(layer) {
+    for (const rule of this.rules.matchers) {
+      let value = this.history[layer].getCurrentChoice();
+      if (
+        layer === rule.layer
+        && rule.value.matches(value)
+        && rule.where.matches(this.environment)
+      ) {
+        switch (rule.do) {
+          case transformType.transformation:
+            this.transform(layer, rule.spec);
+            break;
+          case transformType.promotion:
+            this.promote(layer, rule.spec);
+            layer += 1;
+            break;
+          case transformType.expansion:
+            this.expand(layer, rule.spec);
+            layer += 1;
+            break;
+        }
+      }
+    }
+  }
+
+  invalidateDependents(layer) {
+    this.dependents.ensure(layer).forEach((relationships, tracker) => {
+      // XXX TODO: this is the old bad way of updating dependents
+      // ...now that transforms aren't a black box anymore, we can
+      // definitely be a bit smarter about this: like "make tracker 
+      // test me to see if i'm still what it needs, and only
+      // invalidate me if not"
+      tracker.invalidateDependencies(layer, ...relationships);
+    });
+  }
+
+  transform(layer, {into, weights, because}) {
+    this.history[layer].insert(into, because, weighted(weights));
+    this.invalidateDependents(layer);
+  }
+
+  promote(layer, {into, weights, because}) {
+    this.history[layer + 1].insert(into, because, weighted(weights));
+    this.invalidateDependents(layer);
+  }
+
+  expand(layer, {into, weights, because}) {
+    this.history[layer + 1].insert(
+      into.map(seq => new TrackerList(seq, this.rules, this.layers, layer + 1, this)),
+      because,
+      weighted(weights)
+    );
+    this.invalidateDependents(layer);
+  }
+
+  getCurrentChoice(layer) {
+    return lastOf(this.history[layer]).getCurrentChoice();
+  }
+}
+
+class Rules {
+  constructor() {
+    // this.raw = [];
+    this.matchers = [];
+  }
+
+  add(spec) {
+    // this.raw.push(spec);
+    this.matchers.push({...spec, value: match(spec.value), where: match(spec.where)});
+  }
 }
 
 export class Capture {
-  constructor(word) {
-    this.word = new Word(word);
-    const segments = new DefaultObject({}, () => new Set());
-    word.value.forEach(({value: segment}, idx) => {
-      segments.ensure(segment).add(idx);
-    });
-    this.wordMap = segments;
-
-    this.globalHandlerID = 0;
-    this.handlerMap = new DefaultObject(
-      Object.fromEntries(this.wordMap.keys().map(k => [k])),
-      () => [],
+  constructor(word, alphabets) {
+    this.layerIndices = Object.fromEntries(alphabets.map((name, idx) => [name, idx]));
+    this.layers = Object.fromEntries(
+      // objects preserve insertion order (given non-numerical keys)
+      alphabets.map((name, idx, arr) => [
+        name,
+        {
+          alphabet: alphabets[name],
+          prev: alphabets[arr[idx - 1]],
+          next: alphabets[arr[idx + 1]],
+        }
+      ])
     );
 
-    this.trackers = this.word.value.map(seg => ({
-      visible: true,
-      environment: null,
-      currentlyInvalidating: false,
-      dependents: new DefaultObject(
-        {},
-        () => new Set(),
-      ),
-      currentChoiceIndices: [],
-      choices: [],
-      original: copySeg(seg),
-    }));
+    this.rules = new Rules();
+    this.trackers = new TrackerList(word, rules, this.layerIndices);
   }
 
-  // use this as a template-string tag to select specific keys for use with capture
-  // specifically if you're passing an object that's not of your own definition and
-  // you don't need the entire thing to be matched
-  // usage: keys`{bruh: {test}, bruv}` -> {bruh: {test: {}}, bruv: {}}
-  // - for example, capture.only(symbols.c, Capture.keys`{value}`)
-  // - is just like capture.only(symbols.c, {value: {}})
-  // - which equals capture.only({value: symbols.c.value})
-  // but isn't as redundant, which gets pretty important the more keys you get
-  // - e.g. capture.only({meta: {features: {something: symbols.e.something, otherThing: symbols.e.otherThing}}})
-  // - can just be capture.only(symbols.e, Capture.keys`{meta: {features: {something, otherThing}}}`)
-  // ALSO you can use this to edit specific values of the object in a similar way to obj.edit()
-  // - e.g. instead of capture.only({value: symbols.w.value, meta: {weak: true, features: {emphatic: true}}})
-  // - you can also do capture.only(symbols.w, Capture.keys`{value, meta: {weak: ${true}, features: {emphatic: ${true}}}})
-  // that part is definitely not much of a space-saver and you'll likely end up doing this instead:
-  // capture.only(symbols.w, Capture.keys`{value}`, Capture.keys.with(true)`{meta: {weak}, features: {emphatic}}`)
-  // or just:
-  // capture.only(symbols.w, Capture.keys`{value}`, {meta: {weak: true, features: {emphatic: true}}})
-  // but having the option to do it in this one function is still nice
-  static keys = Object.assign(
-    // just an empty match object for when no match is given, signaling to the capture functions that
-    // they should match everything for this key
-    makeObjectKeyParser(() => `{}`),
-    {
-      // Capture.keys.with(true)`{meta: {weak, features: {emphatic}}}` => {meta: {weak: true, features: {emphatic: true}}},
-      // Capture.keys.with(true, false)`{meta: {weak, features: {emphatic}}` => {meta: {weak: true, features: {emphatic: false}}}
-      // Capture.keys.with(true, false)`{meta: {weak: ${1}}, features: {emphatic: ${0}, etc: ${1}}}` => they're indices, you get it
-      // overkill? yes
-      // having fun tho? heck yes
-      with(...options) {
-        const poppableOptions = options.slice().reverse();
-        return makeObjectKeyParser(
-          options.length === 1 ? () => options[0] : () => poppableOptions.pop(),
-          idx => options[idx]
-        )
-      }
-    }
-  );
-
-  // run all handlers again, mutating both word[idx] and
-  // trackers[idx].choices + trackers[idx].currentChoiceIndices
-  rerunAllHandlers(idx, from) {
-    const tracker = this.trackers[idx];
-    const originalChoice = from > -1
-      ? tracker.choices[from][tracker.currentChoiceIndices[from]]
-      : {order: -1};
-    tracker.choices.splice(from + 1);
-    tracker.currentChoiceIndices.splice(from + 1);
-
-    let changed = false;
-    let update = STAY;
-
-    // loop forever (why does eslint like this syntax more than while true lol)
-    for (;;) {
-      const handlers = this.handlerMap.ensure(this.word.value[idx].value);
-      const current = new Props(this.word.value[idx]);
-      let keepLooping = false;
-
-      const first = handlers.findIndex(
-        h => h.order > originalChoice.order
+  addRule(rule) {
+    rule.spec = {...rule.spec};
+    if (!Array.isArray(rule.spec.into)) {
+      rule.spec.weights = Object.fromEntries(
+        Object.values(rule.spec.into).map((weight, idx) => [idx, weight])
       );
-
-      for (
-        let i = first === -1 ? handlers.length : first;
-        i < handlers.length;
-        i += 1
-      ) {
-        update = handlers[i].f(idx);
-        if (update !== STAY) {
-          tracker.choices.push({order: handlers[i].order, arr: update});
-          tracker.currentChoiceIndices.push(0);
-          // first update the segment in this.word
-          this.word.value[idx] = update[0];
-          // if that handler returned a new kind of segment, we also have to
-          // start over with that segment's handlers
-          if (!current.matches(update[0])) {
-            changed = true;
-            // this is here to avoid using a labeled loop per eslint,
-            // altho honestly i find it a bit more confusing this way
-            keepLooping = true;
-            break;
-          }
-        }
-      }
-
-      // if we've run thru all the handlers for this segment without it
-      // changing, we can leave
-      if (!keepLooping) {
-        if (update !== STAY) {
-          this.word.value[idx] = update;
-        }
-        break;
-      }
+      rule.spec.into = Object.keys(rule.spec.into);
+    } else {
+      rule.spec.weights = Object.fromEntries(rule.spec.into.map((_, idx) => [idx, +!idx]));
     }
-
-    return changed;
+    rule.layer = this.layerIndices[rule.layer];
+    return this.rules.add(rule);
   }
 
-  // call this when the user toggles a choice via the frontend
-  // but only AFTER all handlers have already been collected & used once via this.wrap() ofc
-  update(idx, choicesIdx, newChoiceIdx) {
-    const tracker = this.trackers[idx];
-    tracker.currentChoiceIndices[choicesIdx] = newChoiceIdx;
-    // delete the index from the now-outdated segment in the wordmap
-    this.wordMap.ensure(this.word.value[idx].value).delete(idx);
-    // revert the segment in this.word to that choice for the handlers to operate on
-    this.word.value[idx] = tracker.choices[choicesIdx].arr[newChoiceIdx];
-    // put the index in the now-correct segment's entry in the wordmap
-    this.wordMap.ensure(this.word.value[idx].value).add(idx);
-    this.rerunAllHandlers(idx, choicesIdx);
-    // since the value was updated, it's now invalid for all of its dependents
-    tracker.dependents.entries().forEach(([depIdx, relationships]) => {
-      this.invalidateDependencies(depIdx, relationships);
-    });
-  }
-
-  // this is called from this.update() and from itself, signalling to the
-  // segment at `idx` that its `deps` have changed and are now invalid
-  // meaning it needs to be recomputed with their new values
-  invalidateDependencies(idx, deps) {
-    const tracker = this.trackers[idx];
-    if (tracker.currentlyInvalidating) {
+  init() {
+    let node = this.trackers.head;
+    if (!node) {
       return;
     }
-    // IMPORTANT: this stops infinite recursion
-    tracker.currentlyInvalidating = true;
-    tracker.choices.clear();
-    tracker.currentChoiceIndices.clear();
-    // delete idx from outdated wordmap segment
-    this.wordMap.ensure(this.word.value[idx].value).delete(idx);
-    // revert the segment in this.word so that the handlers can do it all over again
-    this.word.value[idx] = copySeg(tracker.original);
-    // put idx in new wordmap segment
-    this.wordMap.ensure(this.word.value[idx].value).add(idx);
-    deps.forEach(key => {
-      const depIdx = tracker.environment[key];
-      this.trackers[depIdx].dependents.delete(idx);
-      delete tracker.environment[key];
+    do {
+      node.applyRules(0);
+    } while (node = node.next);
+  }
+}
+
+class CaptureApplier {
+  constructor(layer, capture, capturedSpec) {
+    this.layer = layer;
+    this.capture = capture;
+    this.captured = capturedSpec;
+  }
+
+  apply(type, spec) {
+    this.capture.addRule({
+      layer: this.layer,
+      value: this.captured,
+      do: type,
+      spec,
     });
-    // TODO: could maybe make this more efficient by figuring out a way to only
-    // rerun from the first handler that uses one of the invalidated deps
-    if (this.rerunAllHandlers(idx, -1)) {
-    // if this one changed, then invalidate it for all of its dependents too
-      tracker.dependents.entries().forEach(([depIdx, relationships]) => {
-        this.invalidateDependencies(depIdx, relationships);
-      });
-    }
-    // IMPORTANT: this ensures that "this stops infinite recursion" works properly
-    tracker.currentlyInvalidating = false;
+    return this;
   }
 
-  searchSegmentRight(idx, props) {
-    for (let i = idx + 1; i < this.word.length; i += 1) {
-      if (props.matches(this.word.value[i])) {
-        return i;
-      }
-    }
-    return null;
+  transform(spec) {
+    return this.apply(transformType.transformation, spec);
   }
 
-  searchSegmentLeft(idx, props) {
-      for (let i = idx - 1; i >= 0; i -= 1) {
-      if (props.matches(this.word.value[i])) {
-        return i;
-      }
-    }
-    return null;
+  expand(spec) {
+    return this.apply(transformType.expansion, spec);
   }
 
-  react(idx) {
-    const tracker = this.trackers[idx];
-    return (dep, relationship) => {
-      tracker.dependents.ensure(dep).add(relationship);
-      return {...this.word.value[dep], $: {idx: dep, exists: this.word.value[dep] !== undefined}};
-    };
+  promote(spec) {
+    return this.apply(transformType.promotion, spec);
+  }
+}
+
+class CaptureProxy {
+  constructor(alphabet, alphabetName, capture) {
+    this.alphabet = {name: alphabetName, alphabet};
+    this.capture = capture;
   }
 
-  depGetter(idx) {
-    const react = this.react(idx);
-    return key => {
-      switch (key) {
-        /* filters */
-        case depType.isPrefix:
-          return idx < this.word.meta.stemStarts;
-        case depType.isAugmentation:
-          return idx > this.word.meta.stemEnds;
-        /* constant dependencies */
-        case depType.idx:
-          return idx;
-        case depType.type:
-          return this.word.value[idx].type;
-        case depType.meta:
-          return this.word.value[idx].meta;
-        case depType.wordType:
-          return this.word.type;
-        case depType.wordMeta:
-          return this.word.meta;
-        case depType.wordContext:
-          return this.word.context;
-        case depType.word:
-          return this.word.value;
-        /* reactive dependencies */
-        case depType.prev:
-          return react(
-            idx - 1,
-            depType.prev
-          );
-        case depType.next:
-          return react(
-            idx + 1,
-            depType.next
-          );
-        case depType.prevConsonant:
-          return react(
-            this.searchSegmentLeft(idx, consonantPred),
-            depType.prevConsonant
-          );
-        case depType.nextConsonant:
-          return react(
-            this.searchSegmentRight(idx, consonantPred),
-            depType.nextConsonant
-          );
-        case depType.prevVowel:
-          return react(
-            this.searchSegmentLeft(idx, vowelPred),
-            depType.prevVowel
-          );
-        case depType.nextVowel:
-          return react(
-            this.searchSegmentRight(idx, vowelPred),
-            depType.nextVowel
-          );
-        default:
-          throw new Error(
-            `Unknown dep: ${key} for ${idx}, ${this.word.value[idx]} (enum value ${depType.keys[key]})`
-          );
-      }
-    };
+  between() {
+    throw new Error(`capture.between() isn't implemented yet`);
   }
 
-  updateEnv(
-    idx,
-    dep
-  ) {
-    const tracker = this.trackers[idx];
-    if (tracker.environment === null) {
-      tracker.environment = {};
-    }
-
-    const getDependency = this.depGetter(idx);
-    dep.forEach(key => {
-      if (tracker.environment[depType.keys[key]] === undefined) {
-        tracker.environment[depType.keys[key]] = getDependency(key);
-      }
-    });
-    return tracker.environment;
-  }
-
-  wrap(results) {
-    return handler => {
-      const deps = extractDeps(handler);
-      results.forEach(idx => {
-        const tracker = this.trackers[idx];
-        const update = handler(this.updateEnv(idx, deps));
-        if (update === STAY) {
-          return;
-        }
-        tracker.choices.push({order: this.globalHandlerID, arr: update});
-        tracker.currentChoiceIndices.push(0);
-        this.word.value[idx] = update[0];
-        this.handlerMap
-          .ensure(this.word.value[idx].value)
-          .push({
-            order: this.globalHandlerID,
-            // TODO: maybe cache this func idk since it doesn't have to worry abt being mutated
-            f: index => handler(this.updateEnv(index, deps)),
-          });
-        this.globalHandlerID += 1;
-      });
-    };
-  }
-
-  only(obj, ...props) {
-    return this.wrap(this.wordMap.ensure(obj.value));
-  }
-
-  segment(props) {
-    props = props instanceof Props ? props : new Props(props);
-    return this.wrap(
-      this.wordMap.values()
-        .map(indices => [...indices].filter(id => props.matches(id.value)))
-        .flat()
+  segment(obj, ...specifiers) {
+    return new CaptureApplier(
+      this.alphabet.name,
+      this.capture,
+      moldObject(obj, ...specifiers)
     );
   }
 
-  segmentOfType(type, props) {
-    props = props instanceof Props ? props : new Props(props);
-    // don't think i'll allow type or value to be set
-    const {meta: rawMeta, features} = props.obj;
-    const meta = new Props(rawMeta);
-    const searchSpace = props && features
-      ? subAlphabets[type].filter(c => features.matches(c.meta.features))
-      : subAlphabets[type];
-    return this.wrap(
-      searchSpace
-        .map(this.wordMap.ensure)
-        .map(indices => [...indices].filter(
-          id => meta.matches(id.value.meta)
-        ))
-        .flat()
-    );
+  segmentOfType(type, ...props) {
+    return this.segment({}, {type}, ...props);
   }
 
-  consonant(props) {
-    return this.segmentOfType(objType.consonant, props);
+  consonant(...props) {
+    return this.segmentOfType(objType.consonant, ...props);
   }
 
-  vowel(props) {
-    return this.segmentOfType(objType.vowel, props);
+  vowel(...props) {
+    return this.segmentOfType(objType.vowel, ...props);
   }
 
-  epenthetic(props) {
-    return this.segmentOfType(objType.epenthetic, props);
+  epenthetic(...props) {
+    return this.segmentOfType(objType.epenthetic, ...props);
   }
 
-  suffix(props) {
-    return this.segmentOfType(objType.suffix, props);
+  suffix(...props) {
+    return this.segmentOfType(objType.suffix, ...props);
+  }
+
+  prefix(...props) {
+    return this.segmentOfType(objType.prefix, ...props);
+  }
+
+  augmentation(...props) {
+    return this.segmentOfType(objType.augmentation, ...props);
+  }
+}
+
+export class Word {
+  constructor(wordObj, alphabets) {
+    this.word = {
+      type: wordObj.type,
+      meta: {...wordObj.meta, stemStarts: 0},
+      value: wordObj.value.map(copySeg),
+      context: [...(wordObj.context || [])],
+    }
+
+    const capture = new Capture(this.word, alphabets);
+
+    this.capture = Object.fromEntries([
+      ...Object.entries(alphabets).map(
+        ([name, abc]) => [name, new CaptureProxy(abc, name, capture)]
+      ),
+      [`$`, capture],
+    ]);
+    this.abc = alphabets;
   }
 }
