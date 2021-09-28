@@ -2,11 +2,12 @@
 
 ## After rewriting Capture
 * try not to use so many classes
-* rename new Capture class to something fitting
+* ~~rename new Capture class to something fitting (Manager)~~
 * ~~Convert layers to indices in Capture so that each Tracker doesn't do it individually~~
-* be smarter about invalidating dependencies (see XXX comment in classes.js)
+* ~~be smarter about invalidating dependencies, use the `where` param of rules~~
 * update MatchOne (and other classes that forward to it) to let a custom arg (or args) be passed to matched functions
   * this is useful for e.g. checking that next and prev have the same value -- can't do that easily without a function
+* turn TrackerHistory into a linked list...? don't actually need indices for it i don't think
 
 ## Before rewriting capture
 

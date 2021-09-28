@@ -1,7 +1,7 @@
 <script>
     import {Parser, Grammar} from 'nearley';
     import * as grammar from './backend/conversion/parsing/grammar.js';
-  import {Capture, Word} from './backend/conversion/transformers/common/classes';
+  import {Word, keys} from './backend/conversion/transformers/common/classes';
   import wordType from './backend/conversion/parsing/type';
   import {type as segType} from './backend/conversion/objects';
   import {alphabet as abc, location} from './backend/conversion/symbols';
@@ -10,80 +10,24 @@
   const compiledGrammar = Grammar.fromCompiled(grammar);
 
   function join(res, delim=` `, pre=``, post=``) {
-    return 'under maintenance :]';
-    /*
     const joined = res.map(word => {
       if (Array.isArray(word)) {
         return join(word, `/`, ...(word.length > 1 ? [`(`, `)`] : []));
       }
-      word = new Word(word, {underlying: abc, phonic: abc, surface: null});
-      // word.capture.underlying.segment(word.alphabets.underlying.c)
-      //   .promote({
-      //     into: [surface.c]
-      //   });
-      const capture = new Capture(word);
-
-      capture.only({value: `fem`})(({wordType: type, prevVowel, prevConsonant, next}) => {
-        if (type === wordType.verb) {
-          return [{value: prevVowel.value === `i` ? `it` : `at`}];
-        }
-        if (next.$.exists) {
-          return [{value: `it`}];
-        }
-        if (prevConsonant.value === `r` && (prevVowel.value === `i` || prevVowel.value === `ii`)) {
-          return [abc.e, abc.i];
-        }
-        if (
-          prevConsonant.value === `r`
-          || prevConsonant.meta.features.emphatic
-          || prevConsonant.meta.features.location < location.velum
-        ) {
-          return [abc.a];
-        }
-        return [abc.e, abc.i];
-      });
-
-      // capture.only(abc.c, Capture.keys`{value, meta: {features: {emphatic: ${true}}}}`)
-      //   .transform({
-      //     into: [[abc.I, abc.t]],
-      //     where: {prevConsonant: {value: 1}},
-      //     because: `you know`,
-      //   });
-
-      // capture.only(abc.c)
-      //   .transform({
-      //     into: [[abc.I, abc.t]],
-      //     where: {prevConsonant: {value: 1}},
-      //     because: `you know`,
-      //   });
-      return capture.word.value.map(letter => {
-        switch (letter.value) {
-          case `noschwa`:
-            return ``;
-          case `schwa`:
-            return `ᵊ`;
-          case `fem`:
-            return `c`;
-          case `fplural`:
-            return `aat`;
-          case `dual`:
-            return `ayn`;
-          case `plural`:
-            return `iin`;
-          case `stressed`:
-            return `\u0301`;
-          case `nasalized`:
-            return `\u0303`;
-          default:
-            return letter.value;
-        }
-      }).join(``);
+      word = new Word(word, {underlying: abc, phonic: abc, surface: {}});
+      word.capture.underlying.segment(word.abc.underlying.c, keys`{value}`)
+        .transform({
+          into: [word.abc.underlying.a],
+          where: {},
+          because: `just testin`,
+        });
+      word.init();
+      return word.collect(0).map(segment => segment.value).join(``);
     }).join(delim);
-    return `${pre}${joined}${post}`;
-    */
+   return `${pre}${joined}${post}`;
   }
 
-    let input = ``;
+  let input = ``;
   let res = [];
   let joined = ``;
   let err = ``;

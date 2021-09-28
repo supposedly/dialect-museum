@@ -101,12 +101,14 @@ class DefaultObject {
 // (TrackerList contains Trackers and Tracker can contain TrackerLists)
 class TrackerList {
   constructor(word, rules, layers, minLayer = 0, parent = null) {
-    const head = last = null;
-    for (const segment of word) {
+    let head = null;
+    let last = null;
+    for (const segment of word.value) {
       if (head === null) {
         head = last = new Tracker(segment, rules, layers, word.meta, {minLayer, parent: this});
       } else {
         last.next = new Tracker(segment, rules, layers, word.meta, {prev: last, minLayer, parent: this});
+        last = last.next;
       }
     }
 
@@ -114,8 +116,8 @@ class TrackerList {
     this._tail = last;
 
     this.parent = parent;
-    this.prev = this.parent.prev;
-    this.next = this.parent.next;
+    this.prev = this.parent && this.parent.prev;
+    this.next = this.parent && this.parent.next;
   }
 
   get head() {
@@ -141,9 +143,11 @@ class TrackerList {
 }
 
 class TrackerChoices {
-  constructor(choices = [], reason, current = 0) {
+  constructor(choices = [], reason = ``, rule = -1, environment = match({}), current = 0) {
     this.choices = choices;
     this.reason = reason;
+    this.rule = rule;
+    this.environment = environment;
     this.current = current;
   }
 
@@ -172,8 +176,8 @@ class TrackerHistory {
     this.current = this.history.length - 1;
   }
 
-  insertOne(choice) {
-    this.insert(new TrackerChoices([choice]));
+  insertOne(choice, ...args) {
+    this.insert(new TrackerChoices(choice, ...args));
   }
 
   choose(idx) {
@@ -183,7 +187,7 @@ class TrackerHistory {
     } else {
       this.history[this.current].choose(idx);
       this.insert();
-      // caller now has to call this.insert() to update
+      // caller now has to call this.insert(...) to update
       return true;
     }
   }
@@ -228,13 +232,14 @@ class Tracker {
             }
             return this.environmentCache[layer][dep];
           }
-        })
+        }),
+        {}
       )
     );
 
     this.history = layerNames.map(() => new TrackerHistory());
     // insert underlying segment to kick things off
-    this.history[this.minLayer].insertOne(segment);
+    this.history[this.minLayer].insertOne([segment], `Underlying.`);
   }
 
   get prev() {
@@ -242,7 +247,9 @@ class Tracker {
   }
 
   set prev(item) {
-    item.prev = this.node.prev;
+    if (item) {
+      item.prev = this.node.prev;
+    }
     this.node.prev = item;
   }
 
@@ -251,7 +258,9 @@ class Tracker {
   }
 
   set next(item) {
-    item.next = this.next;
+    if (item) {
+      item.next = this.next;
+    }
     this.node.next = item;
   }
 
@@ -359,63 +368,72 @@ class Tracker {
     }
   }
 
-  applyRules(layer) {
-    for (const rule of this.rules.matchers) {
+  applyRules(layer, minIdx = 0) {
+    this.rules.matchers.splice(minIdx).forEach((rule, idx) => {
       let value = this.history[layer].getCurrentChoice();
       if (
         layer === rule.layer
         && rule.value.matches(value)
-        && rule.where.matches(this.environment)
+        && rule.where.matches(this.environment[layer])
       ) {
         switch (rule.do) {
           case transformType.transformation:
-            this.transform(layer, rule.spec);
+            this.transform(layer, idx, rule.spec);
             break;
           case transformType.promotion:
-            this.promote(layer, rule.spec);
+            this.promote(layer, idx, rule.spec);
             layer += 1;
             break;
           case transformType.expansion:
-            this.expand(layer, rule.spec);
+            this.expand(layer, idx, rule.spec);
             layer += 1;
             break;
         }
       }
-    }
+    });
+  }
+
+  reapplyRules(layer) {
+    this.history[layer].revert(
+      this.history[layer].history.findIndex(
+        choices => !choices.environment.matches(this.environment[layer])
+      )
+    );
+    this.applyRules(layer, this.history[layer].getCurrentChoice().rule);
   }
 
   invalidateDependents(layer) {
     this.dependents.ensure(layer).forEach((relationships, tracker) => {
-      // XXX TODO: this is the old bad way of updating dependents
-      // ...now that transforms aren't a black box anymore, we can
-      // definitely be a bit smarter about this: like "make tracker 
-      // test me to see if i'm still what it needs, and only
-      // invalidate me if not"
       tracker.invalidateDependencies(layer, ...relationships);
+      tracker.reapplyRules(layer);
     });
   }
 
-  transform(layer, {into, weights, because}) {
-    this.history[layer].insert(into, because, weighted(weights));
+  transform(layer, ruleIdx, {into, weights, where: environment, because}) {
+    this.history[layer].insertOne(into, because, ruleIdx, environment, weighted(weights));
     this.invalidateDependents(layer);
   }
 
-  promote(layer, {into, weights, because}) {
-    this.history[layer + 1].insert(into, because, weighted(weights));
+  promote(layer, ruleIdx, {into, weights, because}) {
+    this.history[layer + 1].revert(-1);
+    this.history[layer + 1].insertOne(into, because, ruleIdx, environment, weighted(weights));
     this.invalidateDependents(layer);
   }
 
-  expand(layer, {into, weights, because}) {
-    this.history[layer + 1].insert(
+  expand(layer, ruleIdx, {into, weights, where: environment, because}) {
+    this.history[layer + 1].revert(-1);
+    this.history[layer + 1].insertOne(
       into.map(seq => new TrackerList(seq, this.rules, this.layers, layer + 1, this)),
       because,
+      ruleIdx,
+      environment,
       weighted(weights)
     );
     this.invalidateDependents(layer);
   }
 
   getCurrentChoice(layer) {
-    return lastOf(this.history[layer]).getCurrentChoice();
+    return this.history[layer].getCurrentChoice();
   }
 }
 
@@ -431,23 +449,24 @@ class Rules {
   }
 }
 
-export class Capture {
+export class WordManager {
   constructor(word, alphabets) {
-    this.layerIndices = Object.fromEntries(alphabets.map((name, idx) => [name, idx]));
+    const abcNames = Object.keys(alphabets);
+    this.layerIndices = Object.fromEntries(abcNames.map((name, idx) => [name, idx]));
     this.layers = Object.fromEntries(
       // objects preserve insertion order (given non-numerical keys)
-      alphabets.map((name, idx, arr) => [
+      abcNames.map((name, idx, arr) => [
         name,
         {
           alphabet: alphabets[name],
-          prev: alphabets[arr[idx - 1]],
-          next: alphabets[arr[idx + 1]],
+          prev: abcNames[arr[idx - 1]],
+          next: abcNames[arr[idx + 1]],
         }
       ])
     );
 
     this.rules = new Rules();
-    this.trackers = new TrackerList(word, rules, this.layerIndices);
+    this.trackers = new TrackerList(word, this.rules, this.layerIndices);
   }
 
   addRule(rule) {
@@ -472,6 +491,18 @@ export class Capture {
     do {
       node.applyRules(0);
     } while (node = node.next);
+  }
+
+  collect(layer) {
+    let node = this.trackers.head;
+    if (!node) {
+      return;
+    }
+    const arr = [];
+    do {
+      arr.push(node.getCurrentChoice(layer));
+    } while (node = node.next);
+    return arr;
   }
 }
 
@@ -556,19 +587,25 @@ export class Word {
   constructor(wordObj, alphabets) {
     this.word = {
       type: wordObj.type,
-      meta: {...wordObj.meta, stemStarts: 0},
+      meta: {...wordObj.meta},
       value: wordObj.value.map(copySeg),
       context: [...(wordObj.context || [])],
     }
 
-    const capture = new Capture(this.word, alphabets);
-
+    this.manager = new WordManager(this.word, alphabets);
     this.capture = Object.fromEntries([
       ...Object.entries(alphabets).map(
-        ([name, abc]) => [name, new CaptureProxy(abc, name, capture)]
+        ([name, abc]) => [name, new CaptureProxy(abc, name, this.manager)]
       ),
-      [`$`, capture],
     ]);
     this.abc = alphabets;
+  }
+
+  init() {
+    this.manager.init();
+  }
+
+  collect(layer) {
+    return this.manager.collect(layer);
   }
 }
