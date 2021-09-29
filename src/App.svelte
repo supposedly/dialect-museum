@@ -4,7 +4,7 @@
   import {Word, keys} from './backend/conversion/transformers/common/classes';
   import wordType from './backend/conversion/parsing/type';
   import {type as segType} from './backend/conversion/objects';
-  import {alphabet as abc, location, tamToken} from './backend/conversion/symbols';
+  import {alphabet as abc, location, tamToken, wazn} from './backend/conversion/symbols';
   import type from './backend/conversion/parsing/type';
   import match from './backend/conversion/transformers/common/match.js';
 
@@ -17,25 +17,35 @@
       }
 
       word = new Word(word, {underlying: abc, phonic: abc, surface: {}});
+      const {underlying, phonic, surface} = word.abc;
 
       word.capture.underlying.suffix(p => p.gender.fem() && p.number.singular() && p.person.third())
         .expand({
-          into: [[word.abc.phonic.t]],
+          into: [[phonic.i, phonic.t], [phonic.a, phonic.t]],
+          where: {
+            word: {was: type.verb, tam: tamToken.pst, wazn: match.not(wazn.i)},
+            next: {$exists: true}
+          },
+          because: `Many people always use "-it" when they conjugate verbs for هي, but some turn this into "-at" when there's anything after it in the same word. Some others, especially outside of Lebanon, even use "-at" no matter what.`
+          // diachronically it's a retention ofc but synchronically the default form is -it
+        })
+        .expand({
+          into: [[phonic.i, phonic.t]],
           where: {
             word: {was: type.verb, tam: tamToken.pst}
           }
         });
 
-      word.capture.underlying.segment(word.abc.underlying.c, keys`{value}`)
+      word.capture.underlying.segment(underlying.c, keys`{value}`)
         .expand({
-          into: [[word.abc.phonic.i, word.abc.phonic.t]],
+          into: [[phonic.i, phonic.t]],
           where: match.any(
             {next: {$exists: true}},
             {word: {was: type.idafe}}
           )
         })
         .expand({
-          into: [[word.abc.phonic.a]],
+          into: abc => [[abc.a]],
           where: {
             prevConsonant: {
               meta: {

@@ -11,6 +11,7 @@
     "commit": "npm run g && git add src/backend/conversion/parsing/grammar.js && git commit"
   },
   "dependencies": {
+    "@popperjs/core": "^2.10.1",
     "moo": "^0.5.1",
     "nearley": "^2.20.1",
     "sirv-cli": "^1.0.0",

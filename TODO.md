@@ -1,5 +1,8 @@
 # TODO
 
+## Streeeeeeeeeeeeeeeetch goals
+* Remove [initializers][/src/backend/conversion/parsing/initializers] altogether -- they can be handled by the capture/transform logic
+
 ## After rewriting Capture
 * try not to use so many classes
 * ~~rename new Capture class to something fitting (Manager)~~
@@ -9,6 +12,12 @@
   * this is useful for e.g. checking that next and prev have the same value -- can't do that easily without a function
 * Fix MatchOne so that empty objects always match instead of never matching
 * turn TrackerHistory into a linked list...? don't actually need indices for it i don't think
+* Add a .feed() function alongside .transform(), .promote(), .expand() (it'll feed it into one of the alphabet's functions, for which see whiteboard stuff below)
+* Let spec.into access the environment & the match, useful for rules like "promote everything else to itself"... heck it probably needs to support functions too
+  for like "promote everything else to the new alphabet's entry for this.value"
+
+### Frontend stuff
+* Just get some basic buttons and writing up man this is so close to being bare-bones presentable
 
 ## Before rewriting capture
 
