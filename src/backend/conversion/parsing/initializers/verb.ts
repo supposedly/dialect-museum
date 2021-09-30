@@ -472,7 +472,7 @@ export default function verb({
         return _$_`s.t.aa ${$3}.a.${$L}`;
       }
       return _$_`s.t.${$F}.aa ${$3}.a.${$L}`;
-    case wazn[`2af3al`]:
+    case wazn.af3al:
       if (tam === tamToken.pst) {
         return [
           ...$_`2.a.${$F} ${$3}.a.${$L}`,

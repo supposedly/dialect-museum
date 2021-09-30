@@ -307,7 +307,7 @@ export default function pp({
           ...$`m.u.s._.t ${$F}.aa ${$3}.a.${$L}`,
         ]
         : $`m.u.s._.t ${$F}.aa ${$3}.a.${$L}`;
-    case wazn[`2af3al`]:
+    case wazn.af3al:
       return isActiveVoice ? [
         ...$iy`m.u.${$F} ${$3}.i.${$L}`,
         ...$iy`m.2.a.${$F} ${$3}.i.${$L}`,

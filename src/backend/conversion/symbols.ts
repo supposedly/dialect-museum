@@ -19,30 +19,87 @@
 //   return true;
 // }
 
-import { fenum } from './enums';
 import { type } from './objects';
 export { type };
 
-export const articulator = fenum([`throat`, `tongue`, `lips`]);
-export const location = fenum([`glottis`, `pharynx`, `uvula`, `velum`, `palate`, `bridge`, `ridge`, `teeth`, `lips`]);
-export const manner = fenum([`plosive`, `fricative`, `affricate`, `approximant`, `nasal`, `flap`]);
+export enum articulator {
+  throat,
+  tongue,
+  lips
+};
 
-function c(map) {
-  function createConsonant(
-    name,
-    symbol,
-    features = {},
-    sub = null
-  ) {
-    if (name === null) {
-      // terminate chain
-      return map;
+export enum location {
+  glottis,
+  pharynx,
+  uvula,
+  velum,
+  palate,
+  bridge,
+  ridge,
+  teeth,
+  lips
+};
+
+export enum manner {
+  plosive,
+  fricative,
+  affricate,
+  approximant,
+  nasal,
+  flap
+};
+
+interface Segment {
+  type: any,
+  meta?: {features?: Record<string, any>} & Record<string, any>
+}
+
+interface GrammarSegment extends Segment {
+  symbol: string,
+  value: string
+}
+
+interface Consonant extends Segment {
+  type: any,
+  meta: {
+    weak: boolean,
+    features: {
+      emphatic: boolean,
+      semivocalic: boolean,
+      rounded: boolean,
+      voicing: boolean,
+      isNull: boolean
+      articulator: articulator,
+      location: location,
+      manner: manner
     }
+  }
+}
+
+interface Vowel extends Segment {
+  type: any,
+  meta: {
+    lengthOffset: number,
+    features: {
+      length: number,
+      diphthongal: boolean,
+      nasalized: boolean
+    }
+  }
+}
+
+function c(map: Record<string, Consonant & GrammarSegment>) {
+  function createConsonant(
+    name: string,
+    symbol: string,
+    features?: Partial<Consonant[`meta`][`features`]>,
+    sub?: string
+  ) {
     const names = [name];
     if (sub || !/^[a-z_$][a-z0-9_$]*$/i.test(name)) {
       names.push(sub || `_${name}`);
     }
-    const obj = {
+    map[name] = {
       type: type.consonant,
       meta: {
         weak: false,
@@ -62,18 +119,14 @@ function c(map) {
       symbol,
       value: name,
     };
-    names.forEach(n => { map[n] = obj; });
-    return createConsonant;
+    return fn;
   }
-  return createConsonant;
+  const fn = Object.assign(createConsonant, {map});
+  return fn;
 }
 
-function v(map) {
-  function createVowel(name, symbol, features = {}) {
-    if (name === null) {
-      // terminate chain
-      return map;
-    }
+function v(map: Record<string, Vowel & GrammarSegment>) {
+  function createVowel(name: string, symbol: string, features?: Partial<Vowel[`meta`][`features`]>) {
     map[name] = {
       type: type.vowel,
       meta: {
@@ -88,16 +141,17 @@ function v(map) {
       symbol,
       value: name,
     };
-    return createVowel;
+    return fn;
   }
-  return createVowel;
+  const fn = Object.assign(createVowel, {map});
+  return fn;
 }
+
+export const emphatic = `*`;
 
 // anything that isn't a letter is capitalized
 export const alphabet = {
-  ...c({
-    emphatic: `*`,  // goes after the emphatic letter
-  })
+  ...c({})
   // glottal
   (`h`, `h`, {
     location: location.glottis,
@@ -275,19 +329,18 @@ export const alphabet = {
     voicing: true,
   })
   (`p`, `p`, {
-    location: null,
-    articulator: null,
+    location: location.lips,
+    articulator: articulator.lips,
     manner: manner.plosive,
     voicing: false,
   })
   // null
   (`null`, `0`, {
-    location: location.bruh,
-    articulator: articulator,
+    location: null,
+    articulator: null,
     manner: null,
     voicing: true,
-  })
-  (null),
+  }).map,
 
   ...v({})
   (`a`, `a`)
@@ -320,7 +373,7 @@ export const alphabet = {
 
   (`ay`, `Y`, {diphthongal: true})
   (`aw`, `W`, {diphthongal: true})
-  (null),
+  .map,
 
   _: {  // no schwa
     type: type.epenthetic,
@@ -436,45 +489,45 @@ export const alphabet = {
   },
 };
 
-export const wazn = fenum([
+export enum wazn {
   /* form 1: participles */
-  `anyForm1`,
-  `fe3il`,
-  `fa3len`,
+  anyForm1,
+  fe3il,
+  fa3len,
   /* form 1: verbs */
-  `a`,
-  `i`,
-  `u`,
+  a,
+  i,
+  u,
   /* all other forms */
-  `fa33al`,
-  `tfa33al`,
-  `stfa33al`,
-  `fe3al`,
-  `tfe3al`,
-  `stfe3al`,
-  `2af3al`,  // never knew why this is conventionally stuck in the middle of (s/t)fa33al/(s/t)faa3al
-  `nfa3al`,
-  `nfi3il`,  // for npst -nfi3il. the pst is the same as nfa3al
-  `fta3al`,
-  `fti3il`,  // for npst -fti3il. the pst is the same as fta3al
-  `staf3al`,
-  `f3all`,
-  `fa3la2`,
-  `tfa3la2`,
-  `stfa3la2`,  // probably only theoretically exists lol
-]);
+  fa33al,
+  tfa33al,
+  stfa33al,
+  fe3al,
+  tfe3al,
+  stfe3al,
+  af3al,  // never knew why this is conventionally stuck in the middle of (s/t)fa33al/(s/t)faa3al
+  nfa3al,
+  nfi3il,  // for npst -nfi3il. the pst is the same as nfa3al
+  fta3al,
+  fti3il,  // for npst -fti3il. the pst is the same as fta3al
+  staf3al,
+  f3all,
+  fa3la2,
+  tfa3la2,
+  stfa3la2,  // probably only theoretically exists lol
+};
 
-export const tamToken = fenum([
-  `pst`,
-  `sbjv`,
-  `ind`,
-  `imp`,
-]);
+export enum tamToken {
+  pst,
+  sbjv,
+  ind,
+  imp,
+};
 
-export const voiceToken = fenum([
-  `active`,
-  `passive`,
-]);
+export enum voiceToken {
+  active,
+  passive,
+};
 
 export const PERSON = {
   first: `1`,
