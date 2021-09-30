@@ -3,4 +3,7 @@
 
     "include": ["src/**/*"],
     "exclude": ["node_modules/*", "public/*"],
+    "compilerOptions": {
+        "noImplicitAny": true
+    }
 }
