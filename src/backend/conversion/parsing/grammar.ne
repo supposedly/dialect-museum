@@ -20,9 +20,9 @@
   // generate with emphatic
   const c = ([s]) => ({
     match: new RegExp(
-      `${abc[s].symbol}\\${abc.emphatic}?`
+      `${abc[s].symbol}\\${sym.emphatic}?`
     ),
-    value: match => (match.endsWith(abc.emphatic)
+    value: match => (match.endsWith(sym.emphatic)
       ? {...abc[s], meta: {...abc[s].meta, features: {...abc[s].meta.features, emphatic: true}}}
       : abc[s]
     )
