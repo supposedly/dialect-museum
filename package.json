@@ -7,8 +7,8 @@
     "dev": "npm run g && rollup -c -w",
     "start": "sirv public --no-clear",
     "bundle": "browserify test.js -o test.bundle.js",
-    "g": "node ./nearleyc src/backend/conversion/parsing/grammar.ne -s .js",
-    "commit": "npm run g && git add src/backend/conversion/parsing/grammar.js && git commit"
+    "g": "node ./nearleyc src/backend/conversion/parsing/grammar.ne -s .ts",
+    "commit": "npm run g && git add src/backend/conversion/parsing/grammar.ts && git commit"
   },
   "dependencies": {
     "@popperjs/core": "^2.10.1",
@@ -24,6 +24,7 @@
     "@rollup/plugin-node-resolve": "^11.0.0",
     "@rollup/plugin-typescript": "^8.2.5",
     "@tsconfig/svelte": "^2.0.1",
+    "@types/moo": "^0.5.5",
     "open": "^8.2.1",
     "rollup": "^2.3.4",
     "rollup-plugin-css-only": "^3.1.0",

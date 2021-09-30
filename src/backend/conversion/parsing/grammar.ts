@@ -1,6 +1,8 @@
 // Generated automatically by nearley, version 2.20.1
 // http://github.com/Hardmath123/nearley
-function id(x) { return x[0]; }
+// Bypasses TS6133. Allow declared but unused functions.
+// @ts-ignore
+function id(d: any[]): any { return d[0]; }
 
   import * as obj from '../objects';
   import inits from './initializers';
@@ -176,22 +178,51 @@ function id(x) { return x[0]; }
   const init = (...args) => _.obj(...args).init(inits);
 
   const processSuffixes = stressedIdx => value => value.map((suf, idx) => _.edit(suf, {type: type.suffix, meta: {stressed: stressedIdx === idx}}));
-export const Lexer = lexer;
-export const ParserRules = [
+
+interface NearleyToken {
+  value: any;
+  [key: string]: any;
+};
+
+interface NearleyLexer {
+  reset: (chunk: string, info: any) => void;
+  next: () => NearleyToken | undefined;
+  save: () => any;
+  formatError: (token: never) => string;
+  has: (tokenType: string) => boolean;
+};
+
+interface NearleyRule {
+  name: string;
+  symbols: NearleySymbol[];
+  postprocess?: (d: any[], loc?: number, reject?: {}) => any;
+};
+
+type NearleySymbol = string | { literal: any } | { test: (token: any) => boolean };
+
+interface Grammar {
+  Lexer: NearleyLexer | undefined;
+  ParserRules: NearleyRule[];
+  ParserStart: string;
+};
+
+const grammar: Grammar = {
+  Lexer: lexer,
+  ParserRules: [
     {"name": "passage$ebnf$1", "symbols": []},
     {"name": "passage$ebnf$1$subexpression$1", "symbols": ["__", "term"], "postprocess": ([ , term]) => term},
-    {"name": "passage$ebnf$1", "symbols": ["passage$ebnf$1", "passage$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "passage$ebnf$1", "symbols": ["passage$ebnf$1", "passage$ebnf$1$subexpression$1"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "passage", "symbols": ["term", "passage$ebnf$1"], "postprocess": ([a, b]) => [a, ...b]},
     {"name": "term", "symbols": ["expr"], "postprocess": id},
     {"name": "term", "symbols": ["literal"], "postprocess": id},
     {"name": "term", "symbols": ["idafe"], "postprocess": id},
     {"name": "term", "symbols": ["l"], "postprocess": id},
     {"name": "literal$ebnf$1", "symbols": [/[^)]/]},
-    {"name": "literal$ebnf$1", "symbols": ["literal$ebnf$1", /[^)]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "literal$ebnf$1", "symbols": ["literal$ebnf$1", /[^)]/], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "literal", "symbols": [{"literal":"(\\"}, "literal$ebnf$1", {"literal":")"}], "postprocess": ([ , value]) => _.obj(type.literal, {}, value.join(''))},
     {"name": "literal", "symbols": [{"literal":"(\\)"}, {"literal":")"}], "postprocess": () => _.obj(type.literal, {}, `)`)},
     {"name": "idafe$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
-    {"name": "idafe$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "idafe$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "idafe$subexpression$1", "symbols": ["expr"]},
     {"name": "idafe$subexpression$1", "symbols": ["idafe"]},
     {"name": "idafe$subexpression$2", "symbols": ["expr"]},
@@ -210,27 +241,27 @@ export const ParserRules = [
     {"name": "expr", "symbols": ["af3al"]},
     {"name": "expr", "symbols": ["number"]},
     {"name": "number$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
-    {"name": "number$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "number$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "number$subexpression$1$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},
-    {"name": "number$subexpression$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "number$subexpression$1$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "number$subexpression$1", "symbols": ["number$subexpression$1$ebnf$1"], "postprocess": ([c]) => Boolean(c)},
     {"name": "number", "symbols": [{"literal":"("}, "number$ebnf$1", ({type: "number"}), "number$subexpression$1", {"literal":")"}], "postprocess": 
         ([ , ctx , { value: quantity }, isConstruct ]) => init(type.number, { gender: null, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
           },
     {"name": "number$ebnf$2", "symbols": ["ctx_tags"], "postprocess": id},
-    {"name": "number$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "number$ebnf$2", "symbols": [], "postprocess": () => null},
     {"name": "number$subexpression$2$ebnf$1", "symbols": [{"literal":"-"}], "postprocess": id},
-    {"name": "number$subexpression$2$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "number$subexpression$2$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "number$subexpression$2", "symbols": ["number$subexpression$2$ebnf$1"], "postprocess": ([c]) => Boolean(c)},
     {"name": "number", "symbols": [{"literal":"("}, "number$ebnf$2", ({type: "genderedNumber"}), ({type: "numberGender"}), "number$subexpression$2", {"literal":")"}], "postprocess": 
         ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => init(type.number, { gender, isConstruct }, { quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
           },
     {"name": "af3al$ebnf$1", "symbols": ["filter_suffix"], "postprocess": id},
-    {"name": "af3al$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "af3al$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "af3al$ebnf$2", "symbols": ["ctx_tags"], "postprocess": id},
-    {"name": "af3al$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "af3al$ebnf$2", "symbols": [], "postprocess": () => null},
     {"name": "af3al$ebnf$3", "symbols": ["augmentation"], "postprocess": id},
-    {"name": "af3al$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "af3al$ebnf$3", "symbols": [], "postprocess": () => null},
     {"name": "af3al", "symbols": [{"literal":"(af3al"}, "af3al$ebnf$1", "af3al$ebnf$2", "__", "root", "af3al$ebnf$3", {"literal":")"}], "postprocess": 
         ([ , suffix, ctx ,, root, augmentation]) => init(
           type.af3al,
@@ -240,11 +271,11 @@ export const ParserRules = [
         )
         },
     {"name": "tif3il$ebnf$1", "symbols": ["filter_suffix"], "postprocess": id},
-    {"name": "tif3il$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "tif3il$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "tif3il$ebnf$2", "symbols": ["ctx_tags"], "postprocess": id},
-    {"name": "tif3il$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "tif3il$ebnf$2", "symbols": [], "postprocess": () => null},
     {"name": "tif3il$ebnf$3", "symbols": ["augmentation"], "postprocess": id},
-    {"name": "tif3il$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "tif3il$ebnf$3", "symbols": [], "postprocess": () => null},
     {"name": "tif3il", "symbols": [{"literal":"(tif3il"}, "tif3il$ebnf$1", "tif3il$ebnf$2", "__", "root", "tif3il$ebnf$3", {"literal":")"}], "postprocess": 
         ([ , suffix, ctx ,, root, augmentation]) => init(
           type.tif3il,
@@ -254,9 +285,9 @@ export const ParserRules = [
         )
         },
     {"name": "pp$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
-    {"name": "pp$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "pp$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "pp$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
-    {"name": "pp$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "pp$ebnf$2", "symbols": [], "postprocess": () => null},
     {"name": "pp", "symbols": [{"literal":"(pp"}, "pp$ebnf$1", "__", "suffixed_wazn", "__", "voice", "__", "pronoun", "__", "root", "pp$ebnf$2", {"literal":")"}], "postprocess": 
         ([ , ctx ,, {form, suffix} ,, voice ,, conjugation ,, root, augmentation]) => init(
           type.pp,
@@ -266,9 +297,9 @@ export const ParserRules = [
         )
           },
     {"name": "verb$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
-    {"name": "verb$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "verb$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "verb$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
-    {"name": "verb$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "verb$ebnf$2", "symbols": [], "postprocess": () => null},
     {"name": "verb", "symbols": [{"literal":"(verb"}, "verb$ebnf$1", "__", "wazn", "__", "tam", "__", "pronoun", "__", "root", "verb$ebnf$2", {"literal":")"}], "postprocess": 
         ([ , ctx ,, form ,, tam ,, conjugation ,, root, augmentation]) => init(
           type.verb,
@@ -278,13 +309,13 @@ export const ParserRules = [
         )
           },
     {"name": "suffixed_wazn$ebnf$1", "symbols": ["filter_suffix"], "postprocess": id},
-    {"name": "suffixed_wazn$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffixed_wazn$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "suffixed_wazn", "symbols": [({type: "openTag"}), ({type: "wazn"}), "suffixed_wazn$ebnf$1", ({type: "closeTag"})], "postprocess": ([, {value: form}, suffix]) => ({form, suffix})},
     {"name": "filter_suffix", "symbols": [{"literal":"_"}, "suffix"], "postprocess": ([ , suffix]) => suffix},
     {"name": "word$ebnf$1", "symbols": ["suffix"], "postprocess": id},
-    {"name": "word$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "word$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "word$ebnf$2", "symbols": ["augmentation"], "postprocess": id},
-    {"name": "word$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "word$ebnf$2", "symbols": [], "postprocess": () => null},
     {"name": "word", "symbols": ["stem", "word$ebnf$1", "word$ebnf$2"], "postprocess": 
         ([{value}, suffix, augmentation]) => init(
           type.word,
@@ -300,14 +331,14 @@ export const ParserRules = [
     {"name": "ctx_tags$ebnf$1$subexpression$1", "symbols": ["__", ({type: "openCtx"}), ({type: "ctxItem"}), ({type: "closeCtx"})], "postprocess": ([ ,, { value }]) => value},
     {"name": "ctx_tags$ebnf$1", "symbols": ["ctx_tags$ebnf$1$subexpression$1"]},
     {"name": "ctx_tags$ebnf$1$subexpression$2", "symbols": ["__", ({type: "openCtx"}), ({type: "ctxItem"}), ({type: "closeCtx"})], "postprocess": ([ ,, { value }]) => value},
-    {"name": "ctx_tags$ebnf$1", "symbols": ["ctx_tags$ebnf$1", "ctx_tags$ebnf$1$subexpression$2"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "ctx_tags$ebnf$1", "symbols": ["ctx_tags$ebnf$1", "ctx_tags$ebnf$1$subexpression$2"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "ctx_tags", "symbols": ["ctx_tags$ebnf$1"], "postprocess": 
         ([values]) => values
         },
     {"name": "suffix", "symbols": ["suffix_not_iyy"], "postprocess": id},
     {"name": "suffix$macrocall$2", "symbols": ["IYY"]},
     {"name": "suffix$macrocall$1$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
-    {"name": "suffix$macrocall$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix$macrocall$1$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "suffix$macrocall$1", "symbols": ["suffix$macrocall$2", "suffix$macrocall$1$ebnf$1"], "postprocess": 
         ([suffixChain, nesteds]) => {
           // XXX: the suffixChain.length stuff is bad hardcoding
@@ -322,7 +353,7 @@ export const ParserRules = [
     {"name": "suffix", "symbols": ["suffix$macrocall$1"], "postprocess": id},
     {"name": "suffix$macrocall$4", "symbols": ["JIYY"]},
     {"name": "suffix$macrocall$3$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
-    {"name": "suffix$macrocall$3$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix$macrocall$3$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "suffix$macrocall$3", "symbols": ["suffix$macrocall$4", "suffix$macrocall$3$ebnf$1"], "postprocess": 
         ([suffixChain, nesteds]) => {
           // XXX: the suffixChain.length stuff is bad hardcoding
@@ -345,7 +376,7 @@ export const ParserRules = [
     {"name": "suffix_not_iyy", "symbols": ["FEM", "DUAL"], "postprocess": processSuffixes(1)},
     {"name": "suffix_not_iyy$macrocall$2", "symbols": ["FEM_PLURAL", "IYY"]},
     {"name": "suffix_not_iyy$macrocall$1$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
-    {"name": "suffix_not_iyy$macrocall$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix_not_iyy$macrocall$1$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "suffix_not_iyy$macrocall$1", "symbols": ["suffix_not_iyy$macrocall$2", "suffix_not_iyy$macrocall$1$ebnf$1"], "postprocess": 
         ([suffixChain, nesteds]) => {
           // XXX: the suffixChain.length stuff is bad hardcoding
@@ -360,7 +391,7 @@ export const ParserRules = [
     {"name": "suffix_not_iyy", "symbols": ["suffix_not_iyy$macrocall$1"], "postprocess": id},
     {"name": "suffix_not_iyy$macrocall$4", "symbols": ["FEM_PLURAL", "JIYY"]},
     {"name": "suffix_not_iyy$macrocall$3$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
-    {"name": "suffix_not_iyy$macrocall$3$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix_not_iyy$macrocall$3$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "suffix_not_iyy$macrocall$3", "symbols": ["suffix_not_iyy$macrocall$4", "suffix_not_iyy$macrocall$3$ebnf$1"], "postprocess": 
         ([suffixChain, nesteds]) => {
           // XXX: the suffixChain.length stuff is bad hardcoding
@@ -375,7 +406,7 @@ export const ParserRules = [
     {"name": "suffix_not_iyy", "symbols": ["suffix_not_iyy$macrocall$3"], "postprocess": id},
     {"name": "suffix_not_iyy$macrocall$6", "symbols": ["DUAL", "IYY"]},
     {"name": "suffix_not_iyy$macrocall$5$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
-    {"name": "suffix_not_iyy$macrocall$5$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix_not_iyy$macrocall$5$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "suffix_not_iyy$macrocall$5", "symbols": ["suffix_not_iyy$macrocall$6", "suffix_not_iyy$macrocall$5$ebnf$1"], "postprocess": 
         ([suffixChain, nesteds]) => {
           // XXX: the suffixChain.length stuff is bad hardcoding
@@ -390,7 +421,7 @@ export const ParserRules = [
     {"name": "suffix_not_iyy", "symbols": ["suffix_not_iyy$macrocall$5"], "postprocess": id},
     {"name": "suffix_not_iyy$macrocall$8", "symbols": ["DUAL", "JIYY"]},
     {"name": "suffix_not_iyy$macrocall$7$ebnf$1", "symbols": ["suffix_not_iyy"], "postprocess": id},
-    {"name": "suffix_not_iyy$macrocall$7$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "suffix_not_iyy$macrocall$7$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "suffix_not_iyy$macrocall$7", "symbols": ["suffix_not_iyy$macrocall$8", "suffix_not_iyy$macrocall$7$ebnf$1"], "postprocess": 
         ([suffixChain, nesteds]) => {
           // XXX: the suffixChain.length stuff is bad hardcoding
@@ -408,7 +439,7 @@ export const ParserRules = [
     {"name": "stem", "symbols": ["disyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},
     {"name": "stem", "symbols": ["trisyllable"], "postprocess": ([{ stressedOn, value }]) => _.obj(type.stem, { stressedOn }, value)},
     {"name": "stem$ebnf$1", "symbols": []},
-    {"name": "stem$ebnf$1", "symbols": ["stem$ebnf$1", "medial_syllable"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "stem$ebnf$1", "symbols": ["stem$ebnf$1", "medial_syllable"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "stem", "symbols": ["initial_syllable", "stem$ebnf$1", "final_three_syllables"], "postprocess": ([a, b, { stressedOn, value: c }]) => _.obj(type.stem, { stressedOn }, [a, ...b, ...c])},
     {"name": "monosyllable$macrocall$2", "symbols": ["final_syllable"], "postprocess": id},
     {"name": "monosyllable$macrocall$1", "symbols": ["ST", "monosyllable$macrocall$2"], "postprocess": ([st, value]) => _.obj(type.syllable, value.meta, [...st, ...value.value])},
@@ -513,7 +544,7 @@ export const ParserRules = [
     {"name": "vowel$subexpression$1", "symbols": ["long_vowel"]},
     {"name": "vowel$subexpression$1", "symbols": ["short_vowel"]},
     {"name": "vowel$ebnf$1", "symbols": ["NASAL"], "postprocess": id},
-    {"name": "vowel$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "vowel$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "vowel", "symbols": ["vowel$subexpression$1", "vowel$ebnf$1"], "postprocess": ([[value], nasal]) => (nasal ? _.edit(value, {meta: {features: {nasalized: true}}}) : value)},
     {"name": "short_vowel$subexpression$1", "symbols": [({type: "a"})]},
     {"name": "short_vowel$subexpression$1", "symbols": [({type: "iLax"})]},
@@ -534,7 +565,7 @@ export const ParserRules = [
     {"name": "long_vowel$subexpression$1", "symbols": [({type: "aw"})]},
     {"name": "long_vowel", "symbols": ["long_vowel$subexpression$1"], "postprocess": ([[{ value }]]) => _.process(value)},
     {"name": "root$ebnf$1", "symbols": ["consonant"], "postprocess": id},
-    {"name": "root$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "root$ebnf$1", "symbols": [], "postprocess": () => null},
     {"name": "root", "symbols": ["consonant", "consonant", "consonant", "root$ebnf$1"]},
     {"name": "consonant", "symbols": ["strong_consonant"], "postprocess": id},
     {"name": "consonant", "symbols": ["weak_consonant"], "postprocess": id},
@@ -594,5 +625,8 @@ export const ParserRules = [
     {"name": "STRESSED", "symbols": [({type: "stressed"})], "postprocess": processToken},
     {"name": "NASAL", "symbols": [({type: "nasal"})], "postprocess": processToken},
     {"name": "__", "symbols": [({type: "ws"})], "postprocess": () => null}
-];
-export const ParserStart = "passage";
+  ],
+  ParserStart: "passage",
+};
+
+export default grammar;
