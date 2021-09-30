@@ -176,7 +176,7 @@
 %}
 
 @lexer lexer
-@preprocessor esmodule
+@preprocessor typescript
 
 makeInitial[Syllable] ->
     ST $Syllable  {% ([st, value]) => _.obj(type.syllable, value.meta, [...st, ...value.value]) %}
