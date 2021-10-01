@@ -1,7 +1,7 @@
 import type from '../type';
-import { parseString as $, parseLetter } from '../../parse-word';
+import {parseString as $, parseLetter} from '../../parse-word';
 import {obj, type as segType} from '../../objects';
-import { PERSON as P, GENDER as G, NUMBER as N } from '../../symbols';
+import {PERSON as P, GENDER as G, NUMBER as N} from '../../symbols';
 
 const I = Object.freeze(parseLetter`i`);
 /* const FEM_T = Object.freeze(obj.edit(parseLetter`c`, {meta: {t: true}})); */
@@ -148,7 +148,7 @@ export default function pronoun({value: [person, gender, number]}) {
     suffix() {
       return obj.obj(segType.suffix, {}, {person, gender, number});
     },
-    prefix(indicative=null) {
+    prefix(indicative = null) {
       return obj.obj(segType.prefix, {indicative}, {person, gender, number});
     },
     // returns true if this suffix creates a "heavier" syllable than CV at the end of the stem
@@ -161,13 +161,13 @@ export default function pronoun({value: [person, gender, number]}) {
     // because for example what if we go maghrebi with our 1pl
     // this one will become invalid
     noNonpastSuffix() {
-      return (person.third() && number.plural()) || (person.second() && !(number.singular() && gender.masc()))
+      return (person.third() && number.plural()) || (person.second() && !(number.singular() && gender.masc()));
     },
     vowelInitialSuffix(isPast) {
       if (isPast) {
         return !this.heavierPastSuffix();
       }
       return this.noNonpastSuffix();
-    }
+    },
   };
 }

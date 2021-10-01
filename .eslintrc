@@ -16,13 +16,7 @@
           "warn",
           1
         ],
-        "quotes": [
-          "warn",
-          "backtick",
-          {
-            "avoidEscape": true
-          }
-        ],
+        "quotes": "off",
         "@typescript-eslint/quotes": [
             "warn",
             "backtick",
@@ -51,10 +45,7 @@
           }
         ],
         "no-param-reassign": "off",
-        "object-curly-spacing": [
-          "error",
-          "never"
-        ],
+        "object-curly-spacing": "off",
         "@typescript-eslint/object-curly-spacing": [
             "error",
             "never"
@@ -76,6 +67,8 @@
             "exports": "always-multiline",
             "functions": "only-multiline"
           }
-        ]
+        ],
+        "lines-between-class-members": "off",
+        "@typescript-eslint/lines-between-class-members": ["error", "always", {"exceptAfterSingleLine": true}]
     }
 }

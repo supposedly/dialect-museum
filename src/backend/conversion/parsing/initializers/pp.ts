@@ -1,8 +1,9 @@
-import { contract } from '../vowels';
-import { type as segType } from '../../objects';
-import { parseWord, parseLetter } from '../../parse-word';
-import { wazn, voiceToken } from '../../symbols';
+import {contract} from '../vowels';
+import {type as segType} from '../../objects';
+import {parseWord, parseLetter} from '../../parse-word';
+import {Wazn, VoiceToken} from '../../symbols';
 import * as utils from '../../utils';
+
 const {
   misc: {
     lastOf, backup,
@@ -128,17 +129,17 @@ export default function pp({
   value: {
     root: [$F, $3, $L, $Q],
     augmentation,
-    suffix: suffixes
+    suffix: suffixes,
   },
   context,
 }) {
   // xor but being extra-explicit about it
   // (if form is quadriliteral then $Q must be given, and if not then not)
-  if (Boolean($Q) !== Boolean(wazn.keys[form].endsWith(`2`))) {
+  if (Boolean($Q) !== Boolean(Wazn.keys[form].endsWith(`2`))) {
     throw new Error(`Didn't expect fourth radical ${$Q} with form ${form}`);
   }
 
-  const isActiveVoice = voice === voiceToken.active;
+  const isActiveVoice = voice === VoiceToken.active;
   const conjugationSuffix = conjugation.suffix;
   const lastRadical = $Q || $L;
   const onlyMu = context.has(`mu`);
@@ -187,7 +188,7 @@ export default function pp({
     meta,
   });
   switch (form) {
-    case wazn.anyForm1:
+    case Wazn.anyForm1:
       if (isActiveVoice) {
         throw new Error(`Active voice is currently unsupported with anyForm1`);
       }
@@ -216,7 +217,7 @@ export default function pp({
       }
       // default
       return $`m.a.${$F} ${$3}.uu.${$L}`;
-    case wazn.fe3il: {
+    case Wazn.fe3il: {
       if (!isActiveVoice) {
         throw new Error(`Can't use passive voice with fe3il`);
       }
@@ -236,19 +237,19 @@ export default function pp({
         ...($3.meta.weak ? $iy`${$F}.aa y.i.${$L}` : $iy`${$F}.aa ${$3}.i.${$L}`),
       ];
     }
-    case wazn.fa3len:
+    case Wazn.fa3len:
       if (!isActiveVoice) {
         throw new Error(`Can't use passive voice with fa3len`);
       }
       return $`${$F}.a.${$3} ${$L}.aa.n`;
-    case wazn.fa33al:
+    case Wazn.fa33al:
       return isActiveVoice
         ? [
           ...$iy`m.${$F}.a.${$3} ${$3}.i.${$L}`,
           ...$`m.${$F}.a.${$3} ${$3}.a.${$L}`,
         ]
         : $`m.${$F}.a.${$3} ${$3}.a.${$L}`;
-    case wazn.tfa33al:
+    case Wazn.tfa33al:
       return isActiveVoice
         ? [
           ...$`m.${$F}.a.${$3} ${$3}.a.${$L}`,
@@ -257,7 +258,7 @@ export default function pp({
           ...$iy`m.u.t ${$F}.i.${$3} ${$3}.i.${$L}`,
         ]
         : $`m.u.t ${$F}.a.${$3} ${$3}.a.${$L}`;
-    case wazn.stfa33al:
+    case Wazn.stfa33al:
       // stanna-yestanna
       if ($F.meta.weak) {
         return isActiveVoice
@@ -276,14 +277,14 @@ export default function pp({
           ...$`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`,
         ]
         : $`m.u.s._.t ${$F}.a.${$3} ${$3}.a.${$L}`;
-    case wazn.fe3al:
+    case Wazn.fe3al:
       return isActiveVoice
         ? [
           ...$iy`m.${$F}.aa ${$3}.i.${$L}`,
           ...$`m.${$F}.aa ${$3}.a.${$L}`,
         ]
         : $`m.${$F}.aa ${$3}.a.${$L}`;
-    case wazn.tfe3al:
+    case Wazn.tfe3al:
       return isActiveVoice
         ? [
           ...$`m.${$F}.aa ${$3}.a.${$L}`,
@@ -291,7 +292,7 @@ export default function pp({
           ...$`m.u.t ${$F}.aa ${$3}.a.${$L}`,
         ]
         : $`m.u.t ${$F}.aa ${$3}.a.${$L}`;
-    case wazn.stfe3al:
+    case Wazn.stfe3al:
       // stehal-yistehal
       if ($F.meta.weak) {
         return isActiveVoice
@@ -307,7 +308,7 @@ export default function pp({
           ...$`m.u.s._.t ${$F}.aa ${$3}.a.${$L}`,
         ]
         : $`m.u.s._.t ${$F}.aa ${$3}.a.${$L}`;
-    case wazn.af3al:
+    case Wazn.af3al:
       return isActiveVoice ? [
         ...$iy`m.u.${$F} ${$3}.i.${$L}`,
         ...$iy`m.2.a.${$F} ${$3}.i.${$L}`,
@@ -316,7 +317,7 @@ export default function pp({
         ...$`m.u.${$F} ${$3}.a.${$L}`,
         ...$`m.2.a.${$F} ${$3}.a.${$L}`,
       ];
-    case wazn.nfa3al:
+    case Wazn.nfa3al:
       if ($3.meta.weak) {
         return $`m.u.n ${$F}.aa.${$L}`;
       }
@@ -337,7 +338,7 @@ export default function pp({
         ...$`-m.u.n +${$F}.a -${$3}.a.${$L}`,
         ...$`m.u.n ${$F}.a ${$3}.a.${$L}`,
       ];
-    case wazn.nfi3il:
+    case Wazn.nfi3il:
       // same as nfa3al but can never be minfa3al when 'active', only minfi3il
       if ($3.meta.weak) {
         return $`m.u.n ${$F}.aa.${$L}`;
@@ -358,7 +359,7 @@ export default function pp({
         ...$`-m.u.n +${$F}.a -${$3}.a.${$L}`,
         ...$`m.u.n ${$F}.a ${$3}.a.${$L}`,
       ];
-    case wazn.fta3al:
+    case Wazn.fta3al:
       if ($3.meta.weak) {
         return $`m.u.${$F} t.aa.${$L}`;
       }
@@ -373,7 +374,7 @@ export default function pp({
         ...$`-m.u.${$F} +t.a -${$3}.a.${$L}`,
         ...$`m.u.${$F} t.a ${$3}.a.${$L}`,
       ];
-    case wazn.fti3il:
+    case Wazn.fti3il:
       // same as fta3al but can never be mifta3al when 'active', only mifti3il
       if ($3.meta.weak) {
         return $`m.u.${$F} t.aa.${$L}`;
@@ -388,7 +389,7 @@ export default function pp({
         ...$`-m.u.${$F} +t.a -${$3}.a.${$L}`,
         ...$`m.u.${$F} t.a ${$3}.a.${$L}`,
       ];
-    case wazn.staf3al:
+    case Wazn.staf3al:
       if ($3.meta.weak) {
         // not including an "if $L.meta.weak" branch here because
         // the only verb possibly like that is sta7aa, and that
@@ -401,19 +402,19 @@ export default function pp({
         return isActiveVoice ? [...$`m.u.s._.t ${$F}.i.${$3}.${$L}`, ...$`m.u.s t.a ${$F}.i.${$3}.${$L}`] : [...$`m.u.s._.t ${$F}.a.${$3}.${$L}`, ...$`m.u.s t.a ${$F}.a.${$3}.${$L}`];
       }
       return isActiveVoice ? $iy`m.u.s t.a.${$F} ${$3}.i.${$L}` : $`m.u.s t.a.${$F} ${$3}.a.${$L}`;
-    case wazn.f3all:
+    case Wazn.f3all:
       if (isActiveVoice) {
         return $`m.u.${$F} ${$3}.a.${$L}.${$L}`;
       }
       throw new Error(`Can't use passive voice with f3all`);
-    case wazn.fa3la2:
+    case Wazn.fa3la2:
       return isActiveVoice
         ? [
           ...$iy`m.${$F}.a.${$3} ${$L}.i.${$Q}`,
           ...$`m.${$F}.a.${$3} ${$L}.a.${$Q}`,
         ]
         : $`m.${$F}.a.${$3} ${$L}.a.${$Q}`;
-    case wazn.tfa3la2:
+    case Wazn.tfa3la2:
       return isActiveVoice
         ? [
           ...$`m.${$F}.a.${$3} ${$L}.a.${$Q}`,
@@ -422,7 +423,7 @@ export default function pp({
           ...$iy`m.u.t ${$F}.i.${$3} ${$L}.i.${$Q}`,
         ]
         : $`m.u.t ${$F}.a.${$3} ${$L}.a.${$Q}`;
-    case wazn.stfa3la2:
+    case Wazn.stfa3la2:
       if ($F.meta.weak) {
         // doesn't exist B)
         return isActiveVoice
@@ -443,6 +444,6 @@ export default function pp({
         ]
         : $`m.u.s._.t ${$F}.a.${$3} ${$L}.a.${$Q}`;
     default:
-      throw new Error(`Unknown participle form ${form} ('${wazn.keys[form]}')`);
+      throw new Error(`Unknown participle form ${form} ('${Wazn.keys[form]}')`);
   }
 }

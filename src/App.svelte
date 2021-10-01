@@ -4,7 +4,7 @@
   import {Word, keys} from './backend/conversion/transformers/common/classes';
   import wordType from './backend/conversion/parsing/type';
   import {type as segType} from './backend/conversion/objects';
-  import {alphabet as abc, location, tamToken, wazn} from './backend/conversion/symbols';
+  import {alphabet as abc, Location, TamToken, Wazn} from './backend/conversion/symbols';
   import type from './backend/conversion/parsing/type';
   import match from './backend/conversion/transformers/common/match.js';
 
@@ -23,7 +23,7 @@
         .expand({
           into: [[phonic.i, phonic.t], [phonic.a, phonic.t]],
           where: {
-            word: {was: type.verb, tam: tamToken.pst, wazn: match.not(wazn.i)},
+            word: {was: type.verb, tam: TamToken.pst, wazn: match.not(Wazn.i)},
             next: {$exists: true}
           },
           because: `Many people always use "-it" when they conjugate verbs for هي, but some turn this into "-at" when there's anything after it in the same word. Some others, especially outside of Lebanon, even use "-at" no matter what.`
@@ -32,7 +32,7 @@
         .expand({
           into: [[phonic.i, phonic.t]],
           where: {
-            word: {was: type.verb, tam: tamToken.pst}
+            word: {was: type.verb, tam: TamToken.pst}
           }
         });
 
@@ -51,7 +51,7 @@
               meta: {
                 features: match.any(
                   {emphatic: true},
-                  {location: val => val < location.velum}
+                  {location: val => val < Location.velum}
                 )
               }
             }

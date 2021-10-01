@@ -78,7 +78,7 @@ export function qualifyKeys(obj, transform = o => o) {
   return Object.keys(obj)
     .flatMap(parent => [
       [parent],
-      ...qualifyKeys(obj[parent]).map(child => [parent, ...child])
+      ...qualifyKeys(obj[parent]).map(child => [parent, ...child]),
     ])
     .map(transform);
 }

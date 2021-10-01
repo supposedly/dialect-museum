@@ -1,6 +1,7 @@
 import * as utils from '../../utils';
-const { misc: { lastOf } } = utils;
-import { parseWord, parseLetter } from '../../parse-word';
+import {parseWord, parseLetter} from '../../parse-word';
+
+const {misc: {lastOf}} = utils;
 const AA = Object.freeze(parseLetter`aa`);
 
 // transformer: replace -ay with -aa
@@ -28,7 +29,7 @@ export default function af3al({value: {root: [$F, $3, $L, $Q], augmentation}}) {
   if ($Q) {
     return [
       ...$`2.a ${$F}.a.${$3} ${$L}.a.${$Q}`,
-      ...$`2.a ${$F}.a.${$3} ${$L}.i.${$Q}`
+      ...$`2.a ${$F}.a.${$3} ${$L}.i.${$Q}`,
     ];
   }
 
@@ -48,6 +49,6 @@ export default function af3al({value: {root: [$F, $3, $L, $Q], augmentation}}) {
 
   return [
     ...$`2.a.${$F} ${$3}.a.${$L}`,
-    ...$`2.a.${$F} ${$3}.i.${$L}`
+    ...$`2.a.${$F} ${$3}.i.${$L}`,
   ];
 }
