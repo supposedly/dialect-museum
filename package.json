@@ -24,6 +24,11 @@
     "@rollup/plugin-typescript": "^8.2.5",
     "@tsconfig/svelte": "^2.0.1",
     "@types/moo": "^0.5.5",
+    "@typescript-eslint/eslint-plugin": "^4.32.0",
+    "@typescript-eslint/parser": "^4.32.0",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-airbnb-typescript": "^14.0.0",
     "open": "^8.2.1",
     "rollup": "^2.3.4",
     "rollup-plugin-css-only": "^3.1.0",
@@ -34,77 +39,6 @@
     "svelte-check": "^2.2.6",
     "svelte-preprocess": "^4.9.5",
     "typescript": "^4.4.3"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/vue3-essential",
-      "@vue/airbnb"
-    ],
-    "ignorePatterns": "grammar.js",
-    "parserOptions": {
-      "parser": "babel-eslint"
-    },
-    "rules": {
-      "linebreak-style": "off",
-      "max-classes-per-file": [
-        "warn",
-        1
-      ],
-      "quotes": [
-        "warn",
-        "backtick",
-        {
-          "avoidEscape": true
-        }
-      ],
-      "prefer-destructuring": "off",
-      "arrow-parens": [
-        "warn",
-        "as-needed",
-        {
-          "requireForBlockBody": false
-        }
-      ],
-      "no-use-before-define": [
-        "error",
-        {
-          "variables": false
-        }
-      ],
-      "no-multi-spaces": [
-        "warn",
-        {
-          "ignoreEOLComments": true
-        }
-      ],
-      "no-param-reassign": "off",
-      "object-curly-spacing": [
-        "error",
-        "never"
-      ],
-      "object-curly-newline": "off",
-      "no-underscore-dangle": "off",
-      "no-unused-vars": [
-        "error",
-        {
-          "argsIgnorePattern": "^_"
-        }
-      ],
-      "comma-dangle": [
-        "error",
-        {
-          "arrays": "always-multiline",
-          "objects": "always-multiline",
-          "imports": "always-multiline",
-          "exports": "always-multiline",
-          "functions": "only-multiline"
-        }
-      ]
-    }
   },
   "browserslist": [
     "> 1% and last 2 versions",
