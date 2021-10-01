@@ -1,12 +1,14 @@
-import { obj, type } from '../objects';
+import type {Syllable} from '../../../types';
+import {obj} from '../objects';
 import objType from '../parsing/type';
-import { lastOf } from './misc';
+import {isConsonant, isVowel, Segment, SegType} from '../symbols';
+import {lastOf} from './misc';
 
-export function isSyllable(s) {
+export function isSyllable(s): s is Syllable {
   return s.type === objType.syllable;
 }
 
-export function newSyllable(string = []) {
+export function newSyllable(string: Segment[] = []) {
   return obj.obj(
     objType.syllable,
     {stressed: null, weight: null},
@@ -14,7 +16,7 @@ export function newSyllable(string = []) {
   );
 }
 
-export function getSyllableWeight(s) {
+export function getSyllableWeight(s: Syllable) {
   // 0 segments in syllable = weight of -1
   // 1 segment in syllable = weight of 0
   if (s.value.length <= 1) {
@@ -48,11 +50,11 @@ export function getSyllableWeight(s) {
       break;
     }
     // long vowels add 2, short vowels add 1
-    if (segment.type === type.vowel) {
+    if (isVowel(segment)) {
       rimeLength += segment.meta.features.length;
       break;
     }
-    if (segment.type === type.consonant) {
+    if (isConsonant(segment)) {
       // consonants just add 1
       rimeLength += 1;
     }
@@ -62,7 +64,7 @@ export function getSyllableWeight(s) {
 }
 
 // determine & set stressed syllable according to weights
-export function setStressedSyllable(syllables, clearRest = false) {
+export function setStressedSyllable(syllables: Syllable[], clearRest = false) {
   syllables = syllables.filter(isSyllable);
   if (clearRest) {
     syllables.forEach(s => { s.meta.stressed = false; });
@@ -97,8 +99,8 @@ export function setStressedSyllable(syllables, clearRest = false) {
   }
 }
 
-export function copy(syllables) {
-  return syllables.map(s => obj.obj(
+export function copy<T>(things: T[]): T[] {
+  return things.map(s => obj.obj(
     s.type,
     {...s.meta},
     s.type === objType.syllable ? [...s.value] : {...s.value},

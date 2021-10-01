@@ -1,4 +1,4 @@
-import { parseLetter } from '../parse-word';
+import {parseLetter} from '../parse-word';
 
 const I = Object.freeze(parseLetter`i`);
 const LAX_I = Object.freeze(parseLetter`I`);

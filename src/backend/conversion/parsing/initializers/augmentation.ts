@@ -1,7 +1,8 @@
-import { type as segType } from '../../objects';
-import { parseLetter, parseString as $ } from '../../parse-word';
+import {type as segType} from '../../objects';
+import {parseLetter, parseString as $} from '../../parse-word';
 import * as utils from '../../utils';
-const { misc: { lastOf } } = utils;
+
+const {misc: {lastOf}} = utils;
 
 const L = Object.freeze(parseLetter`l`);
 
@@ -153,7 +154,7 @@ function clitic(person, gender, number, n) {
           {
             // last one is e.g. "darabouyon" which is a thing
             uu: [stress(_.WA), stress(_.HA), stress(_.YA)],
-          }
+          },
         );
       }
       return cliticInContext(
@@ -182,7 +183,7 @@ function clitic(person, gender, number, n) {
       {
         // last one is e.g. "darabouyon" which is a thing
         uu: [stress(_.WUN), stress(_.HUN), stress(_.YUN)],
-      }
+      },
     );
   }
   throw new Error(
@@ -205,14 +206,14 @@ function makeAugmentor(delimiter, person, gender, number, makeEnd = null) {
   }
 
   return base => ({
-      delimiter,
-      pronoun: {person, gender, number},
-      clitics: clitic(person, gender, number, n).afterEndOf(
-        makeEnd
-          ? makeEnd(base)
-          : lastOf(base).value,
-      ),
-    });
+    delimiter,
+    pronoun: {person, gender, number},
+    clitics: clitic(person, gender, number, n).afterEndOf(
+      makeEnd
+        ? makeEnd(base)
+        : lastOf(base).value,
+    ),
+  });
 }
 
 // not sure if this and pronouns.js should return { type, meta, value } objs or not
@@ -239,5 +240,5 @@ export default function augmentation({
     number,
   );
   */
- return {type, value: {delimiter, pronoun: {person, gender, number}}};
+  return {type, value: {delimiter, pronoun: {person, gender, number}}};
 }

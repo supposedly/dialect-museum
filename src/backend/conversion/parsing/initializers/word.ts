@@ -1,9 +1,10 @@
-import { contract } from '../vowels';
-import { type as segType } from '../../objects';
+import {contract} from '../vowels';
+import {type as segType} from '../../objects';
 import wordType from '../type';
 import * as utils from '../../utils';
-import { edit } from '../../objects/obj';
-const { misc: { lastOf } } = utils;
+import {edit} from '../../objects/obj';
+
+const {misc: {lastOf}} = utils;
 
 function deSyllabify(sections) {
   sections.forEach(section => {
@@ -21,9 +22,9 @@ function deSyllabify(sections) {
   // they're interpreted as syllable-level thingies before this and they'll be
   // interpreted as segment-level thingies after this
   return sections.flatMap(
-    section => section.type <= wordType.augmentation
+    section => (section.type <= wordType.augmentation
       ? section
-      : section.value
+      : section.value),
   );
 }
 

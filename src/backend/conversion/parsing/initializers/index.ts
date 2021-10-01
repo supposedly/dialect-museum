@@ -10,7 +10,6 @@ import tif3il from './tif3il';
 import verb from './verb';
 import word from './word';
 
-
 export default {
   [type.af3al]: af3al,
   [type.augmentation]: augmentation,

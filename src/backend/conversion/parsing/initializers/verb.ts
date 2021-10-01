@@ -1,11 +1,12 @@
-import { type as segType } from '../../objects';
-import { lax } from '../vowels';
-import { parseWord, parseLetter } from '../../parse-word';
-import { choice } from '../../objects';
-import { wazn, tamToken } from '../../symbols';
+import {type as segType, choice} from '../../objects';
+import {lax} from '../vowels';
+import {parseWord, parseLetter} from '../../parse-word';
+
+import {Wazn, TamToken} from '../../symbols';
 import * as utils from '../../utils';
+
 const {
-  misc: { lastOf /* , backup */ }, syllables: { newSyllable },
+  misc: {lastOf /* , backup */}, syllables: {newSyllable},
 } = utils;
 
 const LAX_I = Object.freeze(parseLetter`I`);
@@ -125,7 +126,7 @@ function makePrefixers(prefixes) {
 */
 
 function makeSuffixer(suffix, conjugation, tam) {
-  if (!conjugation.vowelInitialSuffix(tam === tamToken.pst)) {
+  if (!conjugation.vowelInitialSuffix(tam === TamToken.pst)) {
     return base => {
       base.push(suffix);
     };
@@ -148,7 +149,7 @@ function getAffixes(tam, conjugation, isCV) {
   let prefixes;
   let suffix;
   switch (tam) {
-    case tamToken.sbjv:
+    case TamToken.sbjv:
       if (isCV) {
         prefixes = choice(
           // tkuun
@@ -166,7 +167,7 @@ function getAffixes(tam, conjugation, isCV) {
       }
       suffix = [...conjugation.nonpast.suffix];
       break;
-    case tamToken.ind:
+    case TamToken.ind:
       if (isCV) {
         const cv = conjugation.nonpast.prefix.subjunctive.cv;
         if (cv.length == 0) {
@@ -180,7 +181,7 @@ function getAffixes(tam, conjugation, isCV) {
             {
               syllables: [],
               rest: conjugation.nonpast.prefix.indicative,
-            }
+            },
           );
         } else if (cv[0].value === `y`) {
           prefixes = choice(
@@ -258,14 +259,14 @@ function getAffixes(tam, conjugation, isCV) {
       }
       suffix = [...conjugation.nonpast.suffix];
       break;
-    case tamToken.imp:
+    case TamToken.imp:
       if (!conjugation.person.second()) {
         throw new Error(`Can't use an imperative verb on persons other than second; try sbjv`);
       }
       prefixes = null;
       suffix = [...conjugation.nonpast.suffix];
       break;
-    case tamToken.pst:
+    case TamToken.pst:
       prefixes = null;
       suffix = [...conjugation.past.suffix];
       break;
@@ -282,27 +283,27 @@ export default function verb({
   meta: {conjugation, form, tam},
   value: {root: [$F, $3, $L, $Q], augmentation},
 }) {
-  const stringForm = wazn.keys[form];
+  const stringForm = Wazn.keys[form];
   // xor but being extra-explicit about it
   // (if form is quadriliteral then $Q must be given, and if not then not)
   if (Boolean($Q) !== Boolean(stringForm.endsWith(`2`))) {
     throw new Error(`Didn't expect fourth radical ${$Q} with form ${stringForm}`);
   }
 
-  const prefix = tam === tamToken.pst ? null : conjugation.prefix(tam === tamToken.ind);
+  const prefix = tam === TamToken.pst ? null : conjugation.prefix(tam === TamToken.ind);
   const suffix = conjugation.suffix();
 
   const suffixer = makeSuffixer(suffix, conjugation, tam);
 
   // true if a verb is above form 1 and has no TAM suffix
-  const noSuffix = tam === tamToken.pst
+  const noSuffix = tam === TamToken.pst
     ? conjugation.person.third() && conjugation.gender.masc()
     : (!conjugation.gender.fem() || conjugation.person.third()) && !conjugation.number.plural();
 
   const biliteral = $Q ? $L.value === $Q.value : $3.value === $L.value;
   const lastRadical = $Q || $L;
   const finalWeak = lastRadical.meta.weak;
-  const nonpast = tam !== tamToken.pst;
+  const nonpast = tam !== TamToken.pst;
 
   const meta = {
     was,
@@ -334,7 +335,7 @@ export default function verb({
     // see XXX above
     postTransform: [[
       augment(augmentation),
-      (form === `i` && tam === tamToken.pst && conjugation.person.third() && conjugation.gender.masc()) && fixFi3il,
+      (form === `i` && tam === TamToken.pst && conjugation.person.third() && conjugation.gender.masc()) && fixFi3il,
     ]],
   });
   // these two are just so i can see more-easily when $ adds affixes and when it doesn't
@@ -342,21 +343,21 @@ export default function verb({
   const _$_ = $;
 
   switch (form) {
-    case wazn.a:
+    case Wazn.a:
       if (biliteral) {
         return _$_`${$F}.a.${$3}.${$L}`;
       }
       if ($3.meta.weak) {
         return _$_`${$F}.aa.${$L}`;
       }
-      if (tam === tamToken.pst) {
+      if (tam === TamToken.pst) {
         if ($L.meta.weak && !conjugation.gender.masc() && !conjugation.heavierPastSuffix()) {
           // 3atit, 3atyit
           return [...$_`${$F}.a.${$3}`, ...$_`${$F}.a.${$3}.y`];
         }
         return $_`${$F}.a ${$3}.a.${$L}`;
       }
-      if (tam === tamToken.imp) {
+      if (tam === TamToken.imp) {
         if ($F.meta.weak) {
           // not a thing
           return conjugation.gender.masc() ? $`${$F}.aa.${$L}` : $`${$F}.a.${$L}`;
@@ -373,7 +374,7 @@ export default function verb({
         ];
       }
       return _$_`${$F}.${$3}.a.${$L}`;
-    case wazn.i:
+    case Wazn.i:
       if (biliteral) {
         return _$_`${$F}.i.${$3}.${$L}`;
       }
@@ -381,7 +382,7 @@ export default function verb({
         // possible for past-tense verbs technically, like صِيب (fus7a-ish passive)
         return _$_`${$F}.ii.${$L}`;
       }
-      if (tam === tamToken.pst) {
+      if (tam === TamToken.pst) {
         if ($L.meta.weak && !conjugation.gender.masc() && !conjugation.heavierPastSuffix()) {
           // 7ikyit, 7ikit
           return [...$_`${$F}.i.${$3}.y`, ...$_`${$F}.i.${$3}`];
@@ -391,7 +392,7 @@ export default function verb({
         // but that specificity isn't implemented yet]
         return $_`${$F}.i ${$3}.i.${$L}`;
       }
-      if (tam === tamToken.imp) {
+      if (tam === TamToken.imp) {
         if ($F.meta.weak) {
           // not a thing
           return conjugation.gender.masc() ? $`${$F}.ee.${$L}` : $`${$F}.I.${$L}`;
@@ -405,8 +406,8 @@ export default function verb({
         return $_`2.i.${$F} ${$3}.i.${$L}`;
       }
       return _$_`${$F}.${$3}.i.${$L}`;
-    case wazn.u:
-      if (tam === tamToken.pst) {
+    case Wazn.u:
+      if (tam === TamToken.pst) {
         throw new Error(`No past-tense Form 1 conjugation in /u/ exists: ${$F}${$3}${$L}`);
       }
       if ($L.meta.weak) {
@@ -419,7 +420,7 @@ export default function verb({
         // above error also applies here, yeet
         return _$_`${$F}.uu.${$L}`;
       }
-      if (tam === tamToken.imp) {
+      if (tam === TamToken.imp) {
         if ($F.meta.weak) {
           // kool, 5ood, and for some, 3ood = 23ood/q3ood
           return conjugation.gender.masc() ? $`${$F}.oo.${$L}` : $`${$F}.U.${$L}`;
@@ -430,8 +431,8 @@ export default function verb({
         ];
       }
       return _$_`${$F}.${$3}.u.${$L}`;
-    case wazn.fa33al:
-      if (tam === tamToken.pst) {
+    case Wazn.fa33al:
+      if (tam === TamToken.pst) {
         return [
           ...$_`${$F}.a.${$3} ${$3}.a.${$L}`,
           ...$_`${$F}.i.${$3} ${$3}.a.${$L}`,
@@ -442,12 +443,12 @@ export default function verb({
         ..._$_`${$F}.a.${$3} ${$3}.i.${$L}`,
         ..._$_`${$F}.i.${$3} ${$3}.i.${$L}`,
       ];
-    case wazn.tfa33al:
+    case Wazn.tfa33al:
       return [
         ..._$_`t.${$F}.a.${$3} ${$3}.a.${$L}`,
         ..._$_`t.${$F}.i.${$3} ${$3}.a.${$L}`,
       ];
-    case wazn.stfa33al:
+    case Wazn.stfa33al:
       // stanna-yistanna
       if ($F.meta.weak) {
         return [
@@ -459,21 +460,21 @@ export default function verb({
         ..._$_`s.t.${$F}.a.${$3} ${$3}.a.${$L}`,
         ..._$_`s.t.${$F}.i.${$3} ${$3}.a.${$L}`,
       ];
-    case wazn.fe3al:
-      if (tam === tamToken.pst) {
+    case Wazn.fe3al:
+      if (tam === TamToken.pst) {
         return $_`${$F}.aa ${$3}.a.${$L}`;
       }
       return _$_`${$F}.aa ${$3}.i.${$L}`;
-    case wazn.tfe3al:
+    case Wazn.tfe3al:
       return _$_`t.${$F}.aa ${$3}.a.${$L}`;
-    case wazn.stfe3al:
+    case Wazn.stfe3al:
       // stehal-yistehal
       if ($F.meta.weak) {
         return _$_`s.t.aa ${$3}.a.${$L}`;
       }
       return _$_`s.t.${$F}.aa ${$3}.a.${$L}`;
-    case wazn.af3al:
-      if (tam === tamToken.pst) {
+    case Wazn.af3al:
+      if (tam === TamToken.pst) {
         return [
           ...$_`2.a.${$F} ${$3}.a.${$L}`,
           ...$_`2.i.${$F} ${$3}.a.${$L}`,
@@ -484,9 +485,9 @@ export default function verb({
         ...$`2.a.${$F} ${$3}.i.${$L}`,
         ...$`2.i.${$F} ${$3}.i.${$L}`,
       ];
-    case wazn.nfa3al:
+    case Wazn.nfa3al:
       if ($3.meta.weak) {
-        if (tam === tamToken.pst && conjugation.heavierPastSuffix()) {
+        if (tam === TamToken.pst && conjugation.heavierPastSuffix()) {
           return [
             ...$_`n.${$F}.a.${$L}`,
             ...$_`n.${$F}.i.${$L}`,
@@ -497,7 +498,7 @@ export default function verb({
       if (biliteral) {
         return $_`n.${$F}.a.${$3}.${$L}`;
       }
-      if (tam === tamToken.pst) {
+      if (tam === TamToken.pst) {
         if (
           !noSuffix
           && $L.meta.weak
@@ -510,7 +511,7 @@ export default function verb({
         }
         return $_`n.${$F}.a ${$3}.a.${$L}`;
       }
-      if (tam === tamToken.imp) {
+      if (tam === TamToken.imp) {
         return [
           ...$_`n.${$F}.I ${$3}.i.${$L}`,
           ...$_`2.i.n ${$F}.I ${$3}.i.${$L}`,
@@ -522,11 +523,11 @@ export default function verb({
         ..._$_`+n.${$F}.a -${$3}.a.${$L}`,
         ..._$_`n.${$F}.I ${$3}.i.${$L}`,
       ];
-    case wazn.nfi3il:
+    case Wazn.nfi3il:
       // npst conj are always yinfi3il not yinfa3al
       // and (idk if this exists but) pst conj are nfi3il not nfa3al
       if ($3.meta.weak) {
-        if (tam === tamToken.pst && conjugation.heavierPastSuffix()) {
+        if (tam === TamToken.pst && conjugation.heavierPastSuffix()) {
           return [
             ...$_`n.${$F}.a.${$L}`,
             ...$_`n.${$F}.i.${$L}`,
@@ -537,7 +538,7 @@ export default function verb({
       if (biliteral) {
         return $_`n.${$F}.i.${$3}.${$L}`;
       }
-      if (tam === tamToken.pst) {
+      if (tam === TamToken.pst) {
         if (
           !noSuffix
           && $L.meta.weak
@@ -550,7 +551,7 @@ export default function verb({
         }
         return $_`n.${$F}.I ${$3}.i.${$L}`;
       }
-      if (tam === tamToken.imp) {
+      if (tam === TamToken.imp) {
         return [
           ...$_`n.${$F}.I ${$3}.i.${$L}`,
           ...$_`2.i.n ${$F}.I ${$3}.i.${$L}`,
@@ -562,9 +563,9 @@ export default function verb({
         ..._$_`+n.${$F}.I -${$3}.i.${$L}`,
         ..._$_`n.${$F}.I ${$3}.i.${$L}`,
       ];
-    case wazn.fta3al:
+    case Wazn.fta3al:
       if ($3.meta.weak) {
-        if (tam === tamToken.pst && conjugation.heavierPastSuffix()) {
+        if (tam === TamToken.pst && conjugation.heavierPastSuffix()) {
           return [
             ...$_`${$F}.t.a.${$L}`,
             ...$_`${$F}.t.i.${$L}`,
@@ -575,7 +576,7 @@ export default function verb({
       if (biliteral) {
         return $_`${$F}.t.a.${$3}.${$L}`;
       }
-      if (tam === tamToken.pst) {
+      if (tam === TamToken.pst) {
         if (
           !noSuffix
           && $L.meta.weak
@@ -588,7 +589,7 @@ export default function verb({
         }
         return $_`${$F}.t.a ${$3}.a.${$L}`;
       }
-      if (tam === tamToken.imp) {
+      if (tam === TamToken.imp) {
         return [
           ...$_`${$F}.t.I ${$3}.i.${$L}`,
           ...$_`2.i.${$F} t.I ${$3}.i.${$L}`,
@@ -600,11 +601,11 @@ export default function verb({
         ..._$_`+${$F}.t.a -${$3}.a.${$L}`,
         ..._$_`${$F}.t.I ${$3}.i.${$L}`,
       ];
-    case wazn.fti3il:
+    case Wazn.fti3il:
       // npst conj are always yifti3il not yifta3al
       // and (idk if this exists but) pst conj are fti3il not fta3al
       if ($3.meta.weak) {
-        if (tam === tamToken.pst && conjugation.heavierPastSuffix()) {
+        if (tam === TamToken.pst && conjugation.heavierPastSuffix()) {
           return [
             ...$_`${$F}.t.a.${$L}`,
             ...$_`${$F}.t.i.${$L}`,
@@ -615,7 +616,7 @@ export default function verb({
       if (biliteral) {
         return $_`${$F}.t.i.${$3}.${$L}`;
       }
-      if (tam === tamToken.pst) {
+      if (tam === TamToken.pst) {
         if (
           !noSuffix
           && $L.meta.weak
@@ -628,7 +629,7 @@ export default function verb({
         }
         return $_`${$F}.t.I ${$3}.i.${$L}`;
       }
-      if (tam === tamToken.imp) {
+      if (tam === TamToken.imp) {
         return [
           ...$_`${$F}.t.I ${$3}.i.${$L}`,
           ...$_`2.i.${$F} t.I ${$3}.i.${$L}`,
@@ -640,31 +641,31 @@ export default function verb({
         ..._$_`+${$F}.t.I -${$3}.i.${$L}`,
         ..._$_`${$F}.t.I ${$3}.i.${$L}`,
       ];
-    case wazn.staf3al:
+    case Wazn.staf3al:
       // stehal-yistehil
       if ($F.meta.weak) {
-        if (tam === tamToken.pst) {
+        if (tam === TamToken.pst) {
           return $_`s.t.aa ${$3}.a.${$L}`;
         }
         return _$_`s.t.aa ${$3}.I.${$L}`;
       }
       if ($3.meta.weak) {
-        if (tam === tamToken.pst && conjugation.heavierPastSuffix()) {
+        if (tam === TamToken.pst && conjugation.heavierPastSuffix()) {
           return [
             ...$_`s.t.${$F}.a.${$L}`,
             ...$_`s.t.${$F}.i.${$L}`,
           ];
         }
-        return tam === tamToken.pst
+        return tam === TamToken.pst
           ? [...$_`s.t.${$F}.aa.${$L}`, ...$_`s.t.a ${$F}.aa.${$L}`]
           : [..._$_`s.t.${$F}.ii.${$L}`, ..._$_`s.t.a ${$F}.ii.${$L}`];
       }
       if (biliteral) {
-        return tam === tamToken.pst
+        return tam === TamToken.pst
           ? [...$_`s.t.${$F}.a.${$3}.${$L}`, ...$_`s.t.a ${$F}.a.${$3}.${$L}`]
           : [...$_`s.t.${$F}.i.${$3}.${$L}`, ...$_`s.t.a ${$F}.i.${$3}.${$L}`];
       }
-      if (tam === tamToken.pst) {
+      if (tam === TamToken.pst) {
         return $`s.t.a.${$F} ${$3}.a.${$L}`;
       }
       if ($3.meta.weak) {
@@ -673,10 +674,10 @@ export default function verb({
       }
       // yista3mil, *yista3mul* (spelled yesta3mol)
       return [..._$_`s.t.a.${$F} ${$3}.i.${$L}`, ..._$_`s.t.a.${$F} ${$3}.u.${$L}`];
-    case wazn.f3all:
+    case Wazn.f3all:
       return _$_`${$F}.${$3}.a.${$L}.${$L}`;
-    case wazn.fa3la2:
-      if (tam === tamToken.pst) {
+    case Wazn.fa3la2:
+      if (tam === TamToken.pst) {
         return [
           ...$_`${$F}.a.${$3} ${$L}.a.${$Q}`,
           ...$_`${$F}.i.${$3} ${$L}.a.${$Q}`,
@@ -686,12 +687,12 @@ export default function verb({
         ..._$_`${$F}.a.${$3} ${$L}.i.${$Q}`,
         ..._$_`${$F}.i.${$3} ${$L}.i.${$Q}`,
       ];
-    case wazn.tfa3la2:
+    case Wazn.tfa3la2:
       return [
         ..._$_`s.t.${$F}.a.${$3} ${$L}.a.${$Q}`,
         ..._$_`s.t.${$F}.i.${$3} ${$L}.a.${$Q}`,
       ];
-    case wazn.stfa3la2:
+    case Wazn.stfa3la2:
       // doesn't exist B)
       // XXX: idunno about these /a/ variants btw
       if ($F.meta.weak) {
@@ -705,6 +706,6 @@ export default function verb({
         ..._$_`s.t.${$F}.i.${$3} ${$L}.a.${$Q}`,
       ];
     default:
-      throw new Error(`Unknown verb form ${form} ('${wazn.keys[form]}')`);
+      throw new Error(`Unknown verb form ${form} ('${Wazn.keys[form]}')`);
   }
 }

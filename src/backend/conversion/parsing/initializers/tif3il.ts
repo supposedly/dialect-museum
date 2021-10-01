@@ -1,7 +1,8 @@
 import * as utils from '../../utils';
-const { misc: { lastOf }, syllables: { newSyllable } } = utils;
 /* const {obj} = require('../../objects'); */
-import { parseWord, parseLetter } from '../../parse-word';
+import {parseWord, parseLetter} from '../../parse-word';
+
+const {misc: {lastOf}, syllables: {newSyllable}} = utils;
 
 const AA = Object.freeze(parseLetter`aa`);
 const A = Object.freeze(parseLetter(`a`));
@@ -18,7 +19,7 @@ function aayc(suffix) {
     base.push(newSyllable(
       suffix.length
         ? [lastSyllable.pop(), ...suffix]
-        : [lastSyllable.pop(), FEM]
+        : [lastSyllable.pop(), FEM],
     ));
   };
 }
@@ -32,7 +33,7 @@ function fus7aEnding(suffix) {
     base.push(newSyllable(
       suffix.length
         ? [lastSyllable.pop(), ...suffix]
-        : [lastSyllable.pop(), FEM]
+        : [lastSyllable.pop(), FEM],
     ));
   };
 }

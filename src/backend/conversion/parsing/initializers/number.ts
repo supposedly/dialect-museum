@@ -1,8 +1,9 @@
 // const vowels = require(`../vowels`);
-import { obj } from '../../objects';
-import { parseWord as $, parseSyllable } from '../../parse-word';
+import {obj} from '../../objects';
+import {parseWord as $, parseSyllable} from '../../parse-word';
 import * as utils from '../../utils';
-const { misc: { lastOf }, syllables: { copy } } = utils;
+
+const {misc: {lastOf}, syllables: {copy}} = utils;
 
 // twenty and under
 const uniqs = [
@@ -144,8 +145,8 @@ const tens = [
           ...choice.value.slice(0, -1),
           parseSyllable`${lastOf(choice.value).value[0]}.i.i.n`,
         ],
-      })
-    )
+      }),
+    ),
   ),
 ];
 
@@ -171,7 +172,7 @@ function copyResults(results) {
       result.type,
       result.meta,  // not copying bc this is only meant to run after the forms.forEach() below
       copy(result.value),
-    )
+    ),
   );
 }
 
@@ -190,7 +191,7 @@ export default function number({
     forms.forEach(
       result => {
         result.meta = {was, quantity, gender};
-      }
+      },
     );
     return copyResults(forms);
   };

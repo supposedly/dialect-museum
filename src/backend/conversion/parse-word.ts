@@ -1,18 +1,18 @@
 import * as utils from './utils';
-const {
-  misc: { lastOf }, syllables: { isSyllable, newSyllable, getSyllableWeight, setStressedSyllable, copy },
-} = utils;
-import { alphabet as abc } from './symbols';
-import { obj, type as segType } from './objects';
+import {alphabet as abc, isConsonant, Segment, SegType} from './symbols';
+import {obj} from './objects';
 import objType from './parsing/type';
+import type {Syllable, Word} from '../../types';
 
-const PRUNE = {};
-class Prune extends Error {};
-const REJECT = function reject() {
-  throw Prune;
-};
+const {
+  misc: {lastOf},
+  syllables: {isSyllable, newSyllable, getSyllableWeight, setStressedSyllable, copy},
+} = utils;
 
-function interpolateAndParse(strings, rootConsonants) {
+function interpolateAndParse<V, T extends Segment<V>>(
+  strings: TemplateStringsArray,
+  rootConsonants: T[],
+): Syllable[] {
   const alreadyStressed = strings[0].startsWith(`+`) || strings[0].startsWith(`-`);
   const syllables = [newSyllable()];
   strings.forEach(s => {
@@ -55,21 +55,23 @@ function interpolateAndParse(strings, rootConsonants) {
               c = c.slice(0, -1);
               emphatic = true;
             }
-            const o = abc[c];
-            if (o) {
+            const o = abc[c as keyof typeof abc];
+            if (o && isConsonant(o)) {
+              // XXX: i want `processed` to be of type Consonant but need to get it to compile first
               const processed = obj.process(o);
-              // typescript... processed.meta?.weak = weak; processed.meta?.features?.emphatic = emphatic;
-              if (processed.meta) {
+              // nullish check: != not !==
+              if (processed.meta != null) {
                 processed.meta.weak = weak;
-                if (processed.meta.features) {
-                  processed.meta.features.emphatic = emphatic;
-                }
+              }
+              // nullish check: != not !==
+              if (processed.meta?.features != null) {
+                processed.meta.features.emphatic = emphatic;
               }
               return processed;
             }
             return undefined;
           })
-          .filter(o => o)
+          .filter(o => o),
       );
     });
     if (rootConsonants.length) {
@@ -79,7 +81,7 @@ function interpolateAndParse(strings, rootConsonants) {
   return syllables;
 }
 
-function setWeights(syllables) {
+function setWeights(syllables: obj.Obj<objType, any>[]) {
   syllables.filter(isSyllable).forEach(s => { s.meta.weight = getSyllableWeight(s); });
 }
 
@@ -88,7 +90,7 @@ function setWeights(syllables) {
 // (either as a continuation of the above,
 // or as a cover for if i forget my convention and
 // only mark a + syllable without marking any -)
-function setBooleanStress(syllables) {
+function setBooleanStress(syllables: obj.Obj<objType, any>[]) {
   syllables.filter(isSyllable).forEach(s => {
     s.meta.stressed = !!s.meta.stressed;
     // if (s.meta.stressed !== true) {
@@ -98,18 +100,24 @@ function setBooleanStress(syllables) {
 }
 
 // add schwa to CVCC syllables
-function addSchwa(syllables) {
+function addSchwa(syllables: obj.Obj<objType, any>[]) {
   syllables.filter(isSyllable).forEach(s => {
     if (
       s.meta.weight === 3
       && s.value.length === 4
       && lastOf(s.value).value !== lastOf(s.value, 1).value
-      && lastOf(s.value, 1).type === segType.consonant
+      && lastOf(s.value, 1).type === SegType.consonant
     ) {
       s.value.push(abc.Schwa, s.value.pop());
     }
   });
 }
+
+type ParseWordParams = {
+  preTransform?: (Function | false)[][],
+  postTransform?: (Function | false)[][],
+  meta?: Record<string, any>
+};
 
 // split a template string written using the keys of ./symbols.js's alphabet object
 // into syllable objects + consonant objects, incl. analyzing stress
@@ -135,8 +143,8 @@ function parseWordFunc({
   preTransform = [[]],
   postTransform = [[]],
   meta = {},
-} = {}) {
-  return (strings, ...rootConsonants) => {
+}: ParseWordParams = {}) {
+  return <T extends Segment>(strings: TemplateStringsArray, ...rootConsonants: T[]) => {
     // by convention i'm gonna do all-or-nothing
     // ie either stress is automatic or EVERY syllable is marked for it
     // ...so i can use the very first char of the first string chunk to
@@ -154,29 +162,29 @@ function parseWordFunc({
       // interaction with the syllables array made the code rly rly rly
       // landminey and easy to mess up and frustrating to write
       if (!transforms) {
-        return PRUNE;
+        return false;
       }
       const syllables = copy(initialResult);
       // stuff like `false`, `null`, etc. is allowed and will just be skipped
       transforms.forEach(f => f && f(syllables));
       return syllables;
-    }).filter(res => res !== PRUNE);
+    }).filter(res => res);
 
     preTransformed.forEach(setWeights);
 
     if (!alreadyStressed) {
-      preTransformed.forEach(setStressedSyllable);
+      preTransformed.forEach(v => setStressedSyllable(v));
     }
 
     preTransformed.forEach(setBooleanStress);
 
     preTransformed.forEach(addSchwa);
 
-    const postTransformed = preTransformed.map(
-      transformedSyllables => postTransform.map(
+    const postTransformed = preTransformed.flatMap(
+      (transformedSyllables: Syllable[]) => postTransform.map(
         transforms => {
           if (!transforms) {
-            return PRUNE;
+            return false;
           }
           const newCopy = copy(transformedSyllables);
           const localMeta = {...meta};
@@ -184,16 +192,20 @@ function parseWordFunc({
           transforms.forEach(f => f && f(newCopy, localMeta));
           return {result: newCopy, localMeta};
         },
-      ).filter(res => res !== PRUNE),
-    ).flat();
+      ).filter(res => res !== false),
+    );
 
     return postTransformed.map(({result, localMeta}) => obj.obj(objType.word, localMeta, result));
   };
 }
 
-function createWordParserTag(postprocess = null) {
-  return (first, ...rest) => {
-    if (Array.isArray(first)) {
+function validate(bruh: TemplateStringsArray | ParseWordParams): bruh is TemplateStringsArray {
+  return Array.isArray(bruh);
+}
+
+function createWordParserTag<T>(postprocess: (...params: Word[][]) => T = null) {
+  return <E extends Segment>(first: TemplateStringsArray | ParseWordParams, ...rest: E[]) => {
+    if (validate(first)) {
       // this means the caller just wants the template tag
       const ret = parseWordFunc()(first, ...rest);
       return postprocess ? postprocess(ret) : ret;

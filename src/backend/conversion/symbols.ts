@@ -2,7 +2,9 @@
 // DSL-ish stuff
 /* eslint-disable no-unexpected-multiline */
 /* eslint-disable func-call-spacing */
+/* eslint-disable @typescript-eslint/func-call-spacing */
 /* eslint-disable no-spaced-func */
+/* eslint-disable @typescript-eslint/no-use-before-define */
 
 // // cursed
 // function isValidPropName(name) {
@@ -19,16 +21,13 @@
 //   return true;
 // }
 
-import { type } from './objects';
-export { type };
-
-export enum articulator {
+export enum Articulator {
   throat,
   tongue,
-  lips
-};
+  lips,
+}
 
-export enum location {
+export enum Location {
   glottis,
   pharynx,
   uvula,
@@ -37,50 +36,66 @@ export enum location {
   bridge,
   ridge,
   teeth,
-  lips
-};
+  lips,
+}
 
-export enum manner {
+export enum Manner {
   plosive,
   fricative,
   affricate,
   approximant,
   nasal,
-  flap
-};
-
-interface Segment {
-  type: any,
-  meta?: {features?: Record<string, any>} & Record<string, any>
+  flap,
 }
 
-interface GrammarSegment extends Segment {
+export enum SegType {
+  suffix,
+  prefix,
+  augmentation,
+  consonant,
+  vowel,
+  epenthetic,
+  modifier,
+  delimiter,
+}
+
+export interface Segment {
+  type: SegType,
+  meta?: {features?: Record<string, any>} & Record<string, any>,
+  value: string
+}
+
+export interface GrammarSegment extends Segment {
   symbol: string,
   value: string
 }
 
-interface Consonant extends Segment {
-  type: any,
-  meta: {
+export interface Consonant extends Segment {
+  type: SegType.consonant,
+  meta?: {
     weak: boolean,
-    features: {
+    features?: {
       emphatic: boolean,
       semivocalic: boolean,
       rounded: boolean,
       voicing: boolean,
       isNull: boolean
-      articulator: articulator,
-      location: location,
-      manner: manner
+      articulator: Articulator,
+      location: Location,
+      manner: Manner
     }
   }
 }
 
-interface Vowel extends Segment {
-  type: any,
-  meta: {
+export function isConsonant(obj: Segment): obj is Consonant {
+  return obj.type === SegType.consonant;
+}
+
+export interface Vowel extends Segment {
+  type: SegType.vowel,
+  meta?: {
     lengthOffset: number,
-    features: {
+    features?: {
       length: number,
       diphthongal: boolean,
       nasalized: boolean
@@ -88,19 +103,23 @@ interface Vowel extends Segment {
   }
 }
 
+export function isVowel(obj: Segment): obj is Vowel {
+  return obj.type === SegType.vowel;
+}
+
 function c(map: Record<string, Consonant & GrammarSegment>) {
   function createConsonant(
     name: string,
     symbol: string,
     features?: Partial<Consonant[`meta`][`features`]>,
-    sub?: string
+    sub?: string,
   ) {
     const names = [name];
     if (sub || !/^[a-z_$][a-z0-9_$]*$/i.test(name)) {
       names.push(sub || `_${name}`);
     }
     map[name] = {
-      type: type.consonant,
+      type: SegType.consonant,
       meta: {
         weak: false,
         features: {
@@ -113,7 +132,7 @@ function c(map: Record<string, Consonant & GrammarSegment>) {
           location: features.location,
           voicing: features.voicing,
           manner: features.manner,
-          isNull: name === `null`
+          isNull: name === `null`,
         },
       },
       symbol,
@@ -128,7 +147,7 @@ function c(map: Record<string, Consonant & GrammarSegment>) {
 function v(map: Record<string, Vowel & GrammarSegment>) {
   function createVowel(name: string, symbol: string, features?: Partial<Vowel[`meta`][`features`]>) {
     map[name] = {
-      type: type.vowel,
+      type: SegType.vowel,
       meta: {
         lengthOffset: 0,  // 1 = elongated, -1 = contracted
         features: {
@@ -154,184 +173,184 @@ export const alphabet = {
   ...c({})
   // glottal
   (`h`, `h`, {
-    location: location.glottis,
-    articulator: articulator.throat,
-    manner: manner.fricative,
+    location: Location.glottis,
+    articulator: Articulator.throat,
+    manner: Manner.fricative,
     voicing: false,
   })
   (`2`, `2`, {
-    location: location.glottis,
-    articulator: articulator.throat,
-    manner: manner.plosive,
+    location: Location.glottis,
+    articulator: Articulator.throat,
+    manner: Manner.plosive,
     voicing: false,
   })
   // pharyngeal
   (`7`, `7`, {
-    location: location.pharynx,
-    articulator: articulator.throat,
-    manner: manner.fricative,
+    location: Location.pharynx,
+    articulator: Articulator.throat,
+    manner: Manner.fricative,
     voicing: false,
   })
   (`3`, `3`, {
-    location: location.pharynx,
-    articulator: articulator.throat,
-    manner: manner.approximant,
+    location: Location.pharynx,
+    articulator: Articulator.throat,
+    manner: Manner.approximant,
     voicing: true,
   })
   // uvular
   (`5`, `5`, {
-    location: location.uvula,
-    articulator: articulator.tongue,
-    manner: manner.fricative,
+    location: Location.uvula,
+    articulator: Articulator.tongue,
+    manner: Manner.fricative,
     voicing: false,
   })
   (`gh`, `9`, {
-    location: location.uvula,
-    articulator: articulator.tongue,
-    manner: manner.fricative,
+    location: Location.uvula,
+    articulator: Articulator.tongue,
+    manner: Manner.fricative,
     voicing: true,
   })
   (`q`, `q`, {
-    location: location.uvula,
-    articulator: articulator.tongue,
-    manner: manner.plosive,
+    location: Location.uvula,
+    articulator: Articulator.tongue,
+    manner: Manner.plosive,
     voicing: false,
   })
   // velar
   (`k`, `k`, {
-    location: location.velum,
-    articulator: articulator.tongue,
-    manner: manner.plosive,
+    location: Location.velum,
+    articulator: Articulator.tongue,
+    manner: Manner.plosive,
     voicing: false,
   })
   (`g`, `g`, {
-    location: location.velum,
-    articulator: articulator.tongue,
-    manner: manner.plosive,
+    location: Location.velum,
+    articulator: Articulator.tongue,
+    manner: Manner.plosive,
     voicing: true,
   })
   // palatal
   (`y`, `y`, {
-    location: location.palate,
-    articulator: articulator.tongue,
-    manner: manner.approximant,
+    location: Location.palate,
+    articulator: Articulator.tongue,
+    manner: Manner.approximant,
     voicing: true,
     semivocalic: true,
   })
   // postalveolar
   (`sh`, `x`, {
-    location: location.bridge,
-    articulator: articulator.tongue,
-    manner: manner.fricative,
+    location: Location.bridge,
+    articulator: Articulator.tongue,
+    manner: Manner.fricative,
     voicing: false,
   })
   (`j`, `j`, {
-    location: location.bridge,
-    articulator: articulator.tongue,
-    manner: manner.fricative,
+    location: Location.bridge,
+    articulator: Articulator.tongue,
+    manner: Manner.fricative,
     voicing: true,
   })
   // alveolar
   (`r`, `r`, {
-    location: location.ridge,
-    articulator: articulator.tongue,
-    manner: manner.flap,
+    location: Location.ridge,
+    articulator: Articulator.tongue,
+    manner: Manner.flap,
     voicing: true,
   })  // trill...
   // denti-alveolar idk
   (`l`, `l`, {
-    location: location.ridge,
-    articulator: articulator.tongue,
-    manner: manner.approximant,  // lateral don't real
+    location: Location.ridge,
+    articulator: Articulator.tongue,
+    manner: Manner.approximant,  // lateral don't real
     voicing: true,
   })
   (`s`, `s`, {
-    location: location.ridge,
-    articulator: articulator.tongue,
-    manner: manner.fricative,
+    location: Location.ridge,
+    articulator: Articulator.tongue,
+    manner: Manner.fricative,
     voicing: false,
   })
   (`Z`, `Z`, {  // to be used for z <- ص
-    location: location.ridge,
-    articulator: articulator.tongue,
-    manner: manner.fricative,
+    location: Location.ridge,
+    articulator: Articulator.tongue,
+    manner: Manner.fricative,
     voicing: true,
   })
   (`z`, `z`, {
-    location: location.ridge,
-    articulator: articulator.tongue,
-    manner: manner.fricative,
+    location: Location.ridge,
+    articulator: Articulator.tongue,
+    manner: Manner.fricative,
     voicing: true,
   })
   (`n`, `n`, {
-    location: location.ridge,
-    articulator: articulator.tongue,
-    manner: manner.nasal,
+    location: Location.ridge,
+    articulator: Articulator.tongue,
+    manner: Manner.nasal,
     voicing: true,
   })
   (`t`, `t`, {
-    location: location.ridge,
-    articulator: articulator.tongue,
-    manner: manner.plosive,
+    location: Location.ridge,
+    articulator: Articulator.tongue,
+    manner: Manner.plosive,
     voicing: false,
   })
   (`d`, `d`, {
-    location: location.ridge,
-    articulator: articulator.tongue,
-    manner: manner.plosive,
+    location: Location.ridge,
+    articulator: Articulator.tongue,
+    manner: Manner.plosive,
     voicing: true,
   })
   // interdental
   (`th`, `8`, {
-    location: location.teeth,
-    articulator: articulator.tongue,
-    manner: manner.fricative,
+    location: Location.teeth,
+    articulator: Articulator.tongue,
+    manner: Manner.fricative,
     voicing: false,
   })
   (`dh`, `6`, {
-    location: location.teeth,
-    articulator: articulator.tongue,
-    manner: manner.fricative,
+    location: Location.teeth,
+    articulator: Articulator.tongue,
+    manner: Manner.fricative,
     voicing: true,
   })
   // labiodental
   (`f`, `f`, {
-    location: location.teeth,
-    articulator: articulator.lips,
-    manner: manner.fricative,
+    location: Location.teeth,
+    articulator: Articulator.lips,
+    manner: Manner.fricative,
     voicing: false,
   })
   (`v`, `v`, {
-    location: location.teeth,
-    articulator: articulator.lips,
-    manner: manner.fricative,
+    location: Location.teeth,
+    articulator: Articulator.lips,
+    manner: Manner.fricative,
     voicing: true,
   })
   // bilabial
   (`w`, `w`, {
-    location: location.lips,
-    articulator: articulator.lips,
-    manner: manner.approximant,
+    location: Location.lips,
+    articulator: Articulator.lips,
+    manner: Manner.approximant,
     voicing: true,
     semivocalic: true,
     rounded: true,
   })
   (`m`, `m`, {
-    location: location.lips,
-    articulator: articulator.lips,
-    manner: manner.nasal,
+    location: Location.lips,
+    articulator: Articulator.lips,
+    manner: Manner.nasal,
     voicing: true,
   })  // nasal???
   (`b`, `b`, {
-    location: location.lips,
-    articulator: articulator.lips,
-    manner: manner.plosive,
+    location: Location.lips,
+    articulator: Articulator.lips,
+    manner: Manner.plosive,
     voicing: true,
   })
   (`p`, `p`, {
-    location: location.lips,
-    articulator: articulator.lips,
-    manner: manner.plosive,
+    location: Location.lips,
+    articulator: Articulator.lips,
+    manner: Manner.plosive,
     voicing: false,
   })
   // null
@@ -373,10 +392,10 @@ export const alphabet = {
 
   (`ay`, `Y`, {diphthongal: true})
   (`aw`, `W`, {diphthongal: true})
-  .map,
+    .map,
 
   _: {  // no schwa
-    type: type.epenthetic,
+    type: SegType.epenthetic,
     meta: {
       priority: false,
     },
@@ -384,7 +403,7 @@ export const alphabet = {
     value: `noschwa`,
   },
   Schwa: {
-    type: type.epenthetic,
+    type: SegType.epenthetic,
     meta: {
       priority: true,
     },
@@ -394,102 +413,103 @@ export const alphabet = {
 
   // fem suffix is its own thing bc -a vs -e vs -i variation
   c: {
-    type: type.suffix,
+    type: SegType.suffix,
     symbol: `c`,
     value: `fem`,
   },
   // not sure if this is a good idea?
   // FemDual: {
-  //   type: type.suffix,
+  //   type: SegType.suffix,
   //   symbol: `<`,
   //   value: `fdual`
   // },
   C: {
-    type: type.suffix,
+    type: SegType.suffix,
     symbol: `C`,
     value: `fplural`,
   },
   // dual suffix is its own thing bc -ayn/-een vs -aan variation (per Mekki 1984)
   Dual: {
-    type: type.suffix,
+    type: SegType.suffix,
     symbol: `=`,  // equals sign bc it's two lines
     value: `dual`,
   },
   // plural suffix is its own thing bc -iin-l- vs -in-l- variation, or stuff
   // like meshteryiin vs meshtriyyiin vs meshtriin
   Plural: {
-    type: type.suffix,
+    type: SegType.suffix,
     symbol: `+`,  // plus because plural is uhh... more
     value: `plural`,
   },
   // fossilized "dual" suffix like 3YnYn => 3Yn# and 7awAlYn => 7awAl#
   AynPlural: {
-    type: type.suffix,
+    type: SegType.suffix,
     symbol: `#`,  // kindasortamaybenot like a mix between + and = lol
     value: `ayn`,
   },
   // adverbial -an, ـًا
   An: {
-    type: type.suffix,
+    type: SegType.suffix,
     symbol: `@`,  // bc i needed an unused symbol that still resembles an A
     value: `an`,
   },
   // nisbe suffix ـي
   // necessary bc it alternates between -i and -iyy-
   // (and maybe -(consonant)%= can become -yIn ~ -In instead of -iyyIn too?)
-  // also bc it has effects like معمار mi3mar => معماري mi3meri (still don't know how to handle """emphatic""" R...)
+  // also bc it has effects like معمار mi3mar => معماري mi3meri
+  // (still don't know how to handle """emphatic""" R...)
   Iyy: {
-    type: type.suffix,
+    type: SegType.suffix,
     symbol: `%`,  // ahahahaha get it
-    value: `iyy`
+    value: `iyy`,
   },
   // -ji suffix... has to be separate from $`j.Iyy` because this one shortens vowels before it
   Jiyy: {
-    type: type.suffix,
+    type: SegType.suffix,
     symbol: `G`, // ha
-    value: `jiyy`
+    value: `jiyy`,
   },
   // -sh suffix
   Negative: {
-    type: type.suffix,
+    type: SegType.suffix,
     symbol: `X`,  // capital X because lowercase x is a normal sh
-    value: `negative`
+    value: `negative`,
   },
 
   Stressed: {  // goes after the stressed syllable; only use if the word's stress is not automatic
-    type: type.modifier,
+    type: SegType.modifier,
     symbol: `"`,
     value: `stressed`,
   },
   Nasalized: {  // nasalized and, if final, stressed; 2ONrI" lOsyON kappitAN
-    type: type.modifier,
+    type: SegType.modifier,
     symbol: `N`,
     value: `nasalized`,
   },
 
   Of: {  // introduces idafe pronouns
-    type: type.delimiter,
+    type: SegType.delimiter,
     symbol: `-`,
     value: `genitive`,
   },
   Object: {  // introduces verbs and active participles
-    type: type.delimiter,
+    type: SegType.delimiter,
     symbol: `.`,
     value: `object`,
   },
   PseudoSubject: {  // s`arr~3ms/s`all~3ms, badd~3ms/bidd~3ms, أوعك أصحك etc
-    type: type.delimiter,
+    type: SegType.delimiter,
     symbol: `~`,
     value: `pseudo-subject`,
   },
   Dative: {  // this stands for the dative L
-    type: type.delimiter,
+    type: SegType.delimiter,
     symbol: `|`,
     value: `dative`,
   },
 };
 
-export enum wazn {
+export enum Wazn {
   /* form 1: participles */
   anyForm1,
   fe3il,
@@ -515,19 +535,19 @@ export enum wazn {
   fa3la2,
   tfa3la2,
   stfa3la2,  // probably only theoretically exists lol
-};
+}
 
-export enum tamToken {
+export enum TamToken {
   pst,
   sbjv,
   ind,
   imp,
-};
+}
 
-export enum voiceToken {
+export enum VoiceToken {
   active,
   passive,
-};
+}
 
 export const PERSON = {
   first: `1`,

@@ -11,7 +11,7 @@ class Match {
 class MatchOne extends Match {
   constructor(obj) {
     super(obj);
-  
+
     if (obj instanceof Match) {
       // this was a nasty bug... TODO: see if can make do without the .bind()
       this.matcher = obj.matches.bind(obj);
@@ -84,13 +84,11 @@ class All extends MatchMultiple {
 }
 
 export default Object.assign(
-  function match(obj) {
-    return new MatchOne(obj);
-  },
+  obj => new MatchOne(obj),
   {
     not(obj) { return new Not(obj); },
     any(...objs) { return new Any(...objs); },
     none(...objs) { return new None(...objs); },
-    all(...objs) { return new All(...objs); }
-  }
-)
+    all(...objs) { return new All(...objs); },
+  },
+);

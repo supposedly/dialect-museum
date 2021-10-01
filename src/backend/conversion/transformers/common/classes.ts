@@ -1,14 +1,15 @@
 /* eslint-disable max-classes-per-file */
+import weighted from 'weighted';
 import {alphabet as abc} from '../../symbols';
 import {type as objType} from '../../objects';
 import {extractDeps, moldObject, qualifyKeys} from './helpers';
 import {misc} from '../../utils';
-const {lastOf} = misc;
 
 import {STAY} from './consts';
 import match from './match';
 import {depType, transformType} from './type';
-import weighted from 'weighted';
+
+const {lastOf} = misc;
 
 // see comments above keys() and keys.with()
 function makeObjectKeyParser(emptyValue, givenValue = v => v) {
@@ -56,16 +57,16 @@ export const keys = Object.assign(
       const poppableOptions = options.slice().reverse();
       return makeObjectKeyParser(
         options.length === 1 ? () => options[0] : () => poppableOptions.pop(),
-        idx => options[idx]
-      )
-    }
-  }
+        idx => options[idx],
+      );
+    },
+  },
 );
 
 function copySeg(obj) {
   return {
     type: obj.type,
-    meta: {...obj.meta, features: {...(obj.meta ? obj.meta.features : null)} },
+    meta: {...obj.meta, features: {...(obj.meta ? obj.meta.features : null)}},
     value: obj.value,
     context: {...obj.context},
   };
@@ -211,12 +212,11 @@ class TrackerHistory {
     if (idx === this.history[this.current].current) {
       this.revert(this.current + 1);
       return false;
-    } else {
-      this.history[this.current].choose(idx);
-      this.insert();
-      // caller now has to call this.insert(...) to update
-      return true;
     }
+    this.history[this.current].choose(idx);
+    this.insert();
+    // caller now has to call this.insert(...) to update
+    return true;
   }
 
   getChoice(idx) {
@@ -235,7 +235,7 @@ class Tracker {
     [depType.nextConsonant]: match({type: objType.consonant}),
     [depType.prevVowel]: match({type: objType.vowel}),
     [depType.nextVowel]: match({type: objType.vowel}),
-  }
+  };
 
   constructor(segment, rules, layers, wordInfo, {prev = null, next = null, minLayer = 0, parent = null}) {
     this.node = {prev, next};
@@ -252,16 +252,16 @@ class Tracker {
     this.environmentCache = layerNames.map(() => ({})); // don't neeeed => Object.fromKeys(deptype...etc) since i just test for undefined lol
     this.environment = layerNames.map(
       (_, layer) => depType.keys.reduce(
-        (o, dep) => layer < this.minLayer ? {} : Object.defineProperty(o, dep, {
+        (o, dep) => (layer < this.minLayer ? {} : Object.defineProperty(o, dep, {
           get: () => {
             if (this.environmentCache[layer][dep] === undefined) {
-              this.environmentCache[layer][dep] = this.findDependency(layer, depType[dep])
+              this.environmentCache[layer][dep] = this.findDependency(layer, depType[dep]);
             }
             return this.environmentCache[layer][dep];
-          }
-        }),
-        {}
-      )
+          },
+        })),
+        {},
+      ),
     );
 
     this.history = layerNames.map(() => new TrackerHistory());
@@ -338,7 +338,7 @@ class Tracker {
 
       default:
         throw new Error(
-          `Unknown dep: ${dep} for ${this} (enum value ${depType.keys[dep]})`
+          `Unknown dep: ${dep} for ${this} (enum value ${depType.keys[dep]})`,
         );
     }
   }
@@ -367,7 +367,7 @@ class Tracker {
     return {
       ...tracker.getCurrentChoice(layer),
       $deps: tracker.environment[layer],
-      $exists: true
+      $exists: true,
     };
   }
 
@@ -394,7 +394,7 @@ class Tracker {
 
   applyRules(layer, minIdx = 0) {
     this.rules.matchers.slice(minIdx).forEach((rule, idx) => {
-      let value = this.getCurrentChoice(layer);
+      const value = this.getCurrentChoice(layer);
       if (
         layer === rule.layer
         && rule.value.matches(value)
@@ -420,8 +420,8 @@ class Tracker {
   reapplyRules(layer) {
     this.history[layer].revert(
       this.history[layer].history.findIndex(
-        choices => !choices.environment.matches(this.environment[layer])
-      )
+        choices => !choices.environment.matches(this.environment[layer]),
+      ),
     );
     this.applyRules(layer, this.history[layer].getCurrentChoice().rule);
   }
@@ -451,7 +451,7 @@ class Tracker {
       because,
       ruleIdx,
       environment,
-      weighted(odds)
+      weighted(odds),
     );
     this.invalidateDependents(layer);
   }
@@ -480,8 +480,8 @@ class Rules {
       value: match(rule.value),
       spec: {
         ...rule.spec,
-        where: rule.spec.where && match(rule.spec.where)
-      }
+        where: rule.spec.where && match(rule.spec.where),
+      },
     });
   }
 }
@@ -498,8 +498,8 @@ export class WordManager {
           alphabet: alphabets[name],
           prev: abcNames[arr[idx - 1]],
           next: abcNames[arr[idx + 1]],
-        }
-      ])
+        },
+      ]),
     );
 
     this.rules = new Rules();
@@ -514,7 +514,7 @@ export class WordManager {
     }
     if (!Array.isArray(rule.spec.into)) {
       rule.spec.odds = Object.fromEntries(
-        Object.values(rule.spec.into).map((weight, idx) => [idx, weight])
+        Object.values(rule.spec.into).map((weight, idx) => [idx, weight]),
       );
       rule.spec.into = Object.keys(rule.spec.into);
     } else if (!rule.spec.odds) {
@@ -580,7 +580,7 @@ class Capture {
     return new CaptureApplier(
       this.alphabet.name,
       this.manager,
-      moldObject(obj, ...specifiers)
+      moldObject(obj, ...specifiers),
     );
   }
 
@@ -620,12 +620,12 @@ export class Word {
       meta: {...wordObj.meta},
       value: wordObj.value.map(copySeg),
       context: [...(wordObj.context || [])],
-    }
+    };
 
     this.manager = new WordManager(this.word, alphabets);
     this.capture = Object.fromEntries([
       ...Object.entries(alphabets).map(
-        ([name, abc]) => [name, new Capture(abc, name, this.manager)]
+        ([name, abc]) => [name, new Capture(abc, name, this.manager)],
       ),
     ]);
     this.abc = alphabets;
