@@ -1,0 +1,81 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "project": "./tsconfig.json"
+    },
+    "plugins": ["@typescript-eslint"],
+    "extends": ["airbnb-base", "airbnb-typescript/base"],
+    "ignorePatterns": "grammar.js",
+    "overrides": [
+        {"files": ["**/*.*"], "rules": {"import/no-unused-modules": "off"}}
+    ],
+    "rules": {
+        "linebreak-style": "off",
+        "max-classes-per-file": [
+          "warn",
+          1
+        ],
+        "quotes": [
+          "warn",
+          "backtick",
+          {
+            "avoidEscape": true
+          }
+        ],
+        "@typescript-eslint/quotes": [
+            "warn",
+            "backtick",
+            {
+                "avoidEscape": true
+            }
+        ],
+        "prefer-destructuring": "off",
+        "arrow-parens": [
+          "warn",
+          "as-needed",
+          {
+            "requireForBlockBody": false
+          }
+        ],
+        "no-use-before-define": [
+          "error",
+          {
+            "variables": false
+          }
+        ],
+        "no-multi-spaces": [
+          "warn",
+          {
+            "ignoreEOLComments": true
+          }
+        ],
+        "no-param-reassign": "off",
+        "object-curly-spacing": [
+          "error",
+          "never"
+        ],
+        "@typescript-eslint/object-curly-spacing": [
+            "error",
+            "never"
+        ],
+        "object-curly-newline": "off",
+        "no-underscore-dangle": "off",
+        "no-unused-vars": [
+          "error",
+          {
+            "argsIgnorePattern": "^_"
+          }
+        ],
+        "comma-dangle": [
+          "error",
+          {
+            "arrays": "always-multiline",
+            "objects": "always-multiline",
+            "imports": "always-multiline",
+            "exports": "always-multiline",
+            "functions": "only-multiline"
+          }
+        ]
+    }
+}
