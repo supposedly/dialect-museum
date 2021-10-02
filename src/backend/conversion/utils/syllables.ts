@@ -4,7 +4,7 @@ import objType from '../parsing/type';
 import {isConsonant, isVowel, Segment, SegType} from '../symbols';
 import {lastOf} from './misc';
 
-export function isSyllable(s): s is Syllable {
+export function isSyllable(s: any): s is Syllable {
   return s.type === objType.syllable;
 }
 
@@ -27,7 +27,7 @@ export function getSyllableWeight(s: Syllable) {
   // go backwards so we can break when we reach the nucleus (aka before the onset)
   for (let i = s.value.length - 1; i > 0; i -= 1) {
     const segment = s.value[i];
-    if (segment.type === type.suffix) {
+    if (segment.type === SegType.suffix) {
       // should technically be rimeLength =
       // instead of rimeLength +=
       // but idk maybe if i have something bugged like `word=b` it'd
@@ -99,10 +99,10 @@ export function setStressedSyllable(syllables: Syllable[], clearRest = false) {
   }
 }
 
-export function copy<T>(things: T[]): T[] {
+export function copy(things: Syllable[]): Syllable[] {
   return things.map(s => obj.obj(
     s.type,
     {...s.meta},
-    s.type === objType.syllable ? [...s.value] : {...s.value},
+    [...s.value],
   ));
 }

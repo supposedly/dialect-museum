@@ -9,7 +9,7 @@ const {
   syllables: {isSyllable, newSyllable, getSyllableWeight, setStressedSyllable, copy},
 } = utils;
 
-function interpolateAndParse<V, T extends Segment<V>>(
+function interpolateAndParse<T extends Segment>(
   strings: TemplateStringsArray,
   rootConsonants: T[],
 ): Syllable[] {
@@ -168,7 +168,7 @@ function parseWordFunc({
       // stuff like `false`, `null`, etc. is allowed and will just be skipped
       transforms.forEach(f => f && f(syllables));
       return syllables;
-    }).filter(res => res);
+    }).filter((s: Syllable[] | false): s is Syllable[] => !!s);
 
     preTransformed.forEach(setWeights);
 
@@ -192,7 +192,7 @@ function parseWordFunc({
           transforms.forEach(f => f && f(newCopy, localMeta));
           return {result: newCopy, localMeta};
         },
-      ).filter(res => res !== false),
+      ).filter(<E>(s: E | false): s is E => !!s),
     );
 
     return postTransformed.map(({result, localMeta}) => obj.obj(objType.word, localMeta, result));
@@ -212,7 +212,9 @@ function createWordParserTag<T>(postprocess: (...params: Word[][]) => T = null) 
     }
     // this means the caller wants to pass config params to the tag
     const ret = parseWordFunc(first);
-    return postprocess ? (...args) => postprocess(ret(...args)) : ret;
+    return postprocess
+      ? (...args: [TemplateStringsArray, ...Segment[]]) => postprocess(ret(...args))
+      : ret;
   };
 }
 
