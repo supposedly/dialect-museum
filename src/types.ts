@@ -1,6 +1,6 @@
 import type {Obj} from "./backend/conversion/objects/obj";
-import type objType from "./backend/conversion/parsing/type";
+import type ObjType from "./backend/conversion/parsing/type";
 import type {Segment} from "./backend/conversion/symbols";
 
-export type Syllable = Obj<objType.syllable, Segment[]>;
-export type Word = Obj<objType.word, Syllable[]>;
+export type Syllable = Obj<ObjType.syllable, Segment[]>;
+export type Word = Obj<ObjType.word, Syllable[]>;

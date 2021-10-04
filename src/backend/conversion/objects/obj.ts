@@ -1,10 +1,10 @@
 export class Obj<T extends number, V> {
-  type: T;
-  meta: Record<string, any>;
-  value: V;
-  context: Set<string>;
-
-  constructor(type: T, meta: Record<string, any>, value: V, context: Iterable<string> = new Set()) {
+  constructor(
+    public type: T,
+    public meta: Record<string, any>,
+    public value: V,
+    public context: Iterable<string> = new Set(),
+  ) {
     this.type = type;
     this.meta = meta;
     this.value = value;

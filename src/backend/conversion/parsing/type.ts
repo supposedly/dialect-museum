@@ -1,4 +1,4 @@
-enum objType {
+enum ObjType {
   // XXX: it's important (as long as i'm using this hack enum func) for `suffix` and `prefix` to
   // remain at position 0 in this order, just like in the segment-type enum over in ../objects
   // (what's actually important is that they just have the same indices but w/e)
@@ -20,4 +20,4 @@ enum objType {
   number,
 }
 
-export default objType;
+export default ObjType;

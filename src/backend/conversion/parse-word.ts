@@ -1,7 +1,7 @@
 import * as utils from './utils';
 import {alphabet as abc, isConsonant, Segment, SegType} from './symbols';
 import {obj} from './objects';
-import objType from './parsing/type';
+import ObjType from './parsing/type';
 import type {Syllable, Word} from '../../types';
 
 const {
@@ -81,7 +81,7 @@ function interpolateAndParse<T extends Segment>(
   return syllables;
 }
 
-function setWeights(syllables: obj.Obj<objType, any>[]) {
+function setWeights(syllables: obj.Obj<ObjType, any>[]) {
   syllables.filter(isSyllable).forEach(s => { s.meta.weight = getSyllableWeight(s); });
 }
 
@@ -90,7 +90,7 @@ function setWeights(syllables: obj.Obj<objType, any>[]) {
 // (either as a continuation of the above,
 // or as a cover for if i forget my convention and
 // only mark a + syllable without marking any -)
-function setBooleanStress(syllables: obj.Obj<objType, any>[]) {
+function setBooleanStress(syllables: obj.Obj<ObjType, any>[]) {
   syllables.filter(isSyllable).forEach(s => {
     s.meta.stressed = !!s.meta.stressed;
     // if (s.meta.stressed !== true) {
@@ -100,7 +100,7 @@ function setBooleanStress(syllables: obj.Obj<objType, any>[]) {
 }
 
 // add schwa to CVCC syllables
-function addSchwa(syllables: obj.Obj<objType, any>[]) {
+function addSchwa(syllables: obj.Obj<ObjType, any>[]) {
   syllables.filter(isSyllable).forEach(s => {
     if (
       s.meta.weight === 3
@@ -195,7 +195,7 @@ function parseWordFunc({
       ).filter(<E>(s: E | false): s is E => !!s),
     );
 
-    return postTransformed.map(({result, localMeta}) => obj.obj(objType.word, localMeta, result));
+    return postTransformed.map(({result, localMeta}) => obj.obj(ObjType.word, localMeta, result));
   };
 }
 

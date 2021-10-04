@@ -1,16 +1,16 @@
 import type {Syllable} from '../../../types';
 import {obj} from '../objects';
-import objType from '../parsing/type';
+import ObjType from '../parsing/type';
 import {isConsonant, isVowel, Segment, SegType} from '../symbols';
 import {lastOf} from './misc';
 
 export function isSyllable(s: any): s is Syllable {
-  return s.type === objType.syllable;
+  return s.type === ObjType.syllable;
 }
 
 export function newSyllable(string: Segment[] = []) {
   return obj.obj(
-    objType.syllable,
+    ObjType.syllable,
     {stressed: null, weight: null},
     string,
   );
