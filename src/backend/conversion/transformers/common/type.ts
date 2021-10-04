@@ -1,20 +1,18 @@
-import {fenum} from '../../enums';
-
-export const depType = fenum([
+export enum DepType {
   /* constant dependencies */
-  `word`,
-  `type`,
+  word,
+  type,
   /* reactive dependencies */
-  `prev`,
-  `next`,
-  `prevConsonant`,
-  `nextConsonant`,
-  `prevVowel`,
-  `nextVowel`,
-]);
+  prev,
+  next,
+  prevConsonant,
+  nextConsonant,
+  prevVowel,
+  nextVowel,
+}
 
-export const transformType = fenum([
-  `transformation`,
-  `expansion`,
-  `promotion`,
-]);
+export enum TransformType {
+  transformation,
+  expansion,
+  promotion,
+}

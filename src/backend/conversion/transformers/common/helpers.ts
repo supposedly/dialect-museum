@@ -1,4 +1,4 @@
-import {depType} from './type';
+import {DepType} from './type';
 
 function isLiteral(obj) {
   return !!obj && obj.constructor === Object;
@@ -133,5 +133,5 @@ export function extractDeps(arrowFunc) {
     }
     s = topLevelSubstrings.join(``);
   }
-  return [...s.matchAll(/(\w+)(?:\s*:\s*[^,})]+)?/g)].map(match => depType[match[1]]);
+  return [...s.matchAll(/(\w+)(?:\s*:\s*[^,})]+)?/g)].map(match => DepType[match[1]]);
 }

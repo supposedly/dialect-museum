@@ -1,27 +1,27 @@
 /* eslint-disable max-classes-per-file */
 import weighted from 'weighted';
-import {alphabet as abc} from '../../symbols';
-import {type as objType} from '../../objects';
-import {extractDeps, moldObject, qualifyKeys} from './helpers';
-import {misc} from '../../utils';
+import {moldObject} from './helpers';
 
-import {STAY} from './consts';
-import match from './match';
-import {depType, transformType} from './type';
-
-const {lastOf} = misc;
+import match, {Match} from './match';
+import {DepType, TransformType} from './type';
+import {Consonant, SegType, Vowel} from '../../symbols';
 
 // see comments above keys() and keys.with()
-function makeObjectKeyParser(emptyValue, givenValue = v => v) {
-  return function parse(keys, ...values) {
+function makeObjectKeyParser<T = any>(
+  emptyValue: (values: T[]) => any,
+  givenValue: (value: T) => any = v => v,
+) {
+  return function parse(keys: TemplateStringsArray, ...values: T[]) {
     values.reverse();
-    return JSON.parse(keys.map((string, idx) => [
-      string
-        .replace(/\w+/g, `"$&"`)
-        // this should just be a lookbehind thanks safari
-        .replace(/[^,{}:](?=[},])/g, `$&: ${emptyValue(values)}`),
-      givenValue(values.pop()),
-    ]).flat().join(``));
+    return JSON.parse(keys.flatMap(
+      (string/* , idx */) => [
+        string
+          .replace(/\w+/g, `"$&"`)
+          // this should just be a lookbehind thanks safari
+          .replace(/[^,{}:](?=[},])/g, `$&: ${emptyValue(values)}`),
+        givenValue(values.pop()),
+      ],
+    ).join(``));
   };
 }
 
@@ -29,41 +29,51 @@ function makeObjectKeyParser(emptyValue, givenValue = v => v) {
 // specifically if you're passing an object that's not of your own definition and
 // you don't need the entire thing to be matched
 // usage: keys`{bruh: {test}, bruv}` -> {bruh: {test: {}}, bruv: {}}
-// - for example, capture.only(symbols.c, Capture.keys`{value}`)
-// - is just like capture.only(symbols.c, {value: {}})
-// - which equals capture.only({value: symbols.c.value})
+// - for example, capture.only(abc.c, keys`{value}`)
+// - is just like capture.only(abc.c, {value: {}})
+// - which equals capture.only({value: abc.c.value})
 // but isn't as redundant, which gets pretty important the more keys you get
-// - e.g. capture.only({meta: {features: {something: symbols.e.something, otherThing: symbols.e.otherThing}}})
-// - can just be capture.only(symbols.e, Capture.keys`{meta: {features: {something, otherThing}}}`)
+// - capture.only({meta: {features: {something: abc.e.something, otherThing: abc.e.otherThing}}})
+// - can just be capture.only(abc.e, keys`{meta: {features: {something, otherThing}}}`)
 // ALSO you can use this to edit specific values of the object in a similar way to obj.edit()
-// - e.g. instead of capture.only({value: symbols.w.value, meta: {weak: true, features: {emphatic: true}}})
-// - you can also do capture.only(symbols.w, Capture.keys`{value, meta: {weak: ${true}, features: {emphatic: ${true}}}})
+// - capture.only(abc.w, keys`{value, meta: {weak: ${true}, features: {emphatic: ${true}}}})
+// - instead of capture.only({value: abc.w.value, meta: {weak: true, features: {emphatic: true}}})
 // that part is definitely not much of a space-saver and you'll likely end up doing this instead:
-// capture.only(symbols.w, Capture.keys`{value}`, Capture.keys.with(true)`{meta: {weak}, features: {emphatic}}`)
+// capture.only(abc.w, keys`{value}`, keys.with(true)`{meta: {weak}, features: {emphatic}}`)
 // or just:
-// capture.only(symbols.w, Capture.keys`{value}`, {meta: {weak: true, features: {emphatic: true}}})
+// capture.only(abc.w, keys`{value}`, {meta: {weak: true, features: {emphatic: true}}})
 // but having the option to do it in this one function is still nice
 export const keys = Object.assign(
   // just an empty match object for when no match is given, signaling to the capture functions that
   // they should match everything for this key
   makeObjectKeyParser(() => `{}`),
   {
-    // Capture.keys.with(true)`{meta: {weak, features: {emphatic}}}` => {meta: {weak: true, features: {emphatic: true}}},
-    // Capture.keys.with(true, false)`{meta: {weak, features: {emphatic}}` => {meta: {weak: true, features: {emphatic: false}}}
-    // Capture.keys.with(true, false)`{meta: {weak: ${1}}, features: {emphatic: ${0}, etc: ${1}}}` => they're indices, you get it
+    // keys.with(true)`{meta: {weak, features: {emphatic}}}`
+    // => {meta: {weak: true, features: {emphatic: true}}},
+    // keys.with(true, false)`{meta: {weak, features: {emphatic}}`
+    // => {meta: {weak: true, features: {emphatic: false}}}
+    // keys.with(true, false)`{meta: {weak: ${1}}, features: {emphatic: ${0}, etc: ${1}}}`
+    // => they're indices, you get it
     // overkill? yes
     // having fun tho? heck yes
-    with(...options) {
+    with(...options: any[]) {
       const poppableOptions = options.slice().reverse();
       return makeObjectKeyParser(
         options.length === 1 ? () => options[0] : () => poppableOptions.pop(),
-        idx => options[idx],
+        (idx: number) => options[idx],
       );
     },
   },
 );
 
-function copySeg(obj) {
+interface Obj<V> {
+  type: SegType,
+  meta: {features?: Record<string, any>} & Record<string, any>,
+  value: V,
+  context: Record<string, any>
+}
+
+function copySeg<V>(obj: Obj<V>) {
   return {
     type: obj.type,
     meta: {...obj.meta, features: {...(obj.meta ? obj.meta.features : null)}},
@@ -72,15 +82,17 @@ function copySeg(obj) {
   };
 }
 
-class DefaultObject {
-  constructor(obj, newEntry) {
+class DefaultObject<K extends string | number | symbol, V> {
+  private map: Record<K, V>;
+
+  constructor(obj: Record<K, V>, private newEntry: (key: K) => V) {
     this.map = obj;
     this.newEntry = newEntry;
   }
 
-  ensure(key) {
+  ensure(key: K) {
     if (this.map[key] === undefined) {
-      this.map[key] = this.newEntry(key);
+      this.map = Object.assign(this.map, this.newEntry(key));
     }
     return this.map[key];
   }
@@ -98,10 +110,60 @@ class DefaultObject {
   }
 }
 
+type EnvironmentObj<T extends SegType> = {
+  type: T,
+  $deps: Environment,
+  $exists: boolean,
+  $was: SegType[]
+};
+
+interface Environment {
+  [DepType.next]: EnvironmentObj<SegType>,
+  [DepType.nextConsonant]: EnvironmentObj<SegType.consonant>,
+  [DepType.nextVowel]: EnvironmentObj<SegType.vowel>,
+  [DepType.prev]: EnvironmentObj<SegType>,
+  [DepType.prevConsonant]: EnvironmentObj<SegType.consonant>,
+  [DepType.prevVowel]: EnvironmentObj<SegType.vowel>,
+  [DepType.type]: SegType,
+  [DepType.word]: Consonant[`meta`] | Vowel[`meta`],
+}
+
+type Rule<T> = {
+  layer: string,
+  value: any,
+  do: TransformType,
+  spec: {
+    into: T[],
+    where?: Match,
+    because: string,
+  }
+};
+
+class Rules<T> {
+  matchers: Rule<T>[];
+
+  constructor() {
+    // this.raw = [];
+    this.matchers = [];
+  }
+
+  add(rule: Rule<T>) {
+    // this.raw.push(rule);
+    this.matchers.push({
+      ...rule,
+      value: match(rule.value),
+      spec: {
+        ...rule.spec,
+        where: rule.spec.where && match(rule.spec.where),
+      },
+    });
+  }
+}
+
 // XXX: this feels like a bad idea bc recursive dependency...
 // (TrackerList contains Trackers and Tracker can contain TrackerLists)
 class TrackerList {
-  constructor(word, rules, layers, minLayer = 0, parent = null) {
+  constructor(word: Obj<any>, rules: Rules, layers, minLayer = 0, parent = null) {
     let head = null;
     let last = null;
     for (const segment of word.value) {
@@ -231,10 +293,10 @@ class TrackerHistory {
 
 class Tracker {
   static DEP_FILTERS = {
-    [depType.prevConsonant]: match({type: objType.consonant}),
-    [depType.nextConsonant]: match({type: objType.consonant}),
-    [depType.prevVowel]: match({type: objType.vowel}),
-    [depType.nextVowel]: match({type: objType.vowel}),
+    [DepType.prevConsonant]: match({type: SegType.consonant}),
+    [DepType.nextConsonant]: match({type: SegType.consonant}),
+    [DepType.prevVowel]: match({type: SegType.vowel}),
+    [DepType.nextVowel]: match({type: SegType.vowel}),
   };
 
   constructor(segment, rules, layers, wordInfo, {prev = null, next = null, minLayer = 0, parent = null}) {
@@ -251,11 +313,11 @@ class Tracker {
     // update environment/dependencies on demand
     this.environmentCache = layerNames.map(() => ({})); // don't neeeed => Object.fromKeys(deptype...etc) since i just test for undefined lol
     this.environment = layerNames.map(
-      (_, layer) => depType.keys.reduce(
+      (_, layer) => DepType.keys.reduce(
         (o, dep) => (layer < this.minLayer ? {} : Object.defineProperty(o, dep, {
           get: () => {
             if (this.environmentCache[layer][dep] === undefined) {
-              this.environmentCache[layer][dep] = this.findDependency(layer, depType[dep]);
+              this.environmentCache[layer][dep] = this.findDependency(layer, DepType[dep]);
             }
             return this.environmentCache[layer][dep];
           },
@@ -299,46 +361,46 @@ class Tracker {
 
   retrieveDependency(layer, dep) {
     const currentChoice = this.getCurrentChoice(layer);
-    if (dep > depType.type && currentChoice instanceof TrackerList) {
+    if (dep > DepType.type && currentChoice instanceof TrackerList) {
       const recurse = tracker => this.findRecursiveDependency(layer, tracker, dep, Tracker.DEP_FILTERS[dep]);
       switch (dep) {
-        case depType.prev:
-        case depType.prevVowel:
-        case depType.prevConsonant:
+        case DepType.prev:
+        case DepType.prevVowel:
+        case DepType.prevConsonant:
           return recurse(currentChoice.tail);
 
-        case depType.next:
-        case depType.nextVowel:
-        case depType.nextConsonant:
+        case DepType.next:
+        case DepType.nextVowel:
+        case DepType.nextConsonant:
           return recurse(currentChoice.head);
       }
     }
-    return this.environment[layer][depType.keys[dep]];
+    return this.environment[layer][DepType.keys[dep]];
   }
 
   findDependency(layer, dep) {
     const recurse = tracker => this.findRecursiveDependency(layer, tracker, dep, Tracker.DEP_FILTERS[dep]);
     switch (dep) {
       /* constant dependencies */
-      case depType.word:
+      case DepType.word:
         return this.wordInfo;
-      case depType.type:
+      case DepType.type:
         return this.getCurrentChoice(layer).type;
 
       /* reactive dependencies */
-      case depType.prev:
-      case depType.prevVowel:
-      case depType.prevConsonant:
+      case DepType.prev:
+      case DepType.prevVowel:
+      case DepType.prevConsonant:
         return recurse(this.prev);
 
-      case depType.next:
-      case depType.nextVowel:
-      case depType.nextConsonant:
+      case DepType.next:
+      case DepType.nextVowel:
+      case DepType.nextConsonant:
         return recurse(this.next);
 
       default:
         throw new Error(
-          `Unknown dep: ${dep} for ${this} (enum value ${depType.keys[dep]})`,
+          `Unknown dep: ${dep} for ${this} (enum value ${DepType.keys[dep]})`,
         );
     }
   }
@@ -401,14 +463,14 @@ class Tracker {
         && (rule.spec.where === null || rule.spec.where.matches(this.environment[layer]))
       ) {
         switch (rule.do) {
-          case transformType.transformation:
+          case TransformType.transformation:
             this.transform(layer, idx, rule.spec);
             break;
-          case transformType.promotion:
+          case TransformType.promotion:
             this.promote(layer, idx, rule.spec);
             layer += 1;
             break;
-          case transformType.expansion:
+          case TransformType.expansion:
             this.expand(layer, idx, rule.spec);
             layer += 1;
             break;
@@ -467,25 +529,6 @@ class Tracker {
   }
 }
 
-class Rules {
-  constructor() {
-    // this.raw = [];
-    this.matchers = [];
-  }
-
-  add(rule) {
-    // this.raw.push(rule);
-    this.matchers.push({
-      ...rule,
-      value: match(rule.value),
-      spec: {
-        ...rule.spec,
-        where: rule.spec.where && match(rule.spec.where),
-      },
-    });
-  }
-}
-
 export class WordManager {
   constructor(word, alphabets) {
     const abcNames = Object.keys(alphabets);
@@ -536,6 +579,10 @@ export class WordManager {
   }
 }
 
+type RuleObj = {
+
+};
+
 class CaptureApplier {
   constructor(layer, manager, capturedSpec) {
     this.layer = layer;
@@ -554,15 +601,15 @@ class CaptureApplier {
   }
 
   transform(spec) {
-    return this.apply(transformType.transformation, spec);
+    return this.apply(TransformType.transformation, spec);
   }
 
   expand(spec) {
-    return this.apply(transformType.expansion, spec);
+    return this.apply(TransformType.expansion, spec);
   }
 
   promote(spec) {
-    return this.apply(transformType.promotion, spec);
+    return this.apply(TransformType.promotion, spec);
   }
 }
 
@@ -589,27 +636,27 @@ class Capture {
   }
 
   consonant(...props) {
-    return this.segmentOfType(objType.consonant, ...props);
+    return this.segmentOfType(SegType.consonant, ...props);
   }
 
   vowel(...props) {
-    return this.segmentOfType(objType.vowel, ...props);
+    return this.segmentOfType(SegType.vowel, ...props);
   }
 
   epenthetic(...props) {
-    return this.segmentOfType(objType.epenthetic, ...props);
+    return this.segmentOfType(SegType.epenthetic, ...props);
   }
 
   suffix(...props) {
-    return this.segmentOfType(objType.suffix, ...props);
+    return this.segmentOfType(SegType.suffix, ...props);
   }
 
   prefix(...props) {
-    return this.segmentOfType(objType.prefix, ...props);
+    return this.segmentOfType(SegType.prefix, ...props);
   }
 
   augmentation(...props) {
-    return this.segmentOfType(objType.augmentation, ...props);
+    return this.segmentOfType(SegType.augmentation, ...props);
   }
 }
 

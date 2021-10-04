@@ -1,9 +1,9 @@
-export function lastOf(seq, index = 0) { return seq[seq.length - 1 - index]; }
+export function lastOf<T>(seq: T[], index = 0): T { return seq[seq.length - 1 - index]; }
 
-export function lastIndex(seq, index = 0) { return seq.length - 1 - index; }
+export function lastIndex<T>(seq: T[], index = 0): keyof T[] { return seq.length - 1 - index; }
 
 // wrapper to give array.map an "or" method if empty
-export function backup(array) {
+export function backup<T>(array: T[]) {
   const originalMap = array.map;
   array.map = function newMap(...args) {
     // not sure if the bind is needed
@@ -11,8 +11,8 @@ export function backup(array) {
     // this is the "default"
     result.or = (
       array.length === 0
-        ? (...backups) => backups
-        : _ => result
+        ? <E>(...backups: E[]) => backups
+        : (_: unknown) => result
     );
     return result;
   };
