@@ -1,9 +1,9 @@
 <script>
-  import { Parser, Grammar } from "nearley";
+  import {Parser, Grammar} from "nearley";
   import * as grammar from "./backend/conversion/parsing/grammar.js";
-  import { Word, keys } from "./backend/conversion/transformers/common/classes";
+  import {Word, keys} from "./backend/conversion/transformers/common/classes";
   import wordType from "./backend/conversion/parsing/type";
-  import { type as segType } from "./backend/conversion/objects";
+  import {type as segType} from "./backend/conversion/objects";
   import {
     alphabet as abc,
     location,
@@ -13,7 +13,7 @@
   import type from "./backend/conversion/parsing/type";
   import match from "./backend/conversion/transformers/common/match.js";
 
-  import { Tabs, Tab, TabList, TabPanel } from "svelte-tabs";
+  import {Tabs, Tab, TabList, TabPanel} from "svelte-tabs";
 
   const compiledGrammar = Grammar.fromCompiled(grammar);
 
@@ -22,10 +22,10 @@
       .map((word) => {
         if (Array.isArray(word)) {
           return join(word, `/`, ...(word.length > 1 ? [`(`, `)`] : []));
-        }
+      }
 
-        word = new Word(word, { underlying: abc, phonic: abc, surface: {} });
-        const { underlying, phonic, surface } = word.abc;
+        word = new Word(word, {underlying: abc, phonic: abc, surface: {}});
+        const {underlying, phonic, surface} = word.abc;
 
         word.capture.underlying
           .suffix(
@@ -41,47 +41,47 @@
                 was: type.verb,
                 tam: tamToken.pst,
                 wazn: match.not(wazn.i),
-              },
-              next: { $exists: true },
             },
+              next: {$exists: true},
+          },
             because: `Many people always use "-it" when they conjugate verbs for هي, but some turn this into "-at" when there's anything after it in the same word. Some others, especially outside of Lebanon, even use "-at" no matter what.`,
             // diachronically it's a retention ofc but synchronically the default form is -it
-          })
+        })
           .expand({
             into: [[phonic.i, phonic.t]],
             where: {
-              word: { was: type.verb, tam: tamToken.pst },
-            },
-          });
+              word: {was: type.verb, tam: tamToken.pst},
+          },
+        });
 
         word.capture.underlying
           .segment(underlying.c, keys`{value}`)
           .expand({
             into: [[phonic.i, phonic.t]],
             where: match.any(
-              { next: { $exists: true } },
-              { word: { was: type.idafe } }
+              {next: {$exists: true}},
+              {word: {was: type.idafe}}
             ),
-          })
+        })
           .expand({
             into: (abc) => [[abc.a]],
             where: {
               prevConsonant: {
                 meta: {
                   features: match.any(
-                    { emphatic: true },
-                    { location: (val) => val < location.velum }
+                    {emphatic: true},
+                    {location: (val) => val < location.velum}
                   ),
-                },
               },
             },
+          },
             because: `just testin`,
-          })
+        })
           .expand({
             into: [[word.abc.phonic.e], [word.abc.phonic.i]],
             odds: [0.5, 0.5],
             because: `The ة's default pronunciation in Lebanon, like most of the Levant, is a high unrounded vowel.`,
-          });
+        });
 
         word.init();
 
@@ -100,10 +100,10 @@
             : `-`
         )
         .join(``)}`;
-      })
+    })
       .join(delim);
     return `${pre}${joined}${post}`;
-  }
+}
 
   let input = ``;
   let res = [];
@@ -114,10 +114,10 @@
     res = new Parser(compiledGrammar).feed(input).results[0] || [];
     joined = join(res);
     err = ``;
-  } catch (e) {
+} catch (e) {
     err = e;
     console.error(e);
-  }
+}
 </script>
 
 <main>
@@ -158,6 +158,7 @@
             top of that, you'll be able to switch the entire text from one
             writing system to another, like the Arabic script (عربي) vs.
             3arabizi (3arabe) vs. IPA (/ʕarabe/) vs. anything whatsoever.
+            Right, that includes katakana.
           </p>
           <h3>What?</h3>
           <p>
@@ -177,7 +178,7 @@
             <i>kalbich</i>, <i>qalbich</i> -- and that's just pronunciations,
             not even getting into all the different kinds of Romanization
             systems there are! So <span class="small">(yo, dawg...)</span> how do
-            you deal with all the dialects that are in your dialect?
+            you deal with all the dialects in your dialect?
           </p>
           <p>
             Well, you could just not. Instead of regularly clocking into
@@ -205,7 +206,6 @@
             enough to inspire a shift away from print-style Arabic dictionaries now
             that we have the whole Internet and all.
           </p>
-          <p>Oh yeah, and there's also Arabic in katakana.</p>
         </section>
       </div>
       <p>{joined}</p>
@@ -224,11 +224,11 @@
     padding: 1em;
     max-width: 240px;
     margin: 0 auto;
-  }
+}
 
   pre {
     text-align: left;
-  }
+}
 
   nav {
     position: top;
@@ -241,7 +241,7 @@
     justify-content: space-between;
     align-items: center;
     cursor: default;
-  }
+}
 
   nav h1 {
     color: black;
@@ -251,25 +251,25 @@
     font-weight: 800;
     padding: 10px;
     margin: 0;
-  }
+}
 
   nav a {
     text-decoration: none;
     font-size: 1.5em;
     font-weight: 500;
     padding: 10px;
-  }
+}
 
   textarea {
     font-family: Consolas, "Courier New", Courier, monospace;
     height: 100%;
     flex: 1.5;
-  }
+}
 
   .display-area section {
     flex: 1;
     margin-left: 20px;
-  }
+}
 
   .display-area {
     display: flex;
@@ -277,19 +277,19 @@
     height: 30vh;
     width: 90vw;
     padding: 10px;
-  }
+}
 
   a {
     text-decoration: none;
-  }
+}
 
   .small {
     font-size: 0.8em;
-  }
+}
 
   @media (min-width: 640px) {
     main {
       max-width: none;
-    }
   }
+}
 </style>
