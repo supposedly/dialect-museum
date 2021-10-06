@@ -1,4 +1,17 @@
 # [Lebanese-orthography demo](https://write.lebn.xyz)
+
+**Introduction**
+
+1. [Quick background](#quick-background)
+2. [Unquick background](#unquick-background)
+3. [A pronunciation problem](#a-pronunciation-problem)
+
+**Technical info**
+
+4. [How this thing works](#how-this-thing-works)<!--comment to stop vsc from inserting toc-->
+     1. [At a high level](#at-a-high-level)
+     2. [At a low lev... well, it's JS](#at-a-low-lev-well-its-js)
+5. [Development info](#development-info)
 ## Quick background
 
 1. This repo is part of a larger project where I'm trying to make a dictionary of Lebanese Arabic.
@@ -12,8 +25,7 @@ pronounced, not just a select few.
 
 ## Unquick background
 
-> I am large, I contain multitudes.
-> _— Walt Whitman describing the Arabic language (probably)_
+> I am large, I contain multitudes. *—Walt Whitman describing the Arabic language (probably)*
 
 Arabic is big. The language spoken in Morocco is way different from the one spoken in Oman, for
 example, which makes sense, seeing as they've got 8,000km and more than 1,000 years of separation
