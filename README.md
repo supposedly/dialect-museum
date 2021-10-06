@@ -7,11 +7,8 @@
 
 ## Unquick background
 
-> Do I contradict myself?
-> Very well then I contradict myself,
-> (I am large, I contain multitudes.)
-> _— the Arabic language describing itself_
-> _or just some guy named Walt_
+> I am large, I contain multitudes.
+> _— Walt Whitman describing the Arabic language (no really)_
 
 Arabic is big. The language spoken in Morocco is way different from the one spoken in Oman, for
 example, which makes sense, seeing as they've got 8,000km and more than 1,000 years of separation
@@ -119,7 +116,7 @@ doohickiness before you actually show it to the reader, and there are so many di
 could take advantage of that in a dictionary or language reference to get our info across
 comprehensively and intuitively. But sites like
 [Wiktionary](https://en.wiktionary.org/wiki/Main_Page),
-as admirable as their scope is, are literally built around that sort of
+as admirable as they are in scope, are literally built around that sort of
 page-text-is-raw-data double duty, and it stops so many potential improvements from even being
 dreamt up.
 
@@ -130,13 +127,54 @@ get into how this thing works.
 
 ## How this thing works
 
-Just kidding. We'll get into that when I wake up tomorrow. In the meantime, laugh at my section
-headers:
+Until now, I've been picking between the words "dialect" and "accent" by rolling a two-sided
+die. From here on, though, I'll stick to "accent" alone, since that's more what this
+specific project's about.
 
 ### At a high level
 
-The crucial idea that underlies everything coming up is that different accents of a language don't
-arise randomly. They're related by consistent, describable rules .....
+The big idea is that the different accents of a language don't just arise randomly. They're
+related to each other in consistent, predictable ways, and if you know the ways, you can
+confidently work out what forms a particular word could take in another accent. For
+example, how do Americans know to imitate British accents by saying stuff like
+"Bri'ish" and "Chewsday"? Even if people haven't consciously gone and analyzed the exact 
+phonological mumblejumbling at play there, they've intuitively picked up on how a "T" sound between two vowels can
+[get deleted](https://en.wikipedia.org/wiki/T-glottalization)
+in some UK dialects, and how one that's before a "Y" sound can get
+[CH-ified](https://en.wikipedia.org/wiki/Yod-coalescence).
+
+Say, what if we wanted to try unifying both the British and American pronunciations
+of that second word under one single spelling? By working backwards to determine a system of consistent, predictable spelling rules, we might end up at something that looks like
+"Tuesday", which is consistent and predictable because... uh, wait...
+
+Okay, so English actually has a real spelling system that technically already
+unifies all its different dialects, but lets ignor Inglish spelling fur now so we can
+concoct our own system instead. If we try to improvise some phonetic spellings to start
+with, we might say that three main ways to pronounce Tuesday are "Choozday" (UK), "Toozday"
+(American), and "Tyoozday" (both, maybe more UK), but what's the logic underpinning
+those differences?
+
+With a solid knowledge of English sound shifts, we can figure out that the "Choozday"
+pronunciation smacks of what's called
+[yod-coalescence](https://en.wikipedia.org/wiki/Yod-coalescence),
+and, in comparison, the "Toozday" one smells a bit like
+[yod-dropping](https://en.wikipedia.org/wiki/Yod-dropping). Basically, lots of UK dialects
+of English tend to blend "t" plus "y" into a single "ch" sound, and lots of American
+dialects tend to drop the "y" sound altogether if it comes after a sound that's pronounced
+with the tip of your tongue. So... what it seems like we've found out is that "Tyoozday"
+is the original form. What's more is that we actually have some regular rules we can use
+to transform this original word, "Tyoozday", into the forms it takes some dialects:
+
+- For some American dialects, if there's a "y" right after a sound that uses the tip of the
+  tongue, just drop the "y".
+  - Applying this rule to "Tyoozday" produces **"Toozday"**.
+- For some UK dialects, if there's a "t" with a "y" right after it, blend them together
+  into "ch".
+  - Applying this rule to "Tyoozday" produces **"Choozday"**.
+- For some American and UK dialects, don't do either of those things.
+  - Applying this non-rule to "Tyoozday" just gives us **"Tyoozday"** right back.
+
+Etc more description here. And that was how this project works at a high level.
 
 ### At a low... well, it's JS
 
