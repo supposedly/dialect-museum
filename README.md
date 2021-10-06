@@ -196,8 +196,9 @@ be able to figure them out if we give it those rules, after all.
 Going a step further, building off of that dropdown idea from earlier, what if we could let our
 reader explore all the different pronunciations of the word "Tuesday" at once? We could store
 it under the hood like `[t, ch][y, ∅]oozday` to let the user toggle between
-<code>[<u>t</u>](#)[<u>y</u>](#)oozday</code>, <code>[<u>ch</u>](#)oozday</code>, and
-<code>[<u>t</u>](#)oozday</code> via the frontend.
+<code><u>t</u><u>y</u>oozday</code>,
+<code><u>ch</u>oozday</code>, and
+<code><u>t</u>oozday</code> via the frontend.
 
 Also, we don't even have to stick to our improvised phonetic writing system. If
 our entire language is just a system of rules that transform symbols into other symbols,
