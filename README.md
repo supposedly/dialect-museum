@@ -46,7 +46,7 @@ which Lebanese Arabic am I actually talking about?
 
 ## A pronunciation problem
 
-Ideally, I'd be talking about all "Lebanese Arabics", right? It would be amazing to have a
+Ideally, I'd be talking about all Lebanese Arabics, right? It would be amazing to have a
 dictionary that's equipped to handle **all** of the varieties of whatever language it's covering.
 The place for that to shine would be in the "pronunciation" section of every entry, where it'd be
 awfully helpful to show off all the different ways each word can be pronounced in different
@@ -107,7 +107,7 @@ they used before 1970. So why are we even talking about print dictionaries? Why 
 computers do their whole computer thing and give us a little help?
 
 If you'll notice, the oopsie in that "she's getting up" picture above was that we had three
-variables — orange (the first letter), blue (second), and pink (last) — all varying together in the same exact word. When we tried to permute that out into every single possible resulting string
+variables — orange (the first letter), blue (second), and pink (last) — all varying together in the same exact word. When we tried to permute that out into every single possible resulting string,
 we booked ourselves a ticket straight into the pits of combinatorial hell. But, well... we can
 totally tame those flames if we try expanding depthwise instead of breadthwise:
 
