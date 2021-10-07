@@ -161,7 +161,8 @@ in some UK dialects, and how one that's before a "Y" sound can get
 [CH-ified](https://en.wikipedia.org/wiki/Yod-coalescence).
 
 And, say, what if we wanted to try unifying both the British and American pronunciations
-of that second word under one single spelling? By working backwards to determine a system of consistent, predictable spelling rules, we might end up at something that looks like
+of that second word under one single spelling? By working backwards to determine a system of
+consistent, predictable spelling rules, we might end up at something that looks like
 "Tuesday", which is consistent and predictable because... wait...
 
 Okay, so English actually has a real spelling system that technically already
@@ -192,19 +193,18 @@ can use to transform this original word, "Tyoozday", into the forms it can take 
 
 You see where this is going? What if we could feed the original spelling, "Tyoozday", into a
 computer, and have it automatically spit both "Toozday" and "Choozday" back out at us? It should
-be able to figure them out if we give it those rules, after all. And what if we could work
-backwards like this to reverse-engineer a unified "original" form for every shared word between
-the two dialects?
+be able to figure them out if we give it those rules, after all. And what if we could work backwards
+like this to make a single form, like "Tyoozday", for **every** pair of words that differ
+between our two dialects?
 
-Going a step further, building off of that dropdown idea from earlier, we can drive this home
-by coming up with a way for our reader explore all the different pronunciations of the word
-"Tuesday" at once. We could store it under the hood like
-`[t, ch][y, ∅]oozday` to let the user toggle between
+And we need to build off of that dropdown idea from earlier to find a way for our reader to explore
+all the different pronunciations of the word "Tuesday" at once. Under the hood, we could store the
+word like `[t, ch][y, ∅]oozday` to let the user toggle between
 <code><b>t</b><b>y</b>oozday</code>,
 <code><b>ch</b>oozday</code>, and
-<code><b>t</b>oozday</code> from the frontend.
+<code><b>t</b>oozday</code> from the frontend at will.
 
-Also, we don't even have to stick to our improvised writing system. If
+Also, we don't even have to stick to our own improvised writing system. If
 our entire language is just a bunch of rules that transform symbols into other symbols,
 couldn't those symbols actually be whatever we'd like them to be? We could have our program display
 those options as `/ˈtjuzde͡ɪ/, /ˈt͡ʃuzde͡ɪ/, /ˈtuzde͡ɪ/` in the
@@ -248,9 +248,40 @@ words from earlier are `bYt`,  `xAf`, and `fEr`, and for another example, `x&y 3
 [grammar.ne](/src/backend/conversion/parsing/grammar.ne) to explore the symbol choices
 and see how all of it fits together.
 
-##### Open sesame, close sesame
+The grammar was the very first part of this project that I did, and it took the rest of the
+codebase months to take shape. That means that those later parts suffer from a bit of debt thanks
+to poor assumptions I made early on about how I'd end up structuring them. A lot of the more-complex
+parts of the grammar are probably nixable-AKA-fixable.
+
+##### A game of Macro Yolo
+
+The grammar also supports macros, although I think I went a bit overboard with them.
+The idea behind a macro is to handle any type of word that regularly differs between dialects,
+but in a way that raw pronunciation rules can't handle very cleanly. For example, verbs are
+conjugated in a few distinct ways throughout Lebanon, so a `verb` macro helps us generate
+all of those ways from one single input.
+
+There are a couple different ways macros could be handled in the actual JavaScript code.
+Later in this document, I'll describe [my original approach](#initial-eyes-initialize-initial-lies),
+explain why I think it's wrong now, and show how I plan to replace it by merging it into a later
+step (transforms).
+
+Also, the bit that feels like going overboard (this is the "Yolo" part) is defining a new macro
+for... everything? I made a **numeral** macro during a particularly dry procrastination spell. That
+one definitely might not last.
 
 ##### Stress and syllables
+
+Back in early 2021, I was really proud of how I'd gotten the grammar to be able to not only properly
+syllabify any word you threw at it, but also to determine which syllable should be stressed.
+For example, if you pass it `samak` "fish", it knows to stress the first syllable, and if you pass
+it `sammUk` "fishie", it knows to stress the last syllable.
+
+...the problem is that this is the **underlying** form, and its whole, entire purpose is to be
+chopped up and transformed as it wends its way to the surface where the user can read it.
+Along the way, words will often get resyllabified, and stress can even be reassigned sometimes.
+That makes it counterproductive to try to set the syllable structure and stress in stone from the
+start. This part will definitely be rewritten.
 
 #### Initial eyes initialize initial lies
 
