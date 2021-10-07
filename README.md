@@ -28,15 +28,16 @@ pronounced, not just a select few.
 > I am large, I contain multitudes. *—Walt Whitman describing the Arabic language (probably)*
 
 Arabic is big. The language spoken in Morocco is way different from the one spoken in Oman, for
-example, which makes sense, seeing as they've got 8,000km and more than 1,000 years of separation
+example,<sup id="text-1">[(1)](#note-1)</sup>
+which makes sense, seeing as they've got 8,000km and more than 1,000 years of separation
 between them. No matter whether you call all of Arabic's different flavors "dialects" or
 "languages" (it mostly depends on the type of person you'd like to get yelled at by), there's no
 denying that they're **somehow** different from each other.
 
-You don't even need to cover all eight thousand of those kilometers to clock how strongly they can differ. Like with a lot of other languages, just moving from one village to the next
+And you don't even need to cover all eight thousand of those kilometers to clock how strongly they can differ. Like with a lot of other languages, just moving from one village to the next
 is enough to hear marked differences in the dialect. This means that convenient, blankety terms
 like "Moroccan Arabic" and "Omani Arabic" don't hold up so strongly when you take a closer look...
-there are zillions of different Moroccan Arabics between one end of the country and another.
+there are zillions of different Moroccan and Omani Arabics from one end of a country to the other.
 
 I'm gonna turn my focus to my own country of Lebanon with that in mind. It's barely the size of
 Rhode Island and Delaware put together (for non-Americans, that means it's roughly the size of
@@ -191,32 +192,73 @@ can use to transform this original word, "Tyoozday", into the forms it can take 
 
 You see where this is going? What if we could feed the original spelling, "Tyoozday", into a
 computer, and have it automatically spit both "Toozday" and "Choozday" back out at us? It should
-be able to figure them out if we give it those rules, after all.
+be able to figure them out if we give it those rules, after all. And what if we could work
+backwards like this to reverse-engineer a unified "original" form for every shared word between
+the two dialects?
 
-Going a step further, building off of that dropdown idea from earlier, what if we could let our
-reader explore all the different pronunciations of the word "Tuesday" at once? We could store
-it under the hood like `[t, ch][y, ∅]oozday` to let the user toggle between
-<code><u>t</u><u>y</u>oozday</code>,
-<code><u>ch</u>oozday</code>, and
-<code><u>t</u>oozday</code> via the frontend.
+Going a step further, building off of that dropdown idea from earlier, we can drive this home
+by coming up with a way for our reader explore all the different pronunciations of the word
+"Tuesday" at once. We could store it under the hood like
+`[t, ch][y, ∅]oozday` to let the user toggle between
+<code><b>t</b><b>y</b>oozday</code>,
+<code><b>ch</b>oozday</code>, and
+<code><b>t</b>oozday</code> from the frontend.
 
-Also, we don't even have to stick to our improvised phonetic writing system. If
-our entire language is just a system of rules that transform symbols into other symbols,
-those symbols could actually be whatever we'd like them to be, couldn't they? We could have our
-program display those options as `/ˈtjuzde͡ɪ/, /ˈt͡ʃuzde͡ɪ/, /ˈtuzde͡ɪ/` in the
+Also, we don't even have to stick to our improvised writing system. If
+our entire language is just a bunch of rules that transform symbols into other symbols,
+couldn't those symbols actually be whatever we'd like them to be? We could have our program display
+those options as `/ˈtjuzde͡ɪ/, /ˈt͡ʃuzde͡ɪ/, /ˈtuzde͡ɪ/` in the
 [IPA](https://en.wikipedia.org/wiki/International_Phonetic_Alphabet),
-`tyo͞ozdā, CHo͞ozdā, to͞ozdā` in the pronunciation alphabet Google's dictionary uses,
+`tyo͞ozdā, CHo͞ozdā, to͞ozdā` in the alphabet Google's dictionary uses,
 `𐐓𐐷𐐭𐑆𐐼𐐩/𐐓𐑏𐑆𐐼𐐩, 𐐕𐑏𐑆𐐼𐐩, 𐐓𐐭𐑆𐐼𐐩` in the
 [Deseret alphabet](https://en.wikipedia.org/wiki/Deseret_alphabet) (why not), and anything else
 in any other script we want. Unfortunately, this system doesn't work so well with English's
-actual orthography, since it relies on a word's spelling being uniquely derivable from its
-pronunciation, but — fortunately — we're going to be working with Lebanese Arabic going forward, not
-English 😎
+**actual** writing system, since we're relying on a word's spelling being regularly derivable from
+its pronunciation, but — fortunately — we're going to be working with Lebanese Arabic going
+forward, not English 😎
 
 ### At a low lev... well, it's JS
 
-...
+#### In the beginning was *`lkilmc`*
 
+Somewhere deep within this repo's directory hierarchy lies a secret alphabet that's way
+overcomplicated because I don't know what I'm doing. It tries to represent the "original" sounds
+underpinning different Lebanese Arabic dialects, in the same vein as our "T-y-oo-z-d-ay" spelling
+of "Tuesday". For instance, even though the three words `bēt بيت` ("house"), `shēf شاف` ("he saw"),
+and `fēr فير` ("hair-straightener") are all pronounced with the exact same `ē` sound, each word's
+`ē` is actually different under the hood:
+
+* `bēt`'s goes back to the vowel `ay`, and the word is still pronounced `bayt` by some Lebanese;
+* `shēf`'s goes back to an "ah" sound `ā`, and the word is still pronounced `shāf` by some; and
+* `fēr`'s goes back to the actual "eh" sound in the French word "fer", and it's pronounced
+  `fēr` by everybody.
+
+That tells that we need three different symbols in our secret alphabet for each of these three `ē`
+sounds. (Also, we don't even have to look at multiple dialects to figure out some of these
+distinctions. For example, even a Lebanese speaker who pronounces the lone word "house" as `bēt`
+will likely say `bayto` instead of ~~`bēto`~~ for "his house"; meanwhile, the word `shēfo`
+"he saw him" is never ~~`shayfo`~~, which is enough to tell us that the `ē`'s in `bēt` and `shēf`
+are different.)
+
+Since this alphabet is only meant to be parsed by our code, not by any human eyes, it shoots
+for efficiency by restricting itself to one single letter per sound. For example, our three
+words from earlier are `bYt`,  `xAf`, and `fEr`; for another example, `x&y 3Ad%` means
+"plain/normal tea" and is also a Perl script that deletes your home directory. You can see
+[symbols.js](/src/backend/conversion/symbols.js) and
+[grammar.ne](/src/backend/conversion/parsing/grammar.ne) to explore the symbol choices
+and see how all of it fits together.
+
+##### Open sesame, close sesame
+
+##### Stress and syllables
+
+#### Initial eyes initialize initial lies
 
 ## Development info
 `npm run build` to build for production (to `/dist`) and `npm run serve` to develop.
+
+## Notes
+
+* <sup id="note-1">[(1)](#text-1)</sup> Both Morocco and Oman are home to indigenous languages that
+  don't have roots in Arabic, by the way. That felt worth noting, even if I'm only writing
+  about Arabic in this document.
