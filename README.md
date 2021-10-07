@@ -28,7 +28,7 @@ pronounced, not just a select few.
 > I am large, I contain multitudes. *—Walt Whitman describing the Arabic language (probably)*
 
 Arabic is big. The language spoken in Morocco is way different from the one spoken in Oman, for
-example,<sup id="text-1">[(1)](#note-1)</sup>
+example,<sup id="text-1">[1](#note-1)</sup>
 which makes sense, seeing as they've got 8,000km and more than 1,000 years of separation
 between them. No matter whether you call all of Arabic's different flavors "dialects" or
 "languages" (it mostly depends on the type of person you'd like to get yelled at by), there's no
@@ -233,16 +233,16 @@ and `fēr فير` ("hair-straightener") are all pronounced with the exact same `
 * `fēr`'s goes back to the actual "eh" sound in the French word "fer", and it's pronounced
   `fēr` by everybody.
 
-That tells that we need three different symbols in our secret alphabet for each of these three `ē`
-sounds. (Also, we don't even have to look at multiple dialects to figure out some of these
-distinctions. For example, even a Lebanese speaker who pronounces the lone word "house" as `bēt`
-will likely say `bayto` instead of ~~`bēto`~~ for "his house"; meanwhile, the word `shēfo`
-"he saw him" is never ~~`shayfo`~~, which is enough to tell us that the `ē`'s in `bēt` and `shēf`
+That tells that our secret alphabet needs three different symbols for these three `ē` sounds.
+(By the way, we don't even have to look at multiple dialects to figure out some of these
+distinctions. Even a Lebanese speaker who pronounces the lone word "house" as `bēt`
+will likely say `bayto` instead of ~~`bēto`~~ for "his house", while the word `shēfo`
+"he saw him" is never ~~`shayfo`~~. That's enough to tell us that the `ē`'s in `bēt` and `shēf`
 are different.)
 
-Since this alphabet is only meant to be parsed by our code, not by any human eyes, it shoots
-for efficiency by restricting itself to one single letter per sound. For example, our three
-words from earlier are `bYt`,  `xAf`, and `fEr`; for another example, `x&y 3Ad%` means
+Since this alphabet is only meant to be parsed by our code, not by any human eyes, it maxes
+on efficiency by restricting itself to one single letter per sound. For example, our three
+words from earlier are `bYt`,  `xAf`, and `fEr`, and for another example, `x&y 3Ad%` means
 "plain/normal tea" and is also a Perl script that deletes your home directory. You can see
 [symbols.js](/src/backend/conversion/symbols.js) and
 [grammar.ne](/src/backend/conversion/parsing/grammar.ne) to explore the symbol choices
@@ -259,6 +259,6 @@ and see how all of it fits together.
 
 ## Notes
 
-* <sup id="note-1">[(1)](#text-1)</sup> Both Morocco and Oman are home to indigenous languages that
-  don't have roots in Arabic, by the way. That felt worth noting, even if I'm only writing
-  about Arabic in this document.
+* <sup id="note-1">[1](#text-1)</sup> Both Morocco and Oman are home to indigenous languages that
+  don't have roots in Arabic, which felt worth noting, even if I'm only writing about Arabic in
+  this document.
