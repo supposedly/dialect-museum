@@ -114,16 +114,16 @@ totally tame those flames if we try expanding depthwise instead of breadthwise:
 
 ![the `she's getting up` image from earlier, but instead of expanding the whole word into every possible permutation, we just list all the outcomes of each variable letter 'in place': the word can start with "q", "g", or an apostrophe, then have either "a", "e", or "o", and end with either "é", "i", or "a"](https://user-images.githubusercontent.com/32081933/135978861-8167930c-c718-4d84-8e20-3efbb163555a.png)
 
-And our cool new problem is that this notation makes zero sense at a glance, and that, even if you
-do understand what it's trying to say, it's still hard to get an intuitive feel for it. We
-couldn't publish this in a printed work and expect to help anyone.
+That's at least more-manageable, but our cool new problem is that this notation makes zero sense at
+a glance. On top of that, even if you do understand what it's trying to say, it's still hard to get
+an intuitive feel for it. We couldn't publish this in a printed work and expect to help anyone.
 
 But, again, well... we have the technology:
 
 ![An image showing the variant `'eymi`, where each of the three variable letters is conspicuously underscored with a line and an arrow. The last letter, which is the "é/i/a" variable, is shown being selected by a mouse cursor that's toggling between the three options. What jumps out is that this is actually readable at a glance, unlike the last image, because it only *shows* one letter at a time, even though it still lets you explore the full range of options](https://user-images.githubusercontent.com/32081933/135980997-eaf2f8e3-46a6-4401-9cc1-43b8b05a08db.png)
 
-That's right. I made you sit through a whole page of buildup so I could end up explaining
-dropdowns. And just you wait for the rest of this README.
+And that's right. I made you sit through a whole page of buildup so I could end up explaining
+dropdowns. Just you wait for the rest of this README.
 
 Anyway. The whole reason we were "even talking about print dictionaries" earlier is that some
 features of
