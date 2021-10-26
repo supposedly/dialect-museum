@@ -321,7 +321,7 @@ definitions.
 Enough with the word "her" for now, then. Here's a new example that shows a nice variety of
 Lebanese accents and dialects: how would we say "she's getting up"?
 
-| <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/135920721-0405ee7b-e5dd-4336-aaeb-c1ffff458f34.png" alt="Different ways of saying `she's getting up` throughout Lebanon, enumerated really inefficiently. There's stuff like 'aymi', 'ayma', 'oymi', 'qaymi', 'qayma', and 'gayma'." /></kbd><figcaption><sup><i>You'll find people living in Lebanon who pronounce it in any number of these ways, although I'm not sure if the crossed-out combinations exist. (The ones with "o" are stereotypically Northern, the ones with "q" stereotypically Druze, and the ones with "g" stereotypically Bedouin.)</i></sup></figcaption></figure> |
+| <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/135920721-0405ee7b-e5dd-4336-aaeb-c1ffff458f34.png" alt="Different ways of saying `she's getting up` throughout Lebanon, enumerated really inefficiently. There's stuff like 'aymi', 'ayma', 'oymi', 'qaymi', 'qayma', and 'gayma'." /></kbd><br/><figcaption><sup><i>You'll find people living in Lebanon who pronounce it in any number of these ways, although I'm not sure if the crossed-out combinations exist. (The ones with "o" are stereotypically Northern, the ones with "q" stereotypically Druze, and the ones with "g" stereotypically Bedouin.)</i></sup></figcaption></figure> |
 | - |
 
 Jeez, that wouldn't look nice at all in a book or on a webpage. But we've learned a bit about
