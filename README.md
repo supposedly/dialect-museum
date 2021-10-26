@@ -1,24 +1,4 @@
-# [A Journey of Overthinking](https://write.lebn.xyz)
-
-## Contents  <!-- omit in toc -->
-- [A Journey of Overthinking](#a-journey-of-overthinking)
-  - [The problem](#the-problem)
-    - [What's not to like](#whats-not-to-like)
-    - [The state of our problem](#the-state-of-our-problem)
-  - [Thinking about a solution](#thinking-about-a-solution)
-    - [What's in an accent, anyway?](#whats-in-an-accent-anyway)
-      - [Spare some change, sir?](#spare-some-change-sir)
-      - [Spare some regular change, sir?](#spare-some-regular-change-sir)
-    - [Running it home](#running-it-home)
-  - [Further implications (wow)](#further-implications-wow)
-    - [The state of our problem again](#the-state-of-our-problem-again)
-    - [Data, data, data](#data-data-data)
-    - [Orthographomania](#orthographomania)
-- [Arabic time](#arabic-time)
-  - [How this thing works](#how-this-thing-works)
-    - [Mistakes](#mistakes)
-    - [At a high level](#at-a-high-level)
-    - [At a low lev... well, it's JS](#at-a-low-lev-well-its-js)
+# [A Journey in Overthinking It](https://write.lebn.xyz)
 
 ## The problem
 
