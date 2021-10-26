@@ -1,295 +1,316 @@
-# [Lebanese-orthography demo](https://write.lebn.xyz)
+# [A Journey of Overthinking](https://write.lebn.xyz)
 
-**Introduction**
+## Contents  <!-- omit in toc -->
+- [A Journey of Overthinking](#a-journey-of-overthinking)
+  - [The problem](#the-problem)
+    - [What's not to like](#whats-not-to-like)
+    - [The state of our problem](#the-state-of-our-problem)
+  - [Thinking about a solution](#thinking-about-a-solution)
+    - [What's in an accent, anyway?](#whats-in-an-accent-anyway)
+      - [Spare some change, sir?](#spare-some-change-sir)
+      - [Spare some regular change, sir?](#spare-some-regular-change-sir)
+    - [Running it home](#running-it-home)
+  - [Further implications (wow)](#further-implications-wow)
+    - [The state of our problem again](#the-state-of-our-problem-again)
+    - [Data, data, data](#data-data-data)
+    - [Orthographomania](#orthographomania)
+- [Arabic time](#arabic-time)
+  - [How this thing works](#how-this-thing-works)
+    - [Mistakes](#mistakes)
+    - [At a high level](#at-a-high-level)
+    - [At a low lev... well, it's JS](#at-a-low-lev-well-its-js)
 
-1. [Quick background](#quick-background)
-2. [Unquick background](#unquick-background)
-3. [A pronunciation problem](#a-pronunciation-problem)
+## The problem
 
-**Technical info**
+I don't like this.
 
-4. [How this thing works](#how-this-thing-works)<!--comment to stop vsc from inserting toc-->
-     1. [At a high level](#at-a-high-level)
-     2. [At a low lev... well, it's JS](#at-a-low-lev-well-its-js)
-5. [Development info](#development-info)
-## Quick background
+<kbd aria-role="presentation">![A partial screenshot of the Oxford English Dictionary's definition of the word 'her'. It describes the word as a pronoun and noun and says it's pronounced "huhh" or "uhh" by Britons and "her" or "er" by Americans.](https://user-images.githubusercontent.com/32081933/136824054-6e3da3cc-6005-40d7-94d5-7d1845ad0e41.png)</kbd>
 
-1. This repo is part of a larger project where I'm trying to make a dictionary of Lebanese Arabic.
-2. A **really good** dictionary of Lebanese Arabic.
-   1. I want it to be as comprehensive as possible.
-   2. I also want it to take advantage of the fact that it's on the Internet, so I don't want to treat it like it's just a print dictionary with a frontend.
-3. That means doing some stuff differently from how you'd do it on paper.
+### Her? <!-- omit in toc -->
 
-In this repo, I'm describing a way for a dictionary to represent **all** ways a word can be 
-pronounced, not just a select few.
+No, I hardly know her. What I don't like there is the bit about pronunciation.
 
-## Unquick background
+That's a screenshot from the Oxford English Dictionary's online portal. The OED hit the Internet
+before I was born (a couple decades ago) and came into existence just a bit earlier (a
+couple centuries ago), making it one of the oldest and foremost dictionaries of English. It's spent
+most of its life being the best paper dictionary it could be.
 
-> I am large, I contain multitudes. *—Walt Whitman describing the Arabic language (probably)*
+The online OED is pretty much the same old thing. It's a print dictionary with a web frontend,
+meaning there's almost no difference in the experience from the book version. And the book version
+has clearly proven its mettle, so what's not to like?
 
-Arabic is big. The language spoken in Morocco is way different from the one spoken in Oman, for
-example,<sup id="text-1">[1](#note-1)</sup>
-which makes sense, seeing as they've got 8,000km and more than 1,000 years of separation
-between them. No matter whether you call all of Arabic's different flavors "dialects" or
-"languages" (it mostly depends on the type of person you'd like to get yelled at by), there's no
-denying that they're **somehow** different from each other.
+### What's not to like
 
-And you don't even need to cover all eight thousand of those kilometers to clock how strongly they can differ. Like with a lot of other languages, just moving from one village to the next
-is enough to hear marked differences in the dialect. This means that convenient, blankety terms
-like "Moroccan Arabic" and "Omani Arabic" don't hold up so strongly when you take a closer look...
-there are zillions of different Moroccan and Omani Arabics from one end of a country to the other.
+<kbd aria-role="presentation">![A "meme", visibly edited from a meme that originally read "Inside Each of Us Are Two Wolves; One has depression, The other has depression; You Have Depression". The modified image reads: "Inside Each of Us Are Two (ACCENT). One has (R SOUND) the other has (NO R SOUND). You have (ENGLISH LANGUAGE)"](https://user-images.githubusercontent.com/32081933/137174170-78fe42cc-89c6-4412-903e-3b10a7038c9b.png)</kbd>
 
-I'm gonna turn my focus to my own country of Lebanon with that in mind. It's barely the size of
-Rhode Island and Delaware put together (for non-Americans, that means it's roughly the size of
-Lebanon), but the Arabic spoken throughout it probably varies more than English does throughout
-the entire United States. So, if I tell you I'm trying to make a dictionary of "Lebanese Arabic",
-which Lebanese Arabic am I actually talking about?
+Look at the pronunciations they've got for the word "her". They come in two accents: a
+British one that doesn't pronounce the R, and an American one that does. It does feel nice to
+see them straddling the pond for us like that, but, hey, how wide to a side ought a straddle to
+stride? How many accents per continent should they actually be covering? There sure isn't only one
+kind of English spoken throughout the whole US, let alone all of Britain, let alone-alone the UK in
+general. And I hear there's even a little bit of the rest of the world to contend with...
 
-## A pronunciation problem
+Well, they've got a few excuses to uses. Personally, I think a big, fat dictionary of English needs
+to document as much of the English language as it can, but I'll admit that there's a lot hinging on
+that very last word: *can*. A print dictionary has a few important tradeoffs to make when balancing
+how much it *should* document with how much it *can* document. A lot of the time, it just isn't
+possible or feasible to record everything there is to record.
 
-Ideally, I'd be talking about all Lebanese Arabics, right? It would be amazing to have a
-dictionary that's equipped to handle **all** of the varieties of whatever language it's covering.
-The place for that to shine would be in the "pronunciation" section of every entry, where it'd be
-awfully helpful to show off all the different ways each word can be pronounced in different
-accents or dialects.
+For example, I'm betting that someone using a dictionary for normal-person reasons won't have much
+fun looking at this:
 
-<figure>
-<img src="https://user-images.githubusercontent.com/32081933/135920721-0405ee7b-e5dd-4336-aaeb-c1ffff458f34.png" alt="different ways of saying `she's getting up` throughout Lebanon, enumerated really inefficiently" />
-<figcaption>
-    <sup><i>A word like "she's getting up" makes a few of Lebanon's accent differences very
-    noticeable. You'll find people living in Lebanon who pronounce it in any number of these ways,
-    although I'm not sure if the crossed-out combinations exist. (The ones with "o" are
-    stereotypically Northern, the ones with "q" are stereotypically Druze, and the ones with "g"
-    are stereotypically Bedouin.)</i></sup>
-</figcaption>
-</figure>
+| <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/136869976-acf84922-88ca-4ba0-8a7c-bc447a8575f5.png" alt="The above OED screenshot, just edited to show a flat-out-impractical number of different pronunciations." /></kbd><figcaption><sup><i>I've tactically concentrated all of my of errors into this one image to divert your attention from any other mistakes I might've made in this document.</i></sup></figcaption></figure> |
+| - |
 
-&#x200B;
+Doesn't that just suck? I mean, think of all the times you've forgotten a word as complicated as
+"her". Imagine subjecting your eyeballs to all of those unsightly pronunciation runes every single
+time you had to remind yourself how to read it. On top of that, imagine a dictionary trying to do
+that for. Every. Single. Word. They'd run out of pages after, um, "aardwolf", which is
+apparently what comes after "aardvark". (Promise I'm not lying. The next word is aardxylophone.)
 
-But, jeez, it's really inefficient to list out every imaginable variant of every single word. And
-the fact that you have to do it that way in order to be comprehensive makes
-comprehensiveness a huge waste of ink and paper overall. That's because — and this is about to be
-the lamest truism ever, but bear with me — in print, the text on a page **_is_** the data it
-represents, meaning you can't pack your data efficiently if you want to make it readable (and vice
-versa). If you want to record some data in your print dictionary, the reader is going to see it in
-the exact format you record it in, so they had better be able to consume it as is. In other words,
-there's no good way to compress that list of "she's getting up" variants into something
-space-efficient without making it totally impenetrable.
+Now, sure, we don't actually have to keep all of those different pronunciations in sight at all
+times. We're talking about the online OED here, not the paper one. For instance, you see what
+they've done with that **Forms** section right under our accent accident? That section is actually
+huge, but through the magic of technology, they've taken the entire thing and shoved it behind a
+**(Show More)** button that you're free to leave as unclicked as you like. We could take a leaf out
+of their ebook<sub>(boomer joke, sue me)</sub> and hide all of our different pronunciations behind
+something like that, too, but...
 
-Most language references and dictionaries get around all that by just making a beeline for the
-standard form&zwj;<!-- zwj apparently works like a zero-width nbsp -->(s) of the language,
-regional dialects be darmbed. For example, the Oxford English Dictionary only gives itself room to
-care about the U.S. and British standard pronunciations, ignoring other UK dialects and regional US
-ones. But
-vernacular Arabics are totally unstandardized, so we can't even take that route here! And it would
-feel weird to try to fill in the gap by coming up with our own standard to follow in those
-footsteps with. After all, we're kind of trying to document all sorts of Lebanese Arabic varieties
-here, and ditching half of them to focus on one arbitrary "standard" seems counterproductive —
-especially if we get lazy and just pick some big-city dialect for convenience, since that's
-literally why some distinct rural dialects are on the decline and need documentation in the first
-place.
+<details>
+  <summary><b>(Show More)</b></summary>
 
-So it really feels like we're stuck here. We can't really justify recording all our words in just
-one arbitrary dialect, but at the same time, how do we even begin to find an efficient way of
-writing down as many different forms as possible?
+  ...it just isn't great, is it? This didn't actually do anything to manage the clutter we created
+  — it just let us furnish it with an element of surprise.
 
-## Sorry, one sec, someone's at the door
+  Anyway, don't people usually check the pronunciation section just to get a quick idea of how to
+  say the word they're looking at? I don't love the idea of forcing that kind of person to wade
+  through a bunch of uninteresting variants just to find what they need, boring the daylights out of
+  them in the sole interest of correctness. I mean, I do take an interest in correctness, possibly
+  even a sole interest — I just don't think it should think it should come with such a huge
+  tradeoff.
+</details>
 
-![door getting knocked on](https://user-images.githubusercontent.com/32081933/135816561-5403e593-d2fe-42a4-8ac4-392be92aceb4.png)
+Besides, those detailed pronunciations I added aren't even totally correct. Part of it's on me for
+not being Susie Dent (next life, maybe!), but even if I did know the world's Englishes inside and
+out, I still wouldn't trust myself to keep my accuracy up if I always had to list so many of those out manually. Humans make mistakes doing things, and we make more mistakes doing more
+things.
 
-Hey, they want to come in! I wonder who it is?
+Let's break the pace with a recap.
 
-![door opening with Internet Explorer logo standing outside](https://user-images.githubusercontent.com/32081933/135820008-48345669-b108-4eb9-8088-49b14d572ac3.png)
+### The state of our problem
 
-Oh. It's just the Internet. Which... wait, has it been here this whole time?
+#### On paper <!-- omit in toc -->
 
-Huh, I guess that's right. We're on computers and web browsers right now, not papyrus or whatever
-they used before 1970. So why are we even talking about print dictionaries? Why don't we let our
-computers do their whole computer thing and give us a little help?
+- We thought it could be pretty cool for our dictionary to acknowledge more accents and dialects
+  than just two major ones. After all, more people speak the language than some standard-issue Brit
+  and their Generically American friend.
+- We can't do that comprehensively in a print dictionary, though:
+  1. ❌ It'd waste a ton of valuable ink and paper.
+  2. ❌ The dictionary's editors would have to compile all the different dialects' forms of each 
+     word manually, and that process is just swarming with chances to mess up.
+  3. ❌ Readers who just don't care would have no way to skip past it.
 
-If you'll notice, the oopsie in that "she's getting up" picture above was that we had three
-variables — orange (the first letter), blue (second), and pink (last) — all varying together in the same exact word. When we tried to permute that out into every single possible resulting string,
-we booked ourselves a ticket straight into the pits of combinatorial hell. But, well... we can
-totally tame those flames if we try expanding depthwise instead of breadthwise:
+This is why dictionaries never bother fleshing out their pronunciation keys beyond a couple of
+major dialects. It's a logistical nightmare if you're working in print.
 
-![the `she's getting up` image from earlier, but instead of expanding the whole word into every possible permutation, we just list all the outcomes of each variable letter 'in place': the word can start with "q", "g", or an apostrophe, then have either "a", "e", or "o", and end with either "é", "i", or "a"](https://user-images.githubusercontent.com/32081933/135978861-8167930c-c718-4d84-8e20-3efbb163555a.png)
+But wait, we're not working in print. We're computer. The biggest difference is that, on a
+computer, the text you show the reader **doesn't** have to be the exact same as the actual data you
+recorded — you have some room to mess around with how you display it to format it digestibly. What
+if an online dictionary took advantage of that and shed its paper shackles? Can we harness the
+power of computer for great good?
 
-That's at least more-manageable, but our cool new problem is that this notation makes zero sense at
-a glance. On top of that, even if you do understand what it's trying to say, it's still hard to get
-an intuitive feel for it. We couldn't publish this in a printed work and expect to help anyone.
+#### Wow, look: digital style <!-- omit in toc -->
 
-But, again, well... we have the technology:
+<kbd>![carsalesmeme](https://user-images.githubusercontent.com/32081933/137770895-d1c2b4be-0335-4a00-9d58-cf626628163a.png)</kbd>
 
-![An image showing the variant `'eymi`, where each of the three variable letters is conspicuously underscored with a line and an arrow. The last letter, which is the "é/i/a" variable, is shown being selected by a mouse cursor that's toggling between the three options. What jumps out is that this is actually readable at a glance, unlike the last image, because it only *shows* one letter at a time, even though it still lets you explore the full range of options](https://user-images.githubusercontent.com/32081933/135980997-eaf2f8e3-46a6-4401-9cc1-43b8b05a08db.png)
+Okay, so we're doing our stuff with computers now, not papyrus or whatever they used before 1970.
+Here's what that means for us:
 
-And that's right. I made you sit through a whole page of buildup so I could end up explaining
-dropdowns. Just you wait for the rest of this README.
+- ✔️ We don't have to worry about running out of ink and paper. A computer has, like, infinite
+  amounts of that stuff in it.
+- ❌ #2 is still a problem, though. Having a human enter all those different forms manually
+  is just begging them to screw up at some point.
+- ❌ And we haven't addressed #3. Accounting for all of the English accents in the world just
+  makes for too much info! We tried hiding all of it behind an expandable widget, like with that
+  **(Show More)** thing, but we found out that that doesn't exactly solve the problem... it's more
+  like just shoving it inside a drawer.
 
-Anyway. The whole reason we were "even talking about print dictionaries" earlier is that some
-features of
-print dictionaries have managed to stow their way onto the Internet without ever being targeted
-for a touchup, even after all these years. Pronunciation guides are among the boldest of those
-stowaways in my book. The thing is that, on a computer, your raw data **doesn't** have to double
-as your displayed text; you have time to transform that data into all sorts of human-readable
-doohickiness before you actually show it to the reader, and there are so many different ways we
-could take advantage of that in a dictionary or language reference to get our info across
-comprehensively and intuitively. But sites like
-[Wiktionary](https://en.wiktionary.org/wiki/Main_Page),
-as admirable as they are in scope, are literally built around that sort of
-page-text-is-raw-data double duty, and it stops so many potential improvements from even being
-dreamt up.
+We're making some progress, but we're still not all the way there. With 2/3 of our key issues still
+unsolved, it's starting to look like a good idea to cut our losses and stay satisfied with our two
+measly little accents, but I still need to write the rest of this README, so I'm going to pretend I
+didn't say that. Onward!
 
-So this whole idea isn't anything revolutionary when you look at it. It's literally dropdowns. But
-I still don't think it's been done before, and I think explaining why it's necessary is just as
-important as actually implementing it, so I sure hope that that run-up made some sense. Now, let's
-get into how this thing works.
+As I see it, our big problem is that we're **still treating our computer dictionary like a print
+dictionary.** We're still following that same old workflow where we record everything as raw text
+and display it almost-unchanged. Instead, we should really be looking at ways to get our software
+to cut out some of our work for us. For example, why do we have to be the ones to keep all of the
+different accents of our language in our head? Could we somehow get some help with that?
+
+## Thinking about a solution
+
+### What's in an accent, anyway?
+
+For our next step, we should start asking some questions about how accents actually work.  
+For example, how do accents actually work? Also, how do they arise? And how are they related to
+each other? Can we exploit any properties of theirs for our nefarious needs?
+
+#### Spare some change, sir?
+
+Here are three fun facts about language. (I'm simplifying a bit but not wrongifying)
+
+1. Human languages are always changing. As long as a language is getting used for natural, everyday
+   communication, it's going to be undergoing changes without its speakers even knowing it.
+2. Much like something I can't quite remember right now, those changes only spread through
+   real-life, face-to-face transmission. They can catch on really easily between speakers
+   who are in constant contact with one another, but they don't grow wings and cross oceans
+   if people don't physically carry them over.
+3. This stuff arises totally randomly. We can never confidently predict what changes a language
+   about to undergo. Also, it's super unlikely for lightning to strike twice and make the exact
+   same changes repeat themselves in different locations. If you've got a language with a few
+   groups of speakers that are pretty isolated from one another, that's practically a guarantee
+   that they'll be undergoing different changes from each other.
+
+So what happens if the groups from #3 never actually get back in touch? What happens to their
+language if they hold onto it?
+
+Well, the answer is nothing, kinda. They keep speaking it, the same as ever, and it keeps changing
+and developing, just the same as ever. But, and this is also just like something I wish I could
+remember, the isolation would have to catch up to them eventually. With all of those
+divergent changes piling up over time, could things ever get to a point where they couldn't even
+understand each other anymore? How long would that have to take?
+
+A year? Nope, fortunately. There's this one case where linguists
+[analyzed](https://www.scientificamerican.com/podcast/episode/linguists-hear-an-accent-begin/)
+the difference between an Antarctic research team's English accents before and after they spent one
+year alone in Antarctica, and to everyone's surprise, they did not come back speaking
+English 2. Their vowels did change a teeny little bit, though!
+
+A hundred years? Not quite. There's a
+[community of Cretans](https://en.wikipedia.org/wiki/Al-Hamidiyah) who were granted refuge in
+Syria at the turn of the 20th century, and according to my sample size of 1.5 (I asked the same
+guy twice), their Greek language is still totally peggable as Cretan even though they've spent a
+whole century in isolation from ~~mainisland~~ mainland Crete.
+
+[Six thousand years and counting](https://www.youtube.com/watch?v=aQ283N_ZdKY)? Okay. Yeah. Now
+we're talking.
+
+New languages [usually](https://en.wikipedia.org/wiki/Nicaraguan_Sign_Language) don't just arise
+out of nowhere. We all know about the Romance languages and how they all go back to Latin, for
+example, right? That happened when the different Roman colonies, having not invented cellphones
+yet, started racking up changes in their Latin language over centuries of no contact with the rest
+of the entire expired empire. Naturally, some of those changes were thanks to influence from other
+local languages — like,
+[Romanian's got a few tales to tell](https://en.wikipedia.org/wiki/Slavic_influence_on_Romanian)
+— but they also came from spending **ages** developing independently. After several hundred years,
+that was enough to get us multiple different Romance languages out of what was once one Latin.
+
+And what does Latin itself go back to? This is that six-thousand-years part. It's also the crazy
+part. Something historical linguists are practically sure of is that a ton of languages from all
+throughout Europe and India — Russian, Greek, Persian, English, German, the Scandinavian
+languages, Icelandic, Hindi, etc., plus ancient languages like Latin and Sanskrit — were just
+[one single language](https://en.wikipedia.org/wiki/Proto-Indo-European_language) more than 6,000
+years ago! Its speakers spent about 3,000 years in their
+[make-like-a-plot-and-scatter phase](https://en.wikipedia.org/wiki/Indo-European_migrations),
+spreading their descendants over a huge swath of land and ensuring that their language would
+splinter over multitudes of different paths for eons to come. This is the fate of any language that
+gets split up, as long as it gets enough time to live the destiny out.
+
+#### Okay, cool, but like... reel it in <!-- omit in toc -->
+
+Right. We were only talking about accents and stuff. I just really wanted to highlight how cool it
+is that it's all the same thing, and that what we call "accents" and "dialects" are just a little
+bit early on the way to what we might call "languages".
+
+So we've found out some stuff about what an accent is. We already knew that it had to do with how
+people pronounce things differently from each other, and now we also know that those differences come
+about when the language `c h a n g e s ✨` thanks to separation. But there's a huge question hidden
+in there that I got too carried away to ask or answer.
+
+What's change?
+
+#### Spare some regular change, sir?
+
+We're finally getting to the meaty bits. The one little thing that makes this entire project tick
+is that sound changes are **regular** and **indiscriminate**. When a sound change happens, it
+doesn't just affect individual sounds in random individual words — it wipes out the entire language
+in one go. Any word that has that sound in the right spot feels the burn.
+
+For example, let's head all the way back to the word "her". A stereotypical American would pronounce
+the R sound at the end of it, while a stereotypical British person would pronounce no R at the end.
+But it's not just that one word! That British accent doesn't pronounce any R at the end of any word
+or syllable, and that American accent does pronounce them all.
+
+This gives away a little something hidden in our Rs. What it tells us is that the English language
+used to have an R sound that was always pronounced, and that the British people that came to
+colonize North America still had that R in their accents. It was only after the standard American
+accent had established itself that mainstream British pronunciation must've lost that R — by pure
+chance!
+
+### Running it home
+
+Let's try applying what we know now to our dictionary problem.
+
+If both pronunciations of "her" are related by a rule that applies consistently to our whole
+language, couldn't we just get our software to know that rule for us instead of doing it ourselves?
+That way, instead of forcing ourselves to write out both `/həː/` and `/həɹ/` (for example), we
+could just...
+
+1. Start with one single, original form. This is gonna be a form that has an R sound.
+2. Pass that OG form off to our software. Teach it the rule we've come up with: in some accents,
+   the R sound disappears at the end of a word or syllable.
+3. Have it automatically generate our different forms for us. Brew an instant coffee in the
+   meantime (a **really** instant coffee)
+
+And that's it! It's not that much of a timesave for only two forms like `/həː/` and `/həɹ/`,
+sure, but remember that one of our original plans was to expand our operations to all sorts of
+different English accents worldwide. This lets us do that sustainably and scalably. Instead of
+having to remember all of the different vowel–consonant combos and punch them in manually,
+we can just teach our program all of the rules we already know, and make it generate them all
+based on that.
+
+## Further implications (wow)
+
+### The state of our problem again
+
+Where are we at after all of that?
+
+- ✔️ Ink and paper? Still haven't run out.
+- ✔️ Too many different pronunciations for a human to reliably keep track of? All good! We solved
+  it by not making a human keep track of them anymore.
+- ❌ Okay, we didn't exactly talk about the too-much-info problem... our different pronunciations
+  are still going to clutter up the page. Our best duct-tape solution is still that **(Show More)**
+  widget that we didn't love.
+
+We're 2 for 3 now! Can we do anything about that third one?
+
+### Data, data, data
+
+cool thing about computers is transform data etc
+
+dropdowns!!!
+
+### Orthographomania
+
+literally ANY orthography
+
+----
+
+# Arabic time
+
+Why am I doing this for Lebanese Arabic? Where else could it apply? Etc
+
+| <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/135920721-0405ee7b-e5dd-4336-aaeb-c1ffff458f34.png" alt="different ways of saying `she's getting up` throughout Lebanon, enumerated really inefficiently" /></kbd><figcaption><sup><i>A word like "she's getting up" makes a few of Lebanon's accent differences very noticeable. You'll find people living in Lebanon who pronounce it in any number of these ways, although I'm not sure if the crossed-out combinations exist. (The ones with "o" are stereotypically Northern, the ones with "q" are stereotypically Druze, and the ones with "g" are stereotypically Bedouin.)</i></sup></figcaption></figure> |
+| - |
+
+<kbd aria-role="presentation">![the `she's getting up` image from earlier, but instead of expanding the whole word into every possible permutation, we just list all the outcomes of each variable letter 'in place': the word can start with "q", "g", or an apostrophe, then have either "a", "e", or "o", and end with either "é", "i", or "a"](https://user-images.githubusercontent.com/32081933/135978861-8167930c-c718-4d84-8e20-3efbb163555a.png)</kbd>
+
+<kbd aria-role="presentation">![An image showing the variant `'eymi`, where each of the three variable letters is conspicuously underscored with a line and an arrow. The last letter, which is the "é/i/a" variable, is shown being selected by a mouse cursor that's toggling between the three options. What jumps out is that this is actually readable at a glance, unlike the last image, because it only *shows* one letter at a time, even though it still lets you explore the full range of options](https://user-images.githubusercontent.com/32081933/135980997-eaf2f8e3-46a6-4401-9cc1-43b8b05a08db.png)</kbd>
+
 
 ## How this thing works
 
-Until now, I've been picking between the words "dialect" and "accent" by flipping a
-two-sided die. From here on, though, I'll stick to "accent" alone, since that's more what this specific project's about.
+### Mistakes
 
 ### At a high level
 
-The big idea is that the different accents of a language don't just arise randomly. They're
-related to each other in consistent, predictable ways, and if you know the ways, you can
-confidently work out what forms a particular word could take in another accent. For
-example, how do Americans know to imitate British accents by saying stuff like
-"Bri'ish" and "Chewsday"? They've intuitively picked up on how a "T" sound between two vowels can
-[get deleted](https://en.wikipedia.org/wiki/T-glottalization)
-in some UK dialects, and how one that's before a "Y" sound can get
-[CH-ified](https://en.wikipedia.org/wiki/Yod-coalescence).
-
-And, say, what if we wanted to try unifying both the British and American pronunciations
-of that second word under one single spelling? By working backwards to determine a system of
-consistent, predictable spelling rules, we might end up at something that looks like
-"Tuesday", which is consistent and predictable because... wait...
-
-Okay, so English actually has a real spelling system that technically already
-unifies all its different dialects, but lets ignor Inglish spelling fur now so we can
-concoct our own system instead. If we try to improvise some phonetic spellings to start
-with, we might say that there are three main ways to say Tuesday: "Choozday" (UK), "Toozday"
-(American), and "Tyoozday" (UK/both). But what's the logic underpinning
-those differences?
-
-With some solid knowledge of English sound shifts, we can figure out that the "Choozday"
-pronunciation smacks of what's called
-[yod-coalescence](https://en.wikipedia.org/wiki/Yod-coalescence),
-and, in comparison, the "Toozday" one looks a lot like
-[yod-dropping](https://en.wikipedia.org/wiki/Yod-dropping). Basically, lots of UK dialects
-of English tend to blend a sequence of "t" plus "y" into a single "ch" sound, while lots of American
-dialects tend to drop the "y" altogether there. So... what it seems like we've found out is that
-"Tyoozday" is the original pronunciation. What's more is that we actually have some regular rules we
-can use to transform this original word, "Tyoozday", into the forms it can take in some dialects:
-
-- For some American dialects, if there's a "y" right after a sound that uses the tip of the
-  tongue (like "t"), just drop the "y".
-  - Applying this rule to "Tyoozday" produces **"Toozday"**.
-- For some UK dialects, if there's a "t" with a "y" right after it, blend them together
-  into "ch".
-  - Applying this rule to "Tyoozday" produces **"Choozday"**.
-- For some other American and UK dialects, don't do either of those things.
-  - Applying this rule to "Tyoozday" just gives us **"Tyoozday"** right back.
-
-You see where this is going? What if we could feed the original spelling, "Tyoozday", into a
-computer, and have it automatically spit both "Toozday" and "Choozday" back out at us? It should
-be able to figure them out if we give it those rules, after all. And what if we could work backwards
-like this to make a single form, like "Tyoozday", for **every** pair of words that differ
-between our two dialects?
-
-And we need to build off of that dropdown idea from earlier to find a way for our reader to explore
-all the different pronunciations of the word "Tuesday" at once. Under the hood, we could store the
-word like `[t, ch][y, ∅]oozday` to let the user toggle between
-<code><b>t</b><b>y</b>oozday</code>,
-<code><b>ch</b>oozday</code>, and
-<code><b>t</b>oozday</code> from the frontend at will.
-
-Also, we don't even have to stick to our own improvised writing system. If
-our entire language is just a bunch of rules that transform symbols into other symbols,
-couldn't those symbols actually be whatever we'd like them to be? We could have our program display
-those options as `/ˈtjuzde͡ɪ/, /ˈt͡ʃuzde͡ɪ/, /ˈtuzde͡ɪ/` in the
-[IPA](https://en.wikipedia.org/wiki/International_Phonetic_Alphabet),
-`tyo͞ozdā, CHo͞ozdā, to͞ozdā` in the alphabet Google's dictionary uses,
-`𐐓𐐷𐐭𐑆𐐼𐐩/𐐓𐑏𐑆𐐼𐐩, 𐐕𐑏𐑆𐐼𐐩, 𐐓𐐭𐑆𐐼𐐩` in the
-[Deseret alphabet](https://en.wikipedia.org/wiki/Deseret_alphabet) (why not), and anything else
-in any other script we want. Unfortunately, this system doesn't work so well with English's
-**actual** writing system, since we're relying on a word's spelling being regularly derivable from
-its pronunciation, but — fortunately — we're going to be working with Lebanese Arabic going
-forward, not English 😎
-
 ### At a low lev... well, it's JS
-
-#### In the beginning was *`lkilmc`*
-
-Somewhere deep within this repo's directory hierarchy lies a secret alphabet that's way
-overcomplicated because I don't know what I'm doing. It tries to represent the "original" sounds
-underpinning different Lebanese Arabic dialects, in the same vein as our "T-y-oo-z-d-ay" spelling
-of "Tuesday". For instance, even though the three words `bēt بيت` ("house"), `shēf شاف` ("he saw"),
-and `fēr فير` ("hair-straightener") are all pronounced with the exact same `ē` sound, each word's
-`ē` is actually different under the hood:
-
-* `bēt`'s goes back to the vowel `ay`, and the word is still pronounced `bayt` by some Lebanese;
-* `shēf`'s goes back to an "ah" sound `ā`, and the word is still pronounced `shāf` by some; and
-* `fēr`'s goes back to the actual "eh" sound in the French word "fer", and it's pronounced
-  `fēr` by everybody.
-
-That tells that our secret alphabet needs three different symbols for these three `ē` sounds.
-(By the way, we don't even have to look at multiple dialects to figure out some of these
-distinctions. Even a Lebanese speaker who pronounces the lone word "house" as `bēt`
-will likely say `bayto` instead of ~~`bēto`~~ for "his house", while the word `shēfo`
-"he saw him" is never ~~`shayfo`~~. That's enough to tell us that the `ē`'s in `bēt` and `shēf`
-are different.)
-
-Since this alphabet is only meant to be parsed by our code, not by any human eyes, it maxes
-on efficiency by restricting itself to one single letter per sound. For example, our three
-words from earlier are `bYt`,  `xAf`, and `fEr`, and for another example, `x&y 3Ad%` means
-"plain/normal tea" and is also a Perl script that deletes your home directory. You can see
-[symbols.js](/src/backend/conversion/symbols.js) and
-[grammar.ne](/src/backend/conversion/parsing/grammar.ne) to explore the symbol choices
-and see how all of it fits together.
-
-The grammar was the very first part of this project that I did, and it took the rest of the
-codebase months to take shape. That means that those later parts suffer from a bit of debt thanks
-to poor assumptions I made early on about how I'd end up structuring them. A lot of the more-complex
-parts of the grammar are probably nixable-AKA-fixable.
-
-##### A game of Macro Yolo
-
-The grammar also supports macros, although I think I went a bit overboard with them.
-The idea behind a macro is to handle any type of word that regularly differs between dialects,
-but in a way that raw pronunciation rules can't handle very cleanly. For example, verbs are
-conjugated in a few distinct ways throughout Lebanon, so a `verb` macro helps us generate
-all of those ways from one single input.
-
-There are a couple different ways macros could be handled in the actual JavaScript code.
-Later in this document, I'll describe [my original approach](#initial-eyes-initialize-initial-lies),
-explain why I think it's wrong now, and show how I plan to replace it by merging it into a later
-step (transforms).
-
-Also, the bit that feels like going overboard (this is the "Yolo" part) is defining a new macro
-for... everything? I made a **numeral** macro during a particularly dry procrastination spell. That
-one definitely might not last.
-
-##### Stress and syllables
-
-Back in early 2021, I was really proud of how I'd gotten the grammar to be able to not only properly
-syllabify any word you threw at it, but also to determine which syllable should be stressed.
-For example, if you pass it `samak` "fish", it knows to stress the first syllable, and if you pass
-it `sammUk` "fishie", it knows to stress the last syllable.
-
-...the problem is that this is the **underlying** form, and its whole, entire purpose is to be
-chopped up and transformed as it wends its way to the surface where the user can read it.
-Along the way, words will often get resyllabified, and stress can even be reassigned sometimes.
-That makes it counterproductive to try to set the syllable structure and stress in stone from the
-start. This part will definitely be rewritten.
-
-#### Initial eyes initialize initial lies
-
-## Development info
-`npm run build` to build for production (to `/dist`) and `npm run serve` to develop.
-
-## Notes
-
-* <sup id="note-1">[1](#text-1)</sup> Both Morocco and Oman are home to indigenous languages that
-  don't have roots in Arabic, which felt worth noting, even if I'm only writing about Arabic in
-  this document.
