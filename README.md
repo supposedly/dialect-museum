@@ -6,7 +6,7 @@ I don't like this.
 
 <kbd aria-role="presentation">![A partial screenshot of the Oxford English Dictionary's definition of the word 'her'. It describes the word as a pronoun and noun and says it's pronounced "huhh" or "uhh" by Britons and "her" or "er" by Americans.](https://user-images.githubusercontent.com/32081933/136824054-6e3da3cc-6005-40d7-94d5-7d1845ad0e41.png)</kbd>
 
-### Her? <!-- omit in toc -->
+### Her?
 
 No, I hardly know her. What I don't like there is the bit about pronunciation.
 
@@ -40,7 +40,7 @@ For example, I'm betting that someone using a dictionary for normal-person reaso
 fun looking at this:
 
 | <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/136869976-acf84922-88ca-4ba0-8a7c-bc447a8575f5.png" alt="The above OED screenshot, just edited to show a flat-out-impractical number of different pronunciations." /></kbd><figcaption><sup><i>I've tactically concentrated all of my of errors into this one image to divert your attention from any other mistakes I might've made in this document.</i></sup></figcaption></figure> |
-| - |
+| :-: |
 
 Doesn't that just suck? I mean, think of all the times you've forgotten a word as complicated as
 "her". Imagine subjecting your eyeballs to all of those unsightly pronunciation runes every single
@@ -79,7 +79,7 @@ Let's break the pace with a recap.
 
 ### The state of our problem
 
-#### On paper <!-- omit in toc -->
+#### On paper
 
 - We thought it could be pretty cool for our dictionary to acknowledge more accents and dialects
   than just two major ones. After all, more people speak the language than some standard-issue Brit
@@ -99,14 +99,14 @@ recorded — you have some room to mess around with how you display it to format
 if an online dictionary took advantage of that and shed its paper shackles? Can we harness the
 power of computer for great good?
 
-#### Wow, look: digital style <!-- omit in toc -->
+#### Wow, look: digital style
 
 <kbd>![carsalesmeme](https://user-images.githubusercontent.com/32081933/137770895-d1c2b4be-0335-4a00-9d58-cf626628163a.png)</kbd>
 
 Okay, so we're doing our stuff with computers now, not papyrus or whatever they used before 1970.
 Here's what that means for us:
 
-- ✔️ We don't have to worry about running out of ink and paper. A computer has, like, infinite
+- ✅ We don't have to worry about running out of ink and paper. A computer has, like, infinite
   amounts of that stuff in it.
 - ❌ #2 is still a problem, though. Having a human enter all those different forms manually
   is just begging them to screw up at some point.
@@ -171,7 +171,12 @@ Syria at the turn of the 20th century, and according to my sample size of 1.5 (I
 guy twice), their Greek language is still totally peggable as Cretan even though they've spent a
 whole century in isolation from ~~mainisland~~ mainland Crete.
 
-[Six thousand years and counting](https://www.youtube.com/watch?v=aQ283N_ZdKY)? Okay. Yeah. Now
+[Six thousand years and counting](https://www.youtube.com/watch?v=aQ283N_ZdKY)?
+
+| <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/138953290-c9f4c8b9-33c9-4c86-858d-5e2612a8772e.png" alt="Map of the Expansion of the Indo-European languages." /></kbd><br/><figcaption><sup><i>[Greenhill SJ et al.](https://simon.net.nz/articles/mapping-the-origins-and-expansion-of-the-indo-european-language-family/) 2012. Mapping the Origins and Expansion of the Indo-European Language Family. Science, 337: 957-960.</i></sup></figcaption></figure> |
+| :-: |
+
+Okay. Yeah. Now
 we're talking.
 
 New languages [usually](https://en.wikipedia.org/wiki/Nicaraguan_Sign_Language) don't just arise
@@ -195,7 +200,7 @@ spreading their descendants over a huge swath of land and ensuring that their la
 splinter over multitudes of different paths for eons to come. This is the fate of any language that
 gets split up, as long as it gets enough time to live the destiny out.
 
-#### Okay, cool, but like... reel it in <!-- omit in toc -->
+#### Okay, cool, but like... reel it in
 
 Right. We were only talking about accents and stuff. I just really wanted to highlight how cool it
 is that it's all the same thing, and that what we call "accents" and "dialects" are just a little
@@ -222,9 +227,10 @@ or syllable, and that American accent does pronounce them all.
 
 This gives away a little something hidden in our Rs. What it tells us is that the English language
 used to have an R sound that was always pronounced, and that the British people that came to
-colonize North America still had that R in their accents. It was only after the standard American
-accent had established itself that mainstream British pronunciation must've lost that R — by pure
-chance!
+colonize North America still had that R in their accents. It was only after the General American
+accent had established itself that mainstream British pronunciation must've lost that R — and,
+of course, it's only by pure chance that they lost it. (The full story involves a lot of WW2
+politics, too. Really fascinating.)
 
 ### Running it home
 
@@ -239,11 +245,11 @@ could just...
 2. Pass that OG form off to our software. Teach it the rule we've come up with: in some accents,
    the R sound disappears at the end of a word or syllable.
 3. Have it automatically generate our different forms for us. Brew an instant coffee in the
-   meantime (a **really** instant coffee)
+   meantime (a very instant coffee)
 
 And that's it! It's not that much of a timesave for only two forms like `/həː/` and `/həɹ/`,
 sure, but remember that one of our original plans was to expand our operations to all sorts of
-different English accents worldwide. This lets us do that sustainably and scalably. Instead of
+different English accents worldwide. This lets us do that efficiently and scalably. Instead of
 having to remember all of the different vowel–consonant combos and punch them in manually,
 we can just teach our program all of the rules we already know, and make it generate them all
 based on that.
@@ -254,37 +260,106 @@ based on that.
 
 Where are we at after all of that?
 
-- ✔️ Ink and paper? Still haven't run out.
-- ✔️ Too many different pronunciations for a human to reliably keep track of? All good! We solved
+- ✅ Ink and paper? Still haven't run out.
+- ✅ Too many different pronunciations for a human to reliably keep track of? All good! We solved
   it by not making a human keep track of them anymore.
-- ❌ Okay, we didn't exactly talk about the too-much-info problem... our different pronunciations
-  are still going to clutter up the page. Our best duct-tape solution is still that **(Show More)**
-  widget that we didn't love.
+- ❌ Okay, we still haven't really done anything about the too-much-to-read problem... our different 
+  pronunciations are still going to clutter up the page. Our best duct-tape solution is still that
+  **(Show More)** widget that we didn't love.
 
-We're 2 for 3 now! Can we do anything about that third one?
+But, hey, we're 2 for 3 now! Can we do anything about that third one?
 
 ### Data, data, data
 
-cool thing about computers is transform data etc
+Seeing as a computer's entire job is to transform data, there's no way our answer isn't a yes.
+Here's the solution I thought of.
 
-dropdowns!!!
+Remember our old friends, these images?
+
+<kbd aria-role="presentation">![A partial screenshot of the Oxford English Dictionary's definition of the word 'her'. It describes the word as a pronoun and noun and says it's pronounced "huhh" or "uhh" by Britons and "her" or "er" by Americans.](https://user-images.githubusercontent.com/32081933/136824054-6e3da3cc-6005-40d7-94d5-7d1845ad0e41.png)</kbd>
+
+<kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/136869976-acf84922-88ca-4ba0-8a7c-bc447a8575f5.png" alt="The above OED screenshot, just edited to show a flat-out-impractical number of different pronunciations." /></kbd>
+
+We've been focusing on the R, but there's one other thing in this word's n-*H*-ure... we don't
+always say the H at the start, especially if we're speaking fast. Try saying something like
+"talk to her" quickly: for me, it comes out as either "talk tuh her" (with an H) or "talk tooer"
+(with no H).
+
+That sounds like something you'd want to let people know about if you're teaching them how to say
+the word! The easy way would be to list the H and no-H pronunciations separately, like this:
+
+<kbd aria-role="presentation">![](https://user-images.githubusercontent.com/32081933/138950143-98b9fdec-365e-41bd-9bd4-66088163d09d.png)</kbd>
+
+But the actual OED didn't do it that way. They used parentheses, as in `(h)`, to let us know that
+an H could either be there or been't there. That's a pretty efficient way of compressing two
+pronunciations into one.
+
+I won't go further just yet, but keep this in mind. All will be revealed in a few sections.
 
 ### Orthographomania
 
-literally ANY orthography
+My original motivation
 
 ----
 
 # Arabic time
 
-Why am I doing this for Lebanese Arabic? Where else could it apply? Etc
+Alright, jig's up. I'm not even really working on English. This whole project is a part of a
+Lebanese Arabic dictionary I'm planning on making. My holy grail/hraily goal is for it to not only
+be a dictionary of Lebanese Arabic, but a **really good** dictionary of Lebanese Arabic. That means
+it needs to be two things:
 
-| <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/135920721-0405ee7b-e5dd-4336-aaeb-c1ffff458f34.png" alt="different ways of saying `she's getting up` throughout Lebanon, enumerated really inefficiently" /></kbd><figcaption><sup><i>A word like "she's getting up" makes a few of Lebanon's accent differences very noticeable. You'll find people living in Lebanon who pronounce it in any number of these ways, although I'm not sure if the crossed-out combinations exist. (The ones with "o" are stereotypically Northern, the ones with "q" are stereotypically Druze, and the ones with "g" are stereotypically Bedouin.)</i></sup></figcaption></figure> |
+1. Comprehensive.
+2. Comprehensible.
+
+I want it to be as thorough as possible and as accessible as possible. And, even if I can't make it
+as thorough as possible (since, again, I'm not omniscient — for example, I don't even know what
+omniscient means), I want to outfit it with the **ability** to be as thorough as possible. That
+means leaving room for new information to be added easily and seamlessly, like new accents or
+definitions.
+
+Enough with the word "her" for now, then. Here's a new example that shows a nice variety of
+Lebanese accents and dialects: how would we say "she's getting up"?
+
+| <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/135920721-0405ee7b-e5dd-4336-aaeb-c1ffff458f34.png" alt="Different ways of saying `she's getting up` throughout Lebanon, enumerated really inefficiently. There's stuff like 'aymi', 'ayma', 'oymi', 'qaymi', 'qayma', and 'gayma'." /></kbd><figcaption><sup><i>You'll find people living in Lebanon who pronounce it in any number of these ways, although I'm not sure if the crossed-out combinations exist. (The ones with "o" are stereotypically Northern, the ones with "q" stereotypically Druze, and the ones with "g" stereotypically Bedouin.)</i></sup></figcaption></figure> |
 | - |
 
-<kbd aria-role="presentation">![the `she's getting up` image from earlier, but instead of expanding the whole word into every possible permutation, we just list all the outcomes of each variable letter 'in place': the word can start with "q", "g", or an apostrophe, then have either "a", "e", or "o", and end with either "é", "i", or "a"](https://user-images.githubusercontent.com/32081933/135978861-8167930c-c718-4d84-8e20-3efbb163555a.png)</kbd>
+Jeez, that wouldn't look nice at all in a book or on a webpage. But we've learned a bit about
+accents since the last time we saw something like this. Can we use our newfound knowledge to
+compress the whole shebang into something presentable?
+
+Sure thing. There are three variables to it, which I've colored orange, blue, and magenta: the 
+consonant at the beginning, the long vowel right after it, and the short vowel at the very end that
+marks the word as feminine. Each one of them happens to have three possible pronunciations.
+
+When we put them all together and try to enumerate all the possible resulting words, the gates
+of combinatorial hell open up and bestow upon us twenty-seven words to have fun with. We can
+nix a few of them if we know they're not real, like how I crossed out `qoymé` and didn't list
+`goymi` at all, but that still leaves us with way too much to skim. How can we do better?
+
+Well. What if we just didn't bother with that explosion at all? Let's just not expand anything
+out. I'm thinking something like this:
+
+<kbd aria-role="presentation">![The `she's getting up` image from earlier, but instead of expanding the whole word into every possible permutation of different pronunciations, we just list all the outcomes of each variable letter 'in place': the word can start with "q", "g", or an apostrophe, then have either "a", "e", or "o", and end with either "é", "i", or "a"](https://user-images.githubusercontent.com/32081933/135978861-8167930c-c718-4d84-8e20-3efbb163555a.png)</kbd>
+
+That's real compact! Now, anyone reading this can do the expansion in their head without making us
+spoon-feed them with any of it. For example, you can pick "q" from the first list, "a" from the
+second list, and "i" from the third list to conclude that one way to pronounce this word is "qaymi".
+
+Or you can pick "g" from the first list, "o" from the second list, and "i" from the last one to
+get the pronunciation "goymi", which... was one of the ones that probably doesn't exist... wait.
+Okay, so this forces us to lose some of the precision we had earlier. On top of that, it's just
+kind of an eyesore, isn't it? Before, when we had too many forms to reasonably expect anyone to
+peruse, at least each individual one was readable on its own. Here, we don't even have that, since
+you definitely can't intuitively grasp the word's pronunciation by just glancing at this. So, once
+more: how can we do better?
 
 <kbd aria-role="presentation">![An image showing the variant `'eymi`, where each of the three variable letters is conspicuously underscored with a line and an arrow. The last letter, which is the "é/i/a" variable, is shown being selected by a mouse cursor that's toggling between the three options. What jumps out is that this is actually readable at a glance, unlike the last image, because it only *shows* one letter at a time, even though it still lets you explore the full range of options](https://user-images.githubusercontent.com/32081933/135980997-eaf2f8e3-46a6-4401-9cc1-43b8b05a08db.png)</kbd>
+
+That's right. I made you sit through four or five pages of README just to get to dropdowns. The
+answer is dropdowns.
+
+[Explain reactivity]
 
 
 ## How this thing works
