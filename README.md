@@ -317,12 +317,14 @@ ways to represent English pronunciation. That's because they only give you one w
 particular sound, unlike English's normal spelling scheme, in which the ending of "her" could also
 be badly spelled "ur", "ir", or even "ere" (going by "were", at least).
 
-And... you guessed it. If you think about it, that means that it's possible for our software to
-transform its "underlying form" of any word into **any** phonetic-spelling system we want it to.
-We could even use other languages' scripts! This is the most-powerful application of our future
-application, in my opinion, and it was actually the only reason I originally wanted to code it.
+And... you guessed it. If you think about it, that means that we can use our technique to
+write out a word in **any** phonetic-spelling system we want. Just like how we can transform sounds
+into other sounds depending on what's around them, we can also transform them into letters in the
+exact same way. We could even transliterate English words in other languages' scripts! This is the
+most-powerful application of our future application, in my opinion, and it was actually the only
+reason I originally wanted to code it.
 
-I think that's all the main intro stuff out of the way. Now let me drop the other shoe.
+I think that's all the main intro stuff out of the way.
 
 ----
 
