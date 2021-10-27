@@ -15,9 +15,8 @@ before I was born (a couple decades ago) and came into existence just a bit earl
 couple centuries ago), making it one of the oldest and foremost dictionaries of English. It's spent
 most of its life being the best paper dictionary it could be.
 
-The online OED is pretty much the same old thing. It's a print dictionary with a web frontend,
-meaning there's almost no difference in the experience from the book version. And the book version
-has clearly proven its mettle, so what's not to like?
+The online OED is pretty much the same old thing. There's almost no difference in the experience from the book version. And the traditional book version's experience has clearly proven its mettle,
+so what's not to like?
 
 ### What's not to like
 
@@ -285,8 +284,9 @@ always say the H at the start, especially if we're speaking fast. Try saying som
 "talk to her" quickly: for me, it comes out as either "talk tuh her" (with an H) or "talk tooer"
 (with no H).
 
-That sounds like something you'd want to let people know about if you're teaching them how to say
-the word! The easy way would be to list the H and no-H pronunciations separately, like this:
+That actually isn't a difference between accents, but it still sounds like something you'd want to
+let people know about if you're teaching them how to say the word! The easy way would be to list the
+H and no-H pronunciations separately, like this:
 
 <kbd aria-role="presentation">![](https://user-images.githubusercontent.com/32081933/138950143-98b9fdec-365e-41bd-9bd4-66088163d09d.png)</kbd>
 
@@ -294,11 +294,35 @@ But the actual OED didn't do it that way. They used parentheses, as in `(h)`, to
 an H could either be there or been't there. That's a pretty efficient way of compressing two
 pronunciations into one.
 
-I won't go further just yet, but keep this in mind. All will be revealed in a few sections.
+I won't go further just yet, but keep this in mind. All will be revealed in a few paragraphs.
 
 ### Orthographomania
 
-My original motivation
+The OED's English pronunciations are in the
+[International Phonetic Alphabet](https://en.wikipedia.org/wiki/International_Phonetic_Alphabet).
+It's a great way to represent English pronunciation, but it sure isn't the only way. You might be
+familiar with all sorts of idiosyncratic conventions for spelling English sound-by-sound.
+
+For example, I have a copy of some dictionary called Webster's that writes *hʉr*. I also have a
+children's dictionary that does *hûr*. Google's dictionary has *hər*. The
+[Deseret Alphabet](https://en.wikipedia.org/wiki/Deseret_alphabet) hexes us with *𐐸𐐲𐑉*.
+[Benjamin Franklin's phonetic alphabet](https://en.wikipedia.org/wiki/Benjamin_Franklin%27s_phonetic_alphabet)
+would've had *hɥr* (and you'll never guess the title of that article before clicking the link),
+while [Isaac Newton's](https://www.jstor.org/stable/3718012), in which he spelled a sentence like
+"I am much more sorry" as *Oy am mutש mωωr sory*, finishes us off with an anticlimactic *her*.
+
+The Deseret Alphabet doesn't work great because it kinda forces you to get the vowel wrong (there's
+obviously no other reason it didn't work out), but with the exception of that, these are all tidy
+ways to represent English pronunciation. That's because they only give you one way to spell any
+particular sound, unlike English's normal spelling scheme, in which the ending of "her" could also
+be badly spelled "ur", "ir", or even "ere" (going by "were", at least).
+
+And... you guessed it. If you think about it, that means that it's possible for our software to
+transform its "underlying form" of any word into **any** phonetic-spelling system we want it to.
+We could even use other languages' scripts! This is the most-powerful application of our future
+application, in my opinion, and it was actually the only reason I originally wanted to code it.
+
+I think that's all the main intro stuff out of the way. Now let me drop the other shoe.
 
 ----
 
@@ -309,14 +333,14 @@ Lebanese Arabic dictionary I'm planning on making. My holy grail/hraily goal is 
 be a dictionary of Lebanese Arabic, but a **really good** dictionary of Lebanese Arabic. That means
 it needs to be two things:
 
-1. Comprehensive.
-2. Comprehensible.
 
-I want it to be as thorough as possible and as accessible as possible. And, even if I can't make it
-as thorough as possible (since, again, I'm not omniscient — for example, I don't even know what
-omniscient means), I want to outfit it with the **ability** to be as thorough as possible. That
-means leaving room for new information to be added easily and seamlessly, like new accents or
-definitions.
+1. Comprehensible. I want it to be as accessible as possible. That means taking advantage of the
+   medium, not just pretending it's a print dictionary with a frontend. This project is a good
+   outlet for that mindset.
+2. Comprehensive. I want it to be as thorough as possible. And, even if I can't do that myself
+   (since, again, I'm not omniscient — for example, I don't even know what omniscient means), Iwant
+   to outfit it with the **ability** to be as thorough as possible. That means leaving room for new
+   information to be added easily and seamlessly, like new accents or definitions.
 
 Enough with the word "her" for now, then. Here's a new example that shows a nice variety of
 Lebanese accents and dialects: how would we say "she's getting up"?
@@ -342,24 +366,33 @@ out. I'm thinking something like this:
 
 <kbd aria-role="presentation">![The `she's getting up` image from earlier, but instead of expanding the whole word into every possible permutation of different pronunciations, we just list all the outcomes of each variable letter 'in place': the word can start with "q", "g", or an apostrophe, then have either "a", "e", or "o", and end with either "é", "i", or "a"](https://user-images.githubusercontent.com/32081933/135978861-8167930c-c718-4d84-8e20-3efbb163555a.png)</kbd>
 
-That's real compact! Now, anyone reading this can do the expansion in their head without making us
+That's compact! Now, anyone reading this can do the expansion in their head without making us
 spoon-feed them with any of it. For example, you can pick "q" from the first list, "a" from the
 second list, and "i" from the third list to conclude that one way to pronounce this word is "qaymi".
 
 Or you can pick "g" from the first list, "o" from the second list, and "i" from the last one to
-get the pronunciation "goymi", which... was one of the ones that probably doesn't exist... wait.
+get the pronunciation "goymi", which... was one of the ones we said probably doesn't exist... wait.
 Okay, so this forces us to lose some of the precision we had earlier. On top of that, it's just
-kind of an eyesore, isn't it? Before, when we had too many forms to reasonably expect anyone to
-peruse, at least each individual one was readable on its own. Here, we don't even have that, since
-you definitely can't intuitively grasp the word's pronunciation by just glancing at this. So, once
-more: how can we do better?
+kind of an eyesore, isn't it? Before, when we had too many forms to even peruse, at least each
+individual one was readable on its own. Here, we don't even have that, since you definitely can't
+intuitively grasp the word's pronunciation at a glance. So, once more: how can we do better?
 
-<kbd aria-role="presentation">![An image showing the variant `'eymi`, where each of the three variable letters is conspicuously underscored with a line and an arrow. The last letter, which is the "é/i/a" variable, is shown being selected by a mouse cursor that's toggling between the three options. What jumps out is that this is actually readable at a glance, unlike the last image, because it only *shows* one letter at a time, even though it still lets you explore the full range of options](https://user-images.githubusercontent.com/32081933/135980997-eaf2f8e3-46a6-4401-9cc1-43b8b05a08db.png)</kbd>
+<kbd aria-role="presentation">![An image showing the variant `'eymi`, where each of the three variable letters is conspicuously underscored with a line and an arrow. The last letter, which is the "é/i/a" variable, is shown being selected by a mouse cursor that's toggling between the three options. What jumps out is that this is actually readable at a glance, unlike the last image, because it only *shows* one letter at a time, even though it still lets you explore the full range of options by toggling them with the dropdowns](https://user-images.githubusercontent.com/32081933/135980997-eaf2f8e3-46a6-4401-9cc1-43b8b05a08db.png)</kbd>
 
-That's right. I made you sit through four or five pages of README just to get to dropdowns. The
-answer is dropdowns.
+That's right. Dropdowns. I made you sit through four or five pages of README just to get to
+dropdowns.
 
-[Explain reactivity]
+Really, it's just a visual version of what we already know: each individual sound in a word changes
+consistently depending on where it is in a word and what sounds surround it. By actually
+recognizing that in our presentation of the word, we can finally solve all three of our problems:
+
+- ✅ **Wasting ink and paper:** This one is still an N/A.
+- ✅ **Hard to input different pronunciations without messing up:** Still solved! Our software is
+  still doing the grunt work here for us.
+- ✅ **Hard to read because of visual clutter:** Not at all anymore :) Only one form is displayed
+  at a time, but unlike in the OED's solution, you can easily explore the full range of possible
+  pronunciations if you'd like to.
+
 
 
 ## How this thing works
