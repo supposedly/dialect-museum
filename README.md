@@ -1,5 +1,7 @@
 # [A Journey in Overthinking It](https://write.lebn.xyz)
 
+This repository
+
 ## The problem
 
 I don't like this.
@@ -307,12 +309,12 @@ For example, I have a copy of some dictionary called Webster's that writes *hʉr
 children's dictionary that does *hûr*. Google's dictionary has *hər*. The
 [Deseret Alphabet](https://en.wikipedia.org/wiki/Deseret_alphabet) hexes us with *𐐸𐐲𐑉*.
 [Benjamin Franklin's phonetic alphabet](https://en.wikipedia.org/wiki/Benjamin_Franklin%27s_phonetic_alphabet)
-would've had *hɥr* (and you'll never guess the title of that article before clicking the link),
-while [Isaac Newton's](https://www.jstor.org/stable/3718012), in which he spelled a sentence like
+would've had *hɥr* (you'll never guess the title of that article before clicking the link), while
+[Isaac Newton's](https://www.jstor.org/stable/3718012), in which he spelled a sentence like
 "I am much more sorry" as *Oy am mutש mωωr sory*, finishes us off with an anticlimactic *her*.
 
-The Deseret Alphabet doesn't work great because it kinda forces you to get the vowel wrong (there's
-obviously no other reason it didn't work out), but with the exception of that, these are all tidy
+The Deseret Alphabet doesn't work great because it kinda forces you to get the vowel wrong (and it
+totally would've caught on otherwise), but with the exception of that, these are all tidy
 ways to represent English pronunciation. That's because they only give you one way to spell any
 particular sound, unlike English's normal spelling scheme, in which the ending of "her" could also
 be badly spelled "ur", "ir", or even "ere" (going by "were", at least).
@@ -320,8 +322,8 @@ be badly spelled "ur", "ir", or even "ere" (going by "were", at least).
 And... you guessed it. If you think about it, that means that we can use our technique to
 write out a word in **any** phonetic-spelling system we want. Just like how we can transform sounds
 into other sounds depending on what's around them, we can also transform them into letters in the
-exact same way. We could even transliterate English words in other languages' scripts! This is the
-most-powerful application of our future application, in my opinion, and it was actually the only
+exact same way. We could even transliterate English words using other languages' scripts! This is
+the most-powerful application of our future application, in my opinion, and it was actually the only
 reason I originally wanted to code it.
 
 I think that's all the main intro stuff out of the way.
@@ -337,12 +339,12 @@ it needs to be two things:
 
 
 1. Comprehensible. I want it to be as accessible as possible. That means taking advantage of the
-   medium, not just pretending it's a print dictionary with a frontend. This project is a good
-   outlet for that mindset.
+   medium and embracing the technology we're on, not just pretending it's a print dictionary with a
+   frontend. This sub-project is a good outlet for that mindset.
 2. Comprehensive. I want it to be as thorough as possible. And, even if I can't do that myself
-   (since, again, I'm not omniscient — for example, I don't even know what omniscient means), Iwant
-   to outfit it with the **ability** to be as thorough as possible. That means leaving room for new
-   information to be added easily and seamlessly, like new accents or definitions.
+   (again, I'm not omniscient — for example, I don't even know what omniscient means), I want to
+   outfit it with the **ability** to be as thorough as possible. That means leaving room for new
+   information to be added seamlessly, like new accents or definitions.
 
 Enough with the word "her" for now, then. Here's a new example that shows a nice variety of
 Lebanese accents and dialects: how would we say "she's getting up"?
@@ -350,21 +352,21 @@ Lebanese accents and dialects: how would we say "she's getting up"?
 | <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/135920721-0405ee7b-e5dd-4336-aaeb-c1ffff458f34.png" alt="Different ways of saying `she's getting up` throughout Lebanon, enumerated really inefficiently. There's stuff like 'aymi', 'ayma', 'oymi', 'qaymi', 'qayma', and 'gayma'." /></kbd><br/><figcaption><sup><i>You'll find people living in Lebanon who pronounce it in any number of these ways, although I'm not sure if the crossed-out combinations exist. (The ones with "o" are stereotypically Northern, the ones with "q" stereotypically Druze, and the ones with "g" stereotypically Bedouin.)</i></sup></figcaption></figure> |
 | - |
 
-Jeez, that wouldn't look nice at all in a book or on a webpage. But we've learned a bit about
+Jeez, that list wouldn't look nice at all in a book or on a webpage. But we've learned a bit about
 accents since the last time we saw something like this. Can we use our newfound knowledge to
 compress the whole shebang into something presentable?
 
-Sure thing. There are three variables to it, which I've colored orange, blue, and magenta: the 
-consonant at the beginning, the long vowel right after it, and the short vowel at the very end that
-marks the word as feminine. Each one of them happens to have three possible pronunciations.
+Sure thing. Notice that there are three "variables", which I've colored orange, blue, and magenta:
+the consonant at the beginning, the long vowel right after it, and the short vowel at the very end
+that marks the word as feminine. Each one of them happens to have three possible pronunciations.
 
 When we put them all together and try to enumerate all the possible resulting words, the gates
-of combinatorial hell open up and bestow upon us twenty-seven words to have fun with. We can
+of combinatorial hell open up and we get a whole twenty-seven words to deal with. We can
 nix a few of them if we know they're not real, like how I crossed out `qoymé` and didn't list
 `goymi` at all, but that still leaves us with way too much to skim. How can we do better?
 
 Well. What if we just didn't bother with that explosion at all? Let's just not expand anything
-out. I'm thinking something like this:
+out, period. I'm thinking something like this:
 
 <kbd aria-role="presentation">![The `she's getting up` image from earlier, but instead of expanding the whole word into every possible permutation of different pronunciations, we just list all the outcomes of each variable letter 'in place': the word can start with "q", "g", or an apostrophe, then have either "a", "e", or "o", and end with either "é", "i", or "a"](https://user-images.githubusercontent.com/32081933/135978861-8167930c-c718-4d84-8e20-3efbb163555a.png)</kbd>
 
@@ -373,8 +375,8 @@ spoon-feed them with any of it. For example, you can pick "q" from the first lis
 second list, and "i" from the third list to conclude that one way to pronounce this word is "qaymi".
 
 Or you can pick "g" from the first list, "o" from the second list, and "i" from the last one to
-get the pronunciation "goymi", which... was one of the ones we said probably doesn't exist... wait.
-Okay, so this forces us to lose some of the precision we had earlier. On top of that, it's just
+get the pronunciation "goymi", which... was one of the ones we said probably doesn't exist...
+okay, so this forces us to lose some of the precision we had earlier. On top of that, it's just
 kind of an eyesore, isn't it? Before, when we had too many forms to even peruse, at least each
 individual one was readable on its own. Here, we don't even have that, since you definitely can't
 intuitively grasp the word's pronunciation at a glance. So, once more: how can we do better?
@@ -384,23 +386,66 @@ intuitively grasp the word's pronunciation at a glance. So, once more: how can w
 That's right. Dropdowns. I made you sit through four or five pages of README just to get to
 dropdowns.
 
-Really, it's just a visual version of what we already know: each individual sound in a word changes
-consistently depending on where it is in a word and what sounds surround it. By actually
+It's just a visual version of what we already know: each individual sound in a word changes
+consistently depending on where it is in a word and what sounds surround it, and by actually
 recognizing that in our presentation of the word, we can finally solve all three of our problems:
 
-- ✅ **Wasting ink and paper:** This one is still an N/A.
-- ✅ **Hard to input different pronunciations without messing up:** Still solved! Our software is
+- ✅ **Waste of ink and paper?** N/A.
+- ✅ **Hard to input different pronunciations without messing up?** Still solved! Our software is
   still doing the grunt work here for us.
-- ✅ **Hard to read because of visual clutter:** Not at all anymore :) Only one form is displayed
+- ✅ **Hard to read because of visual clutter?** Not at all anymore :) Only one form is displayed
   at a time, but unlike in the OED's solution, you can easily explore the full range of possible
   pronunciations if you'd like to.
 
+With that done, I think it's about time to drop the theoretical stuff and get into how this thing
+works.
 
+# How this thing works
 
-## How this thing works
+A quick note: This is the weirdest project I've ever worked on in terms of its timeline. It started
+life as a weekend project in December 2020 — no idea how I thought I was gonna make that work — and
+after two 3-month hiatuses and loads of desperate thonking, it's managed to balloon into taking up
+an entire year of my life. If you ask me, the solution isn't even all that complicated or tough. It
+just took me an absurdly long time to get to it.
 
-### Mistakes
+Since it's been in the works for that long, the project has some holdovers from early decisions
+that I don't stand by anymore. I still have to explain them below, though. When I discuss those
+bits, I'll add a big red ❌ before them and explain what a better technique would be.
 
-### At a high level
+## At a high level
 
-### At a low lev... well, it's JS
+For the word "she's getting up", we start by passing our program the spelling `qAymc`. This isn't
+a human-readable version of the word! It's designed specifically for our code to process. The `q`
+stands for the original Arabic sound of [ق](https://en.wikipedia.org/wiki/Qoph), the capital `A`
+stands for a long [alif ا](https://en.wikipedia.org/wiki/Aleph#Arabic), and the `c` stands for
+a suffix that marks the word as feminine.
+
+At the same time, we give our program a bunch of rules that teach it all about different Lebanese
+accents. Without going into too much detail, it'll transform each letter as follows:
+
+- `q` becomes either *[ʔ](https://en.wikipedia.org/wiki/Glottal_stop)* or, among Druze and certain
+  others, *[q](https://en.wikipedia.org/wiki/Voiceless_uvular_stop)*.
+- `A` becomes either a long "eh" sorta sound (similar to French *é* or *è*), a long *o*, or a long
+  *a* as in either "cat" or "father".
+- The letters `y` and `m` don't do anything special. They just stay true to themselves.
+- `c` stands for either a short "eh" (again, like French *é* or *è*), a short *i*, or a short *a*.
+
+Let's say we fire up the page and see _**ʔa**ym**i**_ first thing. We can click on the *i* and get
+the same list of options as in that last picture above; we can click on the *a* and get the options
+*o*, *a*, and *é*; and we can click on the *ʔ* to get the options *ʔ* and *q*. If we pick *o* for
+the second letter, for example, the word updates to _**ʔo**ym**i**_, and we can go back to
+_**ʔa**ym**i**_ by doing the same thing.
+
+Now, remember how we said that people who have *q* aren't usually the same people who'd have an *o*
+for the second sound? Our program knows that rule, too. If we select *q* to update the word to
+_**qa**ym**i**_ now, *o* will stop being an option for the second letter! When we click on the *a*
+in _**qa**ym**i**_, we'll only get to pick between *a* and *é*.
+
+That happens because each letter keeps track of ones that depend on it for some rule or another.
+When we update a letter ourselves by picking a new option, it tells all of its dependents to check
+that it still satisfies whatever rule they're using. If not, they have to recalculate the possible
+values they can take.
+
+## At a low lev... well, it's JS
+
+WIP here.

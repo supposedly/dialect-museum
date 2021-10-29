@@ -25,7 +25,7 @@
       }
 
         word = new Word(word, {underlying: abc, phonic: abc, surface: {}});
-        const {underlying, phonic, surface} = word.abc;
+        // const {underlying, phonic, surface} = word.abc;
 
         word.capture.underlying
           .suffix(
@@ -48,16 +48,17 @@
             // diachronically it's a retention ofc but synchronically the default form is -it
         })
           .expand({
-            into: [[phonic.i, phonic.t]],
+            into: phonic => [[phonic.i, phonic.t]],
             where: {
               word: {was: type.verb, tam: tamToken.pst},
           },
         });
 
+        word.capture.underlying.letter.c(keys`{value}`)
         word.capture.underlying
-          .segment(underlying.c, keys`{value}`)
+          .segment(abc => abc.c, keys`{value}`)
           .expand({
-            into: [[phonic.i, phonic.t]],
+            into: phonic => [[phonic.i, phonic.t]],
             where: match.any(
               {next: {$exists: true}},
               {word: {was: type.idafe}}
