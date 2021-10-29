@@ -1,6 +1,9 @@
 # [A Journey in Overthinking It](https://write.lebn.xyz)
 
-This repository
+This project isn't finished, but I wanted to have something to show for it while it's underway, so
+here's a writeup that I hope helps explain what's up. The short version is that I'm trying to make
+a dictionary, and this is an attempt to re-rig the way dictionaries show you how to pronounce
+words. The long version is coming right up.
 
 ## The problem
 
@@ -17,10 +20,12 @@ before I was born (a couple decades ago) and came into existence just a bit earl
 couple centuries ago), making it one of the oldest and foremost dictionaries of English. It's spent
 most of its life being the best paper dictionary it could be.
 
-The online OED is pretty much the same old thing. There's almost no difference in the experience from the book version. And the traditional book version's experience has clearly proven its mettle,
-so what's not to like?
+The online OED is pretty much the same old thing. There's almost no difference between it and the
+experience you get from the book version. And, I mean, why not, right? Oxford definitely knows what
+what they're doing when it comes to dictionaries (and possibly other things), and since it ain't
+broke, it's tough to come up with a reason to break it.
 
-### What's not to like
+### A reason to break it
 
 <kbd aria-role="presentation">![A "meme", visibly edited from a meme that originally read "Inside Each of Us Are Two Wolves; One has depression, The other has depression; You Have Depression". The modified image reads: "Inside Each of Us Are Two (ACCENT). One has (R SOUND) the other has (NO R SOUND). You have (ENGLISH LANGUAGE)"](https://user-images.githubusercontent.com/32081933/137174170-78fe42cc-89c6-4412-903e-3b10a7038c9b.png)</kbd>
 
@@ -448,4 +453,4 @@ values they can take.
 
 ## At a low lev... well, it's JS
 
-WIP here.
+WIP.
