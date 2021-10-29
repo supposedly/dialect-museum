@@ -25,7 +25,7 @@
       }
 
         word = new Word(word, {underlying: abc, phonic: abc, surface: {}});
-        // const {underlying, phonic, surface} = word.abc;
+        const {underlying, phonic, surface} = word.abc;
 
         word.capture.underlying
           .suffix(
@@ -48,17 +48,17 @@
             // diachronically it's a retention ofc but synchronically the default form is -it
         })
           .expand({
-            into: phonic => [[phonic.i, phonic.t]],
+            into: [[phonic.i, phonic.t]],
             where: {
               word: {was: type.verb, tam: tamToken.pst},
           },
         });
 
-        word.capture.underlying.letter.c(keys`{value}`)
+        // word.capture.underlying.letter.c(keys`{value}`)
         word.capture.underlying
-          .segment(abc => abc.c, keys`{value}`)
+          .segment(underlying.c, keys`{value}`)
           .expand({
-            into: phonic => [[phonic.i, phonic.t]],
+            into: [[phonic.i, phonic.t]],
             where: match.any(
               {next: {$exists: true}},
               {word: {was: type.idafe}}
@@ -141,7 +141,7 @@
           <p>
             I'm in the middle of working on this site. Check back in a month or
             so and it'll rock (or your money back). In the meantime, feel free
-            to mess around typing stuff in the big box and see what big outputs
+            to mess around typing stuff in the big box and seeing what big outputs
             you get.
           </p>
           <h3>But what is it?</h3>
@@ -159,7 +159,7 @@
             top of that, you'll be able to switch the entire text from one
             writing system to another, like the Arabic script (عربي) vs.
             3arabizi (3arabe) vs. IPA (/ʕarabe/) vs. anything whatsoever.
-            Right, that includes katakana.
+            "Anything whatsoever" will also include katakana.
           </p>
           <h3>What?</h3>
           <p>
@@ -186,8 +186,8 @@
             combinatorial hell and typing out every single possible
             pronunciation of every single word in your dictionary, you could
             just write everything in some big-city dialect and call it a wrap.
-            Think of all the time saved. (This is what all of these sites
-            currently do.)
+            Think of all the time saved. This is what all of these sites
+            currently do.
           </p>
           <p>
             But!!! We're on computers here. We aren't slapping our dictionaries

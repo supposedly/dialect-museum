@@ -4,7 +4,8 @@ This project isn't finished, but I wanted to have something to show for it while
 Here's a rundown that I hope helps explain what's up!
 
 The short writeup is that I'm trying to make a dictionary, and this is an attempt to re-rig the way
-dictionaries show you how to pronounce words. The long writeup is write up next.
+dictionaries show you how to pronounce words. The medium writeup is on
+[the project's homepage](https://write.lebn.xyz). The long writeup is write up next.
 
 ## The problem
 
