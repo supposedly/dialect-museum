@@ -1,11 +1,12 @@
 # [A Journey in Overthinking It](https://write.lebn.xyz)
 
 This project isn't finished, but I wanted to have something to show for it while it's underway.
-Here's a rundown that I hope helps explain what's up!
+Hope this README helps explain some stuff!
 
-The short writeup is that I'm trying to make a dictionary, and this is an attempt to re-rig the way
-dictionaries show you how to pronounce words. The medium writeup is on
-[the project's homepage](https://write.lebn.xyz). The long writeup is write up next.
+The short writeup is that I'm trying to make a dictionary,
+and this is an attempt to reimagine the way dictionaries show you how to pronounce words. The
+medium writeup is on [the project's homepage](https://write.lebn.xyz). The long writeup is write up
+next.
 
 ## The problem
 
