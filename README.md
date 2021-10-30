@@ -81,8 +81,8 @@ something like that, too, but...
 
 Besides, those detailed pronunciations I added aren't even totally correct. Part of it's on me for
 not being Susie Dent (next life, maybe!), but even if I did know the world's Englishes inside and
-out, I still wouldn't trust myself to keep my accuracy up if I always had to list so many of those out manually. Humans make mistakes doing things, and we make more mistakes doing more
-things.
+out, I still wouldn't trust myself to keep my accuracy up if I always had to list so many of those
+out manually. Humans make mistakes doing things, and we make more mistakes doing more things.
 
 Let's break the pace with a recap.
 
@@ -97,7 +97,7 @@ Let's break the pace with a recap.
   1. ❌ It'd waste a ton of valuable ink and paper.
   2. ❌ The dictionary's editors would have to compile all the different dialects' forms of each 
      word manually, and that process is just swarming with chances to mess up.
-  3. ❌ Readers who just don't care would have no way to skip past it.
+  3. ❌ Readers who don't care would have no way to skip past it.
 
 This is why dictionaries never bother fleshing out their pronunciation keys beyond a couple of
 major dialects. It's a logistical nightmare if you're working in print.
@@ -122,7 +122,7 @@ Here's what that means for us:
 - ❌ And we haven't addressed #3. Accounting for all of the English accents in the world just
   makes for too much info! We tried hiding all of it behind an expandable widget, like with that
   **(Show More)** thing, but we found out that that doesn't exactly solve the problem... it's more
-  like just shoving it inside a drawer.
+  like shoving it into a drawer to take care of later.
 
 We're making some progress, but we're still not all the way there. With 2/3 of our key issues still
 unsolved, it's starting to look like a good idea to cut our losses and stay satisfied with our two
@@ -132,8 +132,8 @@ didn't say that. Onward!
 As I see it, our big problem is that we're **still treating our computer dictionary like a print
 dictionary.** We're still following that same old workflow where we record everything as raw text
 and display it almost-unchanged. Instead, we should really be looking at ways to get our software
-to cut out some of our work for us. For example, why do we have to be the ones to keep all of the
-different accents of our language in our head? Could we somehow get some help with that?
+to cut out some of our work for us. For example, do we really have to be the ones to keep all of
+the different accents of our language in our head? Could we somehow get some help with that?
 
 ## Thinking about a solution
 
@@ -159,14 +159,14 @@ Here are three fun facts about language. (I'm simplifying a bit but not wrongify
    groups of speakers that are pretty isolated from one another, that's practically a guarantee
    that they'll be undergoing different changes from each other.
 
-So what happens if the groups from #3 never actually get back in touch? What happens to their
-language if they hold onto it?
+Let's think about those groups from #3. Suppose they never actually get back in touch with each
+other. What happens to their language if they hold onto it?
 
 Well, the answer is nothing, kinda. They keep speaking it, the same as ever, and it keeps changing
 and developing, just the same as ever. But, and this is also just like something I wish I could
-remember, the isolation would have to catch up to them eventually. With all of those
-divergent changes piling up over time, could things ever get to a point where they couldn't even
-understand each other anymore? How long would that have to take?
+place, the isolation would have to catch up to them eventually. With all of those divergent changes
+piling up over time, could things ever get to a point where they couldn't even understand each
+other anymore? How long would that have to take?
 
 A year? Nope, fortunately. There's this one case where linguists
 [analyzed](https://www.scientificamerican.com/podcast/episode/linguists-hear-an-accent-begin/)
@@ -207,7 +207,7 @@ years ago! Its speakers spent about 3,000 years in their
 [make-like-a-plot-and-scatter phase](https://en.wikipedia.org/wiki/Indo-European_migrations),
 spreading their descendants over a huge swath of land and ensuring that their language would
 splinter over multitudes of different paths for eons to come. This is the fate of any language that
-gets split up, as long as it gets enough time to live the destiny out.
+gets split up, as long as it gets enough time to live that destiny out.
 
 #### Okay, cool, but like... reel it in
 
@@ -225,21 +225,21 @@ What's change?
 #### Spare some regular change, sir?
 
 We're finally getting to the meaty bits. The one little thing that makes this entire project tick
-is that sound changes are **regular** and **indiscriminate**. When a sound change happens, it
-doesn't just affect individual sounds in random individual words — it wipes out the entire language
-in one go. Any word that has that sound in the right spot feels the burn.
+is that sound changes are two things: **regular** and **indiscriminate**. When a sound change
+happens, it doesn't just affect individual sounds in random individual words — it wipes out the
+entire language in one go. Any word that has that sound in the right spot feels the burn.
 
-For example, let's head all the way back to the word "her". A stereotypical American would pronounce
-the R sound at the end of it, while a stereotypical British person would pronounce no R at the end.
-But it's not just that one word! That British accent doesn't pronounce any R at the end of any word
-or syllable, and that American accent does pronounce them all.
+For example, let's head all the way back up to the word "her". A stereotypical American would
+pronounce the R sound at the end of it, while a stereotypical British person would pronounce no R
+at the end. But it's not just that one word! That British accent doesn't pronounce any R at the end
+of any word or syllable, and that American accent does pronounce them all.
 
 This gives away a little something hidden in our Rs. What it tells us is that the English language
 used to have an R sound that was always pronounced, and that the British people that came to
 colonize North America still had that R in their accents. It was only after the General American
 accent had established itself that mainstream British pronunciation must've lost that R — and,
-of course, it's only by pure chance that they lost it. (The full story involves a lot of WW2
-politics, too. Really fascinating.)
+of course, it's only by pure chance that they lost it. (The full story involves a bit more of
+everyone's favorite pastime. Politics, not baseball)
 
 ### Running it home
 
@@ -254,14 +254,14 @@ could just...
 2. Pass that OG form off to our software. Teach it the rule we've come up with: in some accents,
    the R sound disappears at the end of a word or syllable.
 3. Have it automatically generate our different forms for us. Brew an instant coffee in the
-   meantime (a very instant coffee)
+   meantime (a really instant coffee)
 
 And that's it! It's not that much of a timesave for only two forms like `/həː/` and `/həɹ/`,
 sure, but remember that one of our original plans was to expand our operations to all sorts of
-different English accents worldwide. This lets us do that efficiently and scalably. Instead of
-having to remember all of the different vowel–consonant combos and punch them in manually,
-we can just teach our program all of the rules we already know, and make it generate them all
-based on that.
+different English accents worldwide. This lets us achieve that world domination both efficiently
+and scalably. Instead of having to remember all of the different vowel–consonant combos and punch
+them in manually, we can just teach our program the whole set of rules we already know, and make it
+generate all of them for us based on that.
 
 ## Further implications (wow)
 
@@ -345,7 +345,6 @@ Lebanese Arabic dictionary I'm planning on making. My holy grail/hraily goal is 
 be a dictionary of Lebanese Arabic, but a **really good** dictionary of Lebanese Arabic. That means
 it needs to be two things:
 
-
 1. Comprehensible. I want it to be as accessible as possible. That means taking advantage of the
    medium and embracing the technology we're on, not just pretending it's a print dictionary with a
    frontend. This sub-project is a good outlet for that mindset.
@@ -369,7 +368,7 @@ the consonant at the beginning, the long vowel right after it, and the short vow
 that marks the word as feminine. Each one of them happens to have three possible pronunciations.
 
 When we put them all together and try to enumerate all the possible resulting words, the gates
-of combinatorial hell open up and we get a whole twenty-seven words to deal with. We can
+of combinatorial hell open up and burden us with a whole twenty-seven words to deal with. We can
 nix a few of them if we know they're not real, like how I crossed out `qoymé` and didn't list
 `goymi` at all, but that still leaves us with way too much to skim. How can we do better?
 
@@ -406,13 +405,13 @@ recognizing that in our presentation of the word, we can finally solve all three
   pronunciations if you'd like to.
 
 With that done, I think it's about time to drop the theoretical stuff and get into how this thing
-works.
+really works.
 
-# How this thing works
+# How this thing really works
 
 A quick note: This is the weirdest project I've ever worked on in terms of its timeline. It started
 life as a weekend project in December 2020 — no idea how I thought I was gonna make that work — and
-after two 3-month hiatuses and loads of desperate thonking, it's managed to balloon into taking up
+after loads of desperate thonking and two 3-month hiatuses, it's managed to balloon into taking up
 an entire year of my life. If you ask me, the solution isn't even all that complicated or tough. It
 just took me an absurdly long time to get to it.
 
