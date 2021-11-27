@@ -21,26 +21,25 @@ No, I hardly know her. What I don't like there is the bit about pronunciation.
 That's a screenshot from the Oxford English Dictionary's online portal. The OED hit the Internet
 before I was born (a couple decades ago) and came into existence just a little bit earlier (a
 couple centuries ago), making it one of the oldest and foremost dictionaries of English. It's spent
-most of that life being the best paper dictionary it could be.
+most of that life being the best paper dictionary it could possibly be.
 
 The online OED is pretty much the same old thing. There's almost no difference between it and the
 experience you get from the book version. And, I mean, why not, right? It seems like Oxford knows
 what they're doing when it comes to dictionaries (and, possibly, other things), and their print
-dictionary has been sufficient for a good couple hundred years. If it ain't broke, it's tough to
-come up with a reason to break it.
+dictionary has been sufficient for a good couple hundred years.
 
-### A reason to break it
+### If it ain't broke, break it anyway?
 
-<kbd aria-role="presentation">![A "meme", visibly edited from a meme that originally read "Inside Each of Us Are Two Wolves; One has depression, The other has depression; You Have Depression". The modified image reads: "Inside Each of Us Are Two (ACCENT). One has (R SOUND) the other has (NO R SOUND). You have (ENGLISH LANGUAGE)"](https://user-images.githubusercontent.com/32081933/137174170-78fe42cc-89c6-4412-903e-3b10a7038c9b.png)</kbd>
+<kbd aria-role="presentation">![A meme, visibly edited from a meme that originally read "Inside Each of Us Are Two Wolves; One has depression, The other has depression; You Have Depression". The modified image reads: "Inside Each of Us Are Two (ACCENT). One has (R SOUND) the other has (NO R SOUND). You have (ENGLISH LANGUAGE)"](https://user-images.githubusercontent.com/32081933/137174170-78fe42cc-89c6-4412-903e-3b10a7038c9b.png)</kbd>
 
-Look at the pronunciations they've got for the word "her". They come in two accents: a
+But look at the pronunciations they've got for the word "her". They come in two accents: a
 British one that doesn't pronounce the R, and an American one that does. It does feel nice to
-see them straddling the pond for us like that, but, hey, how wide to a side ought a straddle to
+see them straddling the pond for us like that, but (forgive this) how wide to a side ought a straddle to
 stride? How many accents per continent should they actually be covering? There sure isn't only one
 kind of English spoken throughout the whole US, let alone all of Britain, let alone-alone the UK in
 general. And I hear there's even a little bit of the rest of the world to contend with...
 
-Well, they've got a few excuses to uses. Personally, I think a big, fat dictionary of English needs
+Well, they've got a few excuses. Personally, I think a big, fat dictionary of English needs
 to document as much of the English language as it can, but I'll admit that there's a lot hinging on
 that very last word: *can*. A print dictionary has a few important tradeoffs to make when balancing
 how much it *should* document with how much it *can* document. A lot of the time, it just isn't
@@ -53,7 +52,7 @@ fun looking at this:
 | :-: |
 
 Doesn't that just suck? I mean, think of all the times you've forgotten a word as complicated as
-"her". Imagine subjecting your eyeballs to all of those unsightly pronunciation runes every single
+"her". Imagine subjecting yourself to all of those unsightly pronunciation runes every single
 time you had to remind yourself how to read it. On top of that, imagine a dictionary trying to do
 that for. Every. Single. Word. They'd run out of pages after, um, "aardwolf", which is
 apparently the word after "aardvark". (Promise I'm not lying. The next word is aardxylophone.)
@@ -110,7 +109,7 @@ power of computer for great good?
 
 #### Wow, look: digital style
 
-<kbd>![Edited version of that old car-salesman meme... "*slaps roof of PC* this bad boy can fit so many (USELESS) (INFORMATION) in it"](https://user-images.githubusercontent.com/32081933/137770895-d1c2b4be-0335-4a00-9d58-cf626628163a.png)</kbd>
+<kbd>![Edited version of that old car-salesman meme... "*slaps roof of PC* this bad boy can fit so many (USELESS INFORMATION) in it"](https://user-images.githubusercontent.com/32081933/137770895-d1c2b4be-0335-4a00-9d58-cf626628163a.png)</kbd>
 
 Okay, so we're doing our stuff with computers now, not the town abacus or whatever they used before
 1970. Here's what that means for us:
@@ -225,7 +224,7 @@ What's change?
 
 #### Spare some regular change, sir?
 
-We're finally getting to the meaty bits. The one little thing that makes this entire project tick
+We're finally getting to the meaty bits. The one little fact that makes this entire project tick
 is that sound changes are two things: **regular** and **indiscriminate**. When a sound change
 happens, it doesn't just affect individual sounds in random individual words — it wipes out the
 entire language in one go. Any word that has the same sound in the right spot feels the burn.
@@ -252,7 +251,7 @@ language, couldn't we just get our software to know that rule for us instead of 
 ourselves? That way, instead of forcing ourselves to write out both `/həː/` and `/həɹ/` (for
 example), we could just...
 
-1. Start with one single, original form. This is gonna be a form that has an R sound.
+1. Start with one single original form. This is gonna be a form that has an R sound.
 2. Pass that OG form off to our software. Teach it the rule we've come up with: in some accents,
    the R sound disappears at the end of a word or syllable.
 3. Have it automatically generate our different forms for us. Brew an instant coffee in the
