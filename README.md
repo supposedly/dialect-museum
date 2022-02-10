@@ -404,11 +404,11 @@ really works.
 
 A quick note: This is the weirdest project I've ever worked on in terms of timeline. It started
 life as a weekend project in December 2020 — no idea how I tricked myself into believing I was gonna make
-that work — and after loads of desperate thonking, two 3-month hiatuses thanks to school, and an ongoing
+that work — and after loads of desperate thonking, two 3-month hiatuses thanks to school, and a still-ongoing
 third hiatus, it's managed to balloon into taking up an entire year of my life. If you ask me, the solution
 isn't even all that complicated or tough. It just took me an absurdly long time to get to it.
 
-Since it's been in the works for that long, the project has some bizarre holdovers from earl
+Since it's been in the works for that long, the project has some bizarre holdovers from early
 decisions that I don't stand by anymore. I still have to explain them below, though. When I discuss
 those bits, I'll add a big red ❌ before them and explain what a better technique would be.
 
