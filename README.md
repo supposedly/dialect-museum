@@ -19,29 +19,30 @@ I don't like this.
 No, I hardly know her. What I don't like there is the bit about pronunciation.
 
 That's a screenshot from the Oxford English Dictionary's online portal. The OED hit the Internet
-before I was born (a couple decades ago) and came into existence just a little bit earlier (a
-couple centuries ago), making it one of the oldest and foremost dictionaries of English. It's spent
-most of that life being the best paper dictionary it could possibly be.
+before I was born (a couple decades ago) and came into existence just a little bit earlier
+(a couple centuries ago), making it one of the oldest and foremost dictionaries of English.
+It's spent most of that life being the best ink-and-paper dictionary it could possibly be.
 
-The online OED is pretty much the same old thing. There's almost no difference between it and the
-experience you get from the book version. And, I mean, why not, right? It seems like Oxford knows
-what they're doing when it comes to dictionaries (and, possibly, other things), and their print
-dictionary has been sufficient for a good couple hundred years.
+The online OED is pretty much the same exact thing. There's almost no difference between it and
+the experience you get from the book version. And, I mean, why not, right?
+Oxford does know what they're doing when it comes to dictionaries (and possibly other things),
+and their print dictionary has been sufficient for a good couple hundred years. If it ain't broke,
+why break it?
 
-### If it ain't broke, break it anyway?
+### Why break it
 
-<kbd aria-role="presentation">![A meme, visibly edited from a meme that originally read "Inside Each of Us Are Two Wolves; One has depression, The other has depression; You Have Depression". The modified image reads: "Inside Each of Us Are Two (ACCENT). One has (R SOUND) the other has (NO R SOUND). You have (ENGLISH LANGUAGE)"](https://user-images.githubusercontent.com/32081933/137174170-78fe42cc-89c6-4412-903e-3b10a7038c9b.png)</kbd>
+<kbd aria-role="presentation">![There was a meme that originally went "Inside Each of Us Are Two Wolves; One has depression, The other has depression; You Have Depression". This is modified to read: "Inside Each of Us Are Two ACCENT. One has R SOUND the other has NO R SOUND. You have ENGLISH LANGUAGE"](https://user-images.githubusercontent.com/32081933/137174170-78fe42cc-89c6-4412-903e-3b10a7038c9b.png)</kbd>
 
-But look at the pronunciations they've got for the word "her". They come in two accents: a
+Look at the pronunciations they've got for the word "her". They come in two accents: a
 British one that doesn't pronounce the R, and an American one that does. It does feel nice to
-see them straddling the pond for us like that, but (forgive this) how wide to a side ought a straddle to
-stride? How many accents per continent should they actually be covering? There sure isn't only one
+see them straddling the pond for us like that, but (forgive this) how wide to a side ought a straddle
+to stride? How many accents per continent should they actually be covering? There sure isn't only one
 kind of English spoken throughout the whole US, let alone all of Britain, let alone-alone the UK in
 general. And I hear there's even a little bit of the rest of the world to contend with...
 
-Well, they've got a few excuses. Personally, I think a big, fat dictionary of English needs
+Well, they've got a few excuses to uses. Personally, I think a big fat dictionary of English needs
 to document as much of the English language as it can, but I'll admit that there's a lot hinging on
-that very last word: *can*. A print dictionary has a few important tradeoffs to make when balancing
+the word *can*. A print dictionary has got a few important tradeoffs to make when balancing
 how much it *should* document with how much it *can* document. A lot of the time, it just isn't
 possible or feasible to record everything there is to record.
 
@@ -57,7 +58,7 @@ time you had to remind yourself how to read it. On top of that, imagine a dictio
 that for. Every. Single. Word. They'd run out of pages after, um, "aardwolf", which is
 apparently the word after "aardvark". (Promise I'm not lying. The next word is aardxylophone.)
 
-Now, sure, we don't actually have to keep all of those different pronunciations in sight at all
+Now, sure, we don't actually need to keep all of those different pronunciations in view at all
 times. We're talking about the online OED here, not the paper one. For instance, you see what
 they've done with that **Forms** section right under our accent accident? That section is actually
 huge, but through the magic of technology, they've taken the entire thing and shoved it behind a
@@ -71,9 +72,9 @@ something like that, too, but...
   ...it just isn't great, is it? This didn't actually do anything to manage the clutter we created
   — it just let us furnish it with an element of surprise.
 
-  Anyway, don't people usually check the pronunciation section just to get a quick idea of how to
+  Anyway, don't people usually just check the pronunciation section to get a quick idea of how to
   say the word they're looking at? I don't love the idea of forcing that kind of person to wade
-  through a bunch of uninteresting variants just to find what they need, boring the daylights out of
+  through way too many uninteresting variants to find what they need, boring the daylights out of
   them in the sole interest of correctness. I mean, I do take an interest in correctness, possibly
   even a sole interest — I just don't think it has to come with such a huge tradeoff.
 </details>
@@ -153,17 +154,17 @@ Here are three fun facts about language. (I'm simplifying a bit but not wrongify
    who are in constant contact with one another, but they don't grow wings and cross oceans
    if people don't physically carry them over.
 3. This stuff arises totally randomly. We can never confidently predict what changes a language
-   about to undergo. Also, it's super unlikely for lightning to strike twice and make the exact
+   is about to undergo. Also, it's super unlikely for lightning to strike twice and make the exact
    same changes repeat themselves in different locations. If you've got a language with a few
    groups of speakers that are pretty isolated from one another, that's practically a guarantee
    that they'll be undergoing different changes from each other.
 
-Let's think about those groups from #3. Suppose they never actually get back in touch with each
-other. What happens to their language if they hold onto it?
+Let's think more about those groups from #3. Suppose they never actually get back in touch with
+each other. What happens to their language if they hold onto it?
 
 Well, the answer is nothing, kinda. They keep speaking it, the same as ever, and it keeps changing
 and developing, just the same as ever. But, and this is also just like something I wish I could
-remember, the isolation would have to catch up to them eventually. With all of those divergent
+put a finger on, the isolation would have to catch up to them eventually. With all of those divergent
 changes piling up over time, could things ever get to a point where they couldn't even understand
 each other anymore? How long would that have to take?
 
@@ -177,79 +178,69 @@ A hundred years? Not quite. There's a
 [community of Cretans](https://en.wikipedia.org/wiki/Al-Hamidiyah) who were granted refuge in Syria
 at the turn of the 20th century, and according to my sample size of 1.5 (I asked the same guy
 twice), their Greek language is still totally peggable as Cretan even though they've spent a whole
-century in isolation from ~~mainisland~~ mainland Crete.
+century in isolation from ~~mainland~~ mainisland Crete.
 
 [Six thousand years and counting](https://www.youtube.com/watch?v=aQ283N_ZdKY)?
 
 | <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/138953290-c9f4c8b9-33c9-4c86-858d-5e2612a8772e.png" alt="Map of the Expansion of the Indo-European languages." /></kbd><br/><figcaption><sup><i>[Greenhill SJ et al.](https://simon.net.nz/articles/mapping-the-origins-and-expansion-of-the-indo-european-language-family/) 2012. Mapping the Origins and Expansion of the Indo-European Language Family. Science, 337: 957-960.</i></sup></figcaption></figure> |
 | :-: |
 
-Okay. Yeah. Now
-we're talking.
+Yeah, something like that.
 
-New languages [usually](https://en.wikipedia.org/wiki/Nicaraguan_Sign_Language) don't just arise
-out of nowhere. We all know about the Romance languages and how they all go back to Latin, for
-example, right? That happened when the different Roman colonies, not having invented cellphones
-yet, started racking up changes in their Latin language over centuries of no contact with the rest
-of the entire expired empire. Naturally, some of those changes were thanks to influence from other
-local languages — like,
-[Romanian's got a few tales to tell](https://en.wikipedia.org/wiki/Slavic_influence_on_Romanian)
-— but they also came from spending **ages** developing independently from one another. After
-several hundred years, that was enough to get us multiple different Romance languages out of what
-was once one Latin.
+If you jump that far into the future, you can definitely expect your little language to have given
+way to between one and one gajillion completely different little languages, all of which are going
+to be practically unrecognizable to you. That's how
+[the Indo-European languages](https://en.wikipedia.org/wiki/Indo-European_languages), pictured,
+have been developing ever since the original Indo-Europeans got over their 3,000-year
+[make-like-a-plot-and-scatter phase](https://en.wikipedia.org/wiki/Indo-European_migrations). You
+can even get those kinds of differences at way-smaller time depths as long as everyone is isolated
+from everyone else: we all were there when Latin blipped into the Romance languages once the entire
+empire'd expired, right? That only took a handful of centuries, tops. 
 
-And what does Latin itself go back to? This is that six-thousand-years part. It's also the crazy
-part. Something historical linguists are practically sure of is that a ton of languages from all
-throughout Europe and India — Russian, Greek, Persian, English, German, the Scandinavian
-languages, Icelandic, Hindi, etc., plus ancient languages like Latin and Sanskrit — were just
-[one single language](https://en.wikipedia.org/wiki/Proto-Indo-European_language) more than 6,000
-years ago! Its speakers spent about 3,000 years in their
-[make-like-a-plot-and-scatter phase](https://en.wikipedia.org/wiki/Indo-European_migrations),
-spreading their descendants over a huge swath of land and ensuring that their language would
-splinter over multitudes of different paths for eons to come. This is the fate of any language that
-gets split up if it has enough time to live that destiny out.
+Okay, need to break the fourth wall here for a sec. I think my eyeballs are about to fall
+out from how long I've spent staring at this part trying to figure out how to reel it back in.
+Couldn't do it without breaking the flow, so here's a halfhearted segue that breaks the flow anyway!
 
-#### Okay, cool, but like... reel it in
+Basically, even though my project is about different accents of the same language rather than different
+languages altogether, the big secret is that those are actually the same thing... just at different
+stages of the same process. Language differences first manifest in what we call accents and dialects,
+then slowly, over a whole lotta course of a whole lotta time, develop into what we'd call languages.
 
-Right. We were only talking about accents and stuff. I just really wanted to highlight how cool it
-is that it's all the same thing, and that what we call "accents" and "dialects" are just at the
-beginning of the road to becoming what we might call "languages".
+We just saw how that's how language families end up developing (like Romance and Indo-European), but on
+top of that, it's also why differences in language only gradually get more pronounced the further away
+you move from any specific region. If you have people in areas nearby each other, it means they haven't
+been 'separated' for too long if we're talking migration, not to mention that they have a high chance of
+interacting with each other regularly. That gives them way less chance to drift apart from each
+other in language than from people farther away.
 
-So we've found out some stuff about what an accent is. You probably already knew that it had to do
-with how people pronounce things differently from each other, and now we also know that those
-differences come about when the language `c h a n g e s ✨` thanks to separation. But there's a huge
-question hidden in there that I got too carried away to ask or answer.
-
-What's change?
+But they still **do** drift apart. In a lot of areas, especially ones that have had lots of time to
+settle language-wise, practically every village has a unique accent or dialect. Why? And how do they differ,
+exactly?
 
 #### Spare some regular change, sir?
 
 We're finally getting to the meaty bits. The one little fact that makes this entire project tick
-is that sound changes are two things: **regular** and **indiscriminate**. When a sound change
-happens, it doesn't just affect individual sounds in random individual words — it wipes out the
+is that sound changes tend to be two things: **regular** and **indiscriminate**. Generally, when a
+sound change happens, it doesn't just affect individual sounds in random words — it wipes out the
 entire language in one go. Any word that has the same sound in the right spot feels the burn.
 
-For example, let's head all the way back up to the word "her". A stereotypical American would
-pronounce the R sound at the end of it, while a stereotypical British person would pronounce no R
-at the end. But it's not just that one word! That British accent doesn't pronounce any R at the end
-of any word or syllable, and that American accent does pronounce them all.
-
-This gives away a little something hidden in our Rs. What it tells us is that the English language
-used to have an R sound that was always pronounced, and that the British people that came to
-colonize North America still had that R in their accents. It was only after the General American
-accent had established itself that mainstream British pronunciation must've lost that R — and,
-of course, since sound changes are largely random, it's only by pure chance that they happened
-to lose it and the General American accent happened not to. (For the record: the full story
-involves a bit more of everyone's favorite pastime. I mean politics, not baseball, I think?)
+When you're looking at words that different accents pronounce in their own ways, each word is a
+testimony to exactly what sound changes each accent has undergone since the time when there weren't
+any accents. Any other words in the language that have the same sounds will reflect
+those sound changes, too, barring a few exceptions. What that means is that, if you gather up enough
+words and figure out enough sound-change relationships, you can (theoretically) be–kind–rewind the whole
+entire language back to that (theoretical) stage where there (theoretically) weren't any accents at all.
+Plus, once you've gotten there manually, you can apply literally any accent's sound-change rules to
+automatically determine how a particular word or phrase would sound in it. Sound good?
 
 ### Running it home
 
 Let's try applying what we know now to our dictionary problem.
 
 If both pronunciations of "her" are related by a rule that applies consistently to our entire
-language, couldn't we just get our software to know that rule for us instead of bothering with it
-ourselves? That way, instead of forcing ourselves to write out both `/həː/` and `/həɹ/` (for
-example), we could just...
+language, we should just be able to get our program to know that rule for us instead of having
+to bother ourselves with it. That way, instead of forcing ourselves to write out both `/həː/`
+and `/həɹ/` (for example), we could just...
 
 1. Start with one single original form. This is gonna be a form that has an R sound.
 2. Pass that OG form off to our software. Teach it the rule we've come up with: in some accents,
@@ -259,10 +250,10 @@ example), we could just...
 
 And that's it! It's not that much of a timesave for only two forms like `/həː/` and `/həɹ/`,
 sure, but remember that one of our original plans was to expand our operations to all sorts of
-different English accents worldwide. This lets us get there both efficiently and scalably. Instead
+different accents worldwide. This lets us get there both efficiently and scalably. Instead
 of having to remember all of the different vowel–consonant combos and punch them in manually, we
-can just teach our program the whole set of rules we already know, and make it generate all of them
-for us based on that.
+can just teach our program the set of sound-change rules we already know, and make it generate all
+of the different forms we need for us.
 
 ## Further implications (wow)
 
@@ -282,7 +273,7 @@ But, hey, we're 2 for 3 now! Can we do anything about that third one?
 ### Data, data, data
 
 Seeing as a computer's entire job is to transform data, there's no way our answer isn't a yes.
-Here's the solution I thought of.
+Here's a quick solution I thought of.
 
 Remember our old friends, these pictures?
 
@@ -305,17 +296,17 @@ But the actual OED didn't do it that way. They used parentheses, as in `(h)`, to
 an H could either be there or been't there. That's a pretty efficient way of compressing two
 pronunciations into one.
 
-I won't go further just yet, but keep this in mind. All will be revealed in a few sections.
+I won't go further just yet, but keep this in mind. All will be revealed after the break.
 
 ### Orthographomania
 
-Here's another thing: the OED's English pronunciations are in the
+Here's another unrelated thing: the OED's English pronunciations are in the
 [International Phonetic Alphabet](https://en.wikipedia.org/wiki/International_Phonetic_Alphabet),
-or the IPA for short. The IPA is a great way to represent English pronunciation, but it sure isn't
+or the "IPA" for short. The IPA is a great way to represent English pronunciation, but it sure isn't
 the only way, because there happen to be a whole lot of idiosyncratic conventions for spelling
 English out sound-by-sound. You might be familiar with a few yourself.
 
-For example, I have a copy of some dictionary called Webster's that writes *hʉr*. I also have a
+For instance, I have a copy of some dictionary called Webster's that writes *hʉr*. I also have a random
 children's dictionary that does *hûr*. Google's dictionary has *hər*, and the
 [Deseret Alphabet](https://en.wikipedia.org/wiki/Deseret_alphabet) hexes us with *𐐸𐐲𐑉*.
 [Benjamin Franklin's phonetic alphabet](https://en.wikipedia.org/wiki/Benjamin_Franklin%27s_phonetic_alphabet)
@@ -336,7 +327,7 @@ exact same technique. We could even transliterate English words using other lang
 the most-powerful application of our future application, in my opinion, and it was actually the only
 reason I originally wanted to code it.
 
-I think that's all the main intro stuff out of the way now.
+I think that's all the big intro stuff out of the way.
 
 ----
 
@@ -347,32 +338,33 @@ Lebanese Arabic dictionary I'm planning on making. My holy grail/hraily goal is 
 be a dictionary of Lebanese Arabic, but a **really good** dictionary of Lebanese Arabic. That means
 it needs to be two things:
 
-1. Comprehensive. I want it to be as thorough as possible. And, even if I can't do that myself
-   (again, I'm not omniscient — for example, I don't know what omniscient means), I want to outfit
-   it with the **ability** to be as thorough as possible. That means leaving room for new
-   information to be added seamlessly, like new accents or definitions.
+1. Comprehensive. I want it to be as thorough as possible. And, even if I can't make it comprehensive
+   all by myself, I want to outfit it with the **ability** to be as thorough as possible. That means
+   leaving room for new information to be added seamlessly, like new accents or definitions.
 2. Comprehensible. I want it to be as accessible as possible. That means taking advantage of the
-   medium and embracing the technology we're on, not just pretending it's a print dictionary with a
-   frontend. This sub-project is a good outlet for that mindset.
+   medium (compooter) and embracing the technology we're on, not just making a print dictionary
+   with a web frontend. This sub-project that you're reading about right now is a good outlet to put
+   that mindset to the test.
 
-Enough with the word "her" for now, then. Here's a new example that shows a nice variety of
+Enough with the word "her" for now, then! Here's a new example that shows a nice variety of
 Lebanese accents and dialects: how would we say "she's getting up"?
 
 | <figure><kbd aria-role="presentation"><img src="https://user-images.githubusercontent.com/32081933/135920721-0405ee7b-e5dd-4336-aaeb-c1ffff458f34.png" alt="Different ways of saying `she's getting up` throughout Lebanon, enumerated really inefficiently. There's stuff like 'aymi', 'ayma', 'oymi', 'qaymi', 'qayma', and 'gayma'." /></kbd><br/><figcaption><sup><i>You'll find people living in Lebanon who pronounce it in any number of these ways, although I'm not sure if the crossed-out combinations exist. (The ones with "o" are stereotypically Northern, the ones with "q" stereotypically Druze, and the ones with "g" stereotypically Bedouin.)</i></sup></figcaption></figure> |
 | - |
 
 Jeez, that list wouldn't look nice at all in a book or on a webpage. But we've learned a bit about
-accents since the last time we saw something like this. Can we use our newfound knowledge to
+accents and lists since the last time we saw something like this. Can we use our newfound knowledge to
 compress the whole shebang into something presentable?
 
-Sure we can. Notice that there are three "variables", which I've colored orange, blue, and magenta:
-the consonant at the beginning, the long vowel right after it, and the short vowel at the very end
-that marks the word as feminine. Each one of them happens to have three possible pronunciations.
+Sure we can. If you really look at it, you'll notice that there are only three "variables", which I've
+colored orange, blue, and magenta: the pronunciation of the consonant at the beginning, the long vowel
+right after it, and the short vowel at the very end that marks the word as feminine. Each one of them
+happens to have three possible pronunciations.
 
 When we put them all together and try to enumerate all the possible resulting words, we get a big
-old combinatorial explosion and end up with twenty-seven entire forms to deal with. We can
-nix a few of them if we know they're not real, like how I crossed out `qoymé` and didn't list
-`goymi` at all, but that still leaves us with way too much to skim. How can we do better?
+old combinatorial explosion of twenty-seven entire forms to deal with. We can nix a few of them if
+we know they're not real, like how I crossed out `qoymé` and didn't list `goymi` at all, but that
+still leaves us with way too much to skim. How can we do better?
 
 Well. What if we just didn't let that explosion happen in the first place? Let's just not expand
 anything out, period. I'm thinking something like this:
@@ -392,11 +384,10 @@ intuitively grasp the word's pronunciation at a glance. So, once more: how can w
 
 <kbd aria-role="presentation">![An image showing the variant `'eymi`, where each of the three variable letters is conspicuously underscored with a line and an arrow. The last letter, which is the "é/i/a" variable, is shown being selected by a mouse cursor that's toggling between the three options. What jumps out is that this is actually readable at a glance, unlike the last image, because it only *shows* one letter at a time, even though it still lets you explore the full range of options by toggling them with the dropdowns](https://user-images.githubusercontent.com/32081933/135980997-eaf2f8e3-46a6-4401-9cc1-43b8b05a08db.png)</kbd>
 
-That's right. Dropdowns. I made you sit through four or five pages of README just to get to
-dropdowns.
+That's right. Dropdowns. You just sat through four or five pages of README to get to dropdowns.
 
-It's just a visual version of what we already know: each individual sound in a word changes
-consistently depending on where it is in a word and what sounds surround it, and by actually
+If we drop down to the core of this new idea, it's kinda just a visual version of what we already know. Each individual
+sound in a word changes consistently depending on where it is in a word and what sounds surround it, so by actually
 recognizing that in our presentation of the word, we can finally solve all three of our problems:
 
 - ✅ **Waste of ink and paper?** N/A.
@@ -411,15 +402,15 @@ really works.
 
 # How this thing really works
 
-A quick note: This is the weirdest project I've ever worked on in terms of its timeline. It started
-life as a weekend project in December 2020 — no idea how I thought I was gonna make that work — and
-after loads of desperate thonking and two 3-month hiatuses, it's managed to balloon into taking up
-an entire year of my life. If you ask me, the solution isn't even all that complicated or tough. It
-just took me an absurdly long time to get to it.
+A quick note: This is the weirdest project I've ever worked on in terms of timeline. It started
+life as a weekend project in December 2020 — no idea how I tricked myself into believing I was gonna make
+that work — and after loads of desperate thonking, two 3-month hiatuses thanks to school, and an ongoing
+third hiatus, it's managed to balloon into taking up an entire year of my life. If you ask me, the solution
+isn't even all that complicated or tough. It just took me an absurdly long time to get to it.
 
-Since it's been in the works for that long, the project has some holdovers from early decisions
-that I don't stand by anymore. I still have to explain them below, though. When I discuss those
-bits, I'll add a big red ❌ before them and explain what a better technique would be.
+Since it's been in the works for that long, the project has some bizarre holdovers from earl
+decisions that I don't stand by anymore. I still have to explain them below, though. When I discuss
+those bits, I'll add a big red ❌ before them and explain what a better technique would be.
 
 ## At a high level
 
