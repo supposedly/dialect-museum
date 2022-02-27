@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { Parser, Grammar } from "nearley";
   import * as grammar from "./backend/conversion/parsing/grammar.js";
   import { Word, keys } from "./backend/conversion/transformers/common/classes";
@@ -22,8 +22,23 @@
           return join(word, `/`, ...(word.length > 1 ? [`(`, `)`] : []));
         }
 
-        word = new Word(word, { underlying: abc, phonic: abc, surface: {} });
+        word = new Word(word, {
+          underlying: abc,
+          phonic: abc,
+          surface: {},
+        });
+        word = new Word(word, {
+          underlying: abc,
+          phonic: abc,
+          surface: {},
+        });
         const { underlying, phonic, surface } = word.abc;
+
+        word.capture.underlying((underlying, letter, phonic) => {
+          underlying.suffix(abc.c).expand({
+            into: [[phonic.i, phonic.t]],
+          });
+        });
 
         word.capture.underlying
           .suffix(

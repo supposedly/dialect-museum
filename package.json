@@ -16,7 +16,7 @@
     "moo": "^0.5.1",
     "nearley": "^2.20.1",
     "sirv-cli": "^1.0.0",
-    "svelte-tabs": "^1.1.0",
+    "ts-toolbelt": "^9.6.0",
     "weighted": "^0.3.0"
   },
   "devDependencies": {
