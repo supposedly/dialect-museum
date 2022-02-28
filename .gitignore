@@ -1,4 +1,5 @@
 /test.*
+**/test.*.ts
 
 # svelte
 .DS_Store

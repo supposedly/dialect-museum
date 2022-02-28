@@ -5,6 +5,7 @@
     "exclude": ["node_modules/*", "public/*"],
     "compilerOptions": {
         "strict": true,
-        "noImplicitAny": true
+        "noImplicitAny": true,
+        "importsNotUsedAsValues": "preserve"
     }
 }
