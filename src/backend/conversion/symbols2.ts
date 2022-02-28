@@ -100,9 +100,7 @@ export interface Vowel<V = unknown, S = unknown> extends Segment<V, S> {
 }
 
 export interface Suffix<V = unknown, S = unknown> extends Segment<V, S> {
-  features: Readonly<{
-    canContractVowels: boolean
-  }>
+  type: SegType.suffix,
 }
 
 export interface Modifier<V = unknown, S = unknown> extends Segment<V, S> {
@@ -194,7 +192,7 @@ function consonants<
         isNull: v.isNull ?? false,
       }
     } as Consonant
-  // ])) as ReturnType<typeof consonants<T>>;
+  // ])) as ReturnType<typeof consonants<T>>;  // this works in vscode but not in 'real' typescript...
   ])) as {[K in keyof typeof o]: Consonant<ValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
 }
 
@@ -238,9 +236,6 @@ function suffixes<T extends SymbolValueAndFeaturesOf<Suffix>>(
       type: SegType.suffix,
       value: (v.value ?? k).toLowerCase(),
       symbol: v.symbol ?? k,
-      features: {
-        canContractVowels: v.canContractVowels ?? false
-      },
     } as Suffix
   // ])) as ReturnType<typeof suffixes<T>>;
   ])) as {[K in keyof typeof o]: Suffix<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
@@ -548,12 +543,10 @@ const underlying = newAlphabet({
     // -ji suffix... has to be separate from $`j.Iyy` because this one contracts preceding vowels
     Jiyy: {
       symbol: `G`,  // ha
-      features: {canContractVowels: true},
     },
     // -sh suffix (this one also contracts preceding vowels in some dialects)
     Negative: {
       symbol: `X`,  // capital X because normal sh is a lowercase x
-      features: {canContractVowels: true},
     },
   }),
   delimiters: delimiters({
