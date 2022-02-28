@@ -124,10 +124,6 @@ export interface Pronoun<P extends Ps = Ps, N extends Nb = Nb, G extends Gn = Gn
   }>
 }
 
-type BunchOfRecordsOf<U extends [string, any]> = {
-  [K in U[0]]?: Record<string, U[1]>
-};
-
 type SymbolOf<K extends keyof any, T extends {[J in K]: unknown}> = T[K] extends {symbol: string} ? T[K][`symbol`] : K;
 type ValueOf<K extends keyof any, T extends {[J in K]: unknown}> = T[K] extends {value: string} ? T[K][`value`] : K;
 // lowercase:
@@ -142,6 +138,10 @@ type SymbolValueAndFeaturesOf<T, U extends string = never> = Record<
     : SymbolValueAnd<{}>
 >;
 
+type BunchOfRecordsOf<U extends [string, any]> = {
+  [K in U[0]]?: Record<string, U[1]>
+};
+
 // TODO: fix all this redundancy
 type AllTypes = BunchOfRecordsOf<
   | [`consonants`, Consonant]
@@ -155,7 +155,8 @@ type AllTypes = BunchOfRecordsOf<
 function newAlphabet<K extends AllTypes>(
   o: $<K>
 ): K[`consonants`] & K[`vowels`] & K[`suffixes`] & K[`modifiers`] & K[`delimiters`] & K[`pronouns`] {
-  return o as unknown as ReturnType<typeof newAlphabet<K>>;
+  // return o as unknown as ReturnType<typeof newAlphabet<K>>;
+  return o as unknown as K[`consonants`] & K[`vowels`] & K[`suffixes`] & K[`modifiers`] & K[`delimiters`] & K[`pronouns`];
 }
 
 function n<T>(t: $<T>): $<T> {
@@ -193,7 +194,8 @@ function consonants<
         isNull: v.isNull ?? false,
       }
     } as Consonant
-  ])) as ReturnType<typeof consonants<T>>;
+  // ])) as ReturnType<typeof consonants<T>>;
+  ])) as {[K in keyof typeof o]: Consonant<ValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
 }
 
 function vowels<
@@ -220,7 +222,8 @@ function vowels<
         nasalized: v.nasalized ?? false,
       }
     } as Vowel
-  ])) as ReturnType<typeof vowels<T>>;
+  // ])) as ReturnType<typeof vowels<T>>;
+  ])) as {[K in keyof typeof o]: Vowel<ValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
 }
 
 function suffixes<T extends SymbolValueAndFeaturesOf<Suffix>>(
@@ -239,7 +242,8 @@ function suffixes<T extends SymbolValueAndFeaturesOf<Suffix>>(
         canContractVowels: v.canContractVowels ?? false
       },
     } as Suffix
-  ])) as ReturnType<typeof suffixes<T>>;
+  // ])) as ReturnType<typeof suffixes<T>>;
+  ])) as {[K in keyof typeof o]: Suffix<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
 }
 
 function modifiers<T extends SymbolValueAndFeaturesOf<Modifier>> (
@@ -255,7 +259,8 @@ function modifiers<T extends SymbolValueAndFeaturesOf<Modifier>> (
       value: (v.value ?? k).toLowerCase(),
       symbol: v.symbol ?? k,
     } as Modifier
-  ])) as ReturnType<typeof modifiers<T>>;
+  // ])) as ReturnType<typeof modifiers<T>>;
+  ])) as {[K in keyof typeof o]: Modifier<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
 }
 
 function delimiters<T extends SymbolValueAndFeaturesOf<Delimiter>> (
@@ -271,7 +276,8 @@ function delimiters<T extends SymbolValueAndFeaturesOf<Delimiter>> (
       value: (v.value ?? k).toLowerCase(),
       symbol: v.symbol ?? k,
     } as Delimiter
-  ])) as ReturnType<typeof delimiters<T>>;
+  // ])) as ReturnType<typeof delimiters<T>>;
+  ])) as {[K in keyof typeof o]: Delimiter<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
 }
 
 function pronouns<T extends Record<`${Ps}${Gn}${Nb}`, [Ps, Gn, Nb]>>(o: $<T>): {[K in keyof T]: T[K] extends [Ps, Gn, Nb] ? Pronoun<T[K][0], T[K][2], T[K][1]> : never} {
@@ -292,7 +298,8 @@ function pronouns<T extends Record<`${Ps}${Gn}${Nb}`, [Ps, Gn, Nb]>>(o: $<T>): {
           }
         } as Pronoun
       ])
-  ) as ReturnType<typeof pronouns<T>>;
+  // ) as ReturnType<typeof pronouns<T>>;
+  ) as {[K in keyof T]: T[K] extends [Ps, Gn, Nb] ? Pronoun<T[K][0], T[K][2], T[K][1]> : never};
 }
 
 const underlying = newAlphabet({
