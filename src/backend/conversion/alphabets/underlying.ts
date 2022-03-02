@@ -1,5 +1,5 @@
 import {Function} from "ts-toolbelt";
-import { Articulator, Location, Manner, Ps as P, Gn as G, Nb as N } from "../enums";
+import {Articulator, Location, Manner, Ps as P, Gn as G, Nb as N} from "../enums";
 import * as common from "./common";
 
 function $<T>(o: Function.Narrow<T>): Function.Narrow<T> {
@@ -294,7 +294,7 @@ export default common.newAlphabet({
   }),
   // TODO: this is a monster lol
   // gotta figure out how to generate this automatically...
-  // or at least how to only have to type each combo out once...
+  // or at least how to only have to type each combo out once
   // or at leastest how to not have to narrow() every individual thing for the compiler to be cool :/
   pronouns: common.pronouns({
     [$(`${P.first }${G.masc  }${N.singular}`)]: $([P.first,  G.masc,   N.singular]),  // -e according to loun
@@ -318,7 +318,7 @@ export default common.newAlphabet({
     [$(`${P.first }${G.common}${N.dual    }`)]: $([P.first,  G.common, N.dual    ]),
     [$(`${P.first }${G.masc  }${N.plural  }`)]: $([P.first,  G.masc,   N.plural  ]),
     [$(`${P.first }${G.fem   }${N.plural  }`)]: $([P.first,  G.fem,    N.plural  ]),
-    [$(`${P.second}${G.common}${N.singular}`)]: $([P.second, G.common, N.singular]),  // maybe in the future?
+    [$(`${P.second}${G.common}${N.singular}`)]: $([P.second, G.common, N.singular]),  // maybe in the future? (whether intentionally or just bc of -e inevitably dropping out)
     [$(`${P.second}${G.masc  }${N.dual    }`)]: $([P.second, G.masc,   N.dual    ]),
     [$(`${P.second}${G.fem   }${N.dual    }`)]: $([P.second, G.fem,    N.dual    ]),
     [$(`${P.second}${G.common}${N.dual    }`)]: $([P.second, G.common, N.dual    ]),
