@@ -1,5 +1,6 @@
+/* all hope abandon ye who enter here */
 import type {Function} from "ts-toolbelt";
-import { SegType, Ps, Gn, Nb, Articulator, Location, Manner } from "../enums";
+import {SegType, Ps, Gn, Nb, Articulator, Location, Manner} from "../enums";
 
 type $<T> = Function.Narrow<T>;
 
@@ -91,12 +92,17 @@ export type AllTypes = BunchOfRecordsOf<
   | [`pronouns`, Pronoun]
 >;
 
+export type Alphabet<T extends AllTypes = AllTypes> =
+  & T[`consonants`]
+  & T[`vowels`]
+  & T[`suffixes`]
+  & T[`modifiers`]
+  & T[`delimiters`]
+  & T[`pronouns`];
 
-export function newAlphabet<K extends AllTypes>(
-  o: $<K>
-): K[`consonants`] & K[`vowels`] & K[`suffixes`] & K[`modifiers`] & K[`delimiters`] & K[`pronouns`] {
-  // return o as unknown as ReturnType<typeof newAlphabet<K>>;
-  return o as unknown as K[`consonants`] & K[`vowels`] & K[`suffixes`] & K[`modifiers`] & K[`delimiters`] & K[`pronouns`];
+export function newAlphabet<T extends AllTypes>(o: $<T>): Alphabet<T> {
+  // return o as unknown as ReturnType<typeof newAlphabet<T>>;
+  return o as unknown as Alphabet<T>;
 }
 
 function force<T>(_: any): _ is T {
