@@ -1,5 +1,7 @@
 /* eslint-disable max-classes-per-file */
 
+type Matcher<T> = Exclude<T, Function> | ((obj: any) => boolean);
+
 export class Match {
   // eslint-disable-next-line class-methods-use-this
   matches(_other: any) {
@@ -7,10 +9,14 @@ export class Match {
   }
 }
 
-class MatchOne extends Match {
-  private matcher: (obj: Record<string, any>) => boolean;
+function verifyLiteral(o: any): o is Record<string, any> {
+  return Object.getPrototypeOf(o) === Object.prototype;
+}
 
-  constructor(obj: any) {
+class MatchOne<T> extends Match {
+  private matcher: (obj: any) => boolean;
+
+  constructor(obj: Matcher<T>) {
     super();
 
     if (obj instanceof Match) {
@@ -21,10 +27,10 @@ class MatchOne extends Match {
       this.matcher = new All(...obj).matches;
     } else if (obj instanceof Function) {
       this.matcher = obj;
-    } else if (obj instanceof Object) {
-      obj = Object.entries(obj).map(([k, v]) => [k, new MatchOne(v)]);
-      this.matcher = other => obj.every(
-        <T extends Match>([k, matcher]: [string, T]) => matcher.matches(other[k]),
+    } else if (verifyLiteral(obj)) {
+      const individualMatches = Object.entries(obj).map(([k, v]) => [k, new MatchOne(v)] as const);
+      this.matcher = other => individualMatches.every(
+        <M extends Match>([k, matcher]: readonly [string, M]) => matcher.matches(other[k]),
       );
     } else {
       this.matcher = other => obj === other;
@@ -36,16 +42,16 @@ class MatchOne extends Match {
   }
 }
 
-class Not extends MatchOne {
+class Not<T> extends MatchOne<T> {
   matches(other: any) {
     return !super.matches(other);
   }
 }
 
-class MatchMultiple extends Match {
-  protected objs: MatchOne[];
+class MatchMultiple<T> extends Match {
+  protected objs: MatchOne<T>[];
 
-  constructor(...objs: any[]) {
+  constructor(...objs: Matcher<T>[]) {
     super();
     this.objs = objs.map(obj => new MatchOne(obj));
   }
@@ -55,30 +61,30 @@ class MatchMultiple extends Match {
   }
 }
 
-class Any extends MatchMultiple {
+class Any<T> extends MatchMultiple<T> {
   matches(other: any) {
     return this.objs.some(obj => obj.matches(other));
   }
 }
 
-class None extends Any {
+class None<T> extends Any<T> {
   matches(other: any) {
     return !super.matches(other);
   }
 }
 
-class All extends MatchMultiple {
+class All<T> extends MatchMultiple<T> {
   matches(other: any) {
     return this.objs.every(obj => obj.matches(other));
   }
 }
 
 export default Object.assign(
-  (obj: any) => new MatchOne(obj),
+  <T>(obj: Matcher<T>) => new MatchOne(obj),
   {
-    not(obj: any) { return new Not(obj); },
-    any(...objs: any[]) { return new Any(...objs); },
-    none(...objs: any[]) { return new None(...objs); },
-    all(...objs: any[]) { return new All(...objs); },
+    not<T>(obj: Matcher<T>) { return new Not(obj); },
+    any<T>(...objs: Matcher<T>[]) { return new Any(...objs); },
+    none<T>(...objs: Matcher<T>[]) { return new None(...objs); },
+    all<T>(...objs: Matcher<T>[]) { return new All(...objs); },
   },
 );
