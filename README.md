@@ -4,7 +4,7 @@ This project isn't finished, but I wanted to have something to show for it while
 Hope this README helps explain some stuff!
 
 The short writeup is that I'm trying to make a dictionary,
-and this is an attempt to reimagine the way dictionaries handle pronunciation. The
+and this is an attempt to rework the way dictionaries handle pronunciation. The
 medium writeup is on [the project's homepage](https://write.lebn.xyz). The long writeup is write up
 next.
 
