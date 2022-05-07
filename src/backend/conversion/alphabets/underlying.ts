@@ -1,228 +1,505 @@
-import {Function} from "ts-toolbelt";
-import {Articulator, Location, Manner, Ps as P, Gn as G, Nb as N} from "../enums";
-import * as common from "./common";
+/* eslint-disable template-curly-spacing */
+/* eslint-disable no-multi-spaces */
+import {Function, Union} from "ts-toolbelt";
+import {_, Base, newAlphabet} from "./common";
+import {
+  Of, toEnum,
+  Articulator, Location, Manner,
+  $Articulator, $Location, $Manner,
+  $Ps as $P, $Gn as $G, $Nb as $N,
+  Ps, Gn, Nb,
+} from "../enums";
 
-function $<T>(o: Function.Narrow<T>): Function.Narrow<T> {
-  return o;
+type $<T> = Function.Narrow<T>;
+
+export type SegTypes = {
+  consonant: Consonant
+  vowel: Vowel
+  suffix: Suffix
+  modifier: Modifier
+  delimiter: Delimiter
+  pronoun: Pronoun
+};
+// I really hate this duplication
+// I could use EnumOf<`underlying`, keyof SegTypes> to generate the type,
+// but even then I'd still have to use a string literal for the value here
+export const $SegType = toEnum(`underlying`, `
+  consonant
+  vowel
+  suffix
+  modifier
+  delimiter
+  pronoun
+`);
+export type SegType = typeof $SegType;
+
+export interface Segment<V, S> extends Base<SegType[keyof SegType], V> {
+  type: SegType[keyof SegType],
+  meta?: Record<string, any>,
+  features?: Readonly<Record<string, any>>,
+  value: V,
+  symbol: S
 }
 
-export default common.newAlphabet({
-  consonants: common.consonants({
+type Widen<T> =
+  T extends boolean ? boolean
+  : T extends number ? number
+  : T extends string ? string
+  : T;
+
+type OrElse<T, Default> = T extends Widen<Default> ? T : Default;
+type FillDefaults<Values, Types> = {
+  // Below, I'm using the ? modifier as a hacky shorthand for "widen this type if
+  // I haven't been given anything to fill it in with"
+  // so for example `emphatic?: false` means "Default to `false` if I've been
+  // given a set of features and `emphatic` isn't in there, but if I haven't,
+  // default to `Widen<false>` == `boolean`"
+  // Whereas `articulator: Articulator[keyof Articulator]` ONLY means "Default
+  // to Articulator[keyof Articulator]" and NEVER widens to string because I
+  // haven't introduced it with `articulator?:`
+  // This will probably fall apart and I'll have to come up with an actual
+  // readable way to indicate "widen this in such-and-such case" or "don't widen
+  // this in such-and-such case" but it's cool for now
+  // --
+  // `undefined extends Types[K]` means Types[K] has the question mark
+  [K in keyof Types]-?: [unknown, undefined] extends [Values, Types[K]]
+    // I don't have to Widen<Exclude<Types[K], undefined>> here because the
+    // conditional type in Widen<...> will automatically distribute & handle the
+    // actual thing and the `undefined` separately
+    // And then the `undefined` will be discarded anyway because see below
+    ? Widen<Types[K]>
+    // I don't have to `Exclude<..., undefined>` here because the `-?` above automatically
+    // does that if the original key was written with `?`
+    : K extends keyof Values ? OrElse<Values[K], Types[K]> : Types[K]
+};
+
+export interface Consonant<V = unknown, S = unknown, Features = unknown> extends Segment<V, S> {
+  type: SegType[`consonant`],
+  meta: {
+    weak: boolean,
+  },
+  features: Readonly<FillDefaults<Features, {
+    emphatic?: false,
+    semivocalic?: false,
+    voiced?: false,
+    isNull?: false,
+    articulator: Articulator[keyof Articulator],
+    location: Location[keyof Location],
+    manner: Manner[keyof Manner]
+  }>>
+}
+
+export interface Vowel<V = unknown, S = unknown, Features = unknown> extends Segment<V, S> {
+  type: SegType[`vowel`],
+  meta: {
+    lengthOffset: number,
+    stressed: boolean,
+  },
+  features: Readonly<FillDefaults<Features, {
+    length: V extends {length: number} ? V[`length`] : number,
+    diphthongal?: false,
+    rounded?: false,
+    nasalized?: false,
+  }>>
+}
+
+export interface Suffix<V = unknown, S = unknown> extends Segment<V, S> {
+  type: SegType[`suffix`],
+}
+
+export interface Modifier<V = unknown, S = unknown> extends Segment<V, S> {
+  type: SegType[`modifier`],
+  features?: {}
+}
+
+export interface Delimiter<V = unknown, S = unknown> extends Segment<V, S> {
+  type: SegType[`delimiter`],
+  features?: {}
+}
+
+export interface Pronoun<P extends Ps[keyof Ps] = Ps[keyof Ps], N extends Nb[keyof Nb] = Nb[keyof Nb], G extends Gn[keyof Gn] = Gn[keyof Gn]> extends Segment<`${P}${G}${N}`, undefined> {
+  type: SegType[`pronoun`],
+  features: Readonly<{
+    person: P,
+    number: N,
+    gender: G
+  }>
+}
+
+export type SymbolOf<K extends keyof any, T extends Record<K, unknown>> = T[K] extends {symbol: string} ? T[K][`symbol`] : K;
+export type ValueOf<K extends keyof any, T extends Record<K, unknown>> = T[K] extends {value: string} ? T[K][`value`] : K;
+// lowercase:
+export type LowercaseSymbolOf<K extends keyof any, T extends Record<K, unknown>> = K extends string ? Lowercase<SymbolOf<K, T>> : SymbolOf<K, T>;
+export type LowercaseValueOf<K extends keyof any, T extends Record<K, unknown>> = K extends string ? Lowercase<ValueOf<K, T>> : ValueOf<K, T>;
+
+export type SymbolValueAnd<T> = {symbol?: string, value?: string} & T;
+export type SymbolValueAndFeaturesOf<T, U extends string = never> = Record<
+  string,
+  T extends {features: Readonly<Record<string, unknown>>}
+    ? SymbolValueAnd<Partial<T[`features`]>> & Pick<T[`features`], U>
+    : SymbolValueAnd<{}>
+>;
+
+function force<T>(_o: any): _o is T {
+  return true;
+}
+
+export function consonants<
+  T extends SymbolValueAndFeaturesOf<Consonant, `articulator` | `location` | `manner`>,
+>(
+  o: $<T>,
+): $<{[K in keyof typeof o]: Consonant<ValueOf<K, typeof o>, SymbolOf<K, typeof o>, {voiced: true}>}> {
+  if (!force<T>(o)) {  // for type inference unfortunately
+    throw new Error(`a function whose one job is to return true returned false`);
+  }
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => [
+    k,
+    {
+      type: $SegType.consonant,
+      value: v.value ?? k,
+      symbol: v.symbol ?? k,
+      meta: {
+        weak: false,
+      },
+      features: {
+        articulator: v.articulator,
+        location: v.location,
+        manner: v.manner,
+        emphatic: v.emphatic ?? false,
+        semivocalic: v.semivocalic ?? false,
+        voiced: v.voiced ?? false,
+        isNull: v.isNull ?? false,
+      },
+    } as Consonant,
+  // ])) as ReturnType<typeof consonants<T>>;  // this works in vscode but not in 'real' typescript...
+  // ])) as {[K in keyof typeof o]: Consonant<ValueOf<K, typeof o>, SymbolOf<K, typeof o>, typeof o[K]>};
+  ])) as any;
+}
+
+export function vowels<
+  T extends SymbolValueAndFeaturesOf<Vowel>,
+>(
+  o: $<T>,
+): $<{[K in keyof typeof o]: Vowel<ValueOf<K, typeof o>, SymbolOf<K, typeof o>, typeof o[K]>}> {
+  if (!force<T>(o)) {  // for type inference unfortunately
+    throw new Error(`a function whose one job is to return true returned false`);
+  }
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => [
+    k,
+    {
+      type: $SegType.vowel,
+      value: v.value ?? k,
+      symbol: v.symbol ?? k,
+      meta: {
+        lengthOffset: 0, // 1 = elongated, -1 = contracted (don't think this is useful but it was already there lol)
+        stressed: false,
+      },
+      features: {
+        length: v.length ?? k.length,
+        diphthongal: v.diphthongal ?? false,
+        nasalized: v.nasalized ?? false,
+        rounded: v.rounded ?? false,
+      },
+    } as Vowel,
+  // ])) as ReturnType<typeof vowels<T>>;
+  // ])) as {[K in keyof typeof o]: Vowel<ValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
+  ])) as any;
+}
+
+export function suffixes<T extends SymbolValueAndFeaturesOf<Suffix>>(
+  o: $<T>,
+): {[K in keyof typeof o]: Suffix<LowercaseValueOf<K, $<T>>, SymbolOf<K, $<T>>>} {
+  if (!force<T>(o)) {
+    throw new Error(`a function whose one job is to return true returned false`);
+  }
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => [
+    k,
+    {
+      type: $SegType.suffix,
+      value: (v.value ?? k).toLowerCase(),
+      symbol: v.symbol ?? k,
+    } as Suffix,
+  // ])) as ReturnType<typeof suffixes<T>>;
+  ])) as {[K in keyof typeof o]: Suffix<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
+}
+
+export function modifiers<T extends SymbolValueAndFeaturesOf<Modifier>>(
+  o: $<T>,
+): $<{[K in keyof typeof o]: Modifier<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>}> {
+  if (!force<T>(o)) {
+    throw new Error(`a function whose one job is to return true returned false`);
+  }
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => [
+    k,
+    {
+      type: $SegType.modifier,
+      value: (v.value ?? k).toLowerCase(),
+      symbol: v.symbol ?? k,
+    } as Modifier,
+  // ])) as ReturnType<typeof modifiers<T>>;
+  // ])) as {[K in keyof typeof o]: Modifier<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
+  ])) as any;
+}
+
+export function delimiters<T extends SymbolValueAndFeaturesOf<Delimiter>>(
+  o: $<T>,
+): $<{[K in keyof typeof o]: Delimiter<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>}> {
+  if (!force<T>(o)) {
+    throw new Error(`a function whose one job is to return true returned false`);
+  }
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => [
+    k,
+    {
+      type: $SegType.delimiter,
+      value: (v.value ?? k).toLowerCase(),
+      symbol: v.symbol ?? k,
+    } as Delimiter,
+  // ])) as ReturnType<typeof delimiters<T>>;
+  // ])) as {[K in keyof typeof o]: Delimiter<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>};
+  ])) as any;
+}
+
+type PronounString<S> =
+  S extends `${infer P}${infer G}${infer N}` ?
+    P extends Ps[keyof Ps] ? G extends Gn[keyof Gn] ? N extends Nb[keyof Nb]
+      ? Pronoun<P, N, G>
+      : never : never : never
+    : never;
+type PronounStringArray<T extends string[]> = {[K in T[Union.Select<keyof T, number>]]: PronounString<K>};
+
+export function pronouns<T extends `${Ps[keyof Ps]}${Gn[keyof Gn]}${Nb[keyof Nb]}`[]>(p: T): PronounStringArray<T> {
+  // force() doesn't really work here, maybe because the type is more convoluted?
+  return Object.fromEntries(
+    p.map(s => [s, {
+        type: $SegType.pronoun,
+        value: s,
+        /* symbol: none */
+        features: {
+          person: s[0],
+          gender: s[1],
+          number: s[2],
+        },
+      } as PronounString<typeof s>]),
+  ) as PronounStringArray<T>;
+}
+
+export default newAlphabet(<SegTypes> _, {
+  consonant: consonants({
     // FIXME: these individual entries don't have typechecking that lights up bad keys...
     h: {
-      location: Location.glottis,
-      articulator: Articulator.throat,
-      manner: Manner.fricative,
+      location: $Location.glottis,
+      articulator: $Articulator.throat,
+      manner: $Manner.fricative,
       voiced: false,
     },
     2: {
-      location: Location.glottis,
-      articulator: Articulator.throat,
-      manner: Manner.plosive,
+      location: $Location.glottis,
+      articulator: $Articulator.throat,
+      manner: $Manner.plosive,
       voiced: false,
     },
     7: {
-      location: Location.pharynx,
-      articulator: Articulator.throat,
-      manner: Manner.fricative,
+      location: $Location.pharynx,
+      articulator: $Articulator.throat,
+      manner: $Manner.fricative,
       voiced: false,
     },
     3: {
-      location: Location.pharynx,
-      articulator: Articulator.throat,
-      manner: Manner.approximant,
+      location: $Location.pharynx,
+      articulator: $Articulator.throat,
+      manner: $Manner.approximant,
       voiced: true,
     },
     5: {
-      location: Location.uvula,
-      articulator: Articulator.tongue,
-      manner: Manner.fricative,
+      location: $Location.uvula,
+      articulator: $Articulator.tongue,
+      manner: $Manner.fricative,
       voiced: false,
     },
     gh: {
       symbol: `9`,
-      location: Location.uvula,
-      articulator: Articulator.tongue,
-      manner: Manner.fricative,
+      location: $Location.uvula,
+      articulator: $Articulator.tongue,
+      manner: $Manner.fricative,
       voiced: true,
     },
     q: {
-      location: Location.uvula,
-      articulator: Articulator.tongue,
-      manner: Manner.plosive,
+      location: $Location.uvula,
+      articulator: $Articulator.tongue,
+      manner: $Manner.plosive,
       voiced: false,
     },
     k: {
-      location: Location.velum,
-      articulator: Articulator.tongue,
-      manner: Manner.plosive,
+      location: $Location.velum,
+      articulator: $Articulator.tongue,
+      manner: $Manner.plosive,
       voiced: false,
     },
     g: {
-      location: Location.velum,
-      articulator: Articulator.tongue,
-      manner: Manner.plosive,
+      location: $Location.velum,
+      articulator: $Articulator.tongue,
+      manner: $Manner.plosive,
       voiced: true,
     },
     y: {
-      location: Location.palate,
-      articulator: Articulator.tongue,
-      manner: Manner.approximant,
+      location: $Location.palate,
+      articulator: $Articulator.tongue,
+      manner: $Manner.approximant,
       voiced: true,
       semivocalic: true,
     },
     sh: {
       symbol: `x`,
-      location: Location.bridge,
-      articulator: Articulator.tongue,
-      manner: Manner.fricative,
+      location: $Location.bridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.fricative,
       voiced: false,
     },
     j: {
-      location: Location.bridge,
-      articulator: Articulator.tongue,
-      manner: Manner.fricative,
+      location: $Location.bridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.fricative,
       voiced: true,
     },
     r: {
-      location: Location.ridge,
-      articulator: Articulator.tongue,
-      manner: Manner.flap,
+      location: $Location.ridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.flap,
       voiced: true,
     },
     R: {  // the """""""emphatic""""""""" r
-      location: Location.ridge,
-      articulator: Articulator.tongue,
-      manner: Manner.flap,
+      location: $Location.ridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.flap,
       voiced: true,
     },
     l: {
-      location: Location.ridge,
-      articulator: Articulator.tongue,
-      manner: Manner.approximant,  // lateral don't real
+      location: $Location.ridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.approximant,  // lateral don't real
       voiced: true,
     },
     s: {
-      location: Location.ridge,
-      articulator: Articulator.tongue,
-      manner: Manner.fricative,
+      location: $Location.ridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.fricative,
       voiced: false,
     },
     Z: { // to be used for z <- S (i guess :/)
-      location: Location.ridge,
-      articulator: Articulator.tongue,
-      manner: Manner.fricative,
+      location: $Location.ridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.fricative,
       voiced: true,
     },
     z: {
-      location: Location.ridge,
-      articulator: Articulator.tongue,
-      manner: Manner.fricative,
+      location: $Location.ridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.fricative,
       voiced: true,
     },
     n: {
-      location: Location.ridge,
-      articulator: Articulator.tongue,
-      manner: Manner.nasal,
+      location: $Location.ridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.nasal,
       voiced: true,
     },
     t: {
-      location: Location.ridge,
-      articulator: Articulator.tongue,
-      manner: Manner.plosive,
+      location: $Location.ridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.plosive,
       voiced: false,
     },
     d: {
-      location: Location.ridge,
-      articulator: Articulator.tongue,
-      manner: Manner.plosive,
+      location: $Location.ridge,
+      articulator: $Articulator.tongue,
+      manner: $Manner.plosive,
       voiced: true,
     },
     th: {
       symbol: `8`,
-      location: Location.teeth,
-      articulator: Articulator.tongue,
-      manner: Manner.fricative,
+      location: $Location.teeth,
+      articulator: $Articulator.tongue,
+      manner: $Manner.fricative,
       voiced: false,
     },
     dh: {
       symbol: `6`,
-      location: Location.teeth,
-      articulator: Articulator.tongue,
-      manner: Manner.fricative,
+      location: $Location.teeth,
+      articulator: $Articulator.tongue,
+      manner: $Manner.fricative,
       voiced: true,
     },
     f: {
-      location: Location.teeth,
-      articulator: Articulator.lips,
-      manner: Manner.fricative,
+      location: $Location.teeth,
+      articulator: $Articulator.lips,
+      manner: $Manner.fricative,
       voiced: false,
     },
     v: {
-      location: Location.teeth,
-      articulator: Articulator.lips,
-      manner: Manner.fricative,
+      location: $Location.teeth,
+      articulator: $Articulator.lips,
+      manner: $Manner.fricative,
       voiced: true,
     },
     w: {
-      location: Location.lips,
-      articulator: Articulator.lips,
-      manner: Manner.approximant,
+      location: $Location.lips,
+      articulator: $Articulator.lips,
+      manner: $Manner.approximant,
       voiced: true,
       semivocalic: true,
     },
     m: {
-      location: Location.lips,
-      articulator: Articulator.lips,
-      manner: Manner.nasal,
+      location: $Location.lips,
+      articulator: $Articulator.lips,
+      manner: $Manner.nasal,
       voiced: true,
     },
     b: {
-      location: Location.lips,
-      articulator: Articulator.lips,
-      manner: Manner.plosive,
+      location: $Location.lips,
+      articulator: $Articulator.lips,
+      manner: $Manner.plosive,
       voiced: true,
     },
     p: {
-      location: Location.lips,
-      articulator: Articulator.lips,
-      manner: Manner.plosive,
+      location: $Location.lips,
+      articulator: $Articulator.lips,
+      manner: $Manner.plosive,
       voiced: false,
-    }
+    },
   }),
-  vowels: common.vowels({
-      a: {symbol: `a`},
-      aa: {symbol: `A`},
-      AA: {symbol: `&`},  // lowered aa, like in شاي
-      ae: {symbol: `{`},  // (possibly supplanted by ^) 'foreign' ae, like in نان or فادي (hate xsampa for making { a reasonable way to represent this lmao)
-    
-      I: {symbol: `1`},  /* lax i, specifically for unstressed open syllables
-                          * like null<i<a when still in the medial stage, e.g. for ppl with kitIr كتير
-                          * aaand for stuff like mixYk/mixEke and mixAn (when not something like mxYk and mxAn)
-                          */
-      i: {symbol: `i`},  // default unspecified-tenseness i (= kasra)
-      ii: {symbol: `I`},
-    
-      U: {symbol: `0`},  /* lax u, specifically for unstressed open syllables
-                          * like l08C instead of lu8C (is that a thing?)
-                          */
-      u: {symbol: `u`},  // default unspecified-tenseness u (= damme)
-      uu: {symbol: `U`},
-    
-      e: {symbol: `e`},  /* word-final for *-a, like hYdIke
-                          * plus undecided on e.g. hEdIk vs hedIk (or just hYdIk?) for the short pron of هيديك
-                          * .......or h1dIk lol
-                          * also for loans like fetta فتا or elI" إيلي
-                          */
-      ee: {symbol: `E`},
-    
-      o: {symbol: `o`},  // motEr?
-      oo: {symbol: `O`},
-    
-      ay: {symbol: `Y`, diphthongal: true},
-      aw: {symbol: `W`, diphthongal: true}
+  vowel: vowels({
+    a: {symbol: `a`},
+    aa: {symbol: `A`},
+    AA: {symbol: `&`},  // lowered aa, like in شاي
+    ae: {symbol: `{`},  // (possibly supplanted by ^) 'foreign' ae, like in نان or فادي (hate xsampa for making { a reasonable way to represent this lmao)
+
+    I: {symbol: `1`},  /* lax i, specifically for unstressed open syllables
+                        * like null<i<a when still in the medial stage, e.g. for ppl with kitIr كتير
+                        * aaand for stuff like mixYk/mixEke and mixAn (when not something like mxYk and mxAn)
+                        */
+    i: {symbol: `i`},  // default unspecified-tenseness i (= kasra)
+    ii: {symbol: `I`},
+
+    U: {symbol: `0`},  /* lax u, specifically for unstressed open syllables
+                        * like l08C instead of lu8C (is that a thing?)
+                        */
+    u: {symbol: `u`},  // default unspecified-tenseness u (= damme)
+    uu: {symbol: `U`},
+
+    e: {symbol: `e`},  /* word-final for *-a, like hYdIke
+                        * plus undecided on e.g. hEdIk vs hedIk (or just hYdIk?) for the short pron of هيديك
+                        * .......or h1dIk lol
+                        * also for loans like fetta فتا or elI" إيلي
+                        */
+    ee: {symbol: `E`},
+
+    o: {symbol: `o`},  // motEr?
+    oo: {symbol: `O`},
+
+    ay: {symbol: `Y`, diphthongal: true},
+    aw: {symbol: `W`, diphthongal: true},
   }),
-  suffixes: common.suffixes({
+  suffix: suffixes({
     // fem suffix is its own thing bc -a vs -e vs -i variation
     c: {value: `fem`},
     // not sure if this is a good idea?
@@ -258,7 +535,7 @@ export default common.newAlphabet({
       symbol: `X`,  // capital X because normal sh is a lowercase x
     },
   }),
-  delimiters: common.delimiters({
+  delimiter: delimiters({
     Of: {  // introduces idafe pronouns
       symbol: `-`,
       value: `genitive`,
@@ -274,9 +551,9 @@ export default common.newAlphabet({
       symbol: `|`,
     },
   }),
-  modifiers: common.modifiers({
+  modifier: modifiers({
     Emphatic: {
-      symbol: `*`
+      symbol: `*`,
     },
     Stressed: {  // goes after the stressed vowel; only use if the word's stress is not automatic
       symbol: `"`,
@@ -284,47 +561,47 @@ export default common.newAlphabet({
     Nasalized: {  // nasalized and, if final, stressed; 2ONrI" lOsyON kappitAN
       symbol: `N`,
     },
-    // marks something as fus7a (goes into ctx i guess)
+    // marks something as fus7a or like elevated (goes into ctx i guess)
     // e.g. for me T = /t/ while T^ = /s/ (and both are interdental for someone who preserves interdentals)
     // or -I = /e/ while -I^ = /i/
-    // i guess this actually supplants ae because I can do aa^ instead... might still be useful for loans like نان though?
+    // orr 3Y^n = /3ayn/ (letter name) while 3Yn = /3e:n/ (eye)
+    // also gonna use this for `hY^k (l yWm)`
+    // i guess this actually supplants `ae` because I can do aa^ instead...
+    // ae could maybe still be useful for loans like نان though? not sure
+    // in any case having too many symbols is great, too little is worse
     Fus7a: {
       symbol: `^`,
     },
   }),
-  // TODO: this is a monster lol
-  // gotta figure out how to generate this automatically...
-  // or at least how to only have to type each combo out once
-  // or at leastest how to not have to narrow() every individual thing for the compiler to be cool :/
-  pronouns: common.pronouns({
-    [$(`${P.first }${G.masc  }${N.singular}`)]: $([P.first,  G.masc,   N.singular]),  // -e according to loun
-    [$(`${P.first }${G.fem   }${N.singular}`)]: $([P.first,  G.fem,    N.singular]),  // -i according to loun
-    [$(`${P.first }${G.common}${N.singular}`)]: $([P.first,  G.common, N.singular]),  // the normal neutral one idk
-    [$(`${P.first }${G.common}${N.plural  }`)]: $([P.first,  G.common, N.plural  ]),
-    [$(`${P.second}${G.masc  }${N.singular}`)]: $([P.second, G.masc,   N.singular]),
-    [$(`${P.second}${G.fem   }${N.singular}`)]: $([P.second, G.fem,    N.singular]),
-    [$(`${P.second}${G.masc  }${N.plural  }`)]: $([P.second, G.masc,   N.plural  ]),    // -kVm in case it exists in some southern dialect
-    [$(`${P.second}${G.fem   }${N.plural  }`)]: $([P.second, G.fem,    N.plural  ]),    // ditto but -kVn
-    [$(`${P.second}${G.common}${N.plural  }`)]: $([P.second, G.common, N.plural  ]),
-    [$(`${P.third }${G.masc  }${N.singular}`)]: $([P.third,  G.masc,   N.singular]),
-    [$(`${P.third }${G.fem   }${N.singular}`)]: $([P.third,  G.fem,    N.singular]),
-    [$(`${P.third }${G.masc  }${N.plural  }`)]: $([P.third,  G.masc,   N.plural  ]),    // ditto but -(h)Vm
-    [$(`${P.third }${G.fem   }${N.plural  }`)]: $([P.third,  G.fem,    N.plural  ]),    // ditto but -(h)Vn
-    [$(`${P.third }${G.common}${N.plural  }`)]: $([P.third,  G.common, N.plural  ]),
-  
+  pronoun: pronouns([
+    `${$P.first }${$G.masc  }${$N.singular}`,  // -e according to loun
+    `${$P.first }${$G.fem   }${$N.singular}`,  // -i according to loun
+    `${$P.first }${$G.common}${$N.singular}`,  // the normal neutral one idk
+    `${$P.first }${$G.common}${$N.plural  }`,
+    `${$P.second}${$G.masc  }${$N.singular}`,
+    `${$P.second}${$G.fem   }${$N.singular}`,
+    `${$P.second}${$G.masc  }${$N.plural  }`,    // -kVm in case it exists in some southern dialect
+    `${$P.second}${$G.fem   }${$N.plural  }`,    // ditto but -kVn
+    `${$P.second}${$G.common}${$N.plural  }`,
+    `${$P.third }${$G.masc  }${$N.singular}`,
+    `${$P.third }${$G.fem   }${$N.singular}`,
+    `${$P.third }${$G.masc  }${$N.plural  }`,    // ditto but -(h)Vm
+    `${$P.third }${$G.fem   }${$N.plural  }`,    // ditto but -(h)Vn
+    `${$P.third }${$G.common}${$N.plural  }`,
+
     /* forms that don't exist */
-    [$(`${P.first }${G.masc  }${N.dual    }`)]: $([P.first,  G.masc,   N.dual    ]),
-    [$(`${P.first }${G.fem   }${N.dual    }`)]: $([P.first,  G.fem,    N.dual    ]),
-    [$(`${P.first }${G.common}${N.dual    }`)]: $([P.first,  G.common, N.dual    ]),
-    [$(`${P.first }${G.masc  }${N.plural  }`)]: $([P.first,  G.masc,   N.plural  ]),
-    [$(`${P.first }${G.fem   }${N.plural  }`)]: $([P.first,  G.fem,    N.plural  ]),
-    [$(`${P.second}${G.common}${N.singular}`)]: $([P.second, G.common, N.singular]),  // maybe in the future? (whether intentionally or just bc of -e inevitably dropping out)
-    [$(`${P.second}${G.masc  }${N.dual    }`)]: $([P.second, G.masc,   N.dual    ]),
-    [$(`${P.second}${G.fem   }${N.dual    }`)]: $([P.second, G.fem,    N.dual    ]),
-    [$(`${P.second}${G.common}${N.dual    }`)]: $([P.second, G.common, N.dual    ]),
-    [$(`${P.third }${G.common}${N.singular}`)]: $([P.third,  G.common, N.singular]),  // maybe in the future?
-    [$(`${P.third }${G.masc  }${N.dual    }`)]: $([P.third,  G.masc,   N.dual    ]),
-    [$(`${P.third }${G.fem   }${N.dual    }`)]: $([P.third,  G.fem,    N.dual    ]),
-    [$(`${P.third }${G.common}${N.dual    }`)]: $([P.third,  G.common, N.dual    ]),
-  })
+    `${$P.first }${$G.masc  }${$N.dual    }`,
+    `${$P.first }${$G.fem   }${$N.dual    }`,
+    `${$P.first }${$G.common}${$N.dual    }`,
+    `${$P.first }${$G.masc  }${$N.plural  }`,
+    `${$P.first }${$G.fem   }${$N.plural  }`,
+    `${$P.second}${$G.common}${$N.singular}`,  // maybe in the future? (whether intentionally or just bc of -e inevitably dropping out)
+    `${$P.second}${$G.masc  }${$N.dual    }`,
+    `${$P.second}${$G.fem   }${$N.dual    }`,
+    `${$P.second}${$G.common}${$N.dual    }`,
+    `${$P.third }${$G.common}${$N.singular}`,  // maybe in the future?
+    `${$P.third }${$G.masc  }${$N.dual    }`,
+    `${$P.third }${$G.fem   }${$N.dual    }`,
+    `${$P.third }${$G.common}${$N.dual    }`,
+  ]),
 });
