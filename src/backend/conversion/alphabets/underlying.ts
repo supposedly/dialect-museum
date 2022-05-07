@@ -3,12 +3,14 @@
 import {Function, Union} from "ts-toolbelt";
 import {_, Base, newAlphabet} from "./common";
 import {
-  Of, toEnum,
+  Of, EnumOf, toEnum,
   Articulator, Location, Manner,
   $Articulator, $Location, $Manner,
   $Ps as $P, $Gn as $G, $Nb as $N,
   Ps, Gn, Nb,
 } from "../enums";
+
+export const NAME = `underlying`;
 
 type $<T> = Function.Narrow<T>;
 
@@ -20,10 +22,9 @@ export type SegTypes = {
   delimiter: Delimiter
   pronoun: Pronoun
 };
-// I really hate this duplication
-// I could use EnumOf<`underlying`, keyof SegTypes> to generate the type,
-// but even then I'd still have to use a string literal for the value here
-export const $SegType = toEnum(`underlying`, `
+// Not a fan of this duplication
+// At least I can use EnumOf<...> to statically verify it but still :/
+export const $SegType: EnumOf<typeof NAME, keyof SegTypes> = toEnum(NAME, `
   consonant
   vowel
   suffix
@@ -33,8 +34,8 @@ export const $SegType = toEnum(`underlying`, `
 `);
 export type SegType = typeof $SegType;
 
-export interface Segment<V, S> extends Base<SegType[keyof SegType], V> {
-  type: SegType[keyof SegType],
+export interface Segment<V, S> extends Base<Of<SegType>, V> {
+  type: Of<SegType>,
   meta?: Record<string, any>,
   features?: Readonly<Record<string, any>>,
   value: V,
@@ -54,8 +55,8 @@ type FillDefaults<Values, Types> = {
   // so for example `emphatic?: false` means "Default to `false` if I've been
   // given a set of features and `emphatic` isn't in there, but if I haven't,
   // default to `Widen<false>` == `boolean`"
-  // Whereas `articulator: Articulator[keyof Articulator]` ONLY means "Default
-  // to Articulator[keyof Articulator]" and NEVER widens to string because I
+  // Whereas `articulator: Of<Articulator>` ONLY means "Default
+  // to Of<Articulator>" and NEVER widens to string because I
   // haven't introduced it with `articulator?:`
   // This will probably fall apart and I'll have to come up with an actual
   // readable way to indicate "widen this in such-and-such case" or "don't widen
@@ -83,9 +84,9 @@ export interface Consonant<V = unknown, S = unknown, Features = unknown> extends
     semivocalic?: false,
     voiced?: false,
     isNull?: false,
-    articulator: Articulator[keyof Articulator],
-    location: Location[keyof Location],
-    manner: Manner[keyof Manner]
+    articulator: Of<Articulator>,
+    location: Of<Location>,
+    manner: Of<Manner>
   }>>
 }
 
@@ -117,7 +118,7 @@ export interface Delimiter<V = unknown, S = unknown> extends Segment<V, S> {
   features?: {}
 }
 
-export interface Pronoun<P extends Ps[keyof Ps] = Ps[keyof Ps], N extends Nb[keyof Nb] = Nb[keyof Nb], G extends Gn[keyof Gn] = Gn[keyof Gn]> extends Segment<`${P}${G}${N}`, undefined> {
+export interface Pronoun<P extends Of<Ps> = Of<Ps>, N extends Of<Nb> = Of<Nb>, G extends Of<Gn> = Of<Gn>> extends Segment<`${P}${G}${N}`, undefined> {
   type: SegType[`pronoun`],
   features: Readonly<{
     person: P,
@@ -261,13 +262,13 @@ export function delimiters<T extends SymbolValueAndFeaturesOf<Delimiter>>(
 
 type PronounString<S> =
   S extends `${infer P}${infer G}${infer N}` ?
-    P extends Ps[keyof Ps] ? G extends Gn[keyof Gn] ? N extends Nb[keyof Nb]
+    P extends Of<Ps> ? G extends Of<Gn> ? N extends Of<Nb>
       ? Pronoun<P, N, G>
       : never : never : never
     : never;
 type PronounStringArray<T extends string[]> = {[K in T[Union.Select<keyof T, number>]]: PronounString<K>};
 
-export function pronouns<T extends `${Ps[keyof Ps]}${Gn[keyof Gn]}${Nb[keyof Nb]}`[]>(p: T): PronounStringArray<T> {
+export function pronouns<T extends `${Of<Ps>}${Of<Gn>}${Of<Nb>}`[]>(p: T): PronounStringArray<T> {
   // force() doesn't really work here, maybe because the type is more convoluted?
   return Object.fromEntries(
     p.map(s => [s, {
