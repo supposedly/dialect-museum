@@ -1,4 +1,4 @@
-import { Any, List, Union, Function as Func, Object as Obj } from 'ts-toolbelt';
+import {Any, List, Union, Object as Obj} from 'ts-toolbelt';
 
 export enum DepType {
   /* constant dependencies */
@@ -39,8 +39,6 @@ export type ShiftOne<L extends OrderedObj> = List.Zip<
   List.Tail<ValuesOf<L>>
 >;
 
-// I spent a lot of time on this but it's not actually useful hah
-
 export type MergeObjs<L extends List.List<Record<string, any>>> = Obj.MergeAll<List.Head<L>, List.Tail<L>>;
 
 type OrderedObjOfWithDupes<L extends List.List<Record<string, any>>, T extends 'keys' | 'values' | 'entries' = 'entries'> = Obj.ListOf<{
@@ -53,7 +51,7 @@ type OrderedObjOfWithDupes<L extends List.List<Record<string, any>>, T extends '
 }>;
 
 export type OrderedObjOf<L extends List.List<Record<string, any>>, T extends 'keys' | 'values' | 'entries' = 'entries'> =
-  // ensure there are no duplicates (but anything else this could do is eclipsed by the "1 item long" check above!)
+  // ensure there are no duplicates (and anything else this could do is eclipsed by the "1 item long" check above!)
   List.Length<Union.ListOf<keyof MergeObjs<L>>> extends List.Length<L>
     ? OrderedObjOfWithDupes<L, T>
     : never;
