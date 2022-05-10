@@ -23,7 +23,7 @@ before I was born (a couple decades ago) and came into existence just a little b
 (a couple centuries ago), making it one of the oldest and foremost dictionaries of English.
 It's spent most of that life being the best ink-and-paper dictionary it could possibly be.
 
-So that's the paper OED. And the online one? It's pretty much the same exact thing. There's almost no difference between it and
+So that's the printed Oxford English Dictionary. And the online one? It's pretty much the same exact thing. There's almost no difference between it and
 the experience you get from the book version.
 
 It makes sense. Oxford does know what they're doing when it comes to dictionaries (and possibly other things),
