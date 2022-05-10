@@ -23,6 +23,10 @@
     }
   ],
   "rules": {
+    "max-len": [
+      "warn",
+      120
+    ],
     "linebreak-style": "off",
     "max-classes-per-file": [
       "warn",
@@ -83,6 +87,17 @@
       }
     ],
     "lines-between-class-members": "off",
+    "@typescript-eslint/naming-convention": [
+      "warn",
+      {
+        "selector": "typeLike",
+        "format": [
+          "PascalCase"
+        ],
+        "leadingUnderscore": "allow",
+      }
+    ],
+    "@typescript-eslint/indent": "off",
     "@typescript-eslint/lines-between-class-members": [
       "error",
       "always",

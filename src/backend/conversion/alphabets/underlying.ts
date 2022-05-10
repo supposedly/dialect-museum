@@ -42,6 +42,11 @@ export interface Segment<V, S> extends Base<Of<SegType>, V> {
   symbol: S
 }
 
+type StringSegment<V, S> = Segment<
+  V extends number ? `${V}` : V,
+  S extends number ? `${S}` : S
+>;
+
 type Widen<T> =
   T extends boolean ? boolean
   : T extends number ? number
@@ -74,7 +79,7 @@ type FillDefaults<Values, Types> = {
     : K extends keyof Values ? OrElse<Values[K], Types[K]> : Types[K]
 };
 
-export interface Consonant<V = unknown, S = unknown, Features = unknown> extends Segment<V, S> {
+export interface Consonant<V = unknown, S = unknown, Features = unknown> extends StringSegment<V, S> {
   type: SegType[`consonant`],
   meta: {
     weak: boolean,
@@ -90,7 +95,7 @@ export interface Consonant<V = unknown, S = unknown, Features = unknown> extends
   }>>
 }
 
-export interface Vowel<V = unknown, S = unknown, Features = unknown> extends Segment<V, S> {
+export interface Vowel<V = unknown, S = unknown, Features = unknown> extends StringSegment<V, S> {
   type: SegType[`vowel`],
   meta: {
     lengthOffset: number,
@@ -104,27 +109,35 @@ export interface Vowel<V = unknown, S = unknown, Features = unknown> extends Seg
   }>>
 }
 
-export interface Suffix<V = unknown, S = unknown> extends Segment<V, S> {
+export interface Suffix<V = unknown, S = unknown> extends StringSegment<V, S> {
   type: SegType[`suffix`],
 }
 
-export interface Modifier<V = unknown, S = unknown> extends Segment<V, S> {
+export interface Modifier<V = unknown, S = unknown> extends StringSegment<V, S> {
   type: SegType[`modifier`],
   features?: {}
 }
 
-export interface Delimiter<V = unknown, S = unknown> extends Segment<V, S> {
+export interface Delimiter<V = unknown, S = unknown> extends StringSegment<V, S> {
   type: SegType[`delimiter`],
   features?: {}
 }
 
-export interface Pronoun<P extends Of<Ps> = Of<Ps>, N extends Of<Nb> = Of<Nb>, G extends Of<Gn> = Of<Gn>> extends Segment<`${P}${G}${N}`, undefined> {
+export interface Pronoun<
+  P extends Of<Ps> = Of<Ps>,
+  N extends Of<Nb> = Of<Nb>,
+  G extends Of<Gn> = Of<Gn>,
+> extends Segment<`${P}${G}${N}`, undefined> {
   type: SegType[`pronoun`],
   features: Readonly<{
     person: P,
     number: N,
     gender: G
   }>
+}
+
+export interface Template<V = unknown> extends Segment<V, undefined> {
+
 }
 
 export type SymbolOf<K extends keyof any, T extends Record<K, unknown>> = T[K] extends {symbol: string} ? T[K][`symbol`] : K;
@@ -141,19 +154,12 @@ export type SymbolValueAndFeaturesOf<T, U extends string = never> = Record<
     : SymbolValueAnd<{}>
 >;
 
-function force<T>(_o: any): _o is T {
-  return true;
-}
-
 export function consonants<
   T extends SymbolValueAndFeaturesOf<Consonant, `articulator` | `location` | `manner`>,
 >(
   o: $<T>,
-): $<{[K in keyof typeof o]: Consonant<ValueOf<K, typeof o>, SymbolOf<K, typeof o>, {voiced: true}>}> {
-  if (!force<T>(o)) {  // for type inference unfortunately
-    throw new Error(`a function whose one job is to return true returned false`);
-  }
-  return Object.fromEntries(Object.entries(o).map(([k, v]) => [
+): $<{[K in keyof typeof o]: Consonant<ValueOf<K, typeof o>, SymbolOf<K, typeof o>, typeof o[K]>}> {
+  return Object.fromEntries(Object.entries(o as T).map(([k, v]) => [
     k,
     {
       type: $SegType.consonant,
@@ -182,9 +188,6 @@ export function vowels<
 >(
   o: $<T>,
 ): $<{[K in keyof typeof o]: Vowel<ValueOf<K, typeof o>, SymbolOf<K, typeof o>, typeof o[K]>}> {
-  if (!force<T>(o)) {  // for type inference unfortunately
-    throw new Error(`a function whose one job is to return true returned false`);
-  }
   return Object.fromEntries(Object.entries(o).map(([k, v]) => [
     k,
     {
@@ -210,10 +213,7 @@ export function vowels<
 export function suffixes<T extends SymbolValueAndFeaturesOf<Suffix>>(
   o: $<T>,
 ): {[K in keyof typeof o]: Suffix<LowercaseValueOf<K, $<T>>, SymbolOf<K, $<T>>>} {
-  if (!force<T>(o)) {
-    throw new Error(`a function whose one job is to return true returned false`);
-  }
-  return Object.fromEntries(Object.entries(o).map(([k, v]) => [
+  return Object.fromEntries(Object.entries(o as T).map(([k, v]) => [
     k,
     {
       type: $SegType.suffix,
@@ -227,10 +227,7 @@ export function suffixes<T extends SymbolValueAndFeaturesOf<Suffix>>(
 export function modifiers<T extends SymbolValueAndFeaturesOf<Modifier>>(
   o: $<T>,
 ): $<{[K in keyof typeof o]: Modifier<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>}> {
-  if (!force<T>(o)) {
-    throw new Error(`a function whose one job is to return true returned false`);
-  }
-  return Object.fromEntries(Object.entries(o).map(([k, v]) => [
+  return Object.fromEntries(Object.entries(o as T).map(([k, v]) => [
     k,
     {
       type: $SegType.modifier,
@@ -245,10 +242,7 @@ export function modifiers<T extends SymbolValueAndFeaturesOf<Modifier>>(
 export function delimiters<T extends SymbolValueAndFeaturesOf<Delimiter>>(
   o: $<T>,
 ): $<{[K in keyof typeof o]: Delimiter<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>}> {
-  if (!force<T>(o)) {
-    throw new Error(`a function whose one job is to return true returned false`);
-  }
-  return Object.fromEntries(Object.entries(o).map(([k, v]) => [
+  return Object.fromEntries(Object.entries(o as T).map(([k, v]) => [
     k,
     {
       type: $SegType.delimiter,
@@ -269,7 +263,6 @@ type PronounString<S> =
 type PronounStringArray<T extends string[]> = {[K in T[Union.Select<keyof T, number>]]: PronounString<K>};
 
 export function pronouns<T extends `${Of<Ps>}${Of<Gn>}${Of<Nb>}`[]>(p: T): PronounStringArray<T> {
-  // force() doesn't really work here, maybe because the type is more convoluted?
   return Object.fromEntries(
     p.map(s => [s, {
         type: $SegType.pronoun,
@@ -284,9 +277,8 @@ export function pronouns<T extends `${Of<Ps>}${Of<Gn>}${Of<Nb>}`[]>(p: T): Prono
   ) as PronounStringArray<T>;
 }
 
-export default newAlphabet(<SegTypes> _, {
+export default newAlphabet(<SegTypes> <unknown> $SegType, {
   consonant: consonants({
-    // FIXME: these individual entries don't have typechecking that lights up bad keys...
     h: {
       location: $Location.glottis,
       articulator: $Articulator.throat,
@@ -472,7 +464,8 @@ export default newAlphabet(<SegTypes> _, {
     a: {symbol: `a`},
     aa: {symbol: `A`},
     AA: {symbol: `&`},  // lowered aa, like in شاي
-    ae: {symbol: `{`},  // (possibly supplanted by ^) 'foreign' ae, like in نان or فادي (hate xsampa for making { a reasonable way to represent this lmao)
+    ae: {symbol: `{`},  // (possibly supplanted by ^) 'foreign' ae, like in نان or فادي
+                        // (hate xsampa for making { a reasonable way to represent this lmao)
 
     I: {symbol: `1`},  /* lax i, specifically for unstressed open syllables
                         * like null<i<a when still in the medial stage, e.g. for ppl with kitIr كتير
@@ -490,7 +483,7 @@ export default newAlphabet(<SegTypes> _, {
     e: {symbol: `e`},  /* word-final for *-a, like hYdIke
                         * plus undecided on e.g. hEdIk vs hedIk (or just hYdIk?) for the short pron of هيديك
                         * .......or h1dIk lol
-                        * also for loans like fetta فتا or elI" إيلي
+                        * also possibly for loans like fetta فتا or elI" إيلي
                         */
     ee: {symbol: `E`},
 
@@ -504,6 +497,7 @@ export default newAlphabet(<SegTypes> _, {
     // fem suffix is its own thing bc -a vs -e vs -i variation
     c: {value: `fem`},
     // not sure if this is a good idea?
+    // (it can instead just be `c.Dual` / `c=`)
     // FemDual: {
     //   symbol: `<`,
     //   value: `fdual`
@@ -514,22 +508,22 @@ export default newAlphabet(<SegTypes> _, {
     // plural suffix is its own thing bc -iin-l- vs -in-l- variation, or stuff
     // like meshteryiin vs meshtriyyiin vs meshtriin
     Plural: {symbol: `+`},  // plus sign because plural is uhh... more
-    // fossilized "dual" suffix like 3YnYn => 3Yn# and 7awAlYn => 7awAl#
+    // fossilized "dual" suffix like 3YnYn => 3Yn# and 7awAlYn => 7awAl# or 7awal#:
     AynPlural: {
       symbol: `#`,  // kindasortamaybenot like a mix between + and = lol
       value: `ayn`,
     },
     // adverbial -an, ـًا
     An: {symbol: `@`},  // bc i needed an unused symbol that still resembles an A
-    // nisbe suffix ـي
-    // necessary bc it alternates between -i and -iyy-
+    // nisba suffix ـي
+    // special treatment necessary bc it alternates between -i and -iyy-
     // (and maybe -(consonant)%= can become -yIn ~ -In instead of -iyyIn too?)
-    // also bc it has effects like معمار mi3mar => معماري mi3meri
-    // (still don't know how to handle """emphatic""" R...)
+    // also-also bc it has effects like معمار mi3mar => معماري mi3meri
+    // (still don't know how to handle """emphatic""" R btw...)
     Iyy: {symbol: `%`},  // ahahahaha get it
     // -ji suffix... has to be separate from $`j.Iyy` because this one contracts preceding vowels
     Jiyy: {
-      symbol: `G`,  // ha
+      symbol: `G`,  // hahahahahaha
     },
     // -sh suffix (this one also contracts preceding vowels in some dialects)
     Negative: {
@@ -596,7 +590,8 @@ export default newAlphabet(<SegTypes> _, {
     `${$P.first }${$G.common}${$N.dual    }`,
     `${$P.first }${$G.masc  }${$N.plural  }`,
     `${$P.first }${$G.fem   }${$N.plural  }`,
-    `${$P.second}${$G.common}${$N.singular}`,  // maybe in the future? (whether intentionally or just bc of -e inevitably dropping out)
+    `${$P.second}${$G.common}${$N.singular}`,  // maybe in the future?
+                                               // (whether intentionally or just bc of -e inevitably dropping out)
     `${$P.second}${$G.masc  }${$N.dual    }`,
     `${$P.second}${$G.fem   }${$N.dual    }`,
     `${$P.second}${$G.common}${$N.dual    }`,

@@ -18,10 +18,14 @@ export type ProtoAlphabet<T> = {
   [K in keyof T]: Record<string, T[K]>
 };
 
-export type Alphabet<T extends Record<string, any>> = Union.Merge<T[keyof T]>;
-export type AnyAlphabet = Record<string, Base>;
+export type Alphabet<T extends Record<string, any>, Types> = {abc: Union.Merge<T[keyof T]>, __types: Set<Types>};
+export type AnyAlphabet = {abc: Record<string, Base>, __types: Set<string>};
+export type ABC<A extends AnyAlphabet> = A[`abc`];
+export type Types<A extends AnyAlphabet> = A[`__types`] extends Set<infer U> ? U extends string ? U : never : never;
 
-export function newAlphabet<A, T extends ProtoAlphabet<A>>(_type: A, o: $<T>): Alphabet<$<T>> {
-  // return o as unknown as ReturnType<typeof newAlphabet<T>>;
-  return o as unknown as Alphabet<$<T>>;
+export function newAlphabet<A, T extends ProtoAlphabet<A>>(type: A, o: $<T>): Alphabet<$<T>, keyof A> {
+  return {
+    __types: new Set(Object.keys(type)),
+    abc: Object.fromEntries(Object.values(o).flatMap(group => Object.entries(group as any))),
+  } as any;
 }
