@@ -1,8 +1,18 @@
 /* eslint-disable max-classes-per-file */
+type AllKeys<T> = T extends unknown ? keyof T : never;
+type Id<T> = T extends infer U ? {[K in keyof U]: U[K]} : never;
+type _ExclusifyUnion<T, K extends PropertyKey> =
+    T extends unknown ? Id<T & Partial<Record<Exclude<K, keyof T>, never>>> : never;
+export type ExclusifyUnion<T> = _ExclusifyUnion<T, AllKeys<T>>;  // TODO: take this out of this file
 
-type Matcher<T> = Exclude<T, Function> | ((obj: any) => boolean);
+type MatcherFunc = (obj: any) => boolean;
+type Matcher<T> = Exclude<T, Function> | MatcherFunc;
 
-export class Match {
+export type MatchOr<T> = T extends object ? ExclusifyUnion<T | Match<T>> : (T | Match<T>);
+
+export class Match<T> {
+  private _justForStructuralTypecheck: T = undefined as unknown as T;
+
   // eslint-disable-next-line class-methods-use-this
   matches(_other: any) {
     return false;
@@ -13,8 +23,8 @@ function verifyLiteral(o: any): o is Record<string, any> {
   return Object.getPrototypeOf(o) === Object.prototype;
 }
 
-class MatchOne<T> extends Match {
-  private matcher: (obj: any) => boolean;
+export class MatchOne<T> extends Match<T> {
+  private matcher: MatcherFunc;
 
   constructor(obj: Matcher<T>) {
     super();
@@ -30,7 +40,7 @@ class MatchOne<T> extends Match {
     } else if (verifyLiteral(obj)) {
       const individualMatches = Object.entries(obj).map(([k, v]) => [k, new MatchOne(v)] as const);
       this.matcher = other => individualMatches.every(
-        <M extends Match>([k, matcher]: readonly [string, M]) => matcher.matches(other[k]),
+        <M>([k, matcher]: readonly [string, MatchOne<M>]) => matcher.matches(other[k]),
       );
     } else {
       this.matcher = other => obj === other;
@@ -48,10 +58,10 @@ class Not<T> extends MatchOne<T> {
   }
 }
 
-class MatchMultiple<T> extends Match {
-  protected objs: MatchOne<T>[];
+class MatchMultiple<U> extends Match<U> {
+  protected objs: MatchOne<U>[];
 
-  constructor(...objs: Matcher<T>[]) {
+  constructor(...objs: Matcher<U>[]) {
     super();
     this.objs = objs.map(obj => new MatchOne(obj));
   }
@@ -61,19 +71,19 @@ class MatchMultiple<T> extends Match {
   }
 }
 
-class Any<T> extends MatchMultiple<T> {
+class Any<U> extends MatchMultiple<U> {
   matches(other: any) {
     return this.objs.some(obj => obj.matches(other));
   }
 }
 
-class None<T> extends Any<T> {
+class None<U> extends Any<U> {
   matches(other: any) {
     return !super.matches(other);
   }
 }
 
-class All<T> extends MatchMultiple<T> {
+class All<U> extends MatchMultiple<U> {
   matches(other: any) {
     return this.objs.every(obj => obj.matches(other));
   }
@@ -83,8 +93,15 @@ export default Object.assign(
   <T>(obj: Matcher<T>) => new MatchOne(obj),
   {
     not<T>(obj: Matcher<T>) { return new Not(obj); },
-    any<T>(...objs: Matcher<T>[]) { return new Any(...objs); },
-    none<T>(...objs: Matcher<T>[]) { return new None(...objs); },
-    all<T>(...objs: Matcher<T>[]) { return new All(...objs); },
+    // for some reason these break on alphabet members if it's unknown[] instead of any[] idk why
+    any<U>(objs: Matcher<U>[]) { return new Any(...objs); },
+    none<U>(objs: Matcher<U>[]) { return new None(...objs); },
+    all<U>(objs: Matcher<U>[]) { return new All(...objs); },
   },
 );
+
+export type {MatchMultiple};
+export type MatchNot<T> = Not<T>;
+export type MatchAny<U> = Any<U>;
+export type MatchNone<U> = None<U>;
+export type MatchAll<U> = All<U>;
