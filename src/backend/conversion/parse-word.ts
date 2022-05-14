@@ -203,7 +203,7 @@ function validate(bruh: TemplateStringsArray | ParseWordParams): bruh is Templat
   return Array.isArray(bruh);
 }
 
-function createWordParserTag<T>(postprocess: (...params: Word[][]) => T = null) {
+function createWordParserTag<T>(postprocess: null | ((...params: Word[][]) => T) = null) {
   return <E extends Segment>(first: TemplateStringsArray | ParseWordParams, ...rest: E[]) => {
     if (validate(first)) {
       // this means the caller just wants the template tag

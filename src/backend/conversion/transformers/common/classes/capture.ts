@@ -1,10 +1,19 @@
 /* eslint-disable max-classes-per-file */
+/* eslint-disable import/prefer-default-export */
 
 import {Any, Function as Func, List, Union} from 'ts-toolbelt';
 
 import * as ABC from '../../../alphabets/common';
-import {OrderedObj, RevTail, KeysOf, ObjectOf, ShiftOne, OrderedObjOf, MergeObjs, TransformType} from '../type';
-
+import {
+  OrderedObj,
+  RevTail,
+  KeysOf,
+  ObjectOf,
+  ShiftOne,
+  OrderedObjOf,
+  MergeObjs,
+  TransformType,
+} from '../type';
 import {Match} from '../match';
 
 type $<T> = Func.Narrow<T>;
@@ -63,6 +72,7 @@ type DeepMatchOr<O> = Match<O> | {
 type DeepMerge<O> = [O] extends [object] ? {
   // I think the Union.Merge<O> helps it not distribute or something? not sure exactly what's
   // going on but it doesn't work without it if O is a union :(
+  [K in keyof Union.Merge<O> & keyof O]: DeepMerge<O[K]>
   // Now with that settled it does work if you do:
   //  [K in keyof Union.Merge<O>]: DeepMerge<Union.Merge<O>[K]>
   // but in the interest of not duplicating that Union.Merge<O> you might want to try:
@@ -70,7 +80,6 @@ type DeepMerge<O> = [O] extends [object] ? {
   // which SHOULD be the same -- but TypeScript ofc doesn't love it unless you go
   //  [K in keyof Union.Merge<O>]: K extends keyof O ? DeepMerge<O[K]> : never
   // so in the double-interest of not having that conditional, this `&` is my best solution
-  [K in keyof Union.Merge<O> & keyof O]: DeepMerge<O[K]>
 } : O;
 
 type MatchSpec<A extends ABC.AnyAlphabet> = DeepPartial<ValuesOf<{
@@ -122,30 +131,37 @@ export class Language<A extends Alphabets> {
   public readonly abcs: MergeObjs<A>;
   public readonly select: NextMappedFuncs<typeof this.abcNames>;
 
+  // All of the `any` types I'm using below are unimportant
+  // Because in reality my alphabet-related mapped types have already
+  // taken care of determining the right types for these objects
+  // So I'm just using `any` to forcibly assign stuff to those types
+  // in cases where the type inference gives me 0 way of getting TypeScript
+  // to actually agree with me about what I'm assigning
+  // In other words I'm making two assumptions here: first that my runtime
+  // code is correct and says the same thing as my mapped types (which I
+  // verify this manually in eg REPL), and second that my handcrafted
+  // mapped types know more than the type inference below would
   constructor(...abcs: $<A>) {
     this.abcs = Object.assign({}, ...abcs);
-    this.abcNames = abcs.map(o => Object.entries(o)[0]) as unknown as typeof this.abcNames;
+    this.abcNames = abcs.map(o => Object.entries(o)[0]) as any;
     this.rules = Object.fromEntries(this.abcNames.map(name => [name, []]));
 
     this.select = Object.fromEntries(
       this.abcNames.map(([layer, alphabet], idx) => [
         layer,
         (
-          // the actual alphabet types from NextMappedFuncs are narrower
-          funcs: Record<string, InnerCaptureFunc<typeof alphabet, typeof alphabet>>,
+          funcs: Record<string, InnerCaptureFunc<any, any>>,
         ) => {
           const next = this.abcNames[idx + 1]?.[1];
           Object.entries(funcs).forEach(([feature, func]) => {
             const f = Object.assign(
-              (
-                obj: Partial<unknown>, // Partial<typeof alphabet[keyof typeof alphabet]>,
-              ) => new CaptureApplier<any, any>(
+              (obj: Partial<any>) => new CaptureApplier<any, any>(
                 this.rules[layer as keyof typeof this.rules],
                 layer, obj, feature,
               ),
               Object.fromEntries(alphabet.__types.forEach((type: string) => [
                 type,
-                (obj: Partial<typeof alphabet[keyof typeof alphabet]>) => new CaptureApplier<any, any>(
+                (obj: Partial<any>) => new CaptureApplier<any, any>(
                   this.rules[layer as keyof typeof this.rules],
                   layer, obj, feature,
                 ),
@@ -162,5 +178,3 @@ export class Language<A extends Alphabets> {
     return this && text;
   }
 }
-
-export default Language;  // get linter to be quiet for now
