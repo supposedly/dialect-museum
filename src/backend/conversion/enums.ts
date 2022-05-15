@@ -2,6 +2,7 @@ import {Union} from "ts-toolbelt";
 
 type DISTRIBUTE = any;
 type WS = `\n  ` | ` ` | `  ` | `\n`;
+type LB = '\n' | '\n ' | '\n  ';
 
 type Trim<S extends string> = S extends
   | `${WS}${infer Sub}${WS}`
@@ -16,7 +17,7 @@ type Entry<Name extends string, Line extends string> =
     : Record<Line, Join<Name, Line>>;
 
 type _Enum<Name extends string, S extends string> =
-  Trim<S> extends `${infer A}${'\n' | '\n ' | '\n  '}${infer B}`
+  Trim<S> extends `${infer A}${LB}${infer B}`
     ? Entry<Name, Trim<A>> | _Enum<Name, B>
     : `` extends S
       ? {}
@@ -33,14 +34,14 @@ export type Of<O> = O[keyof O];
 type NameOf<E> = E[keyof E] extends `${infer Name}:${infer _}` ? Name : ``;
 type ValueOf<V> = V extends `${infer _}:${infer Value}` ? Value : V;
 type WithName<E extends EnumType, Name extends string> = {
-  [K in keyof E]: `${Name}${ValueOf<E[K]>}`
+  [K in keyof E]: Join<Name, ValueOf<E[K]>>
 };
 
 function join(name: string, value: string): string {
   return name.length ? `${name}:${value}` : value;
 }
 
-export function toEnum<Name extends string, S extends string>(name: Name, s: S): Enum<Name, S> {
+export function enumize<Name extends string, S extends string>(name: Name, s: S): Enum<Name, S> {
   return Object.fromEntries(
     s.trim()
       .replace(/\n/g, `,`)
@@ -53,16 +54,18 @@ export function toEnum<Name extends string, S extends string>(name: Name, s: S):
         }
         return [m, join(name, m)];
       }),
-  ) as Enum<Name, S>;
+  ) as any;
+}
+
+function nameOf<E extends EnumType>(e: E): NameOf<E> {
+  const arbitraryVal = Object.values(e)[0];  // max efficiency
+  return (arbitraryVal.split(`:`)[0] ?? ``) as any;
 }
 
 export function merge<A extends EnumType, B extends EnumType>(a: A, b: B): Union.Merge<A | WithName<B, NameOf<A>>> {
-  const arbitraryVal = Object.values(a)[0];  // max efficiency
-  const name = arbitraryVal.split(`:`)[0] ?? arbitraryVal;
-
   return {
     ...a,
-    ...Object.fromEntries(Object.entries(b).map(([k, v]) => [k, `${name}${v.split(`:`)[1]}`])),
+    ...Object.fromEntries(Object.entries(b).map(([k, v]) => [k, `${nameOf(a)}${v.split(`:`)[1]}`])),
   } as any;
 }
 
@@ -70,18 +73,18 @@ export function extend<
   E extends EnumType,
   Name extends string,
   S extends string,
->(e: E, name: Name, s: S): Union.Merge<Enum<Name, S> | WithName<E, Name>> {
-  return merge(toEnum(name, s), e) as any;
+>(e: E, s: S, name?: Name): Union.Merge<Enum<Name, S> | WithName<E, Name>> {
+  return merge(enumize(name ?? nameOf(e), s), e) as any;
 }
 
-export const $Articulator = toEnum(`articulator`, `
+export const $Articulator = enumize(`articulator`, `
   throat
   tongue
   lips
 `);
 export type Articulator = typeof $Articulator;
 
-export const $Location = toEnum(`location`, `
+export const $Location = enumize(`location`, `
   glottis
   pharynx
   uvula
@@ -94,7 +97,7 @@ export const $Location = toEnum(`location`, `
 `);
 export type Location = typeof $Location;
 
-export const $Manner = toEnum(`manner`, `
+export const $Manner = enumize(`manner`, `
   plosive
   fricative
   affricate
@@ -104,7 +107,7 @@ export const $Manner = toEnum(`manner`, `
 `);
 export type Manner = typeof $Manner;
 
-export const $Wazn = toEnum(`wazn`, `
+export const $Wazn = enumize(`wazn`, `
   a
   i
   u
@@ -127,14 +130,14 @@ export const $Wazn = toEnum(`wazn`, `
 `);
 export type Wazn = typeof $Wazn;
 
-export const $PPWazn = extend($Wazn, `ppwazn`, `
+export const $PPWazn = extend($Wazn, `
   anyForm1
   fe3il
   fa3len
 `);
 export type PPWazn = typeof $PPWazn;
 
-export const $TamToken = toEnum(`tam`, `
+export const $TamToken = enumize(`tam`, `
   pst
   sbjv
   ind
@@ -142,7 +145,7 @@ export const $TamToken = toEnum(`tam`, `
 `);
 export type TamToken = typeof $TamToken;
 
-export const $VoiceToken = toEnum(`voice`, `
+export const $VoiceToken = enumize(`voice`, `
   active
   passive
 `);
@@ -150,21 +153,21 @@ export type VoiceToken = typeof $VoiceToken;
 
 // These have to be nameless because I have some stupid code that
 // depends on each variant being exactly 1 character long
-export const $Ps = toEnum(``, `
+export const $Ps = enumize(``, `
   first = 1
   second = 2
   third = 3
 `);
 export type Ps = typeof $Ps;
 
-export const $Nb = toEnum(``, `
+export const $Nb = enumize(``, `
   singular = s
   dual = d
   plural = p
 `);
 export type Nb = typeof $Nb;
 
-export const $Gn = toEnum(``, `
+export const $Gn = enumize(``, `
   masc = m
   fem = f
   common = c
