@@ -3,7 +3,7 @@
 import {Any, Function, Union} from "ts-toolbelt";
 import {cheat, Base, newAlphabet, FillDefaults} from "./common";
 import {
-  Of, EnumOf, toEnum,
+  Of, EnumOf, enumize,
   Articulator, Location, Manner,
   $Articulator, $Location, $Manner,
   $Ps as $P, $Gn as $G, $Nb as $N,
@@ -29,7 +29,7 @@ export type Types = {
 };
 // Not a fan of this duplication
 // At least I can use EnumOf<...> to statically verify it but still :/
-export const $Type: EnumOf<typeof NAME, keyof Types> = toEnum(NAME, `
+export const $Type: EnumOf<typeof NAME, keyof Types> = enumize(NAME, `
   consonant
   vowel
   suffix
