@@ -1,45 +1,63 @@
 /* eslint-disable template-curly-spacing */
 /* eslint-disable no-multi-spaces */
-import {Function, Union} from "ts-toolbelt";
+import {Any, Function, Union} from "ts-toolbelt";
 import {cheat, Base, newAlphabet, FillDefaults} from "./common";
 import {
   Of, EnumOf, toEnum,
   Articulator, Location, Manner,
   $Articulator, $Location, $Manner,
   $Ps as $P, $Gn as $G, $Nb as $N,
-  Ps, Gn, Nb,
+  Ps, Gn, Nb, TamToken, Wazn, PPWazn, VoiceToken,
 } from "../enums";
 
 export const NAME = `underlying`;
-
 type $<T> = Function.Narrow<T>;
 
-export type SegTypes = {
+export type Types = {
   consonant: Consonant
   vowel: Vowel
   suffix: Suffix
   modifier: Modifier
   delimiter: Delimiter
   pronoun: Pronoun
+  af3al: Af3al
+  idafe: Idafe
+  number: Number
+  participle: Participle
+  tif3il: Tif3il
+  verb: Verb
 };
 // Not a fan of this duplication
 // At least I can use EnumOf<...> to statically verify it but still :/
-export const $SegType: EnumOf<typeof NAME, keyof SegTypes> = toEnum(NAME, `
+export const $Type: EnumOf<typeof NAME, keyof Types> = toEnum(NAME, `
   consonant
   vowel
   suffix
   modifier
   delimiter
   pronoun
+  af3al
+  idafe
+  number
+  participle
+  tif3il
+  verb
 `);
-export type SegType = typeof $SegType;
+export type Type = typeof $Type;
 
-export interface Segment<V, S> extends Base<Of<SegType>, V> {
-  type: Of<SegType>,
-  meta?: Record<string, any>,
-  features?: Readonly<Record<string, any>>,
-  value: V,
+export interface Segment<V, S> extends Base<Of<Type>, V> {
+  type: Of<Type>
+  meta?: Record<string, any>
+  features?: Readonly<Record<string, any>>
+  value: V
   symbol: S
+}
+
+export interface Template<V> extends Base<Of<Type>, V> {
+  type: Of<Type>
+  meta?: Record<string, any>
+  features?: Readonly<Record<string, any>>
+  value: V
 }
 
 type StringSegment<V, S> = Segment<
@@ -48,46 +66,46 @@ type StringSegment<V, S> = Segment<
 >;
 
 export interface Consonant<V = unknown, S = unknown, Features = unknown> extends StringSegment<V, S> {
-  type: SegType[`consonant`],
+  type: Type[`consonant`]
   meta: {
-    weak: boolean,
-  },
+    weak: boolean
+  }
   features: Readonly<FillDefaults<Features, {
-    emphatic?: false,
-    semivocalic?: false,
-    voiced?: false,
-    isNull?: false,
-    articulator: Of<Articulator>,
-    location: Of<Location>,
+    emphatic?: false
+    semivocalic?: false
+    voiced?: false
+    isNull?: false
+    articulator: Of<Articulator>
+    location: Of<Location>
     manner: Of<Manner>
   }>>
 }
 
 export interface Vowel<V = unknown, S = unknown, Features = unknown> extends StringSegment<V, S> {
-  type: SegType[`vowel`],
+  type: Type[`vowel`]
   meta: {
-    lengthOffset: number,
-    stressed: boolean,
-  },
+    lengthOffset: number
+    stressed: boolean
+  }
   features: Readonly<FillDefaults<Features, {
-    length: V extends {length: number} ? V[`length`] : number,
-    diphthongal?: false,
-    rounded?: false,
-    nasalized?: false,
+    length: V extends {length: number} ? V[`length`] : number
+    diphthongal?: false
+    rounded?: false
+    nasalized?: false
   }>>
 }
 
 export interface Suffix<V = unknown, S = unknown> extends StringSegment<V, S> {
-  type: SegType[`suffix`],
+  type: Type[`suffix`]
 }
 
 export interface Modifier<V = unknown, S = unknown> extends StringSegment<V, S> {
-  type: SegType[`modifier`],
+  type: Type[`modifier`]
   features?: {}
 }
 
 export interface Delimiter<V = unknown, S = unknown> extends StringSegment<V, S> {
-  type: SegType[`delimiter`],
+  type: Type[`delimiter`]
   features?: {}
 }
 
@@ -96,7 +114,7 @@ export interface Pronoun<
   N extends Of<Nb> = Of<Nb>,
   G extends Of<Gn> = Of<Gn>,
 > extends Segment<`${P}${G}${N}`, undefined> {
-  type: SegType[`pronoun`],
+  type: Type[`pronoun`]
   features: Readonly<{
     person: P,
     number: N,
@@ -104,8 +122,39 @@ export interface Pronoun<
   }>
 }
 
-export interface Template<V = unknown> extends Segment<V, undefined> {
+// todo: maybe different file for this ex-initializer stuff? or idk
+export interface Af3al<V = unknown> extends Template<V> {
+  type: Type[`af3al`]
+}
 
+export interface Idafe<V = unknown> extends Template<V> {
+  type: Type[`idafe`]
+}
+
+export interface Number<V = unknown> extends Template<V> {
+  type: Type[`number`]
+}
+
+export interface Participle<V = unknown> extends Template<V> {
+  type: Type[`participle`],
+  features: Readonly<{
+    subject: Pronoun
+    voice: VoiceToken
+    wazn: PPWazn
+  }>
+}
+
+export interface Tif3il<V = unknown> extends Template<V> {
+  type: Type[`tif3il`]
+}
+
+export interface Verb<V = unknown> extends Template<V> {
+  type: Type[`verb`]
+  features: Readonly<{
+    subject: Pronoun
+    tam: TamToken
+    wazn: Wazn
+  }>
 }
 
 export type SymbolOf<K extends keyof any, T extends Record<K, unknown>> = T[K] extends {symbol: string} ? T[K][`symbol`] : K;
@@ -130,7 +179,7 @@ export function consonants<
   return Object.fromEntries(Object.entries(o as T).map(([k, v]) => [
     k,
     {
-      type: $SegType.consonant,
+      type: $Type.consonant,
       value: v.value ?? k,
       symbol: v.symbol ?? k,
       meta: {
@@ -157,7 +206,7 @@ export function vowels<
   return Object.fromEntries(Object.entries(o).map(([k, v]) => [
     k,
     {
-      type: $SegType.vowel,
+      type: $Type.vowel,
       value: v.value ?? k,
       symbol: v.symbol ?? k,
       meta: {
@@ -180,7 +229,7 @@ export function suffixes<T extends SymbolValueAndFeaturesOf<Suffix>>(
   return Object.fromEntries(Object.entries(o as T).map(([k, v]) => [
     k,
     {
-      type: $SegType.suffix,
+      type: $Type.suffix,
       value: (v.value ?? k).toLowerCase(),
       symbol: v.symbol ?? k,
     } as Suffix,
@@ -193,7 +242,7 @@ export function modifiers<T extends SymbolValueAndFeaturesOf<Modifier>>(
   return Object.fromEntries(Object.entries(o as T).map(([k, v]) => [
     k,
     {
-      type: $SegType.modifier,
+      type: $Type.modifier,
       value: (v.value ?? k).toLowerCase(),
       symbol: v.symbol ?? k,
     } as Modifier,
@@ -206,7 +255,7 @@ export function delimiters<T extends SymbolValueAndFeaturesOf<Delimiter>>(
   return Object.fromEntries(Object.entries(o as T).map(([k, v]) => [
     k,
     {
-      type: $SegType.delimiter,
+      type: $Type.delimiter,
       value: (v.value ?? k).toLowerCase(),
       symbol: v.symbol ?? k,
     } as Delimiter,
@@ -224,7 +273,7 @@ type PronounStringArray<T extends string[]> = {[K in T[Union.Select<keyof T, num
 export function pronouns<T extends `${Of<Ps>}${Of<Gn>}${Of<Nb>}`[]>(p: T): PronounStringArray<T> {
   return Object.fromEntries(
     p.map(s => [s, {
-        type: $SegType.pronoun,
+        type: $Type.pronoun,
         value: s,
         /* symbol: none */
         features: {
@@ -237,7 +286,7 @@ export function pronouns<T extends `${Of<Ps>}${Of<Gn>}${Of<Nb>}`[]>(p: T): Prono
 }
 
 export default newAlphabet(
-  cheat<SegTypes>($SegType),  // see cheat()'s function comment
+  cheat<Types>($Type),  // see cheat()'s function comment
   {
     consonant: consonants({
       h: {
@@ -425,7 +474,7 @@ export default newAlphabet(
       a: {symbol: `a`},
       aa: {symbol: `A`},
       AA: {symbol: `&`},  // lowered aa, like in شاي
-      ae: {symbol: `{`},  // (possibly supplanted by ^) 'foreign' ae, like in نان or فادي
+      ae: {symbol: `{`},  // (possibly supplanted by `^`) 'foreign' ae, like in نان or فادي
                           // (hate xsampa for making { a reasonable way to represent this lmao)
 
       I: {symbol: `1`},  /* lax i, specifically for unstressed open syllables
@@ -561,5 +610,12 @@ export default newAlphabet(
       `${$P.third }${$G.fem   }${$N.dual    }`,
       `${$P.third }${$G.common}${$N.dual    }`,
     ]),
+    af3al: {},
+    augmentation: {},
+    idafe: {},
+    number: {},
+    participle: {},
+    tif3il: {},
+    verb: {},
   },
 );
