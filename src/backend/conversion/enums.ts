@@ -1,4 +1,6 @@
-import {Union} from "ts-toolbelt";
+import {B, Union} from "ts-toolbelt";
+
+const SPACE = 0x20;  // char code of space
 
 type DISTRIBUTE = any;
 type WS = `\n  ` | ` ` | `  ` | `\n`;
@@ -37,22 +39,29 @@ type WithName<E extends EnumType, Name extends string> = {
   [K in keyof E]: Join<Name, ValueOf<E[K]>>
 };
 
-function join(name: string, value: string): string {
-  return name.length ? `${name}:${value}` : value;
+function join(name: string, value: string, idx?: number | false): string {
+  const joined = name.length ? `${name}:${value}` : value;
+  if (idx || idx === 0) {
+    return `${String.fromCharCode(idx + +(idx >= SPACE))} ${joined}`;
+  }
+  return joined;
 }
 
-export function enumize<Name extends string, S extends string>(name: Name, s: S): Enum<Name, S> {
+export function enumize<
+  Name extends string,
+  S extends string,
+>(name: Name, s: S, ordered: boolean = false): Enum<Name, S> {
   return Object.fromEntries(
     s.trim()
       .replace(/\n/g, `,`)
       .replace(/\s+/g, ``)
       .split(`,`)
-      .map(m => {
+      .map((m, idx) => {
         if (m.includes(`=`)) {
           const [key, value] = m.split(`=`);
-          return [key, join(name, value)];
+          return [key, join(name, value, ordered && idx)];
         }
-        return [m, join(name, m)];
+        return [m, join(name, m, ordered && idx)];
       }),
   ) as any;
 }
@@ -62,19 +71,62 @@ function nameOf<E extends EnumType>(e: E): NameOf<E> {
   return (arbitraryVal.split(`:`)[0] ?? ``) as any;
 }
 
-export function merge<A extends EnumType, B extends EnumType>(a: A, b: B): Union.Merge<A | WithName<B, NameOf<A>>> {
+function rename<E extends EnumType, N extends string>(e: E, name: N): WithName<E, N> {
+  return Object.fromEntries(Object.entries(e).map(
+    ([k, v]) => [k, join(name, v.split(`:`)[1] ?? v)],
+  )) as any;
+}
+
+function size(e: EnumType): number {
+  return Object.entries(e).length - +Object.prototype.hasOwnProperty.call(e, `  LAST`);
+}
+
+function renumber<E extends EnumType>(e: E, from: number | null): E {
+  const unordered = !Object.prototype.hasOwnProperty.call(e, `  LAST`);
+
+  // from === null means remove ordering
+  if (from === null || from === undefined) {
+    return unordered ? e : Object.fromEntries(
+      Object.entries(e).map(
+        ([k, v]) => [k, v.slice(2)],
+      ),
+    ) as any;
+  }
+
+  if (unordered) {
+    throw new Error(`Can't renumber an unordered enum`);
+  }
+
+  const length = size(e);
+  const offset = +e[`  LAST`] - length + 1;
+  return {
+    ...Object.fromEntries(Object.entries(e).map(
+      ([k, v]) => [
+        k,
+        `${String.fromCharCode(from + v.charCodeAt(0) - offset)}${v.slice(2)}`,
+      ],
+    )),
+    [`  LAST`]: length + from,
+  } as any;
+}
+
+function _merge<A extends EnumType, B extends EnumType>(a: A, b: B): Union.Merge<A | WithName<B, NameOf<A>>> {
   return {
     ...a,
-    ...Object.fromEntries(Object.entries(b).map(([k, v]) => [k, `${nameOf(a)}${v.split(`:`)[1]}`])),
+    ...rename(b, nameOf(a)),
   } as any;
+}
+
+export function merge<A extends EnumType, B extends EnumType>(a: A, b: B): Union.Merge<A | WithName<B, NameOf<A>>> {
+  return _merge(a, renumber(b, a[`  LAST`] as any)) as any;
 }
 
 export function extend<
   E extends EnumType,
   Name extends string,
   S extends string,
->(e: E, s: S, name?: Name): Union.Merge<Enum<Name, S> | WithName<E, Name>> {
-  return merge(enumize(name ?? nameOf(e), s), e) as any;
+>(e: E, s: S): Union.Merge<Enum<Name, S> | WithName<E, Name>> {
+  return merge(e, enumize(nameOf(e), s)) as any;
 }
 
 export const $Articulator = enumize(`articulator`, `
@@ -94,7 +146,7 @@ export const $Location = enumize(`location`, `
   ridge
   teeth
   lips
-`);
+`, true);
 export type Location = typeof $Location;
 
 export const $Manner = enumize(`manner`, `
@@ -107,10 +159,7 @@ export const $Manner = enumize(`manner`, `
 `);
 export type Manner = typeof $Manner;
 
-export const $Wazn = enumize(`wazn`, `
-  a
-  i
-  u
+const $HigherWazn = enumize(`wazn`, `
   fa33al
   tfa33al
   stfa33al
@@ -127,14 +176,19 @@ export const $Wazn = enumize(`wazn`, `
   fa3la2
   tfa3la2
   stfa3la2
-`);
-export type Wazn = typeof $Wazn;
+`, true);
 
-export const $PPWazn = extend($Wazn, `
+export const $VerbWazn = extend($HigherWazn, `
+  a
+  i
+  u
+`, true);
+
+export const $PPWazn = extend($HigherWazn, `
   anyForm1
   fe3il
   fa3len
-`);
+`, true);
 export type PPWazn = typeof $PPWazn;
 
 export const $TamToken = enumize(`tam`, `
