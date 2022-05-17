@@ -1,10 +1,20 @@
-import {B, Union} from "ts-toolbelt";
+import {Union} from "ts-toolbelt";
 
 const SPACE = 0x20;  // char code of space
+const SPECIAL = `  `;
+const MAKE_SPECIAL = (s: string) => `${SPECIAL}${s.toUpperCase()}`;
+const LAST = MAKE_SPECIAL(`LAST`);
+const NOT_SPECIAL = ([k, _]: [string, string]) => !k.startsWith(SPECIAL);
+const IS_SPECIAL = (k: string) => k.startsWith(SPECIAL);  // very consistency
 
 type DISTRIBUTE = any;
 type WS = `\n  ` | ` ` | `  ` | `\n`;
 type LB = '\n' | '\n ' | '\n  ';
+
+enum Order {
+  Before,
+  After,
+}
 
 type Trim<S extends string> = S extends
   | `${WS}${infer Sub}${WS}`
@@ -39,10 +49,10 @@ type WithName<E extends EnumType, Name extends string> = {
   [K in keyof E]: Join<Name, ValueOf<E[K]>>
 };
 
-function join(name: string, value: string, idx?: number | false): string {
+function join(name: string, value: string, idx?: number | false, normalize: boolean = true): string {
   const joined = name.length ? `${name}:${value}` : value;
   if (idx || idx === 0) {
-    return `${String.fromCharCode(idx + +(idx >= SPACE))} ${joined}`;
+    return `${String.fromCharCode(idx + +(normalize && idx >= SPACE))} ${joined}`;
   }
   return joined;
 }
@@ -50,8 +60,8 @@ function join(name: string, value: string, idx?: number | false): string {
 export function enumize<
   Name extends string,
   S extends string,
->(name: Name, s: S, ordered: boolean = false): Enum<Name, S> {
-  return Object.fromEntries(
+>(name: Name, s: S, ordered: boolean = true): Enum<Name, S> {
+  const o = Object.fromEntries(
     s.trim()
       .replace(/\n/g, `,`)
       .replace(/\s+/g, ``)
@@ -63,33 +73,53 @@ export function enumize<
         }
         return [m, join(name, m, ordered && idx)];
       }),
-  ) as any;
+  );
+
+  if (ordered) {
+    return {
+      ...o,
+      [LAST]: Object.keys(o).length,
+    } as any;
+  }
+
+  return o as any;
+}
+
+function getArbitraryVal<E extends EnumType>(e: E): E[keyof E] {
+  const values = Object.values(e);  // max efficiency
+  if (typeof values[0] === `string`) {
+    return values[0] as any;
+  }
+  return values[1] as any;
 }
 
 function nameOf<E extends EnumType>(e: E): NameOf<E> {
-  const arbitraryVal = Object.values(e)[0];  // max efficiency
-  return (arbitraryVal.split(`:`)[0] ?? ``) as any;
+  const preColon = getArbitraryVal(e).split(`:`)[0] ?? ``;
+  if (preColon.indexOf(` `) > 0) {
+    return preColon.split(` `)[1] as any;
+  }
+  return preColon as any;
 }
 
 function rename<E extends EnumType, N extends string>(e: E, name: N): WithName<E, N> {
   return Object.fromEntries(Object.entries(e).map(
-    ([k, v]) => [k, join(name, v.split(`:`)[1] ?? v)],
+    ([k, v]) => (IS_SPECIAL(k) ? [k, v] : [k, join(name, v.split(`:`)[1] ?? v, v.charCodeAt(0), false)]),
   )) as any;
 }
 
 function size(e: EnumType): number {
-  return Object.entries(e).length - +Object.prototype.hasOwnProperty.call(e, `  LAST`);
+  return Object.keys(e).length - +Object.prototype.hasOwnProperty.call(e, LAST);
 }
 
 function renumber<E extends EnumType>(e: E, from: number | null): E {
-  const unordered = !Object.prototype.hasOwnProperty.call(e, `  LAST`);
+  const unordered = !Object.prototype.hasOwnProperty.call(e, LAST);
 
   // from === null means remove ordering
   if (from === null || from === undefined) {
     return unordered ? e : Object.fromEntries(
-      Object.entries(e).map(
-        ([k, v]) => [k, v.slice(2)],
-      ),
+      Object.entries(e)
+        .filter(NOT_SPECIAL)
+        .map(([k, v]) => [k, v.slice(2)]),
     ) as any;
   }
 
@@ -98,35 +128,42 @@ function renumber<E extends EnumType>(e: E, from: number | null): E {
   }
 
   const length = size(e);
-  const offset = +e[`  LAST`] - length + 1;
+  const offset = +e[LAST] - length + 1;
   return {
-    ...Object.fromEntries(Object.entries(e).map(
-      ([k, v]) => [
-        k,
-        `${String.fromCharCode(from + v.charCodeAt(0) - offset)}${v.slice(2)}`,
-      ],
-    )),
-    [`  LAST`]: length + from,
-  } as any;
-}
-
-function _merge<A extends EnumType, B extends EnumType>(a: A, b: B): Union.Merge<A | WithName<B, NameOf<A>>> {
-  return {
-    ...a,
-    ...rename(b, nameOf(a)),
+    ...Object.fromEntries(
+      Object.entries(e)
+        .filter(NOT_SPECIAL)
+        .map(([k, v]) => [
+          k,
+          `${String.fromCharCode(from + v.charCodeAt(0) - offset)} ${v.slice(2)}`,
+        ]),
+    ),
+    [LAST]: length + from,
   } as any;
 }
 
 export function merge<A extends EnumType, B extends EnumType>(a: A, b: B): Union.Merge<A | WithName<B, NameOf<A>>> {
-  return _merge(a, renumber(b, a[`  LAST`] as any)) as any;
+  return {
+    ...a,
+    ...rename(renumber(b, a[LAST] as any), nameOf(a)),
+  } as any;
 }
 
 export function extend<
   E extends EnumType,
-  Name extends string,
   S extends string,
->(e: E, s: S): Union.Merge<Enum<Name, S> | WithName<E, Name>> {
-  return merge(e, enumize(nameOf(e), s)) as any;
+  Name extends string = NameOf<E>,
+>(e: E, s: S, order: Order = Order.After): Union.Merge<Enum<Name, S> | WithName<E, Name>> {
+  const extension = enumize(nameOf(e), s);
+  return (
+    order === Order.After
+      ? merge(e, extension)
+      : merge(extension, e)
+  ) as any;
+}
+
+export function index<E extends EnumType>(e: E[keyof E]): number {
+  return e.charCodeAt(0);
 }
 
 export const $Articulator = enumize(`articulator`, `
@@ -146,16 +183,16 @@ export const $Location = enumize(`location`, `
   ridge
   teeth
   lips
-`, true);
+`);
 export type Location = typeof $Location;
 
 export const $Manner = enumize(`manner`, `
-  plosive
-  fricative
-  affricate
   approximant
   nasal
+  fricative
+  affricate
   flap
+  plosive
 `);
 export type Manner = typeof $Manner;
 
@@ -176,19 +213,19 @@ const $HigherWazn = enumize(`wazn`, `
   fa3la2
   tfa3la2
   stfa3la2
-`, true);
+`);
 
 export const $VerbWazn = extend($HigherWazn, `
   a
   i
   u
-`, true);
+`, Order.Before);
 
 export const $PPWazn = extend($HigherWazn, `
   anyForm1
   fe3il
   fa3len
-`, true);
+`, Order.Before);
 export type PPWazn = typeof $PPWazn;
 
 export const $TamToken = enumize(`tam`, `
