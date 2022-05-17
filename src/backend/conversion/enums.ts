@@ -248,19 +248,19 @@ export const $Ps = enumize(``, `
   first = 1
   second = 2
   third = 3
-`);
+`, false);
 export type Ps = typeof $Ps;
 
 export const $Nb = enumize(``, `
   singular = s
   dual = d
   plural = p
-`);
+`, false);
 export type Nb = typeof $Nb;
 
 export const $Gn = enumize(``, `
   masc = m
   fem = f
   common = c
-`);
+`, false);
 export type Gn = typeof $Gn;
