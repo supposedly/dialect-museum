@@ -237,6 +237,7 @@ export const $VerbWazn = extend($HigherWazn, `
   i
   u
 `, Order.Before);
+export type VerbWazn = typeof $VerbWazn;
 
 export const $PPWazn = extend($HigherWazn, `
   anyForm1
