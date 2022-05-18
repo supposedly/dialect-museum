@@ -1,3 +1,17 @@
+/*
+This file defines an enum that maps keys to unique-ish strings
+That's better to me than TypeScript's enums, which map strings to
+numbers (not even symbols!) and offer no way to enforce that an
+actual member of the desired enum is being used
+This file's enums are understood to the type system as value types,
+but they're also ordered by default by inserting a character with some
+specific codepoint at the start (unbeknownst to the type systems) --
+so unless you set `ordered` to `false` when using toEnum(), you CAN'T
+compare enum members to the raw strings they appear to be
+Also, because of ordering, be careful (at least IMHO) to only use extend()
+if shared entries will also share indices in each extending enum
+*/
+
 import {Union} from "ts-toolbelt";
 
 const SPACE = 0x20;  // char code of space
@@ -162,8 +176,11 @@ export function extend<
   ) as any;
 }
 
-export function index<E extends EnumType>(e: E[keyof E]): number {
-  return e.charCodeAt(0);
+export function index<E extends EnumType>(member: E[keyof E]): number {
+  if (!member.includes(` `)) {
+    throw new Error(`Unordered enum member has no index`);
+  }
+  return member.charCodeAt(0);
 }
 
 export const $Articulator = enumize(`articulator`, `
