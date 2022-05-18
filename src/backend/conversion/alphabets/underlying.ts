@@ -7,7 +7,7 @@ import {
   Articulator, Location, Manner,
   $Articulator, $Location, $Manner,
   $Ps as $P, $Gn as $G, $Nb as $N,
-  Ps, Gn, Nb, TamToken, Wazn, PPWazn, VoiceToken,
+  Ps, Gn, Nb, TamToken, VerbWazn, PPWazn, VoiceToken,
 } from "../enums";
 
 export const NAME = `underlying`;
@@ -153,7 +153,7 @@ export interface Verb<V = unknown> extends Template<V> {
   features: Readonly<{
     subject: Pronoun
     tam: TamToken
-    wazn: Wazn
+    wazn: VerbWazn
   }>
 }
 
