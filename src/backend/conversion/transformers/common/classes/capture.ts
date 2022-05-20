@@ -18,22 +18,21 @@ import {Match} from '../match';
 
 type $<T> = Func.Narrow<T>;
 type ValuesOf<O> = O[keyof O];
-type ValuesOfABC<A extends ABC.AnyAlphabet> = ValuesOf<ABC.ABC<A>>;
 
 type InnerCaptureFunc<
   Curr extends ABC.AnyAlphabet,
   Next extends ABC.AnyAlphabet,
 > = (
-    capture:
-      ((obj: ValuesOf<ABC.ABC<Curr>>) => CaptureApplier<Curr, Next>) &
-      {
-        [K in ABC.Types<Curr>]: (
-          obj: DeepMatchOr<DeepMerge<Extract<ValuesOf<ABC.ABC<Curr>>, {type: K}>>>
-        ) => CaptureApplier<Curr, Next>
-      }
-    ,
-    abc: ABC.ABC<Curr>,
-    nextABC: ABC.ABC<Next>
+  capture:
+    ((obj: ABC.ValuesOfABC<Curr>) => CaptureApplier<Curr, Next>) &
+    {
+      [T in ABC.Types<Curr>]: (
+        obj: DeepMatchOr<DeepMerge<ABC.AllOfType<Curr, T>>>
+      ) => CaptureApplier<Curr, Next>
+    }
+  ,
+  abc: ABC.ABC<Curr>,
+  nextABC: ABC.ABC<Next>
 ) => void;
 
 type CaptureFunc<
@@ -54,13 +53,6 @@ type Alphabets = List.List<RawAlphabets>;
 type FirstABC<A extends Alphabets> = OrderedObjOf<Func.Narrow<A>>[0][1];
 type InputText<A extends Alphabets> = FirstABC<A>[keyof FirstABC<A>][];
 
-type DeepPartial<O> = /* distribute union */ O extends any ? {
-  [K in keyof O]?:
-    O[K] extends Record<Any.Key, unknown>
-      ? DeepPartial<O[K]>
-      : O[K]
-} : never;
-
 type DeepMatchOr<O> = Match<O> | {
   [K in keyof O]?:
     O[K] extends Record<Any.Key, unknown>
@@ -70,24 +62,38 @@ type DeepMatchOr<O> = Match<O> | {
 
 // Same as Union.Merge<> but recursive
 type DeepMerge<O> = [O] extends [object] ? {
-  // I think the Union.Merge<O> helps it not distribute or something? not sure exactly what's
+  // I think the Union.Merge<O> helps it not distribute or something? Not sure exactly what's
   // going on but it doesn't work without it if O is a union :(
   [K in keyof Union.Merge<O> & keyof O]: DeepMerge<O[K]>
-  // Now with that settled it does work if you do:
+  // Now with that settled it does work if you just do:
   //  [K in keyof Union.Merge<O>]: DeepMerge<Union.Merge<O>[K]>
-  // but in the interest of not duplicating that Union.Merge<O> you might want to try:
-  //  ~~[K in keyof Union.Merge<O>]: DeepMerge<O[K]>~~
+  // but in the interest of not duplicating that Union.Merge<O>, you might want to try:
+  //  * [K in keyof Union.Merge<O>]: DeepMerge<O[K]>
   // which SHOULD be the same -- but TypeScript ofc doesn't love it unless you go
   //  [K in keyof Union.Merge<O>]: K extends keyof O ? DeepMerge<O[K]> : never
-  // so in the double-interest of not having that conditional, this `&` is my best solution
+  // so in the double-interest of not having that conditional, that `&` is my best solution
 } : O;
 
-type MatchSpec<A extends ABC.AnyAlphabet> = DeepPartial<ValuesOf<{
-  [K in ABC.Types<A>]: DeepMerge<Extract<ValuesOf<ABC.ABC<A>>, {type: K}>>
-}>>;
+// TODO: figure out how to handle `{was: ...}`
+type MatchSpec<A extends ABC.AnyAlphabet> = DeepMatchOr<Union.Merge<
+  | ValuesOf<{
+    [Dir in `next` | `prev`]: {
+      [T in ABC.Types<A> as `${Dir}${Capitalize<T>}`]: {
+          val: DeepMerge<ABC.AllOfType<A, T>>
+          env: MatchSpec<A>
+        }
+      }
+  }>
+  | {
+    [Dir in `next` | `prev`]: {
+      val: ValuesOf<{[T in ABC.Types<A>]: DeepMerge<ABC.AllOfType<A, T>>}>
+      env: MatchSpec<A>
+    }
+  }
+>>;
 
-// todo: replace `string` with a union of specific accent features from somewhere or other
-type IntoSpec<B extends ABC.AnyAlphabet> = Record<string, ValuesOfABC<B> | ValuesOfABC<B>[]>;
+// TODO: replace `string` with a union of specific accent features from somewhere or other
+type IntoSpec<B extends ABC.AnyAlphabet> = Record<string, ABC.ValuesOfABC<B> | ABC.ValuesOfABC<B>[]>;
 
 type Rule<A extends ABC.AnyAlphabet, B extends ABC.AnyAlphabet> = {
   type: TransformType,
@@ -139,7 +145,7 @@ export class Language<A extends Alphabets> {
   // to actually agree with me about what I'm assigning
   // In other words I'm making two assumptions here: first that my runtime
   // code is correct and says the same thing as my mapped types (which I
-  // verify this manually in eg REPL), and second that my handcrafted
+  // gotta verify manually in eg REPL), and second that my handcrafted
   // mapped types know more than the type inference below would
   constructor(...abcs: $<A>) {
     this.abcs = Object.assign({}, ...abcs);
@@ -159,7 +165,7 @@ export class Language<A extends Alphabets> {
                 this.rules[layer as keyof typeof this.rules],
                 layer, obj, feature,
               ),
-              Object.fromEntries(alphabet.__types.forEach((type: string) => [
+              Object.fromEntries(alphabet.types.forEach((type: string) => [
                 type,
                 (obj: Partial<any>) => new CaptureApplier<any, any>(
                   this.rules[layer as keyof typeof this.rules],

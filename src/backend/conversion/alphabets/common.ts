@@ -47,10 +47,20 @@ export type ProtoAlphabet<T> = {
   [K in keyof T]: Record<string, T[K]>
 };
 
-export type Alphabet<T extends Record<string, any>, Types> = {abc: Union.Merge<T[keyof T]>, __types: Set<Types>};
-export type AnyAlphabet = {abc: Record<string, Base>, __types: Set<string>};
+export type Alphabet<T extends Record<string, any>, Types, Name extends string> = {
+  abc: Union.Merge<T[keyof T]>,
+  types: Set<Types>,
+  name: Name
+};
+export type AnyAlphabet = {abc: Record<string, Base>, types: Set<string>, name: string};
 export type ABC<A extends AnyAlphabet> = A[`abc`];
-export type Types<A extends AnyAlphabet> = A[`__types`] extends Set<infer U> ? U extends string ? U : never : never;
+export type Types<A extends AnyAlphabet> = A[`types`] extends Set<infer U> ? U extends string ? U : never : never;
+export type Named<A extends AnyAlphabet, S extends Types<A>> = `${A[`name`]}:${S}`;
+
+type ValuesOf<O> = O[keyof O];
+export type ValuesOfABC<A extends AnyAlphabet> = ValuesOf<ABC<A>>;
+export type AllMatching<A extends AnyAlphabet, U> = Extract<ValuesOfABC<A>, U>;
+export type AllOfType<A extends AnyAlphabet, T extends Types<A>> = AllMatching<A, {type: Named<A, T>}>;
 
 // I use this because I need to pass the runtime and compiler/type system
 // slightly different info
@@ -61,10 +71,17 @@ export function cheat<T>(o: Record<keyof T, any>): T {
   return <T> o;
 }
 
-// In the future: Add a third parameter to this, after `type`, that's something like a list of accent features
-export function newAlphabet<A, T extends ProtoAlphabet<A>>(type: A, o: $<T>): Alphabet<$<T>, keyof A> {
+type ExtractPreColon<S extends string> = S extends `${infer Name}:${infer _}` ? Name : ``;
+
+// In the future: Add a fourth parameter to this, after `type`, that's something like a list of accent features
+export function newAlphabet<
+  A extends Record<string, Base>,
+  T extends ProtoAlphabet<A>,
+  Name extends ExtractPreColon<A[keyof A][`type`]>,
+>(name: Name, type: A, o: $<T>): Alphabet<$<T>, keyof A, Name> {
   return {
-    __types: new Set(Object.keys(type)),
+    name,
+    types: new Set(Object.keys(type)),
     abc: Object.fromEntries(Object.values(o).flatMap(group => Object.entries(group as any))),
   } as any;
 }

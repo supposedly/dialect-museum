@@ -286,6 +286,7 @@ export function pronouns<T extends `${Of<Ps>}${Of<Gn>}${Of<Nb>}`[]>(p: T): Prono
 }
 
 export default newAlphabet(
+  `underlying`,
   cheat<Types>($Type),  // see cheat()'s function comment
   {
     consonant: consonants({
