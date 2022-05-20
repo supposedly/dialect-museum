@@ -9,7 +9,7 @@
   const lang = new Language(
     { underlying },
     { phonic: underlying },
-    { surface: { abc: {}, __types: new Set() } }
+    { surface: { name: `surface`, abc: {}, types: new Set() } }
   );
 
   let input = ``;
