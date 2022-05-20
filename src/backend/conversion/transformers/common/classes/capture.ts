@@ -78,7 +78,7 @@ type DeepMerge<O> = [O] extends [object] ? {
 type MatchSpec<A extends ABC.AnyAlphabet> = DeepMatchOr<Union.Merge<
   | ValuesOf<{
     [Dir in `next` | `prev`]: {
-      [T in ABC.Types<A> as `${Dir}${Capitalize<T>}`]: {
+      [T in ABC.Types<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-highlighting bc bugged
           val: DeepMerge<ABC.AllOfType<A, T>>
           env: MatchSpec<A>
         }
