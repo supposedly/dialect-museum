@@ -11,7 +11,7 @@ type Matcher<T> = Exclude<T, Function> | MatcherFunc;
 export type MatchOr<T> = T extends object ? ExclusifyUnion<T | Match<T>> : (T | Match<T>);
 
 export class Match<T> {
-  private _justForStructuralTypecheck: T = undefined as unknown as T;
+  private _justForStructuralTypecheck: T = undefined as any;
 
   // eslint-disable-next-line class-methods-use-this
   matches(_other: any) {
@@ -94,6 +94,7 @@ export default Object.assign(
   {
     not<T>(obj: Matcher<T>) { return new Not(obj); },
     // for some reason these break on alphabet members if it's unknown[] instead of any[] idk why
+    // also TODO: figure out how to get this to work with varargs
     any<U>(objs: Matcher<U>[]) { return new Any(...objs); },
     none<U>(objs: Matcher<U>[]) { return new None(...objs); },
     all<U>(objs: Matcher<U>[]) { return new All(...objs); },
