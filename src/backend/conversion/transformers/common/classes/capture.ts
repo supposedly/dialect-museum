@@ -7,12 +7,13 @@ import * as ABC from '../../../alphabets/common';
 import {
   OrderedObj,
   RevTail,
-  KeysOf,
   ObjectOf,
   ShiftOne,
   OrderedObjOf,
   MergeObjs,
   TransformType,
+  ShiftedObjOf,
+  KeysAndIndicesOf,
 } from '../type';
 import {Match} from '../match';
 
@@ -22,13 +23,14 @@ type ValuesOf<O> = O[keyof O];
 type InnerCaptureFunc<
   Curr extends ABC.AnyAlphabet,
   Next extends ABC.AnyAlphabet,
+  PreCurr extends OrderedObj<string, ABC.AnyAlphabet>,
 > = (
   capture:
-    ((obj: ABC.ValuesOfABC<Curr>) => CaptureApplier<Curr, Next>) &
+    ((obj: ABC.ValuesOfABC<Curr>) => CaptureApplier<Curr, Next, PreCurr>) &
     {
       [T in ABC.Types<Curr>]: (
         obj: DeepMatchOr<DeepMerge<ABC.AllOfType<Curr, T>>>
-      ) => CaptureApplier<Curr, Next>
+      ) => CaptureApplier<Curr, Next, PreCurr>
     }
   ,
   abc: ABC.ABC<Curr>,
@@ -38,22 +40,24 @@ type InnerCaptureFunc<
 type CaptureFunc<
   Curr extends ABC.AnyAlphabet,
   Next extends ABC.AnyAlphabet,
-> = (funcs: Record<string, InnerCaptureFunc<Curr, Next>>) => void;
+  PreCurr extends OrderedObj<string, ABC.AnyAlphabet>,
+> = (funcs: Record<string, InnerCaptureFunc<Curr, Next, PreCurr>>) => void;
 
-type _NextMappedFuncs<O extends OrderedObj, _O = ObjectOf<O>, _Shifted = ObjectOf<ShiftOne<O>>> = {
-  [K in List.UnionOf<RevTail<KeysOf<O>>>]: CaptureFunc<
-    _O[K] extends ABC.AnyAlphabet ? _O[K] : never,
-    _Shifted[K] extends ABC.AnyAlphabet ? _Shifted[K] : never
+type _NextMappedFuncs<O extends OrderedObj<string, ABC.AnyAlphabet>, _O = ObjectOf<O>, _Shifted = ObjectOf<ShiftOne<O>>> = {
+  [KI in List.UnionOf<RevTail<KeysAndIndicesOf<O>>> as KI[0]]: CaptureFunc<
+    _O[KI[0]] extends ABC.AnyAlphabet ? _O[KI[0]] : never,
+    _Shifted[KI[0]] extends ABC.AnyAlphabet ? _Shifted[KI[0]] : never,
+    RevTail<List.Extract<O, 0, KI[1]>>
   >;
 };
-type NextMappedFuncs<O extends OrderedObj> = _NextMappedFuncs<O>;
+type NextMappedFuncs<O extends OrderedObj<string, ABC.AnyAlphabet>> = _NextMappedFuncs<O>;
 
 type RawAlphabets = Record<string, NonNullable<ABC.AnyAlphabet>>;
 type Alphabets = List.List<RawAlphabets>;
 type FirstABC<A extends Alphabets> = OrderedObjOf<Func.Narrow<A>>[0][1];
 type InputText<A extends Alphabets> = FirstABC<A>[keyof FirstABC<A>][];
 
-type DeepMatchOr<O> = Match<O> | {
+type DeepMatchOr<O> = Match<DeepMatchOr<O>> | {
   [K in keyof O]?:
     O[K] extends Record<Any.Key, unknown>
       ? DeepMatchOr<O[K]>
@@ -75,19 +79,29 @@ type DeepMerge<O> = [O] extends [object] ? {
 } : O;
 
 // TODO: figure out how to handle `{was: ...}`
-type MatchSpec<A extends ABC.AnyAlphabet> = DeepMatchOr<Union.Merge<
+type MatchSpec<A extends ABC.AnyAlphabet, Pre extends OrderedObj<string, ABC.AnyAlphabet>> = DeepMatchOr<Union.Merge<
   | ValuesOf<{
     [Dir in `next` | `prev`]: {
       [T in ABC.Types<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-highlighting bc bugged
           val: DeepMerge<ABC.AllOfType<A, T>>
-          env: MatchSpec<A>
+          env: MatchSpec<A, Pre>
         }
       }
   }>
   | {
     [Dir in `next` | `prev`]: {
       val: ValuesOf<{[T in ABC.Types<A>]: DeepMerge<ABC.AllOfType<A, T>>}>
-      env: MatchSpec<A>
+      env: MatchSpec<A, Pre>
+    }
+  }
+  | {
+    was: {
+      // Pre[KI[1]][1] is like `value of Pre at index I` and it's the AnyAlphabet at some layer
+      [KI in List.UnionOf<KeysAndIndicesOf<Pre>> as KI[0]]: /* {val: */ ValuesOf<{
+          [T in ABC.Types<Pre[KI[1]][1]>]: DeepMerge<ABC.AllOfType<Pre[KI[1]][1], T>>
+        }>
+        // env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>
+        // ^ doesn't work bc type instantiation is excessively deep
     }
   }
 >>;
@@ -95,21 +109,21 @@ type MatchSpec<A extends ABC.AnyAlphabet> = DeepMatchOr<Union.Merge<
 // TODO: replace `string` with a union of specific accent features from somewhere or other
 type IntoSpec<B extends ABC.AnyAlphabet> = Record<string, ABC.ValuesOfABC<B> | ABC.ValuesOfABC<B>[]>;
 
-type Rule<A extends ABC.AnyAlphabet, B extends ABC.AnyAlphabet> = {
+type Rule<A extends ABC.AnyAlphabet, B extends ABC.AnyAlphabet, PreA extends OrderedObj<string, ABC.AnyAlphabet>> = {
   type: TransformType,
   into: IntoSpec<B>,
-  where: MatchSpec<A>
+  where: MatchSpec<A, PreA>
 };
 
-class CaptureApplier<A extends ABC.AnyAlphabet, B extends ABC.AnyAlphabet> {
+class CaptureApplier<A extends ABC.AnyAlphabet, B extends ABC.AnyAlphabet, PreA extends OrderedObj<string, ABC.AnyAlphabet>> {
   constructor(
-    private rules: Rule<A, B>[],
+    private rules: Rule<A, B, PreA>[],
     private layer: string,
     private obj: Partial<A[keyof A]>,
     private feature: string,
   ) {}
 
-  transform({into, where}: {into: IntoSpec<B>, where: MatchSpec<A>}) {
+  transform({into, where}: {into: IntoSpec<B>, where: MatchSpec<A, PreA>}) {
     this.rules.push({
       type: TransformType.transformation,
       into,
@@ -117,7 +131,7 @@ class CaptureApplier<A extends ABC.AnyAlphabet, B extends ABC.AnyAlphabet> {
     });
   }
 
-  promote({into, where}: {into: IntoSpec<B>, where: MatchSpec<A>}) {
+  promote({into, where}: {into: IntoSpec<B>, where: MatchSpec<A, PreA>}) {
     this.rules.push({
       type: TransformType.promotion,
       into,
@@ -126,12 +140,15 @@ class CaptureApplier<A extends ABC.AnyAlphabet, B extends ABC.AnyAlphabet> {
   }
 }
 
-export class Language<A extends Alphabets> {
+export class Language<A extends Record<string, ABC.AnyAlphabet>[]> {
   public readonly abcNames: OrderedObjOf<A>;
+
   public rules: {
-    [K in List.UnionOf<KeysOf<typeof this.abcNames>>]: Rule<
-      ObjectOf<typeof this.abcNames>[K],
-      ObjectOf<typeof this.abcNames>[K]
+    // https://github.com/microsoft/TypeScript/issues/45281 means we need a jankier solution
+    [KI in List.UnionOf<KeysAndIndicesOf<typeof this.abcNames>> as KI[0]]: Rule<
+      typeof this.abcNames[KI[1]][1],
+      ShiftedObjOf<typeof this.abcNames>[KI[0]],
+      RevTail<List.Extract<typeof this.abcNames, 0, KI[1]>>
   >[]};
 
   public readonly abcs: MergeObjs<A>;
@@ -156,18 +173,18 @@ export class Language<A extends Alphabets> {
       this.abcNames.map(([layer, alphabet], idx) => [
         layer,
         (
-          funcs: Record<string, InnerCaptureFunc<any, any>>,
+          funcs: Record<string, InnerCaptureFunc<any, any, []>>,
         ) => {
           const next = this.abcNames[idx + 1]?.[1];
           Object.entries(funcs).forEach(([feature, func]) => {
             const f = Object.assign(
-              (obj: Partial<any>) => new CaptureApplier<any, any>(
+              (obj: Partial<any>) => new CaptureApplier<any, any, []>(
                 this.rules[layer as keyof typeof this.rules],
                 layer, obj, feature,
               ),
               Object.fromEntries(alphabet.types.forEach((type: string) => [
                 type,
-                (obj: Partial<any>) => new CaptureApplier<any, any>(
+                (obj: Partial<any>) => new CaptureApplier<any, any, []>(
                   this.rules[layer as keyof typeof this.rules],
                   layer, obj, feature,
                 ),
