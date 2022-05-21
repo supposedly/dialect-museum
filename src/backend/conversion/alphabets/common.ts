@@ -1,11 +1,10 @@
-/* all hope abandon ye who enter here */
-// btw half of this file needs to be moved into underlying.ts because it's not actually "common"
-// bc each alphabet needs to have its own concepts (eg no guarantee that a higher alphabet will
-// have consonants, vowels, suffixes, whatevers)
-
-import {Function as Func, Union} from "ts-toolbelt";
-
-type $<T> = Func.Narrow<T>;
+// https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
+// I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
+// some compilers and not others...
+type MergeUnion<U> =
+  UnionToIntersection<U> extends infer O ? {[K in keyof O]: O[K]} : never;
+type UnionToIntersection<U> =
+  (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
 
 export type Widen<T> =
   T extends boolean ? boolean
@@ -48,7 +47,7 @@ export type ProtoAlphabet<T> = {
 };
 
 export type Alphabet<T extends Record<string, any>, Types, Name extends string> = {
-  abc: Union.Merge<T[keyof T]>,
+  abc: MergeUnion<T[keyof T]>,
   types: Set<Types>,
   name: Name
 };
@@ -62,13 +61,13 @@ export type ValuesOfABC<A extends AnyAlphabet> = ValuesOf<ABC<A>>;
 export type AllMatching<A extends AnyAlphabet, U> = Extract<ValuesOfABC<A>, U>;
 export type AllOfType<A extends AnyAlphabet, T extends Types<A>> = AllMatching<A, {type: Named<A, T>}>;
 
-// I use this because I need to pass the runtime and compiler/type system
+// I use this when I need to pass the runtime and compiler/type system
 // slightly different info
 // For example, in underlying.ts, I coerce a key-to-strings enum into a
 // keys-to-interfaces type so that the type system can use those interfaces
 // and newAlphabet() can just use the keys
 export function cheat<T>(o: Record<keyof T, any>): T {
-  return <T> o;
+  return o as T;
 }
 
 type ExtractPreColon<S extends string> = S extends `${infer Name}:${infer _}` ? Name : ``;
@@ -78,7 +77,7 @@ export function newAlphabet<
   A extends Record<string, Base>,
   T extends ProtoAlphabet<A>,
   Name extends ExtractPreColon<A[keyof A][`type`]>,
->(name: Name, type: A, o: $<T>): Alphabet<$<T>, keyof A, Name> {
+>(name: Name, type: A, o: T): Alphabet<T, keyof A, Name> {
   return {
     name,
     types: new Set(Object.keys(type)),
