@@ -100,14 +100,14 @@ type MatchSpec<A extends ABC.AnyAlphabet, Pre extends OrderedObj<string, ABC.Any
   | ValuesOf<{
     [Dir in `next` | `prev`]: {
       [T in ABC.Types<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-highlighting bc bugged
-          val: Any.Compute<DeepMerge<ABC.AllOfType<A, T>>>
+          _: Any.Compute<DeepMerge<ABC.AllOfType<A, T>>>
           env: MatchSpec<A, Pre>
         }
       }
   }>
   | {
     [Dir in `next` | `prev`]: {
-      val: Any.Compute<ValuesOf<{[T in ABC.Types<A>]: DeepMerge<ABC.AllOfType<A, T>>}>>
+      _: Any.Compute<ValuesOf<{[T in ABC.Types<A>]: DeepMerge<ABC.AllOfType<A, T>>}>>
       env: MatchSpec<A, Pre>
     }
   }
@@ -117,7 +117,7 @@ type MatchSpec<A extends ABC.AnyAlphabet, Pre extends OrderedObj<string, ABC.Any
       [KI in List.UnionOf<KeysAndIndicesOf<Pre>> as Force<KI[0], string>]: ValuesOf<{
           [T in ABC.Types<Pre[KI[1]][1]>]: DeepMerge<ABC.AllOfType<Pre[KI[1]][1], T>>
         }>
-        // {val: /* see above ^ */, env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
+        // {_: /* see above ^ */, env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
         // that doesn't work bc type instantiation is excessively deep for `env`'s value
     }
   }
