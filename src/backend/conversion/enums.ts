@@ -12,7 +12,13 @@ Also, because of ordering, be careful (at least IMHO) to only use extend()
 if shared entries will also share indices in each extending enum
 */
 
-import {Union} from "ts-toolbelt";
+// https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
+// I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
+// some compilers and not others...
+type MergeUnion<U> =
+  UnionToIntersection<U> extends infer O ? {[K in keyof O]: O[K]} : never;
+type UnionToIntersection<U> =
+  (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
 
 const SPACE = 0x20;  // char code of space
 const SPECIAL = `  `;
@@ -48,10 +54,10 @@ type _Enum<Name extends string, S extends string> =
     : `` extends S
       ? {}
       : Entry<Name, Trim<S>>;
-export type Enum<Name extends string, S extends string> = Union.Merge<_Enum<Name, S>>;
+export type Enum<Name extends string, S extends string> = MergeUnion<_Enum<Name, S>>;
 export type EnumType = Record<string, string>;
 
-export type EnumOf<Name extends string, Keys extends string> = Union.Merge<
+export type EnumOf<Name extends string, Keys extends string> = MergeUnion<
   Keys extends DISTRIBUTE ? Enum<Name, Keys> : never
 >;
 
@@ -156,7 +162,7 @@ function renumber<E extends EnumType>(e: E, from: number | null): E {
   } as any;
 }
 
-export function merge<A extends EnumType, B extends EnumType>(a: A, b: B): Union.Merge<A | WithName<B, NameOf<A>>> {
+export function merge<A extends EnumType, B extends EnumType>(a: A, b: B): MergeUnion<A | WithName<B, NameOf<A>>> {
   return {
     ...a,
     ...rename(renumber(b, a[LAST] as any), nameOf(a)),
@@ -167,7 +173,7 @@ export function extend<
   E extends EnumType,
   S extends string,
   Name extends string = NameOf<E>,
->(e: E, s: S, order: Order = Order.After): Union.Merge<Enum<Name, S> | WithName<E, Name>> {
+>(e: E, s: S, order: Order = Order.After): MergeUnion<Enum<Name, S> | WithName<E, Name>> {
   const extension = enumize(nameOf(e), s);
   return (
     order === Order.After

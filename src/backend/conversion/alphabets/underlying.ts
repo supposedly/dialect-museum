@@ -568,13 +568,13 @@ export default newAlphabet(
         symbol: `N`,
       },
       // marks something as fus7a or like elevated (goes into ctx i guess)
-      // e.g. for me T = /t/ while T^ = /s/ (and both are interdental for someone who preserves interdentals)
+      // e.g. for me T = /t/ while T^ = /s~T/ (and both are interdental for someone who preserves interdentals)
       // or -I = /e/ while -I^ = /i/
       // orr 3Y^n = /3ayn/ (letter name) while 3Yn = /3e:n/ (eye)
       // also gonna use this for `hY^k (l yWm)`
-      // i guess this actually supplants `ae` because I can do aa^ instead...
+      // (i guess this actually supplants `ae` because I can do aa^ instead...
       // ae could maybe still be useful for loans like نان though? not sure
-      // in any case having too many symbols is great, too little is worse
+      // in any case having too many symbols is fine ofc, too little is what would be bad)
       Fus7a: {
         symbol: `^`,
       },
