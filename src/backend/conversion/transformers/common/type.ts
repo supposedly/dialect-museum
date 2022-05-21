@@ -2,7 +2,6 @@ import {Any, List, Union, Object as Obj} from 'ts-toolbelt';
 
 export enum TransformType {
   transformation,
-  expansion,
   promotion,
 }
 
@@ -15,7 +14,7 @@ type Zip<L1 extends readonly unknown[], L2 extends readonly unknown[]> =
     ? [[A, B], ...Zip<Rest1, Rest2>]
     : [];
 
-export type RevTail<L extends UnknownList> = L extends [...infer Head, infer _] ? Head : [];
+export type DropLast<L extends UnknownList> = L extends [...infer Head, infer _] ? Head : [];
 
 export type KeysOf<L extends OrderedObj> = L extends OrderedObj<infer K, infer V>
   ? {[I in keyof L]: L[I] extends [K, V] ? L[I][0] : L[I]}
@@ -25,11 +24,11 @@ export type ValuesOf<L extends OrderedObj> = L extends OrderedObj<infer K, infer
   : never;
 export type ObjectOf<L extends OrderedObj> = List.ZipObj<KeysOf<L>, ValuesOf<L>>;
 export type ShiftOne<L extends OrderedObj> = Zip<
-  RevTail<KeysOf<L>>,
+  DropLast<KeysOf<L>>,
   List.Tail<ValuesOf<L>>
 >;
 export type ShiftedObjOf<L extends OrderedObj> = List.ZipObj<
-  RevTail<KeysOf<L>>,
+  DropLast<KeysOf<L>>,
   List.Tail<ValuesOf<L>>
 >;
 export type IndicesOf<L extends OrderedObj> = {[K in keyof L]: K};
