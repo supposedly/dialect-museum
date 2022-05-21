@@ -6,7 +6,7 @@ import {Any, Function as Func, List} from 'ts-toolbelt';
 import * as ABC from '../../../alphabets/common';
 import {
   OrderedObj,
-  RevTail,
+  DropLast,
   ObjectOf,
   OrderedObjOf,
   MergeObjs,
@@ -62,10 +62,10 @@ type CaptureFunc<
 > = (funcs: Record<string, InnerCaptureFunc<Curr, Next, PreCurr>>) => void;
 
 type _NextMappedFuncs<O extends OrderedObj<string, ABC.AnyAlphabet>, _O = ObjectOf<O>, _Shifted = ShiftedObjOf<O>> = {
-  [KI in List.UnionOf<RevTail<KeysAndIndicesOf<O>>> as KI[0]]: CaptureFunc<
+  [KI in List.UnionOf<DropLast<KeysAndIndicesOf<O>>> as KI[0]]: CaptureFunc<
     _O[KI[0]] extends ABC.AnyAlphabet ? _O[KI[0]] : never,
     _Shifted[KI[0]] extends ABC.AnyAlphabet ? _Shifted[KI[0]] : never,
-    RevTail<List.Extract<O, 0, KI[1]>>
+    DropLast<List.Extract<O, 0, KI[1]>>
   >;
 };
 type NextMappedFuncs<O extends OrderedObj<string, ABC.AnyAlphabet>> = _NextMappedFuncs<O>;
@@ -163,12 +163,13 @@ export class Language<A extends Record<string, ABC.AnyAlphabet>[]> {
   declare public what: Any.Compute<UnionOf<KeysAndIndicesOf<typeof this.abcNames>>>;
 
   public rules: {
-    // https://github.com/microsoft/TypeScript/issues/45281 means we need a jankier solution
-    // for extracting ranges from a list
+    // https://github.com/microsoft/TypeScript/issues/45281 means we need a jankier
+    // way of extracting ranges from a list (specifically we can't go fancy and
+    // get Head from smth like [...infer Head, [`specific item`], ...infer _Tail])
     [KI in UnionOf<KeysAndIndicesOf<typeof this.abcNames>> as Force<KI[0], string>]: Rule<
       typeof this.abcNames[KI[1]][1],
       Force<ForceKey<ShiftedObjOf<typeof this.abcNames>, KI[0]>, ABC.AnyAlphabet>,
-      RevTail<List.Extract<typeof this.abcNames, 0, Force<KI[1], `${number}`>>>
+      DropLast<List.Extract<typeof this.abcNames, 0, Force<KI[1], `${number}`>>>
   >[]};
 
   public readonly abcs: MergeObjs<A>;
