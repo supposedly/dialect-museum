@@ -53,7 +53,7 @@ export type Alphabet<T extends Record<string, any>, Types, Name extends string> 
 };
 export type AnyAlphabet = {abc: Record<string, Base>, types: Set<string>, name: string};
 export type ABC<A extends AnyAlphabet> = A[`abc`];
-export type Types<A extends AnyAlphabet> = A[`types`] extends Set<infer U> ? U extends string ? U : never : never;
+export type Types<A extends AnyAlphabet> = A[`types`] extends Set<infer U extends string> ? U : never;
 export type Named<A extends AnyAlphabet, S extends Types<A>> = `${A[`name`]}:${S}`;
 
 type ValuesOf<O> = O[keyof O];

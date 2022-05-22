@@ -140,15 +140,13 @@ type OrArray<T> = T | T[];
 type _IntoHelper<Captured, ABCValues> =
   Captured extends ABCValues
     ? Captured  // capture(abc.letter) means use that letter directly
-    : Captured extends (MatchOne<infer T> | MatchAny<infer T>)  // else check inside match
-      ? T extends ABCValues  // this will be one level cleaner come typescript 4.7!
-        ? T  // capture(match.any([abc.letter1, abc.letter2])) means use letter1 | letter2 directly
-        : ABCValues  // else just accept everything
-      : Captured extends (MatchNot<infer T> | MatchNone<infer T>)   // also check for not-match bc why not
-        ? T extends ABCValues
-          ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
-          : ABCValues  // else again just accept everything
-        : ABCValues;  // ditto
+    // else check inside match
+    : Captured extends (MatchOne<infer T extends ABCValues> | MatchAny<infer T extends ABCValues>)
+      ? T  // capture(match.any([abc.letter1, abc.letter2])) means use letter1 | letter2 directly
+      // also check for not-match bc why not
+      : Captured extends (MatchNot<infer T extends ABCValues> | MatchNone<infer T extends ABCValues>)
+        ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
+        : ABCValues;  // else again just accept everything
 
 type IntoSpec<
   Captured,
