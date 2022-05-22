@@ -196,6 +196,7 @@ class CaptureApplier<
       into,
       where,
     });
+    return this;
   }
 
   promote({into, where}: {into: IntoSpec<Captured, A, B>, where: MatchSpec<A, PreA>}) {
@@ -204,6 +205,7 @@ class CaptureApplier<
       into,
       where,
     });
+    return this;
   }
 }
 
