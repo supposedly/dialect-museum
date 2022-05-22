@@ -1,4 +1,6 @@
 /* eslint-disable max-classes-per-file */
+import {Function as Func} from "ts-toolbelt";
+
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? {[K in keyof U]: U[K]} : never;
 type _ExclusifyUnion<T, K extends PropertyKey> =
@@ -8,7 +10,15 @@ export type ExclusifyUnion<T> = _ExclusifyUnion<T, AllKeys<T>>;  // TODO: take t
 type MatcherFunc = (obj: any) => boolean;
 type Matcher<T> = Exclude<T, Function> | MatcherFunc;
 
+type $<T> = Func.Narrow<T>;
+
 export type MatchOr<T> = T extends object ? ExclusifyUnion<T | Match<T>> : (T | Match<T>);
+export type DeepMatchOr<O> = Match<DeepMatchOr<O>> | {
+  [K in keyof O]?:
+    O[K] extends Record<keyof any, unknown>
+      ? DeepMatchOr<O[K]>
+      : Match<O[K]> | O[K]
+};
 
 export class Match<T> {
   private _justForStructuralTypecheck: T = undefined as any;
@@ -93,11 +103,16 @@ export default Object.assign(
   <T>(obj: Matcher<T>) => new MatchOne(obj),
   {
     not<T>(obj: Matcher<T>) { return new Not(obj); },
-    // for some reason these break on alphabet members if it's unknown[] instead of any[] idk why
-    // also TODO: figure out how to get this to work with varargs
-    any<U>(objs: Matcher<U>[]) { return new Any(...objs); },
-    none<U>(objs: Matcher<U>[]) { return new None(...objs); },
-    all<U>(objs: Matcher<U>[]) { return new All(...objs); },
+    // use the lowercase functions if you're passing them literals
+    any<U>(...objs: Matcher<U>[]) { return new Any(...objs); },
+    none<U>(...objs: Matcher<U>[]) { return new None(...objs); },
+    all<U>(...objs: Matcher<U>[]) { return new All(...objs); },
+    // use the uppercase functions if you're passing them values that are already narrowed (i think?)
+    // alternative foolproof method: use the lowercase functions until it starts erroring because
+    // of arguments of different types, at which point use the uppercase functions
+    Any<M extends any[]>(...objs: $<M>) { return new Any<typeof objs[number]>(...objs as any); },
+    None<M extends any[]>(...objs: $<M>) { return new None<typeof objs[number]>(...objs as any); },
+    All<M extends any[]>(...objs: $<M>) { return new All<typeof objs[number]>(...objs as any); },
   },
 );
 
