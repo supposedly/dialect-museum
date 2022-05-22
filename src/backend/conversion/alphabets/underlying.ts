@@ -263,10 +263,8 @@ export function delimiters<T extends SymbolValueAndFeaturesOf<Delimiter>>(
 }
 
 type PronounString<S> =
-  S extends `${infer P}${infer G}${infer N}` ?
-    P extends Of<Ps> ? G extends Of<Gn> ? N extends Of<Nb>
-      ? Pronoun<P, N, G>
-      : never : never : never
+  S extends `${infer P extends Of<Ps>}${infer G extends Of<Gn>}${infer N extends Of<Nb>}`
+    ? Pronoun<P, N, G>
     : never;
 type PronounStringArray<T extends string[]> = {[K in T[Union.Select<keyof T, number>]]: PronounString<K>};
 
