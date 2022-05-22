@@ -77,7 +77,7 @@ function join(name: string, value: string, idx?: number | false, normalize: bool
   return joined;
 }
 
-export function enumize<
+export function enumerate<
   Name extends string,
   S extends string,
 >(name: Name, s: S, ordered: boolean = true): Enum<Name, S> {
@@ -86,13 +86,23 @@ export function enumize<
       .replace(/\n/g, `,`)
       .replace(/\s+/g, ``)
       .split(`,`)
-      .map((m, idx) => {
-        if (m.includes(`=`)) {
-          const [key, value] = m.split(`=`);
-          return [key, join(name, value, ordered && idx)];
-        }
-        return [m, join(name, m, ordered && idx)];
-      }),
+      .map(
+        ordered
+          ? (m, idx) => {
+            if (m.includes(`=`)) {
+              const [key, value] = m.split(`=`);
+              return [key, join(name, value, idx)];
+            }
+            return [m, join(name, m, idx)];
+          }
+          : m => {
+            if (m.includes(`=`)) {
+              const [key, value] = m.split(`=`);
+              return [key, join(name, value)];
+            }
+            return [m, join(name, m)];
+        },
+      ),
   );
 
   if (ordered) {
@@ -174,7 +184,7 @@ export function extend<
   S extends string,
   Name extends string = NameOf<E>,
 >(e: E, s: S, order: Order = Order.After): MergeUnion<Enum<Name, S> | WithName<E, Name>> {
-  const extension = enumize(nameOf(e), s);
+  const extension = enumerate(nameOf(e), s);
   return (
     order === Order.After
       ? merge(e, extension)
@@ -189,14 +199,14 @@ export function index<E extends EnumType>(member: E[keyof E]): number {
   return member.charCodeAt(0);
 }
 
-export const $Articulator = enumize(`articulator`, `
+export const $Articulator = enumerate(`articulator`, `
   throat
   tongue
   lips
 `);
 export type Articulator = typeof $Articulator;
 
-export const $Location = enumize(`location`, `
+export const $Location = enumerate(`location`, `
   glottis
   pharynx
   uvula
@@ -209,7 +219,7 @@ export const $Location = enumize(`location`, `
 `);
 export type Location = typeof $Location;
 
-export const $Manner = enumize(`manner`, `
+export const $Manner = enumerate(`manner`, `
   approximant
   nasal
   fricative
@@ -219,7 +229,7 @@ export const $Manner = enumize(`manner`, `
 `);
 export type Manner = typeof $Manner;
 
-const $HigherWazn = enumize(`wazn`, `
+const $HigherWazn = enumerate(`wazn`, `
   fa33al
   tfa33al
   stfa33al
@@ -252,7 +262,7 @@ export const $PPWazn = extend($HigherWazn, `
 `, Order.Before);
 export type PPWazn = typeof $PPWazn;
 
-export const $TamToken = enumize(`tam`, `
+export const $TamToken = enumerate(`tam`, `
   pst
   sbjv
   ind
@@ -260,7 +270,7 @@ export const $TamToken = enumize(`tam`, `
 `);
 export type TamToken = typeof $TamToken;
 
-export const $VoiceToken = enumize(`voice`, `
+export const $VoiceToken = enumerate(`voice`, `
   active
   passive
 `);
@@ -268,21 +278,21 @@ export type VoiceToken = typeof $VoiceToken;
 
 // These have to be nameless because I have some stupid code that
 // depends on each variant being exactly 1 character long
-export const $Ps = enumize(``, `
+export const $Ps = enumerate(``, `
   first = 1
   second = 2
   third = 3
 `, false);
 export type Ps = typeof $Ps;
 
-export const $Nb = enumize(``, `
+export const $Nb = enumerate(``, `
   singular = s
   dual = d
   plural = p
 `, false);
 export type Nb = typeof $Nb;
 
-export const $Gn = enumize(``, `
+export const $Gn = enumerate(``, `
   masc = m
   fem = f
   common = c

@@ -1,9 +1,9 @@
 /* eslint-disable template-curly-spacing */
 /* eslint-disable no-multi-spaces */
-import {Any, Function, Union} from "ts-toolbelt";
+import {Function, Union} from "ts-toolbelt";
 import {cheat, Base, newAlphabet, FillDefaults} from "./common";
 import {
-  Of, EnumOf, enumize,
+  Of, EnumOf, enumerate,
   Articulator, Location, Manner,
   $Articulator, $Location, $Manner,
   $Ps as $P, $Gn as $G, $Nb as $N,
@@ -29,7 +29,7 @@ export type Types = {
 };
 // Not a fan of this duplication
 // At least I can use EnumOf<...> to statically verify it but still :/
-export const $Type: EnumOf<typeof NAME, keyof Types> = enumize(NAME, `
+export const $Type: EnumOf<typeof NAME, keyof Types> = enumerate(NAME, `
   consonant
   vowel
   suffix
@@ -284,7 +284,7 @@ export function pronouns<T extends `${Of<Ps>}${Of<Gn>}${Of<Nb>}`[]>(p: T): Prono
 }
 
 export default newAlphabet(
-  `underlying`,
+  NAME,
   cheat<Types>($Type),  // see cheat()'s function comment
   {
     consonant: consonants({
