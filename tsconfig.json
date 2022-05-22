@@ -8,7 +8,7 @@
         "public/*"
     ],
     "compilerOptions": {
-        "target": "es5",
+        "target": "es6",
         "strict": true,
         "noImplicitAny": true,
         "importsNotUsedAsValues": "preserve",

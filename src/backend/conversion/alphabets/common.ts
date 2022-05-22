@@ -74,10 +74,10 @@ type ExtractPreColon<S extends string> = S extends `${infer Name}:${infer _}` ? 
 
 // In the future: Add a fourth parameter to this, after `type`, that's something like a list of accent features
 export function newAlphabet<
-  A extends Record<string, Base>,
-  T extends ProtoAlphabet<A>,
-  Name extends ExtractPreColon<A[keyof A][`type`]>,
->(name: Name, type: A, o: T): Alphabet<T, keyof A, Name> {
+  Type extends Record<string, Base>,
+  Symbols extends ProtoAlphabet<Type>,
+  Name extends ExtractPreColon<ValuesOf<Type>[`type`]>,
+>(name: Name, type: Type, o: Symbols): Alphabet<Symbols, keyof Type, Name> {
   return {
     name,
     types: new Set(Object.keys(type)),
