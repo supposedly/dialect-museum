@@ -12,13 +12,7 @@ Also, because of ordering, be careful (at least IMHO) to only use extend()
 if shared entries will also share indices in each extending enum
 */
 
-// https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
-// I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
-// some compilers and not others...
-type MergeUnion<U> =
-  UnionToIntersection<U> extends infer O ? {[K in keyof O]: O[K]} : never;
-type UnionToIntersection<U> =
-  (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
+import {MergeUnion} from "./utils/typetools";
 
 const SPACE = 0x20;  // char code of space
 const SPECIAL = `  `;

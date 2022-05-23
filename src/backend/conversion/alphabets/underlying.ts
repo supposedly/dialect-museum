@@ -7,7 +7,7 @@ import {
   Articulator, Location, Manner,
   $Articulator, $Location, $Manner,
   $Ps as $P, $Gn as $G, $Nb as $N,
-  Ps, Gn, Nb, TamToken, VerbWazn, PPWazn, VoiceToken,
+  Ps, Gn, Nb,
 } from "../enums";
 
 export const NAME = `underlying`;
@@ -17,15 +17,8 @@ export type Types = {
   consonant: Consonant
   vowel: Vowel
   suffix: Suffix
-  modifier: Modifier
   delimiter: Delimiter
   pronoun: Pronoun
-  af3al: Af3al
-  idafe: Idafe
-  number: Number
-  participle: Participle
-  tif3il: Tif3il
-  verb: Verb
 };
 // Not a fan of this duplication
 // At least I can use EnumOf<...> to statically verify it but still :/
@@ -33,15 +26,8 @@ export const $Type: EnumOf<typeof NAME, keyof Types> = enumerate(NAME, `
   consonant
   vowel
   suffix
-  modifier
   delimiter
   pronoun
-  af3al
-  idafe
-  number
-  participle
-  tif3il
-  verb
 `);
 export type Type = typeof $Type;
 
@@ -51,13 +37,6 @@ export interface Segment<V, S> extends Base<Of<Type>, V> {
   features?: Readonly<Record<string, any>>
   value: V
   symbol: S
-}
-
-export interface Template<V> extends Base<Of<Type>, V> {
-  type: Of<Type>
-  meta?: Record<string, any>
-  features?: Readonly<Record<string, any>>
-  value: V
 }
 
 type StringSegment<V, S> = Segment<
@@ -99,11 +78,6 @@ export interface Suffix<V = unknown, S = unknown> extends StringSegment<V, S> {
   type: Type[`suffix`]
 }
 
-export interface Modifier<V = unknown, S = unknown> extends StringSegment<V, S> {
-  type: Type[`modifier`]
-  features?: {}
-}
-
 export interface Delimiter<V = unknown, S = unknown> extends StringSegment<V, S> {
   type: Type[`delimiter`]
   features?: {}
@@ -119,41 +93,6 @@ export interface Pronoun<
     person: P,
     number: N,
     gender: G
-  }>
-}
-
-// todo: maybe different file for this ex-initializer stuff? or idk
-export interface Af3al<V = unknown> extends Template<V> {
-  type: Type[`af3al`]
-}
-
-export interface Idafe<V = unknown> extends Template<V> {
-  type: Type[`idafe`]
-}
-
-export interface Number<V = unknown> extends Template<V> {
-  type: Type[`number`]
-}
-
-export interface Participle<V = unknown> extends Template<V> {
-  type: Type[`participle`],
-  features: Readonly<{
-    subject: Pronoun
-    voice: VoiceToken
-    wazn: PPWazn
-  }>
-}
-
-export interface Tif3il<V = unknown> extends Template<V> {
-  type: Type[`tif3il`]
-}
-
-export interface Verb<V = unknown> extends Template<V> {
-  type: Type[`verb`]
-  features: Readonly<{
-    subject: Pronoun
-    tam: TamToken
-    wazn: VerbWazn
   }>
 }
 
@@ -233,19 +172,6 @@ export function suffixes<T extends SymbolValueAndFeaturesOf<Suffix>>(
       value: (v.value ?? k).toLowerCase(),
       symbol: v.symbol ?? k,
     } as Suffix,
-  ])) as any;
-}
-
-export function modifiers<T extends SymbolValueAndFeaturesOf<Modifier>>(
-  o: $<T>,
-): $<{[K in keyof typeof o]: Modifier<LowercaseValueOf<K, typeof o>, SymbolOf<K, typeof o>>}> {
-  return Object.fromEntries(Object.entries(o as T).map(([k, v]) => [
-    k,
-    {
-      type: $Type.modifier,
-      value: (v.value ?? k).toLowerCase(),
-      symbol: v.symbol ?? k,
-    } as Modifier,
   ])) as any;
 }
 
@@ -531,9 +457,7 @@ export default newAlphabet(
       // (still don't know how to handle """emphatic""" R btw...)
       Iyy: {symbol: `%`},  // ahahahaha get it
       // -ji suffix... has to be separate from $`j.Iyy` because this one contracts preceding vowels
-      Jiyy: {
-        symbol: `G`,  // hahahahahaha
-      },
+      Jiyy: {symbol: `G`},  // bahahahahaha
       // -sh suffix (this one also contracts preceding vowels in some dialects)
       Negative: {
         symbol: `X`,  // capital X because normal sh is a lowercase x
@@ -553,28 +477,6 @@ export default newAlphabet(
       },
       Dative: {  // this stands for the dative L
         symbol: `|`,
-      },
-    }),
-    modifier: modifiers({
-      Emphatic: {
-        symbol: `*`,
-      },
-      Stressed: {  // goes after the stressed vowel; only use if the word's stress is not automatic
-        symbol: `"`,
-      },
-      Nasalized: {  // nasalized and, if final, stressed; 2ONrI" lOsyON kappitAN
-        symbol: `N`,
-      },
-      // marks something as fus7a or like elevated (goes into ctx i guess)
-      // e.g. for me T = /t/ while T^ = /s~T/ (and both are interdental for someone who preserves interdentals)
-      // or -I = /e/ while -I^ = /i/
-      // orr 3Y^n = /3ayn/ (letter name) while 3Yn = /3e:n/ (eye)
-      // also gonna use this for `hY^k (l yWm)`
-      // (i guess this actually supplants `ae` because I can do aa^ instead...
-      // ae could maybe still be useful for loans like نان though? not sure
-      // in any case having too many symbols is fine ofc, too little is what would be bad)
-      Fus7a: {
-        symbol: `^`,
       },
     }),
     pronoun: pronouns([
@@ -609,12 +511,5 @@ export default newAlphabet(
       `${$P.third }${$G.fem   }${$N.dual    }`,
       `${$P.third }${$G.common}${$N.dual    }`,
     ]),
-    af3al: {},
-    augmentation: {},
-    idafe: {},
-    number: {},
-    participle: {},
-    tif3il: {},
-    verb: {},
   },
 );

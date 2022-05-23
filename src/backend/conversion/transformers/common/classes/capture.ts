@@ -15,40 +15,15 @@ import {
   KeysAndIndicesOf,
 } from '../type';
 import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone} from '../match';
+import {DeepMerge, MergeUnion, UnionOf, ValuesOf} from '../../../utils/typetools';
 
 type $<T> = Func.Narrow<T>;
-type ValuesOf<O> = O[keyof O];
 
 // type system likes being silly and not accepting that KeysAndIndicesOf<> produces
 // tuples [K, V] where K is a valid key and V is a valid value
 // so I can use these to force it to realize it's fine while I figure out what's even wrong
 type Force<T, B> = T extends B ? T : never;
 type ForceKey<T, K> = K extends keyof T ? T[K] : never;
-
-// https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
-// I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
-// some compilers and not others...
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
-type MergeUnion<U> = UnionToIntersection<U> extends infer O ? {[K in keyof O]: O[K]} : never;
-
-// Same as MergeUnion<> but recursive
-type DeepMerge<O> = [O] extends [object] ? {
-  // I think the MergeUnion<O> helps it not distribute or something? Not sure exactly what's
-  // going on but it doesn't work without it if O is a union :(
-  [K in keyof MergeUnion<O> & keyof O]: DeepMerge<O[K]>
-  // Now with that settled it does work if you just do:
-  //  [K in keyof MergeUnion<O>]: DeepMerge<MergeUnion<O>[K]>
-  // but in the interest of not duplicating that MergeUnion<O>, you might want to try:
-  //  * [K in keyof MergeUnion<O>]: DeepMerge<O[K]>
-  // which SHOULD be the same -- but TypeScript ofc doesn't love it unless you go
-  //  [K in keyof MergeUnion<O>]: K extends keyof O ? DeepMerge<O[K]> : never
-  // so in the double-interest of not having that conditional, that `&` is my best solution
-} : O;
-
-// using ts-toolbelt's List.UnionOf<> was giving some bad "type instantiation is excessively deep and
-// possibly infinite" errors
-// this works instead and is hopefully simpler (probably don't need whatever complex failsafes List.UnionOf<> has...)
-type UnionOf<L extends unknown[]> = L extends [infer Head, ...infer Tail] ? Head | UnionOf<Tail> : never;
 
 type InnerCaptureFunc<
   Curr extends ABC.AnyAlphabet,
@@ -59,7 +34,7 @@ type InnerCaptureFunc<
     (
       <
         // I originally put this out here in a generic so I could Function.Narrow<> it below
-        // But then it turned out that its type inference was actually narrower without Function.Narrow<> than
+        // But then it turned out that its type inference was actually narrower WITHOUT Function.Narrow<> than
         // with... and that it specifically still needs to be an `extends` generic for it to work that way,
         // so I still can't put this directly in type position
         // Overall what this says is that I still don't know enough about TS's type system!
@@ -68,7 +43,7 @@ type InnerCaptureFunc<
         // - an actual member of the current alphabet
         // - a partial specification that overlaps with one or more members of the current alphabet
         // - a match() thing that says to match parts of members of the current alphabet
-        O extends ValuesOf<{[T in ABC.Types<Curr>]: DeepMatchOr<DeepMerge<ABC.AllOfType<Curr, T>>>}>,
+        O extends ValuesOf<{[T in ABC.TypeNames<Curr>]: DeepMatchOr<DeepMerge<ABC.AllOfType<Curr, T>>>}>,
       >(obj: O) => CaptureApplier<typeof obj, Curr, Next, PreCurr>)
       // and if you happen to have passed something that can be resolved to one or more concrete members of
       // the current alphabet *AND nothing else* (namely: any of match(abc.letter), match.not(abc.letter),
@@ -77,8 +52,11 @@ type InnerCaptureFunc<
       // to the type of that/those concrete member(s) and nothing else
       // OTHERWISE, if no such constriction is resolvable, then that function's `input` parameter will just
       // be typed with the entire union ABC.ValuesOfABC<Curr>
+      // I would love to have it actually recursively resolve the Match<>-es to a series of Exclude<>s and
+      // Extract<>s but I don't think it's possible -- or at least I'm not good enough with type-wrangling magic to
+      // know how to do it -- so this is the best I've got for now
     & {
-      [T in ABC.Types<Curr>]: (
+      [T in ABC.TypeNames<Curr>]: (
         obj: DeepMatchOr<DeepMerge<ABC.AllOfType<Curr, T>>>
       ) => CaptureApplier<null, Curr, Next, PreCurr>
     }
@@ -110,7 +88,7 @@ type InputText<A extends Alphabets> = FirstABC<A>[keyof FirstABC<A>][];
 type MatchSpec<A extends ABC.AnyAlphabet, Pre extends OrderedObj<string, ABC.AnyAlphabet>> = DeepMatchOr<MergeUnion<
   | ValuesOf<{
     [Dir in `next` | `prev`]: {
-      [T in ABC.Types<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-highlighting bc bugged
+      [T in ABC.TypeNames<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-coloring bc bugged
           _: DeepMerge<ABC.AllOfType<A, T>>
           env: MatchSpec<A, Pre>
         }
@@ -118,7 +96,7 @@ type MatchSpec<A extends ABC.AnyAlphabet, Pre extends OrderedObj<string, ABC.Any
   }>
   | {
     [Dir in `next` | `prev`]: {
-      _: ValuesOf<{[T in ABC.Types<A>]: DeepMerge<ABC.AllOfType<A, T>>}>
+      _: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMerge<ABC.AllOfType<A, T>>}>
       env: MatchSpec<A, Pre>
     }
   }
@@ -126,12 +104,12 @@ type MatchSpec<A extends ABC.AnyAlphabet, Pre extends OrderedObj<string, ABC.Any
     was: {
       // Pre[KI[1]][1] is like `value of Pre at index I` and it's the AnyAlphabet at some layer
       [KI in List.UnionOf<KeysAndIndicesOf<Pre>> as Force<KI[0], string>]: ValuesOf<{
-          [T in ABC.Types<Pre[KI[1]][1]>]: DeepMerge<ABC.AllOfType<Pre[KI[1]][1], T>>
+          [T in ABC.TypeNames<Pre[KI[1]][1]>]: DeepMerge<ABC.AllOfType<Pre[KI[1]][1], T>>
         }>
         // {_: /* see above ^ */, env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
         // that doesn't work bc type instantiation is excessively deep for `env`'s value
         // so I'm gambling on hopefully never having to refer to the environment of a previous
-        // layer in actual runtime code (wow that exists)
+        // layer in actual runtime code (wow runtime code is a thing that exists)
     }
   }
 >>;

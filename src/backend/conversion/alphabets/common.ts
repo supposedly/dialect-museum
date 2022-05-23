@@ -1,10 +1,6 @@
 // https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
 // I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
-// some compilers and not others...
-type MergeUnion<U> =
-  UnionToIntersection<U> extends infer O ? {[K in keyof O]: O[K]} : never;
-type UnionToIntersection<U> =
-  (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
+import {MergeUnion, ValuesOf} from "../utils/typetools";
 
 export type Widen<T> =
   T extends boolean ? boolean
@@ -46,20 +42,45 @@ export type ProtoAlphabet<T> = {
   [K in keyof T]: Record<string, T[K]>
 };
 
-export type Alphabet<T extends Record<string, any>, Types, Name extends string> = {
-  abc: MergeUnion<T[keyof T]>,
-  types: Set<Types>,
+export type Alphabet<
+  ProtoABC extends Record<string, Record<string, Base>>,
+  Types extends Record<string, Base>,
+  Name extends string,
+> = {
+  abc: MergeUnion<ValuesOf<ProtoABC>>
+  types: Set<keyof Types>
   name: Name
+  // All of the base types this alphabet was created with
+  [` bases`]: ValuesOf<Types>
+  // To be used when validating inputs: contains all of the
+  // concrete value-type instances in `abc`, AND also contains
+  // base types that don't have any predecided instances in `abc`
+  // (so for example the `templated` Alphabet's `exactTypes` will
+  // contain specific, concrete Pronouns, but only the base types
+  // for stuff like Verb or Af3al)
+  [` exactTypes`]: ValuesOf<{
+    [K in keyof ProtoABC & keyof Types]:
+      keyof ProtoABC[K] extends never
+        ? Types[K]
+        : ValuesOf<ProtoABC[K]>
+  }>
 };
-export type AnyAlphabet = {abc: Record<string, Base>, types: Set<string>, name: string};
+export type AnyAlphabet = {
+  abc: Record<string, Base>
+  types: Set<string>
+  name: string
+  [` bases`]: Base
+  [` exactTypes`]: Base
+};
 export type ABC<A extends AnyAlphabet> = A[`abc`];
-export type Types<A extends AnyAlphabet> = A[`types`] extends Set<infer U extends string> ? U : never;
-export type Named<A extends AnyAlphabet, S extends Types<A>> = `${A[`name`]}:${S}`;
+export type TypeNames<A extends AnyAlphabet> = A[`types`] extends Set<infer U extends string> ? U : never;
+export type _Types<A extends AnyAlphabet> = A[` bases`];
+export type _ExactTypes<A extends AnyAlphabet> = A[` exactTypes`];
+export type Named<A extends AnyAlphabet, S extends TypeNames<A>> = `${A[`name`]}:${S}`;
 
-type ValuesOf<O> = O[keyof O];
 export type ValuesOfABC<A extends AnyAlphabet> = ValuesOf<ABC<A>>;
 export type AllMatching<A extends AnyAlphabet, U> = Extract<ValuesOfABC<A>, U>;
-export type AllOfType<A extends AnyAlphabet, T extends Types<A>> = AllMatching<A, {type: Named<A, T>}>;
+export type AllOfType<A extends AnyAlphabet, T extends TypeNames<A>> = AllMatching<A, {type: Named<A, T>}>;
 
 // I use this when I need to pass the runtime and compiler/type system
 // slightly different info
@@ -74,10 +95,10 @@ type ExtractPreColon<S extends string> = S extends `${infer Name}:${infer _}` ? 
 
 // In the future: Add a fourth parameter to this, after `type`, that's something like a list of accent features
 export function newAlphabet<
-  Type extends Record<string, Base>,
-  Symbols extends ProtoAlphabet<Type>,
-  Name extends ExtractPreColon<ValuesOf<Type>[`type`]>,
->(name: Name, type: Type, o: Symbols): Alphabet<Symbols, keyof Type, Name> {
+  Types extends Record<string, Base>,
+  Symbols extends ProtoAlphabet<Types>,
+  Name extends ExtractPreColon<ValuesOf<Types>[`type`]>,
+>(name: Name, type: Types, o: Symbols): Alphabet<Symbols, Types, Name> {
   return {
     name,
     types: new Set(Object.keys(type)),
