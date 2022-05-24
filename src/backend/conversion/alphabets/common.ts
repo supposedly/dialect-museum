@@ -50,8 +50,10 @@ export type Alphabet<
   abc: MergeUnion<ValuesOf<ProtoABC>>
   types: Set<keyof Types>
   name: Name
+  /*
   // All of the base types this alphabet was created with
   [` bases`]: ValuesOf<Types>
+  */
   // To be used when validating inputs: contains all of the
   // concrete value-type instances in `abc`, AND also contains
   // base types that don't have any predecided instances in `abc`
@@ -69,12 +71,10 @@ export type AnyAlphabet = {
   abc: Record<string, Base>
   types: Set<string>
   name: string
-  [` bases`]: Base
   [` exactTypes`]: Base
 };
 export type ABC<A extends AnyAlphabet> = A[`abc`];
 export type TypeNames<A extends AnyAlphabet> = A[`types`] extends Set<infer U extends string> ? U : never;
-export type _Types<A extends AnyAlphabet> = A[` bases`];
 export type _ExactTypes<A extends AnyAlphabet> = A[` exactTypes`];
 export type Named<A extends AnyAlphabet, S extends TypeNames<A>> = `${A[`name`]}:${S}`;
 
