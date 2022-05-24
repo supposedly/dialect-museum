@@ -1,3 +1,5 @@
+import {Function as Func} from "ts-toolbelt";
+
 // https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
 // I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
 // some compilers and not others...
@@ -24,3 +26,7 @@ export type DeepMerge<O> = [O] extends [object] ? {
 export type UnionOf<L extends unknown[]> = L extends [infer Head, ...infer Tail] ? Head | UnionOf<Tail> : never;
 
 export type ValuesOf<O> = O[keyof O];
+
+export function narrow<T>(o: Func.Narrow<T>): T {
+  return o as T;
+}

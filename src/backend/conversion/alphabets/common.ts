@@ -52,6 +52,7 @@ export type Alphabet<
   name: Name
   /*
   // All of the base types this alphabet was created with
+  // Commented out because I don't really need it and it was causing some error
   [` bases`]: ValuesOf<Types>
   */
   // To be used when validating inputs: contains all of the

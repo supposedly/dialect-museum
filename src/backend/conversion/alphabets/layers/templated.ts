@@ -7,12 +7,12 @@
 // TODO: add verb.value (the root), word.value (sequence of underlying symbols or keys), etc...
 
 import {Function, Union} from "ts-toolbelt";
-import {cheat, Base, newAlphabet, _ExactTypes} from "./common";
+import {cheat, Base, newAlphabet} from "../common";
 import {
   Of, EnumOf, enumerate,
   $Ps as $P, $Gn as $G, $Nb as $N,
   Ps, Gn, Nb, TamToken, VerbWazn, PPWazn, VoiceToken,
-} from "../enums";
+} from "../../enums";
 
 export const NAME = `templated`;
 type $<T> = Function.Narrow<T>;
@@ -47,23 +47,23 @@ export type Type = typeof $Type;
 
 export interface Segment<V, S> extends Base<Of<Type>, V> {
   type: Of<Type>
-  meta?: Record<string, any>
-  features?: Readonly<Record<string, any>>
+  meta?: {}
+  features?: Readonly<{}>
   value: V
   symbol: S
-}
-
-export interface Template<V> extends Base<Of<Type>, V> {
-  type: Of<Type>
-  meta?: Record<string, any>
-  features?: Readonly<Record<string, any>>
-  value: V
 }
 
 type StringSegment<V, S> = Segment<
   V extends number ? `${V}` : V,
   S extends number ? `${S}` : S
 >;
+
+export interface Template<V> extends Base<Of<Type>, V> {
+  type: Of<Type>
+  meta?: {}
+  features?: Readonly<{}>
+  value: V
+}
 
 export interface Suffix<V = unknown, S = unknown> extends StringSegment<V, S> {
   type: Type[`suffix`]
@@ -78,7 +78,7 @@ export interface Pronoun<
   P extends Of<Ps> = Of<Ps>,
   N extends Of<Nb> = Of<Nb>,
   G extends Of<Gn> = Of<Gn>,
-> extends Segment<`${P}${G}${N}`, undefined> {
+> extends Template<`${P}${G}${N}`> {
   type: Type[`pronoun`]
   features: Readonly<{
     person: P,
@@ -91,7 +91,7 @@ export interface Af3al<V = unknown> extends Template<V> {
   type: Type[`af3al`]
 }
 
-export interface Idafe<V = unknown> extends Template<V> {
+export interface Idafe<V extends number = number> extends Template<V> {
   type: Type[`idafe`]
 }
 
@@ -100,7 +100,7 @@ export interface Number<V = unknown> extends Template<V> {
 }
 
 export interface Participle<V = unknown> extends Template<V> {
-  type: Type[`participle`],
+  type: Type[`participle`]
   features: Readonly<{
     subject: Pronoun
     voice: VoiceToken
@@ -123,6 +123,7 @@ export interface Verb<V = unknown> extends Template<V> {
 
 export interface Word<V = unknown> extends Template<V> {
   type: Type[`word`]
+  // TODO: make the value something out of basic-symbols.ts???
 }
 
 export type SymbolOf<K extends keyof any, T extends Record<K, unknown>> = T[K] extends {symbol: string} ? T[K][`symbol`] : K;
@@ -235,9 +236,7 @@ export default newAlphabet(
         symbol: `~`,
         value: `pseudo-subject`,
       },
-      Dative: {  // this stands for the dative L
-        symbol: `|`,
-      },
+      Dative: {symbol: `|`},  // this stands for the dative L
     }),
     pronoun: pronouns([
       `${$P.first }${$G.masc  }${$N.singular}`,  // -e according to loun
