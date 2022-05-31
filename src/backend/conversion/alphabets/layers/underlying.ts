@@ -5,7 +5,7 @@ import {
   Articulator, Location, Manner,
   Ps, Gn, Nb,
 } from "../../enums";
-import * as basic from "../basic-symbols";
+import {basic} from "../basic-symbols";
 
 export const NAME = `underlying`;
 type $<T> = Function.Narrow<T>;

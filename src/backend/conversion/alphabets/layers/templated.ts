@@ -10,12 +10,14 @@ import {Function, Union} from "ts-toolbelt";
 import {cheat, Base, newAlphabet} from "../common";
 import {
   Of, EnumOf, enumerate,
-  $Ps as $P, $Gn as $G, $Nb as $N,
-  Ps, Gn, Nb, TamToken, VerbWazn, PPWazn, VoiceToken,
+  Ps, Gn, Nb, TamToken, VerbWazn, PPWazn, VoiceToken, HigherWazn,
 } from "../../enums";
+import {basic, Symbol} from "../basic-symbols";
 
 export const NAME = `templated`;
 type $<T> = Function.Narrow<T>;
+
+type Root = [Symbol, Symbol, Symbol, Symbol?];
 
 export type Types = {
   word: Word,
@@ -26,7 +28,7 @@ export type Types = {
   idafe: Idafe
   number: Number
   participle: Participle
-  tif3il: Tif3il
+  masdar: Masdar
   verb: Verb
 };
 // Not a fan of this duplication
@@ -40,7 +42,7 @@ export const $Type: EnumOf<typeof NAME, keyof Types> = enumerate(NAME, `
   idafe
   number
   participle
-  tif3il
+  masdar
   verb
 `);
 export type Type = typeof $Type;
@@ -60,7 +62,9 @@ type StringSegment<V, S> = Segment<
 
 export interface Template<V> extends Base<Of<Type>, V> {
   type: Of<Type>
-  meta?: {}
+  meta?: {
+    fus7a: boolean
+  }
   features?: Readonly<{}>
   value: V
 }
@@ -87,19 +91,21 @@ export interface Pronoun<
   }>
 }
 
-export interface Af3al<V = unknown> extends Template<V> {
+export interface Af3al<V extends Root = Root> extends Template<V> {
   type: Type[`af3al`]
 }
 
-export interface Idafe<V extends number = number> extends Template<V> {
+export interface Idafe<
+  V extends [Template<unknown>, Template<unknown>] = [Template<unknown>, Template<unknown>],
+> extends Template<V> {
   type: Type[`idafe`]
 }
 
-export interface Number<V = unknown> extends Template<V> {
+export interface Number<V extends `${number}` = `${number}`> extends Template<V> {
   type: Type[`number`]
 }
 
-export interface Participle<V = unknown> extends Template<V> {
+export interface Participle<V extends Root = Root> extends Template<V> {
   type: Type[`participle`]
   features: Readonly<{
     subject: Pronoun
@@ -108,11 +114,14 @@ export interface Participle<V = unknown> extends Template<V> {
   }>
 }
 
-export interface Tif3il<V = unknown> extends Template<V> {
-  type: Type[`tif3il`]
+export interface Masdar<V extends Root = Root> extends Template<V> {
+  type: Type[`masdar`]
+  features: Readonly<{
+    wazn: HigherWazn
+  }>
 }
 
-export interface Verb<V = unknown> extends Template<V> {
+export interface Verb<V extends Root = Root> extends Template<V> {
   type: Type[`verb`]
   features: Readonly<{
     subject: Pronoun
@@ -121,9 +130,8 @@ export interface Verb<V = unknown> extends Template<V> {
   }>
 }
 
-export interface Word<V = unknown> extends Template<V> {
+export interface Word<V extends Symbol[] = Symbol[]> extends Template<V> {
   type: Type[`word`]
-  // TODO: make the value something out of basic-symbols.ts???
 }
 
 export type SymbolOf<K extends keyof any, T extends Record<K, unknown>> = T[K] extends {symbol: string} ? T[K][`symbol`] : K;
@@ -191,90 +199,14 @@ export default newAlphabet(
   NAME,
   cheat<Types>($Type),  // see cheat()'s function comment
   {
-    suffix: suffixes({
-      // fem suffix is its own thing bc -a vs -e vs -i variation
-      c: {value: `fem`},
-      // not sure if this is a good idea?
-      // (it can instead just be `c.Dual` / `c=`)
-      // FemDual: {
-      //   symbol: `<`,
-      //   value: `fdual`
-      // },
-      C: {value: `fplural`},
-      // dual suffix is its own thing bc -ayn/-een vs -aan variation (per Mekki 1984)
-      Dual: {symbol: `=`},  // equals sign bc it's two lines
-      // plural suffix is its own thing bc -iin-l- vs -in-l- variation, or stuff
-      // like meshteryiin vs meshtriyyiin vs meshtriin
-      Plural: {symbol: `+`},  // plus sign because plural is uhh... more
-      // fossilized "dual" suffix like 3YnYn => 3Yn# and 7awAlYn => 7awAl# or 7awal#:
-      AynPlural: {
-        symbol: `#`,  // kindasortamaybenot like a mix between + and = lol
-        value: `ayn`,
-      },
-      // adverbial -an, ـًا
-      An: {symbol: `@`},  // bc i needed an unused symbol that still resembles an A
-      // nisba suffix ـي
-      // special treatment necessary bc it alternates between -i and -iyy-
-      // (and maybe -(consonant)%= can become -yIn ~ -In instead of -iyyIn too?)
-      // also-also bc it has effects like معمار mi3mar => معماري mi3meri
-      // (still don't know how to handle """emphatic""" R btw...)
-      Iyy: {symbol: `%`},  // ahahahaha get it
-      // -ji suffix... has to be separate from $`j.Iyy` because this one contracts preceding vowels
-      Jiyy: {symbol: `G`},  // bahahahahaha
-      // -sh suffix (this one also contracts preceding vowels in some dialects)
-      Negative: {symbol: `X`},  // capital X because normal sh is a lowercase x
-    }),
-    delimiter: delimiters({
-      Of: {  // introduces idafe pronouns
-        symbol: `-`,
-        value: `genitive`,
-      },
-      Object: {  // introduces verbs and active participles
-        symbol: `.`,
-      },
-      PseudoSubject: {  // s`arr~3ms/s`all~3ms, badd~3ms/bidd~3ms, أوعك أصحك etc
-        symbol: `~`,
-        value: `pseudo-subject`,
-      },
-      Dative: {symbol: `|`},  // this stands for the dative L
-    }),
-    pronoun: pronouns([
-      `${$P.first }${$G.masc  }${$N.singular}`,  // -e according to loun
-      `${$P.first }${$G.fem   }${$N.singular}`,  // -i according to loun
-      `${$P.first }${$G.common}${$N.singular}`,  // the normal neutral one idk
-      `${$P.first }${$G.common}${$N.plural  }`,
-      `${$P.second}${$G.masc  }${$N.singular}`,
-      `${$P.second}${$G.fem   }${$N.singular}`,
-      `${$P.second}${$G.masc  }${$N.plural  }`,    // -kVm in case it exists in some southern dialect
-      `${$P.second}${$G.fem   }${$N.plural  }`,    // ditto but -kVn
-      `${$P.second}${$G.common}${$N.plural  }`,
-      `${$P.third }${$G.masc  }${$N.singular}`,
-      `${$P.third }${$G.fem   }${$N.singular}`,
-      `${$P.third }${$G.masc  }${$N.plural  }`,    // ditto but -(h)Vm
-      `${$P.third }${$G.fem   }${$N.plural  }`,    // ditto but -(h)Vn
-      `${$P.third }${$G.common}${$N.plural  }`,
-
-      /* forms that don't exist */
-      `${$P.first }${$G.masc  }${$N.dual    }`,
-      `${$P.first }${$G.fem   }${$N.dual    }`,
-      `${$P.first }${$G.common}${$N.dual    }`,
-      `${$P.first }${$G.masc  }${$N.plural  }`,
-      `${$P.first }${$G.fem   }${$N.plural  }`,
-      `${$P.second}${$G.common}${$N.singular}`,  // maybe in the future?
-                                                // (whether intentionally or just bc of -e inevitably dropping out)
-      `${$P.second}${$G.masc  }${$N.dual    }`,
-      `${$P.second}${$G.fem   }${$N.dual    }`,
-      `${$P.second}${$G.common}${$N.dual    }`,
-      `${$P.third }${$G.common}${$N.singular}`,  // maybe in the future?
-      `${$P.third }${$G.masc  }${$N.dual    }`,
-      `${$P.third }${$G.fem   }${$N.dual    }`,
-      `${$P.third }${$G.common}${$N.dual    }`,
-    ]),
+    suffix: suffixes(basic.suffixes),
+    delimiter: delimiters(basic.delimiters),
+    pronoun: pronouns(basic.pronouns),
     af3al: {},
     idafe: {},
     number: {},
     participle: {},
-    tif3il: {},
+    masdar: {},
     verb: {},
     word: {},
   },

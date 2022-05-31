@@ -3,8 +3,8 @@
 import {
   $Location, $Articulator, $Manner,
   $Ps as $P, $Gn as $G, $Nb as $N,
-} from "../enums";
-import {narrow} from "../utils/typetools";
+} from "../../enums";
+import {narrow} from "../../utils/typetools";
 
 export const consonants = {
   h: {
