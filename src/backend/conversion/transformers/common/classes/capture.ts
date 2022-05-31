@@ -15,7 +15,7 @@ import {
   KeysAndIndicesOf,
 } from '../type';
 import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone} from '../match';
-import {DeepMerge, MergeUnion, UnionOf, ValuesOf} from '../../../utils/typetools';
+import {ArrayOr, DeepMerge, MergeUnion, UnionOf, ValuesOf} from '../../../utils/typetools';
 
 type $<T> = Func.Narrow<T>;
 
@@ -65,7 +65,7 @@ type CaptureFunc<
   },
   abc: ABC.ABC<Curr>,
   nextABC: ABC.ABC<Next>
-) => Record<string, OrArray<Rule<never, Curr, Next, PreCurr>>>;
+) => Record<string, ArrayOr<Rule<never, Curr, Next, PreCurr>>>;
 // I have to use `never` there because I can't access the value of O out here :(
 // Every single hack I tried inevitably produced a wider `Captured` type out here than
 // the actual `O` inside the capture func, and that runs up against contravariance,
@@ -131,7 +131,6 @@ type MatchSpec<A extends ABC.AnyAlphabet, Pre extends OrderedObj<string, ABC.Any
   }
 >>;
 
-type OrArray<T> = T | T[];
 type _IntoHelper<Captured, ABCValues> =
   Captured extends null
     ? never
@@ -151,8 +150,8 @@ type IntoSpec<
   B extends ABC.AnyAlphabet,
 > = Record<
   string,  // TODO: replace with union of specific accent features from somewhere or other
-  | OrArray<ABC.ValuesOfABC<B>>
-  | ((input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>, abc?: B) => OrArray<ABC.ValuesOfABC<B>>)
+  | ArrayOr<ABC.ValuesOfABC<B>>
+  | ((input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>, abc?: B) => ArrayOr<ABC.ValuesOfABC<B>>)
 >;
 
 type CapturableOr<T, A extends ABC.AnyAlphabet> =
