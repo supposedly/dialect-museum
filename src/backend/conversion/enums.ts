@@ -223,7 +223,7 @@ export const $Manner = enumerate(`manner`, `
 `);
 export type Manner = typeof $Manner;
 
-const $HigherWazn = enumerate(`wazn`, `
+export const $HigherWazn = enumerate(`wazn`, `
   fa33al
   tfa33al
   stfa33al
@@ -241,6 +241,7 @@ const $HigherWazn = enumerate(`wazn`, `
   tfa3la2
   stfa3la2
 `);
+export type HigherWazn = typeof $HigherWazn;
 
 export const $VerbWazn = extend($HigherWazn, `
   a
