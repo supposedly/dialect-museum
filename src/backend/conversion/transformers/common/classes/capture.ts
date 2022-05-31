@@ -25,54 +25,71 @@ type $<T> = Func.Narrow<T>;
 type Force<T, B> = T extends B ? T : never;
 type ForceKey<T, K> = K extends keyof T ? T[K] : never;
 
-type InnerCaptureFunc<
-  Curr extends ABC.AnyAlphabet,
-  Next extends ABC.AnyAlphabet,
-  PreCurr extends OrderedObj<string, ABC.AnyAlphabet>,
-> = (
-  capture:
-    (
-      <
-        // I originally put this out here in a generic so I could Function.Narrow<> it below
-        // But then it turned out that its type inference was actually narrower WITHOUT Function.Narrow<> than
-        // with... and that it specifically still needs to be an `extends` generic for it to work that way,
-        // so I still can't put this directly in type position
-        // Overall what this says is that I still don't know enough about TS's type system!
-        // -------------------
-        // anyway the idea is that you can pass capture() any of the following:
-        // - an actual member of the current alphabet
-        // - a partial specification that overlaps with one or more members of the current alphabet
-        // - a match() thing that says to match parts of members of the current alphabet
-        O extends ValuesOf<{[T in ABC.TypeNames<Curr>]: DeepMatchOr<DeepMerge<ABC.AllOfType<Curr, T>>>}>,
-      >(obj: O) => CaptureApplier<typeof obj, Curr, Next, PreCurr>)
-      // and if you happen to have passed something that can be resolved to one or more concrete members of
-      // the current alphabet *AND nothing else* (namely: any of match(abc.letter), match.not(abc.letter),
-      // match.any(abc.letter1, abc.letter2)), match.none(abc.letter1, abc.letter2), OR literally just abc.letter),
-      // then if you attach a function to {into: ...}, that function's `input` parameter will be constrained
-      // to the type of that/those concrete member(s) and nothing else
-      // OTHERWISE, if no such constriction is resolvable, then that function's `input` parameter will just
-      // be typed with the entire union ABC.ValuesOfABC<Curr>
-      // I would love to have it actually recursively resolve the Match<>-es to a series of Exclude<>s and
-      // Extract<>s but I don't think it's possible -- or at least I'm not good enough with type-wrangling magic to
-      // know how to do it -- so this is the best I've got for now
-    & {
-      [T in ABC.TypeNames<Curr>]: (
-        obj: DeepMatchOr<DeepMerge<ABC.AllOfType<Curr, T>>>
-      ) => CaptureApplier<null, Curr, Next, PreCurr>
-    }
-  ,
-  abc: ABC.ABC<Curr>,
-  nextABC: ABC.ABC<Next>
-) => void;
+type Capturable<A extends ABC.AnyAlphabet> = ValuesOf<{
+  [T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC.AllOfType<A, T>>>
+}>;
 
 type CaptureFunc<
   Curr extends ABC.AnyAlphabet,
   Next extends ABC.AnyAlphabet,
   PreCurr extends OrderedObj<string, ABC.AnyAlphabet>,
-> = (funcs: Record<string, InnerCaptureFunc<Curr, Next, PreCurr>>) => void;
+> = (
+  capture:
+  (<
+      // I originally put this out here in a generic so I could Function.Narrow<> it below
+      // But then it turned out that its type inference was actually narrower WITHOUT Function.Narrow<> than
+      // with... and that it specifically still needs to be an `extends` generic for it to work that way,
+      // so I still can't put this directly in type position
+      // Overall what this says is that I still don't know enough about TS's type system!
+      // -------------------
+      // anyway the idea is that you can pass capture() any of the following:
+      // - an actual member of the current alphabet
+      // - a partial specification that overlaps with one or more members of the current alphabet
+      // - a match() thing that says to match parts of members of the current alphabet
+      O extends Capturable<Curr>,
+    >(obj: O) => CaptureApplier<typeof obj, Curr, Next, PreCurr>)
+    // and if you happen to have passed something that can be resolved to one or more concrete members of
+    // the current alphabet *AND nothing else* (namely: any of match(abc.letter), match.not(abc.letter),
+    // match.any(abc.letter1, abc.letter2)), match.none(abc.letter1, abc.letter2), OR literally just abc.letter),
+    // then if you attach a function to {into: ...}, that function's `input` parameter will be constrained
+    // to the type of that/those concrete member(s) and nothing else
+    // OTHERWISE, if no such constriction is resolvable, then that function's `input` parameter will just
+    // be typed with the entire union ABC.ValuesOfABC<Curr>
+    // I would love to have it actually recursively resolve the Match<>-es to a series of Exclude<>s and
+    // Extract<>s but I don't think it's possible -- or at least I'm not good enough with type-wrangling magic to
+    // know how to do it -- so this is the best I've got for now
+  & {
+    [T in ABC.TypeNames<Curr>]: <O extends DeepMatchOr<DeepMerge<ABC.AllOfType<Curr, T>>>>(
+      obj: O
+    ) => CaptureApplier<typeof obj, Curr, Next, PreCurr>
+  },
+  abc: ABC.ABC<Curr>,
+  nextABC: ABC.ABC<Next>
+) => Record<string, OrArray<Rule<never, Curr, Next, PreCurr>>>;
+// I have to use `never` there because I can't access the value of O out here :(
+// Every single hack I tried inevitably produced a wider `Captured` type out here than
+// the actual `O` inside the capture func, and that runs up against contravariance,
+// which there's (I guess this is a good thing?) no way to override
+// Specifically: I'm assigning the return value of the capture func's CaptureApplier methods,
+// which use a really narrow value of O for `Captured`, to a value in a record that's typed
+// with a wider `Captured`
+// And this type is specifically used in a function parameter for `into`
+// So by the letter of the law that violates contravariance and I don't know enough to dispute it :]
+// Naturally you can't get around that by using `any` or `unknown` because those are even wider
+// So the only type that works there is `never` and the downside is that until I can find
+// a better solution I have to call such functions using `as never` to coerce the first parameter
+// (This isn't a huge dealbreaker because my main reason for doing all this is to have typehints
+// and live validation for what I punch in manually, but either way it'd still be nice to at least
+// have it validate that I'm using the right alphabet or whatever when calling an `into` function)
+
+type SelectFunc<
+  Curr extends ABC.AnyAlphabet,
+  Next extends ABC.AnyAlphabet,
+  PreCurr extends OrderedObj<string, ABC.AnyAlphabet>,
+> = (createRules: CaptureFunc<Curr, Next, PreCurr>) => void;
 
 type _NextMappedFuncs<O extends OrderedObj<string, ABC.AnyAlphabet>, _O = ObjectOf<O>, _Shifted = ShiftedObjOf<O>> = {
-  [KI in List.UnionOf<DropLast<KeysAndIndicesOf<O>>> as KI[0]]: CaptureFunc<
+  [KI in List.UnionOf<DropLast<KeysAndIndicesOf<O>>> as KI[0]]: SelectFunc<
     _O[KI[0]] extends ABC.AnyAlphabet ? _O[KI[0]] : never,
     _Shifted[KI[0]] extends ABC.AnyAlphabet ? _Shifted[KI[0]] : never,
     DropLast<List.Extract<O, 0, KI[1]>>
@@ -116,15 +133,17 @@ type MatchSpec<A extends ABC.AnyAlphabet, Pre extends OrderedObj<string, ABC.Any
 
 type OrArray<T> = T | T[];
 type _IntoHelper<Captured, ABCValues> =
-  Captured extends ABCValues
-    ? Captured  // capture(abc.letter) means use that letter directly
-    // else check inside match
-    : Captured extends (MatchOne<infer T extends ABCValues> | MatchAny<infer T extends ABCValues>)
-      ? T  // capture(match.any([abc.letter1, abc.letter2])) means use letter1 | letter2 directly
-      // also check for not-match bc why not
-      : Captured extends (MatchNot<infer T extends ABCValues> | MatchNone<infer T extends ABCValues>)
-        ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
-        : ABCValues;  // else again just accept everything
+  Captured extends null
+    ? never
+    : Captured extends ABCValues
+      ? Captured  // capture(abc.letter) means use that letter directly
+      // else check inside match
+      : Captured extends (MatchOne<infer T extends ABCValues> | MatchAny<infer T extends ABCValues>)
+        ? T  // capture(match.any([abc.letter1, abc.letter2])) means use letter1 | letter2 directly
+        // also check for not-match bc why not
+        : Captured extends (MatchNot<infer T extends ABCValues> | MatchNone<infer T extends ABCValues>)
+          ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
+          : ABCValues;  // else again just accept everything
 
 type IntoSpec<
   Captured,
@@ -133,8 +152,15 @@ type IntoSpec<
 > = Record<
   string,  // TODO: replace with union of specific accent features from somewhere or other
   | OrArray<ABC.ValuesOfABC<B>>
-  | ((input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>, abc: B) => OrArray<ABC.ValuesOfABC<B>>)
+  | ((input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>, abc?: B) => OrArray<ABC.ValuesOfABC<B>>)
 >;
+
+type CapturableOr<T, A extends ABC.AnyAlphabet> =
+  [T] extends [never]
+    ? Capturable<A>
+    : T extends Capturable<A>
+      ? T
+      : Capturable<A>;
 
 type Rule<
   Captured,
@@ -144,11 +170,13 @@ type Rule<
 > =
   | {
     type: TransformType.promotion,
+    from: CapturableOr<Captured, A>,
     into: IntoSpec<Captured, A, B>,
     where: MatchSpec<A, PreA>
   }
   | {
     type: TransformType.transformation,
+    from: CapturableOr<Captured, A>,
     into: IntoSpec<Captured, A, A>,
     where: MatchSpec<A, PreA>
   };
@@ -160,28 +188,25 @@ class CaptureApplier<
   PreA extends OrderedObj<string, ABC.AnyAlphabet>,
 > {
   constructor(
-    private rules: Rule<Captured, A, B, PreA>[],
-    private layer: string,
-    private obj: Partial<A[keyof A]>,
-    private feature: string,
+    private obj: CapturableOr<Captured, A>,
   ) {}
 
-  transform({into, where}: {into: IntoSpec<Captured, A, A>, where: MatchSpec<A, PreA>}) {
-    this.rules.push({
+  transform({into, where}: {into: IntoSpec<Captured, A, A>, where: MatchSpec<A, PreA>}): Rule<Captured, A, A, PreA> {
+    return {
       type: TransformType.transformation,
+      from: this.obj,
       into,
       where,
-    });
-    return this;
+    };
   }
 
-  promote({into, where}: {into: IntoSpec<Captured, A, B>, where: MatchSpec<A, PreA>}) {
-    this.rules.push({
+  promote({into, where}: {into: IntoSpec<Captured, A, B>, where: MatchSpec<A, PreA>}): Rule<Captured, A, B, PreA> {
+    return {
       type: TransformType.promotion,
+      from: this.obj,
       into,
       where,
-    });
-    return this;
+    };
   }
 }
 
@@ -226,25 +251,17 @@ export class Language<A extends Record<string, ABC.AnyAlphabet>[]> {
       this.abcNames.map(([layer, alphabet], idx) => [
         layer,
         (
-          funcs: Record<string, InnerCaptureFunc<any, any, []>>,
+          createRules: CaptureFunc<any, any, []>,
         ) => {
           const next = this.abcNames[idx + 1]?.[1];
-          Object.entries(funcs).forEach(([feature, func]) => {
-            const f = Object.assign(
-              (obj: Partial<any>) => new CaptureApplier<any, any, any, []>(
-                this.rules[layer as keyof typeof this.rules] as any,
-                layer, obj, feature,
-              ),
-              Object.fromEntries(alphabet.types.forEach((type: string) => [
-                type,
-                (obj: Partial<any>) => new CaptureApplier<any, any, any, []>(
-                  this.rules[layer as keyof typeof this.rules] as any,
-                  layer, obj, feature,
-                ),
-              ])),
-            );
-            func(f, alphabet, next);
-          });
+          const f = Object.assign(
+            (obj: Partial<any>) => new CaptureApplier<any, any, any, []>(obj),
+            Object.fromEntries(alphabet.types.forEach((type: string) => [
+              type,
+              (obj: Partial<any>) => new CaptureApplier<any, any, any, []>(obj),
+            ])),
+          );
+          createRules(f, alphabet, next);
         },
       ]),
     );
