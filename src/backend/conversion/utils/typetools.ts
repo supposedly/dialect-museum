@@ -26,6 +26,7 @@ export type DeepMerge<O> = [O] extends [object] ? {
 export type UnionOf<L extends unknown[]> = L extends [infer Head, ...infer Tail] ? Head | UnionOf<Tail> : never;
 
 export type ValuesOf<O> = O[keyof O];
+export type ArrayOr<T> = T | T[];
 
 export function narrow<T>(o: Func.Narrow<T>): T {
   return o as T;
