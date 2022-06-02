@@ -268,10 +268,10 @@ export class Language<A extends Record<string, ABC.AnyAlphabet>[]> {
           // me when I'm typesafe
           const rules = (this.rules as Record<string, Record<string, Rule<never, any, any, []>[]>>)[layer];
           const capture = Object.assign(
-            (obj: Partial<any>) => new CaptureApplier<any, any, any, []>(obj),
+            (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, []>(obj),
             Object.fromEntries(alphabet.types.forEach((type: string) => [
               type,
-              (obj: Partial<any>) => new CaptureApplier<any, any, any, []>({...obj, type}),
+              (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, []>({...obj, type}),
             ])),
           );
           const nextAlphabet = this.layerNames[idx + 1]?.[1];
