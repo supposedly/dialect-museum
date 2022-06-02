@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 /* eslint-disable import/prefer-default-export */
 
-import {Function as Func, List} from 'ts-toolbelt';
+import {List} from 'ts-toolbelt';
 
 import * as ABC from '../../../alphabets/common';
 import {
@@ -15,9 +15,7 @@ import {
   KeysAndIndicesOf,
 } from '../type';
 import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone} from '../match';
-import {ArrayOr, DeepMerge, MergeUnion, UnionOf, ValuesOf} from '../../../utils/typetools';
-
-type $<T> = Func.Narrow<T>;
+import {ArrayOr, DeepMerge, MergeUnion, UnionOf, ValuesOf, Narrow} from '../../../utils/typetools';
 
 // type system likes being silly and not accepting that KeysAndIndicesOf<> produces
 // tuples [K, V] where K is a valid key and V is a valid value
@@ -99,7 +97,7 @@ type NextMappedFuncs<O extends OrderedObj<string, ABC.AnyAlphabet>> = _NextMappe
 
 type RawAlphabets = Record<string, NonNullable<ABC.AnyAlphabet>>;
 type Alphabets = List.List<RawAlphabets>;
-type FirstABC<A extends Alphabets> = OrderedObjOf<Func.Narrow<A>>[0][1];
+type FirstABC<A extends Alphabets> = OrderedObjOf<Narrow<A>>[0][1];
 type InputText<A extends Alphabets> = FirstABC<A>[keyof FirstABC<A>][];
 
 type MatchSpec<A extends ABC.AnyAlphabet, Pre extends OrderedObj<string, ABC.AnyAlphabet>> = DeepMatchOr<MergeUnion<
@@ -132,17 +130,15 @@ type MatchSpec<A extends ABC.AnyAlphabet, Pre extends OrderedObj<string, ABC.Any
 >>;
 
 type _IntoHelper<Captured, ABCValues> =
-  Captured extends null
-    ? never
-    : Captured extends ABCValues
-      ? Captured  // capture(abc.letter) means use that letter directly
-      // else check inside match
-      : Captured extends (MatchOne<infer T extends ABCValues> | MatchAny<infer T extends ABCValues>)
-        ? T  // capture(match.any([abc.letter1, abc.letter2])) means use letter1 | letter2 directly
-        // also check for not-match bc why not
-        : Captured extends (MatchNot<infer T extends ABCValues> | MatchNone<infer T extends ABCValues>)
-          ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
-          : ABCValues;  // else again just accept everything
+  Captured extends ABCValues
+  ? Captured  // capture(abc.letter) means use that letter directly
+  // else check inside match
+  : Captured extends (MatchOne<infer T extends ABCValues> | MatchAny<infer T extends ABCValues>)
+    ? T  // capture(match.any([abc.letter1, abc.letter2])) means use letter1 | letter2 directly
+    // also check for not-match bc why not
+    : Captured extends (MatchNot<infer T extends ABCValues> | MatchNone<infer T extends ABCValues>)
+      ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
+      : ABCValues;  // else again just accept everything
 
 type IntoSpec<
   Captured,
@@ -180,6 +176,11 @@ type Rule<
     where: MatchSpec<A, PreA>
   };
 
+type _TransformFuncs<C extends CaptureApplier<any, any, any, []>> = {
+  transform: C[`transform`],
+  promote: C[`promote`]
+};
+
 class CaptureApplier<
   Captured,
   A extends ABC.AnyAlphabet,
@@ -190,46 +191,58 @@ class CaptureApplier<
     private obj: CapturableOr<Captured, A>,
   ) {}
 
-  transform({into, where}: {into: IntoSpec<Captured, A, A>, where: MatchSpec<A, PreA>}): Rule<Captured, A, A, PreA> {
+  transform(
+    {into, where}: {into: IntoSpec<Captured, A, A>, where: MatchSpec<A, PreA>},
+  ): Rule<Captured, A, A, PreA> & _TransformFuncs<typeof this> {
     return {
       type: TransformType.transformation,
       from: this.obj,
       into,
       where,
+      transform: this.transform,
+      promote: this.promote,
     };
   }
 
-  promote({into, where}: {into: IntoSpec<Captured, A, B>, where: MatchSpec<A, PreA>}): Rule<Captured, A, B, PreA> {
+  promote(
+    {into, where}: {into: IntoSpec<Captured, A, B>, where: MatchSpec<A, PreA>},
+  ): Rule<Captured, A, B, PreA> & _TransformFuncs<typeof this> {
     return {
       type: TransformType.promotion,
       from: this.obj,
       into,
       where,
+      transform: this.transform,
+      promote: this.promote,
     };
   }
 }
 
 export class Language<A extends Record<string, ABC.AnyAlphabet>[]> {
-  public readonly abcNames: OrderedObjOf<A>;  // don't even know at this point if i need $<A> or not
+  public readonly layerNames: OrderedObjOf<A>;
 
   public rules: {
     // https://github.com/microsoft/TypeScript/issues/45281 means we need a jankier
     // way of extracting ranges from a list (specifically we can't go fancy and
     // get Head from smth like [...infer Head, (`specific item`), ...infer _Tail])
-    [KI in UnionOf<KeysAndIndicesOf<typeof this.abcNames>> as Force<KI[0], string>]: Array<Rule<
-      // Boils down to `null | ABC.ValuesOfABC<typeof this.abcNames[KI[0]]>`
-      // which means `null | (union of members of the alphabet whose name is the current key)`
-      null | ABC.ValuesOfABC<Force<ForceKey<ShiftedObjOf<typeof this.abcNames>, KI[0]>, ABC.AnyAlphabet>>,
-      typeof this.abcNames[KI[1]][1],
-      // Boils down to `typeof this.abcNames[KI[0]]`
-      // which means the same as above!
-      Force<ForceKey<ShiftedObjOf<typeof this.abcNames>, KI[0]>, ABC.AnyAlphabet>,
-      DropLast<List.Extract<typeof this.abcNames, 0, Force<KI[1], `${number}`>>>
-    >>
+    [KI in UnionOf<KeysAndIndicesOf<typeof this.layerNames>> as Force<KI[0], string>]:
+      Record<
+        string,
+        Array<Rule<
+          // Boils down to `null | ABC.ValuesOfABC<typeof this.abcNames[KI[0]]>`
+          // which means `null | (union of members of the alphabet whose name is the current key)`
+          null | ABC.ValuesOfABC<Force<ForceKey<ShiftedObjOf<typeof this.layerNames>, KI[0]>, ABC.AnyAlphabet>>,
+          typeof this.layerNames[KI[1]][1],
+          // Boils down to `typeof this.abcNames[KI[0]]`
+          // which means the same as above!
+          Force<ForceKey<ShiftedObjOf<typeof this.layerNames>, KI[0]>, ABC.AnyAlphabet>,
+          DropLast<List.Extract<typeof this.layerNames, 0, Force<KI[1], `${number}`>>>
+        >>
+      >
   };
 
   public readonly abcs: MergeObjs<A>;
-  public readonly select: NextMappedFuncs<typeof this.abcNames>;
+  public readonly select: NextMappedFuncs<typeof this.layerNames>;
 
   // All of the `any` types I'm using below are unimportant
   // Because in reality my alphabet-related mapped types have already
@@ -239,28 +252,41 @@ export class Language<A extends Record<string, ABC.AnyAlphabet>[]> {
   // to actually agree with me about what I'm assigning
   // In other words I'm making two assumptions here: first that my runtime
   // code is correct and says the same thing as my mapped types (which I
-  // gotta verify manually in eg REPL), and second that my handcrafted
+  // gotta verify manually in eg REPL), and second that my handmade
   // mapped types know more than the type inference below would
-  constructor(...abcs: $<A>) {
+  constructor(...abcs: Narrow<A>) {
     this.abcs = Object.assign({}, ...abcs);
-    this.abcNames = abcs.map(o => Object.entries(o)[0]) as any;
-    this.rules = Object.fromEntries(this.abcNames.map(name => [name, []]));
+    this.layerNames = abcs.map(o => Object.entries(o)[0]) as any;
+    this.rules = Object.fromEntries(this.layerNames.map(name => [name, {}]));
 
     this.select = Object.fromEntries(
-      this.abcNames.map(([layer, alphabet], idx) => [
+      this.layerNames.map(([layer, alphabet], idx) => [
         layer,
         (
           createRules: CaptureFunc<any, any, []>,
         ) => {
-          const next = this.abcNames[idx + 1]?.[1];
-          const f = Object.assign(
+          // me when I'm typesafe
+          const rules = (this.rules as Record<string, Record<string, Rule<never, any, any, []>[]>>)[layer];
+          const capture = Object.assign(
             (obj: Partial<any>) => new CaptureApplier<any, any, any, []>(obj),
             Object.fromEntries(alphabet.types.forEach((type: string) => [
               type,
               (obj: Partial<any>) => new CaptureApplier<any, any, any, []>(obj),
             ])),
           );
-          createRules(f, alphabet, next);
+          const nextAlphabet = this.layerNames[idx + 1]?.[1];
+          Object.entries(createRules(capture, alphabet, nextAlphabet)).forEach(
+            ([accent, rule]) => {
+              if (rules[accent] === undefined) {
+                rules[accent] = [];
+              }
+              if (Array.isArray(rule)) {
+                rules[accent].push(...rule);
+              } else {
+                rules[accent].push(rule);
+              }
+            },
+          );
         },
       ]),
     );

@@ -1,5 +1,5 @@
 /* eslint-disable max-classes-per-file */
-import {Function as Func} from "ts-toolbelt";
+import {Narrow as $} from "../../utils/typetools";
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? {[K in keyof U]: U[K]} : never;
@@ -9,8 +9,6 @@ export type ExclusifyUnion<T> = _ExclusifyUnion<T, AllKeys<T>>;  // TODO: take t
 
 type MatcherFunc = (obj: any) => boolean;
 type Matcher<T> = Exclude<T, Function> | MatcherFunc;
-
-type $<T> = Func.Narrow<T>;
 
 export type MatchOr<T> = T extends object ? ExclusifyUnion<T | Match<T>> : (T | Match<T>);
 export type DeepMatchOr<O> = Match<DeepMatchOr<O>> | {
