@@ -271,7 +271,7 @@ export class Language<A extends Record<string, ABC.AnyAlphabet>[]> {
             (obj: Partial<any>) => new CaptureApplier<any, any, any, []>(obj),
             Object.fromEntries(alphabet.types.forEach((type: string) => [
               type,
-              (obj: Partial<any>) => new CaptureApplier<any, any, any, []>(obj),
+              (obj: Partial<any>) => new CaptureApplier<any, any, any, []>({...obj, type}),
             ])),
           );
           const nextAlphabet = this.layerNames[idx + 1]?.[1];
