@@ -28,6 +28,8 @@ export type UnionOf<L extends unknown[]> = L extends [infer Head, ...infer Tail]
 export type ValuesOf<O> = O[keyof O];
 export type ArrayOr<T> = T | T[];
 
-export function narrow<T>(o: Func.Narrow<T>): T {
+export type Narrow<T> = Func.Narrow<T>;
+
+export function narrow<T>(o: Narrow<T>): T {
   return o as T;
 }

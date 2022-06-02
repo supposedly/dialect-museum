@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 
-import {Function as Func} from "ts-toolbelt";
+import {Narrow} from "../../../utils/typetools";
 
 export class TrackerHistory {
 
@@ -14,7 +14,7 @@ export class Tracker {
 export class TrackerList<T> {
   private head: Tracker;
 
-  constructor(private readonly text: Func.Narrow<T>) {
+  constructor(private readonly text: Narrow<T>) {
     this.head = new Tracker();
   }
 }
