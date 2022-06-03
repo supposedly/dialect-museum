@@ -215,10 +215,10 @@ export type Location = typeof $Location;
 
 export const $Manner = enumerate(`manner`, `
   approximant
-  nasal
+  flap
   fricative
   affricate
-  flap
+  nasal
   plosive
 `);
 export type Manner = typeof $Manner;
