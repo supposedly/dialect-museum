@@ -1,4 +1,4 @@
-import {Function as Func} from "ts-toolbelt";
+import {Function as Func, Union} from "ts-toolbelt";
 
 // https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
 // I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
@@ -23,7 +23,25 @@ export type DeepMerge<O> = [O] extends [object] ? {
 // using ts-toolbelt's List.UnionOf<> was giving some bad "type instantiation is excessively deep and
 // possibly infinite" errors
 // this works instead and is hopefully simpler (probably don't need whatever complex failsafes List.UnionOf<> has...)
-export type UnionOf<L extends unknown[]> = L extends [infer Head, ...infer Tail] ? Head | UnionOf<Tail> : never;
+export type UnionOf<L extends readonly unknown[]> =
+  L extends readonly [infer Head, ...infer Tail]
+    ? Head | UnionOf<Tail>
+    : never;
+
+// less weirdly-complicated than ts-toolbelt's List.Zip<>
+export type Zip<L1 extends readonly unknown[], L2 extends readonly unknown[]> =
+  [L1, L2] extends [readonly [infer A, ...infer Rest1], readonly [infer B, ...infer Rest2]]
+    ? [[A, B], ...Zip<Rest1, Rest2>]
+    : [];
+
+type _ZipObj<Keys extends readonly unknown[], Values extends readonly unknown[]> =
+  [Keys, Values] extends [[infer KHead extends keyof any, ...infer KTail], [infer VHead, ...infer VTail]]
+    ? Record<KHead, VHead> | _ZipObj<KTail, VTail>
+    : {};
+export type ZipObj<
+  Keys extends readonly unknown[],
+  Values extends readonly unknown[],
+> = Union.Merge<_ZipObj<Keys, Values>>;
 
 export type ValuesOf<O> = O[keyof O];
 export type ArrayOr<T> = T | T[];
