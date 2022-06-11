@@ -62,8 +62,8 @@ aardxylophone.)
 
 Maybe the fix is to cease this silliness at once and return straight to how the English
 language was meant to be: two accents, no more, no less. Alas, I've spent ages of my life
-refusing to consider that exact solution (two ages, to be exact), so you won't hear any more of it from me.
-Let's put our imaginations to use and come up with some other methods to manage the madness!
+(two ages) refusing to consider that exact solution, so you won't hear any more of it from me.
+The ultimate goal here is to be able to represent as much variation as possible as succinctly as possible.
 
 A quick fix would just be to hide that whole mess of pronunciation guides until someone purposely asks to see it.
 You've probably noticed that I've been showing you the online OED instead of a paper dictionary, and, as you know...
