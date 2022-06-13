@@ -1,10 +1,9 @@
 /* eslint-disable template-curly-spacing */
 /* eslint-disable no-multi-spaces */
+
 // !!! THIS FILE IS UNFINISHED !!!
-// TODO: extend stuff from Template instead of StringSegment
 // TODO: figure out how to handle ctx stuff
 // TODO: figure out what word.meta should look like
-// TODO: add verb.value (the root), word.value (sequence of underlying symbols or keys), etc...
 
 import {Function, Union} from "ts-toolbelt";
 import {cheat, Base, newAlphabet} from "../common";
@@ -90,7 +89,6 @@ export interface Pronoun<
     gender: G
   }>
 }
-
 export interface Af3al<V extends Root = Root> extends Template<V> {
   type: Type[`af3al`]
 }
