@@ -42,13 +42,23 @@ export type ProtoAlphabet<T> = {
   [K in keyof T]: Record<string, T[K]>
 };
 
+// fundamental types
+type BoundaryType<Name extends string> = `${Name}:boundary`;
+type LiteralType<Name extends string> = `${Name}:literal`;
+interface Boundary<T extends string, V extends string = string> extends Base<BoundaryType<T>, V> {}
+interface Literal<T extends string, V extends string = string> extends Base<LiteralType<T>, V> {}
+type Fundamentals<Name extends string> = Boundary<Name> | Literal<Name>;
+
+const fundamentalNames = [`boundary`, `literal`] as const;
+type FundamentalNames = typeof fundamentalNames[number];
+
 export type Alphabet<
   ProtoABC extends Record<string, Record<string, Base>>,
   Types extends Record<string, Base>,
   Name extends string,
 > = {
   abc: MergeUnion<ValuesOf<ProtoABC>>
-  types: Set<keyof Types>
+  types: Set<FundamentalNames | keyof Types>
   name: Name
   /*
   // All of the base types this alphabet was created with
@@ -61,7 +71,7 @@ export type Alphabet<
   // (so for example the `templated` Alphabet's `exactTypes` will
   // contain specific, concrete Pronouns, but only the base types
   // for stuff like Verb or Af3al)
-  [` exactTypes`]: ValuesOf<{
+  [` exactTypes`]: Fundamentals<Name> | ValuesOf<{
     [K in keyof ProtoABC & keyof Types]:
       keyof ProtoABC[K] extends never
         ? Types[K]
@@ -83,6 +93,10 @@ export type ValuesOfABC<A extends AnyAlphabet> = ValuesOf<ABC<A>>;
 export type AllMatching<A extends AnyAlphabet, U> = Extract<ValuesOfABC<A>, U>;
 export type AllOfType<A extends AnyAlphabet, T extends TypeNames<A>> = AllMatching<A, {type: Named<A, T>}>;
 
+export type _ExactValuesOfABC<A extends AnyAlphabet> = ValuesOf<_ExactTypes<A>>;
+export type _ExactAllMatching<A extends AnyAlphabet, U> = Extract<_ExactValuesOfABC<A>, U>;
+export type _ExactAllOfType<A extends AnyAlphabet, T extends TypeNames<A>> = _ExactAllMatching<A, {type: Named<A, T>}>;
+
 // I use this when I need to pass the runtime and compiler/type system
 // slightly different info
 // For example, in underlying.ts, I coerce a key-to-strings enum into a
@@ -102,7 +116,7 @@ export function newAlphabet<
 >(name: Name, type: Types, o: Symbols): Alphabet<Symbols, Types, Name> {
   return {
     name,
-    types: new Set(Object.keys(type)),
+    types: new Set([...fundamentalNames, ...Object.keys(type)]),
     abc: Object.fromEntries(Object.values(o).flatMap(group => Object.entries(group as any))),
   } as any;
 }

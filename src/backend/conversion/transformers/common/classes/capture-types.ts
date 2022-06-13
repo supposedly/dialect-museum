@@ -20,7 +20,7 @@ export type Force<T, B> = T extends B ? T : never;
 export type ForceKey<T, K> = K extends keyof T ? T[K] : never;
 
 export type Capturable<A extends ABC.AnyAlphabet> = ValuesOf<{
-  [T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC.AllOfType<A, T>>>
+  [T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<A, T>>>
 }>;
 
 export type CaptureFunc<
@@ -53,7 +53,7 @@ export type CaptureFunc<
     // Extract<>s but I don't think it's possible -- or at least I'm not good enough with type-wrangling magic to
     // know how to do it -- so this is the best I've got for now
   & {
-    [T in ABC.TypeNames<Curr>]: <O extends DeepMatchOr<DeepMerge<ABC.AllOfType<Curr, T>>>>(
+    [T in ABC.TypeNames<Curr>]: <O extends DeepMatchOr<DeepMerge<ABC._ExactAllOfType<Curr, T>>>>(
       obj: O
     ) => CaptureApplier<typeof obj, Curr, Next, PreCurr>
   },
@@ -106,14 +106,14 @@ export type MatchSpec<
   | ValuesOf<{
     [Dir in `next` | `prev`]: {
       [T in ABC.TypeNames<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-coloring bc bugged
-          _: DeepMerge<ABC.AllOfType<A, T>>
+          _: DeepMerge<ABC._ExactAllOfType<A, T>>
           env: MatchSpec<A, Pre>
         }
       }
   }>
   | {
     [Dir in `next` | `prev`]: {
-      _: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMerge<ABC.AllOfType<A, T>>}>
+      _: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMerge<ABC._ExactAllOfType<A, T>>}>
       env: MatchSpec<A, Pre>
     }
   }
@@ -121,7 +121,7 @@ export type MatchSpec<
     was: {
       // Pre[KI[1]][1] is like `value of Pre at index I` and it's the AnyAlphabet at some layer
       [KI in List.UnionOf<KeysAndIndicesOf<Pre>> as Force<KI[0], string>]: ValuesOf<{
-          [T in ABC.TypeNames<Pre[KI[1]][1]>]: DeepMerge<ABC.AllOfType<Pre[KI[1]][1], T>>
+          [T in ABC.TypeNames<Pre[KI[1]][1]>]: DeepMerge<ABC._ExactAllOfType<Pre[KI[1]][1], T>>
         }>
         // {_: /* see above ^ */, env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
         // that doesn't work bc type instantiation is excessively deep for `env`'s value
