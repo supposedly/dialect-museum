@@ -210,6 +210,12 @@ export default newAlphabet(
   NAME,
   cheat<Types>($Type),  // see cheat()'s function comment
   {
+    // TODO: fill in all accent features here...
+    // ...I don't like that this is here instead of somewhere external...
+    // -
+    // Features here will include all pre-phonic transformations (I think...)
+  },
+  {
     consonant: consonants(basic.consonants),
     vowel: vowels(basic.vowels),
     suffix: suffixes(basic.suffixes),

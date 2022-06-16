@@ -51,3 +51,7 @@ export type Narrow<T> = Func.Narrow<T>;
 export function narrow<T>(o: Narrow<T>): T {
   return o as T;
 }
+
+export function narrowSet<E extends unknown[]>(values: Narrow<E>): Set<E[number]> {
+  return new Set(values);
+}

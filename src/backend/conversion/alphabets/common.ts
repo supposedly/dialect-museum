@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
 // I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
-import {MergeUnion, ValuesOf} from "../utils/typetools";
+import {MergeUnion, ValuesOf, Narrow as $} from "../utils/typetools";
 
 export type Widen<T> =
   T extends boolean ? boolean
@@ -55,11 +55,13 @@ type FundamentalNames = typeof fundamentalNames[number];
 export type Alphabet<
   ProtoABC extends Record<string, Record<string, Base>>,
   Types extends Record<string, Base>,
+  Accents extends Record<string, Set<string>>,
   Name extends string,
 > = {
-  abc: MergeUnion<ValuesOf<ProtoABC>>
-  types: Set<FundamentalNames | keyof Types>
   name: Name
+  types: Set<FundamentalNames | keyof Types>
+  accents: Accents
+  abc: MergeUnion<ValuesOf<ProtoABC>>
   /*
   // All of the base types this alphabet was created with
   // Commented out because I don't really need it and it was causing some error
@@ -79,13 +81,19 @@ export type Alphabet<
   }>
 };
 export type AnyAlphabet = {
-  abc: Record<string, Base>
-  types: Set<string>
   name: string
+  types: Set<string>
+  accents: Record<string, Set<string>>
+  abc: Record<string, Base>
   [` exactTypes`]: Base
 };
 export type ABC<A extends AnyAlphabet> = A[`abc`];
 export type TypeNames<A extends AnyAlphabet> = A[`types`] extends Set<infer U extends string> ? U : never;
+export type AccentFeatures<A extends AnyAlphabet> = keyof A[`accents`];
+export type AccentFeature<A extends AnyAlphabet, F extends AccentFeatures<A>> =
+  A[`accents`][F] extends Set<infer U extends string>
+    ? U
+    : never;
 export type _ExactTypes<A extends AnyAlphabet> = A[` exactTypes`];
 export type Named<A extends AnyAlphabet, S extends TypeNames<A>> = `${A[`name`]}:${S}`;
 
@@ -108,15 +116,22 @@ export function cheat<T>(o: Record<keyof T, any>): T {
 
 type ExtractPreColon<S extends string> = S extends `${infer Name}:${infer _}` ? Name : ``;
 
-// In the future: Add a fourth parameter to this, after `type`, that's something like a list of accent features
+type ToSets<R extends Record<string, string[]>> = {
+  [K in keyof R]: Set<R[K][number]>
+};
+
 export function newAlphabet<
   Types extends Record<string, Base>,
+  Features extends Record<string, string[]>,
   Symbols extends ProtoAlphabet<Types>,
   Name extends ExtractPreColon<ValuesOf<Types>[`type`]>,
->(name: Name, type: Types, o: Symbols): Alphabet<Symbols, Types, Name> {
+>(name: Name, type: Types, accents: $<Features>, symbols: Symbols): Alphabet<Symbols, Types, ToSets<Features>, Name> {
   return {
     name,
+    accents,
     types: new Set([...fundamentalNames, ...Object.keys(type)]),
-    abc: Object.fromEntries(Object.values(o).flatMap(group => Object.entries(group as any))),
+    abc: Object.fromEntries(
+      Object.values(symbols).flatMap(group => Object.entries(group as any)),
+    ),
   } as any;
 }
