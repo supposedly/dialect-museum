@@ -18,24 +18,26 @@ import {
   _TransformFuncs,
   Force,
   NextMappedFuncs,
-  CaptureFunc,
-  InputText,
+  CaptureFuncs,
   Rule,
+  TransformRule,
+  PromoteRule,
 } from './capture-types';
 
 class CaptureApplier<
+  Features extends string,
   Captured,
   A extends ABC.AnyAlphabet,
   B extends ABC.AnyAlphabet,
   PreA extends OrderedObj<string, ABC.AnyAlphabet>,
-> implements ICaptureApplier<Captured, A, B, PreA> {
+> implements ICaptureApplier<Features, Captured, A, B, PreA> {
   constructor(
     private obj: CapturableOr<Captured, A>,
   ) {}
 
   transform(
-    {into, where}: {into: IntoSpec<Captured, A, A>, where: MatchSpec<A, PreA>},
-  ): Rule<Captured, A, A, PreA> & _TransformFuncs<this> {
+    {into, where}: {into: IntoSpec<Features, Captured, A, A>, where: MatchSpec<A, PreA>},
+  ): TransformRule<Features, Captured, A, PreA> & _TransformFuncs<this> {
     return {
       type: TransformType.transformation,
       from: this.obj,
@@ -47,8 +49,8 @@ class CaptureApplier<
   }
 
   promote(
-    {into, where}: {into: IntoSpec<Captured, A, B>, where: MatchSpec<A, PreA>},
-  ): Rule<Captured, A, B, PreA> & _TransformFuncs<this> {
+    {into, where}: {into: IntoSpec<Features, Captured, A, B>, where: MatchSpec<A, PreA>},
+  ): PromoteRule<Features, Captured, A, B, PreA> & _TransformFuncs<this> {
     return {
       type: TransformType.promotion,
       from: this.obj,
@@ -98,30 +100,28 @@ export class Language<A extends Record<string, ABC.AnyAlphabet>[]> {
       this.layers.map(([layer, alphabet], idx) => [
         layer,
         (
-          createRules: CaptureFunc<any, any, []>,
+          createRules: CaptureFuncs<any, any, []>,
         ) => {
-          // me when I'm typesafe
           const rules = this.rules[layer];
+          const nextAlphabet = this.layers[idx + 1]?.[1];
           const capture = Object.assign(
-            (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, []>(obj),
+            (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, any, []>(obj),
             Object.fromEntries(alphabet.types.forEach((type: string) => [
               type,
-              (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, []>({...obj, type}),
+              (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, any, []>({...obj, type}),
             ])),
           );
-          const nextAlphabet = this.layers[idx + 1]?.[1];
-          Object.entries(createRules(capture, alphabet, nextAlphabet)).forEach(
-            ([accent, rule]) => {
-              if (rules[accent] === undefined) {
-                rules[accent] = [];
-              }
-              if (Array.isArray(rule)) {
-                rules[accent].push(...rule);
-              } else {
-                rules[accent].push(rule);
-              }
-            },
-          );
+          Object.entries(createRules).forEach(([accent, createRule]) => {
+            if (createRule === undefined) {
+              // will literally never happen
+              console.log(`I was wrong it happened`);
+              return;
+            }
+            if (rules[accent] === undefined) {
+              rules[accent] = [];
+            }
+            rules[accent].push(...createRule(capture, alphabet, nextAlphabet));
+          });
         },
       ]),
     );
