@@ -55,12 +55,10 @@ type FundamentalNames = typeof fundamentalNames[number];
 export type Alphabet<
   ProtoABC extends Record<string, Record<string, Base>>,
   Types extends Record<string, Base>,
-  Accents extends Record<string, Set<string>>,
   Name extends string,
 > = {
   name: Name
   types: Set<FundamentalNames | keyof Types>
-  accents: Accents
   abc: MergeUnion<ValuesOf<ProtoABC>>
   /*
   // All of the base types this alphabet was created with
@@ -83,17 +81,11 @@ export type Alphabet<
 export type AnyAlphabet = {
   name: string
   types: Set<string>
-  accents: Record<string, Set<string>>
   abc: Record<string, Base>
   [` exactTypes`]: Base
 };
 export type ABC<A extends AnyAlphabet> = A[`abc`];
 export type TypeNames<A extends AnyAlphabet> = A[`types`] extends Set<infer U extends string> ? U : never;
-export type AccentFeatures<A extends AnyAlphabet> = keyof A[`accents`];
-export type AccentFeature<A extends AnyAlphabet, F extends AccentFeatures<A>> =
-  A[`accents`][F] extends Set<infer U extends string>
-    ? U
-    : never;
 export type _ExactTypes<A extends AnyAlphabet> = A[` exactTypes`];
 export type Named<A extends AnyAlphabet, S extends TypeNames<A>> = `${A[`name`]}:${S}`;
 
@@ -116,19 +108,13 @@ export function cheat<T>(o: Record<keyof T, any>): T {
 
 type ExtractPreColon<S extends string> = S extends `${infer Name}:${infer _}` ? Name : ``;
 
-type ToSets<R extends Record<string, string[]>> = {
-  [K in keyof R]: Set<R[K][number]>
-};
-
 export function newAlphabet<
   Types extends Record<string, Base>,
-  Features extends Record<string, string[]>,
   Symbols extends ProtoAlphabet<Types>,
   Name extends ExtractPreColon<ValuesOf<Types>[`type`]>,
->(name: Name, type: Types, accents: $<Features>, symbols: Symbols): Alphabet<Symbols, Types, ToSets<Features>, Name> {
+>(name: Name, type: Types, symbols: Symbols): Alphabet<Symbols, Types, Name> {
   return {
     name,
-    accents,
     types: new Set([...fundamentalNames, ...Object.keys(type)]),
     abc: Object.fromEntries(
       Object.values(symbols).flatMap(group => Object.entries(group as any)),

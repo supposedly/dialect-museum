@@ -2,6 +2,7 @@
 /* eslint-disable import/prefer-default-export */
 
 import * as ABC from '../../../alphabets/common';
+import * as Accents from '../../../accents/common';
 import {Narrow as $} from '../../../utils/typetools';
 import {TrackerList} from './tracker';
 import {
@@ -25,19 +26,19 @@ import {
 } from './capture-types';
 
 class CaptureApplier<
-  Features extends string,
   Captured,
-  A extends ABC.AnyAlphabet,
+  A extends Accents.AnyLayer,
   B extends ABC.AnyAlphabet,
   PreA extends OrderedObj<string, ABC.AnyAlphabet>,
-> implements ICaptureApplier<Features, Captured, A, B, PreA> {
+  Feature extends Accents.AccentFeatures<A>,
+> implements ICaptureApplier<Captured, A, B, PreA, Feature> {
   constructor(
     private obj: CapturableOr<Captured, A>,
   ) {}
 
   transform(
-    {into, where}: {into: IntoSpec<Features, Captured, A, A>, where: MatchSpec<A, PreA>},
-  ): TransformRule<Features, Captured, A, PreA> & _TransformFuncs<this> {
+    {into, where}: {into: IntoSpec<Captured, A, A, Feature>, where: MatchSpec<A, PreA>},
+  ): TransformRule<Captured, A, PreA, Feature> & _TransformFuncs<this> {
     return {
       type: TransformType.transformation,
       from: this.obj,
@@ -49,8 +50,8 @@ class CaptureApplier<
   }
 
   promote(
-    {into, where}: {into: IntoSpec<Features, Captured, A, B>, where: MatchSpec<A, PreA>},
-  ): PromoteRule<Features, Captured, A, B, PreA> & _TransformFuncs<this> {
+    {into, where}: {into: IntoSpec<Captured, A, B, Feature>, where: MatchSpec<A, PreA>},
+  ): PromoteRule<Captured, A, B, PreA, Feature> & _TransformFuncs<this> {
     return {
       type: TransformType.promotion,
       from: this.obj,
@@ -74,7 +75,7 @@ type UghGetABCLinearly<T extends Record<string, ABC.AnyAlphabet>[], N extends st
       : UghGetABCLinearly<Tail, N>
     : never;
 
-export class Language<A extends Record<string, ABC.AnyAlphabet>[]> {
+export class Language<A extends Record<string, Accents.AnyLayer>[]> {
   public readonly layers: OrderedObjOf<A>;
 
   public rules: Record<string, Record<string, Array<Rule>>>;
@@ -105,10 +106,10 @@ export class Language<A extends Record<string, ABC.AnyAlphabet>[]> {
           const rules = this.rules[layer];
           const nextAlphabet = this.layers[idx + 1]?.[1];
           const capture = Object.assign(
-            (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, any, []>(obj),
+            (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>(obj),
             Object.fromEntries(alphabet.types.forEach((type: string) => [
               type,
-              (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, any, []>({...obj, type}),
+              (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>({...obj, type}),
             ])),
           );
           Object.entries(createRules).forEach(([accent, createRule]) => {
