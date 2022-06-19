@@ -197,14 +197,6 @@ export default newAlphabet(
   NAME,
   cheat<Types>($Type),  // see cheat()'s function comment
   {
-    // TODO: fill in all accent features here...
-    // ...I don't like that this is here instead of somewhere external...
-    // -
-    // Features here will include everything that the initializers in the former
-    // design used to either (1) test for in ctx OR (2) just do unconditionally,
-    // irrespectively of different accents
-  },
-  {
     suffix: suffixes(basic.suffixes),
     delimiter: delimiters(basic.delimiters),
     pronoun: pronouns(basic.pronouns),
