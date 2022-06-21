@@ -1,13 +1,13 @@
 import * as ABC from "../alphabets/common";
 import {Narrow as $} from "../utils/typetools";
 
-export type Layer<A extends ABC.AnyAlphabet, R extends Record<string, Set<string>>> = A & {
+export type Layer<A extends ABC.AnyAlphabet, R extends Record<string, Set<string>>> = {
   accents: R
-};
+} & A;
 
-export type AnyLayer = ABC.AnyAlphabet & {
+export type AnyLayer = {
   accents: Record<string, Set<String>>
-};
+} & ABC.AnyAlphabet;
 
 type ToSets<R extends Record<string, string[]>> = {
   [K in keyof R]: Set<R[K][number]>

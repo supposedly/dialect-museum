@@ -93,8 +93,7 @@ export type ValuesOfABC<A extends AnyAlphabet> = ValuesOf<ABC<A>>;
 export type AllMatching<A extends AnyAlphabet, U> = Extract<ValuesOfABC<A>, U>;
 export type AllOfType<A extends AnyAlphabet, T extends TypeNames<A>> = AllMatching<A, {type: Named<A, T>}>;
 
-export type _ExactValuesOfABC<A extends AnyAlphabet> = ValuesOf<_ExactTypes<A>>;
-export type _ExactAllMatching<A extends AnyAlphabet, U> = Extract<_ExactValuesOfABC<A>, U>;
+export type _ExactAllMatching<A extends AnyAlphabet, U> = Extract<_ExactTypes<A>, U>;
 export type _ExactAllOfType<A extends AnyAlphabet, T extends TypeNames<A>> = _ExactAllMatching<A, {type: Named<A, T>}>;
 
 // I use this when I need to pass the runtime and compiler/type system
