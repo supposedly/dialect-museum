@@ -66,7 +66,7 @@ export type _NextMappedFuncs<
   [KI in List.UnionOf<DropLast<KeysAndIndicesOf<O>>> as KI[0]]: SelectFunc<
     _O[KI[0]] extends Accents.AnyLayer ? _O[KI[0]] : never,
     _Shifted[KI[0]] extends Accents.AnyLayer ? _Shifted[KI[0]] : never,
-    DropLast<List.Extract<O, 0, KI[1]>>
+    List.Extract<O, 0, KI[1]>
   >;
 };
 export type NextMappedFuncs<O extends OrderedObj<string, ABC.AnyAlphabet>> = _NextMappedFuncs<O>;

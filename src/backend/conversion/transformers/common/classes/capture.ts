@@ -100,9 +100,7 @@ export class Language<A extends Record<string, Accents.AnyLayer>[]> {
     this.select = Object.fromEntries(
       this.layers.map(([layer, alphabet], idx) => [
         layer,
-        (
-          createRules: CaptureFuncs<any, any, []>,
-        ) => {
+        (createRules: CaptureFuncs<any, any, []>) => {
           const rules = this.rules[layer];
           const nextAlphabet = this.layers[idx + 1]?.[1];
           const capture = Object.assign(
@@ -115,8 +113,7 @@ export class Language<A extends Record<string, Accents.AnyLayer>[]> {
           Object.entries(createRules).forEach(([accent, createRule]) => {
             if (createRule === undefined) {
               // will literally never happen
-              console.log(`I was wrong it happened`);
-              return;
+              throw new Error(`I was wrong it happened`);
             }
             if (rules[accent] === undefined) {
               rules[accent] = [];
