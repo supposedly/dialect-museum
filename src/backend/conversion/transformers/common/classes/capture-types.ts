@@ -27,7 +27,7 @@ export type Capturable<A extends ABC.AnyAlphabet> = ValuesOf<{
 export type CaptureFuncs<
   Curr extends Accents.AnyLayer,
   Next extends ABC.AnyAlphabet,
-  PreCurr extends OrderedObj<string, ABC.AnyAlphabet>,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
 > = {
   [Feature in Accents.AccentFeatures<Curr>]?: (
     capture: (<
@@ -42,22 +42,22 @@ export type CaptureFuncs<
       // - a partial specification that overlaps with one or more members of the current alphabet
       // - a match() thing that says to match parts of members of the current alphabet
       O extends Capturable<Curr>,
-    >(obj: O) => CaptureApplier<typeof obj, Curr, Next, PreCurr, Feature>)
+    >(obj: O) => CaptureApplier<typeof obj, Curr, Next, ABCHistory, Feature>)
     & {
       [T in ABC.TypeNames<Curr>]: <O extends DeepMatchOr<DeepMerge<ABC._ExactAllOfType<Curr, T>>>>(
         obj: O
-      ) => CaptureApplier<typeof obj, Curr, Next, PreCurr, Feature>
+      ) => CaptureApplier<typeof obj, Curr, Next, ABCHistory, Feature>
     },
     abc: ABC.ABC<Curr>,
     nextABC: ABC.ABC<Next>
-  ) => Array<Rule<never, Curr, Next, PreCurr, Feature>>
+  ) => Array<Rule<never, Curr, Next, ABCHistory, Feature>>
 };
 
 export type SelectFunc<
   Curr extends Accents.AnyLayer,
   Next extends Accents.AnyLayer,
-  PreCurr extends OrderedObj<string, Accents.AnyLayer>,
-> = (rules: CaptureFuncs<Curr, Next, PreCurr>) => void;
+  ABCHistory extends OrderedObj<string, Accents.AnyLayer>,
+> = (rules: CaptureFuncs<Curr, Next, ABCHistory>) => void;
 
 export type _NextMappedFuncs<
   O extends OrderedObj<string, ABC.AnyAlphabet>,
@@ -78,27 +78,27 @@ export type InputText<A extends Alphabets> = FirstABC<A>[keyof FirstABC<A>][];
 
 export type MatchSpec<
   A extends ABC.AnyAlphabet,
-  Pre extends OrderedObj<string, ABC.AnyAlphabet>,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
 > = DeepMatchOr<MergeUnion<
   | ValuesOf<{
     [Dir in `next` | `prev`]: {
       [T in ABC.TypeNames<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-coloring bc bugged
           _: DeepMerge<ABC._ExactAllOfType<A, T>>
-          env: MatchSpec<A, Pre>
+          env: MatchSpec<A, ABCHistory>
         }
       }
   }>
   | {
     [Dir in `next` | `prev`]: {
       _: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMerge<ABC._ExactAllOfType<A, T>>}>
-      env: MatchSpec<A, Pre>
+      env: MatchSpec<A, ABCHistory>
     }
   }
   | {
     was: {
       // Pre[KI[1]][1] is like `value of Pre at index I` and it's the AnyAlphabet at some layer
-      [KI in List.UnionOf<KeysAndIndicesOf<Pre>> as Force<KI[0], string>]: ValuesOf<{
-          [T in ABC.TypeNames<Pre[KI[1]][1]>]: DeepMerge<ABC._ExactAllOfType<Pre[KI[1]][1], T>>
+      [KI in List.UnionOf<KeysAndIndicesOf<ABCHistory>> as Force<KI[0], string>]: ValuesOf<{
+          [T in ABC.TypeNames<ABCHistory[KI[1]][1]>]: DeepMerge<ABC._ExactAllOfType<ABCHistory[KI[1]][1], T>>
         }>
         // {_: /* see above ^ */, env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
         // that doesn't work bc type instantiation is excessively deep for `env`'s value
@@ -140,37 +140,37 @@ export type CapturableOr<T, A extends ABC.AnyAlphabet> =
 export type TransformRule<
   Captured,
   A extends Accents.AnyLayer,
-  PreA extends OrderedObj<string, ABC.AnyAlphabet>,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
   Feature extends Accents.AccentFeatures<A>,
 > = {
   type: TransformType.transformation,
   from: CapturableOr<Captured, A>,
   into: IntoSpec<Captured, A, A, Feature>,
-  where: MatchSpec<A, PreA>
+  where: MatchSpec<A, ABCHistory>
 };
 
 export type PromoteRule<
   Captured,
   A extends Accents.AnyLayer,
   B extends ABC.AnyAlphabet,
-  PreA extends OrderedObj<string, ABC.AnyAlphabet>,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
   Feature extends Accents.AccentFeatures<A>,
 > = {
   type: TransformType.promotion,
   from: CapturableOr<Captured, A>,
   into: IntoSpec<Captured, A, B, Feature>,
-  where: MatchSpec<A, PreA>
+  where: MatchSpec<A, ABCHistory>
 };
 
 export type Rule<
   Captured = never,
   A extends Accents.AnyLayer = any,
   B extends ABC.AnyAlphabet = any,
-  PreA extends OrderedObj<string, ABC.AnyAlphabet> = [],
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet> = [],
   Feature extends Accents.AccentFeatures<A> = Accents.AccentFeatures<A>,
 > =
-  | TransformRule<Captured, A, PreA, Feature>
-  | PromoteRule<Captured, A, B, PreA, Feature>;
+  | TransformRule<Captured, A, ABCHistory, Feature>
+  | PromoteRule<Captured, A, B, ABCHistory, Feature>;
 
 export type _TransformFuncs<C extends CaptureApplier<any, any, any, [], any>> = {
   transform: C[`transform`],
@@ -181,14 +181,14 @@ export interface CaptureApplier<
   Captured,
   A extends Accents.AnyLayer,
   B extends ABC.AnyAlphabet,
-  PreA extends OrderedObj<string, ABC.AnyAlphabet>,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
   Feature extends Accents.AccentFeatures<A>,
 > {
   transform(
-    {into, where}: {into: IntoSpec<Captured, A, A, Feature>, where: MatchSpec<A, PreA>},
-  ): TransformRule<Captured, A, PreA, Feature> & _TransformFuncs<this>;
+    {into, where}: {into: IntoSpec<Captured, A, A, Feature>, where: MatchSpec<A, ABCHistory>},
+  ): TransformRule<Captured, A, ABCHistory, Feature> & _TransformFuncs<this>;
 
   promote(
-    {into, where}: {into: IntoSpec<Captured, A, B, Feature>, where: MatchSpec<A, PreA>},
-  ): PromoteRule<Captured, A, B, PreA, Feature> & _TransformFuncs<this>;
+    {into, where}: {into: IntoSpec<Captured, A, B, Feature>, where: MatchSpec<A, ABCHistory>},
+  ): PromoteRule<Captured, A, B, ABCHistory, Feature> & _TransformFuncs<this>;
 }
