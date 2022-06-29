@@ -29,16 +29,16 @@ class CaptureApplier<
   Captured,
   A extends Accents.AnyLayer,
   B extends ABC.AnyAlphabet,
-  PreA extends OrderedObj<string, ABC.AnyAlphabet>,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
   Feature extends Accents.AccentFeatures<A>,
-> implements ICaptureApplier<Captured, A, B, PreA, Feature> {
+> implements ICaptureApplier<Captured, A, B, ABCHistory, Feature> {
   constructor(
     private obj: CapturableOr<Captured, A>,
   ) {}
 
   transform(
-    {into, where}: {into: IntoSpec<Captured, A, A, Feature>, where: MatchSpec<A, PreA>},
-  ): TransformRule<Captured, A, PreA, Feature> & _TransformFuncs<this> {
+    {into, where}: {into: IntoSpec<Captured, A, A, Feature>, where: MatchSpec<A, ABCHistory>},
+  ): TransformRule<Captured, A, ABCHistory, Feature> & _TransformFuncs<this> {
     return {
       type: TransformType.transformation,
       from: this.obj,
@@ -50,8 +50,8 @@ class CaptureApplier<
   }
 
   promote(
-    {into, where}: {into: IntoSpec<Captured, A, B, Feature>, where: MatchSpec<A, PreA>},
-  ): PromoteRule<Captured, A, B, PreA, Feature> & _TransformFuncs<this> {
+    {into, where}: {into: IntoSpec<Captured, A, B, Feature>, where: MatchSpec<A, ABCHistory>},
+  ): PromoteRule<Captured, A, B, ABCHistory, Feature> & _TransformFuncs<this> {
     return {
       type: TransformType.promotion,
       from: this.obj,
