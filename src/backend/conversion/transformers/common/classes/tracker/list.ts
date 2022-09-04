@@ -16,6 +16,7 @@ export class List<T extends ListNode<T>> {
           ...node,
           next: null,
           append(n) {
+            n.next = this.next;
             this.next = n;
           },
         });
@@ -63,6 +64,7 @@ export class List<T extends ListNode<T>> {
         ...f(node),
         next: null,
         append(n) {
+          n.next = this.next;
           this.next = n;
         },
       });

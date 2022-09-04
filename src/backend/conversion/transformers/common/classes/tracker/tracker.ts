@@ -17,6 +17,7 @@ class LayerHistoryEntry implements ListNode<LayerHistoryEntry> {
   next: Null<LayerHistoryEntry> = null;
 
   append(node: LayerHistoryEntry) {
+    node.next = this.next;
     this.next = node;
   }
 }
@@ -65,6 +66,7 @@ export class Tracker {
   }
 
   append(node: Tracker) {
+    node.next = this.next;
     this.next = node;
     node.prev = this;
   }
