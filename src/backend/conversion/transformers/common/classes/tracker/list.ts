@@ -3,19 +3,49 @@ export interface ListNode<T> {
   append(node: T): void
 }
 
+type ListNodeOf<T> = ListNode<ListNodeOf<T>> & T;
+
 export class List<T extends ListNode<T>> {
   head: T | null = null;
   tail: T | null = null;
 
-  forEach(f: (node: T) => void) {
-    let node = this.head;
-    while (node !== null) {
-      f(node);
-      node = node.next;
-    }
+  static fromArray<R>(arr: R[]): List<ListNodeOf<R>> {
+    return arr.reduce(
+      (list, node) => {
+        list.append({
+          ...node,
+          next: null,
+          append(n) {
+            this.next = n;
+          },
+        });
+        return list;
+      },
+      new List<ListNodeOf<R>>(),
+    );
   }
 
-  map<R>(f: (node: T) => R): R[] {
+  toArray() {
+    const arr = [];
+    let node = this.head;
+    while (node !== null) {
+      arr.push(node);
+      node = node.next;
+    }
+    return arr;
+  }
+
+  map<R extends ListNode<R>>(f: (node: T) => R): List<R> {
+    const list = new List<R>();
+    let node = this.head;
+    while (node !== null) {
+      list.append(f(node));
+      node = node.next;
+    }
+    return list;
+  }
+
+  mapToArray<R>(f: (node: T) => R): R[] {
     const arr = [];
     let node = this.head;
     while (node !== null) {
@@ -23,6 +53,30 @@ export class List<T extends ListNode<T>> {
       node = node.next;
     }
     return arr;
+  }
+
+  mapToList<R>(f: (node: T) => R): List<ListNodeOf<R>> {
+    const list = new List<ListNodeOf<R>>();
+    let node = this.head;
+    while (node !== null) {
+      list.append({
+        ...f(node),
+        next: null,
+        append(n) {
+          this.next = n;
+        },
+      });
+      node = node.next;
+    }
+    return list;
+  }
+
+  forEach(f: (node: T) => void) {
+    let node = this.head;
+    while (node !== null) {
+      f(node);
+      node = node.next;
+    }
   }
 
   append(node: T) {
