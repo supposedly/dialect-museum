@@ -74,8 +74,12 @@ export type NextMappedFuncs<O extends OrderedObj<string, ABC.AnyAlphabet>> = _Ne
 export type RawAlphabets = Record<string, NonNullable<ABC.AnyAlphabet>>;
 export type Alphabets = List.List<RawAlphabets>;
 export type FirstABC<A extends Alphabets> = OrderedObjOf<A>[0][1];
-export type InputText<A extends Alphabets> = FirstABC<A>[keyof FirstABC<A>][];
+export type InputText<A extends Alphabets> = ValuesOf<FirstABC<A>>[];
 
+// Wanted to restructure this to take {next: {consonant: ..., _: ...}, prev: {consonant: ..., vowel: ...}}
+// instead of the current {nextConsonant: ..., next: ..., prevConsonant: ..., prevVowel: ...}
+// which would make things a lot easier to parse
+// but I kept running into a 'type instantiation is excessively deep and possibly infinite'!
 export type MatchSpec<
   A extends ABC.AnyAlphabet,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
@@ -83,14 +87,14 @@ export type MatchSpec<
   | ValuesOf<{
     [Dir in `next` | `prev`]: {
       [T in ABC.TypeNames<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-coloring bc bugged
-          _: DeepMerge<ABC._ExactAllOfType<A, T>>
+          spec: DeepMerge<ABC._ExactAllOfType<A, T>>
           env: MatchSpec<A, ABCHistory>
         }
       }
   }>
   | {
     [Dir in `next` | `prev`]: {
-      _: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMerge<ABC._ExactAllOfType<A, T>>}>
+      spec: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMerge<ABC._ExactAllOfType<A, T>>}>
       env: MatchSpec<A, ABCHistory>
     }
   }
@@ -98,12 +102,12 @@ export type MatchSpec<
     was: {
       // Pre[KI[1]][1] is like `value of Pre at index I` and it's the AnyAlphabet at some layer
       [KI in List.UnionOf<KeysAndIndicesOf<ABCHistory>> as Force<KI[0], string>]: ValuesOf<{
-          [T in ABC.TypeNames<ABCHistory[KI[1]][1]>]: DeepMerge<ABC._ExactAllOfType<ABCHistory[KI[1]][1], T>>
-        }>
-        // {_: /* see above ^ */, env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
-        // that doesn't work bc type instantiation is excessively deep for `env`'s value
-        // so I'm gambling on hopefully never having to refer to the environment of a previous
-        // layer in actual runtime code (wow runtime code is a thing that exists)
+        [T in ABC.TypeNames<ABCHistory[KI[1]][1]>]: DeepMerge<ABC._ExactAllOfType<ABCHistory[KI[1]][1], T>>
+      }>
+      // {_: /* see above ^ */, env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
+      // that doesn't work bc type instantiation is excessively deep for `env`'s value
+      // so I'm gambling on hopefully never having to refer to the environment of a previous
+      // layer in actual runtime code (wow runtime code is a thing that exists)
     }
   }
 >>;
@@ -137,6 +141,13 @@ export type CapturableOr<T, A extends ABC.AnyAlphabet> =
       ? T
       : Capturable<A>;
 
+type _OrderingConstraint<A extends Accents.AnyLayer> = Record<Accents.AccentFeatures<A>, number>;
+
+export type OrderingConstraints<A extends Accents.AnyLayer> = {
+  before?: _OrderingConstraint<A>,
+  after?: _OrderingConstraint<A>,
+};
+
 export type TransformRule<
   Captured,
   A extends Accents.AnyLayer,
@@ -146,7 +157,8 @@ export type TransformRule<
   type: TransformType.transformation,
   from: CapturableOr<Captured, A>,
   into: IntoSpec<Captured, A, A, Feature>,
-  where: MatchSpec<A, ABCHistory>
+  where: MatchSpec<A, ABCHistory>,
+  order: OrderingConstraints<A>,
 };
 
 export type PromoteRule<
@@ -159,7 +171,8 @@ export type PromoteRule<
   type: TransformType.promotion,
   from: CapturableOr<Captured, A>,
   into: IntoSpec<Captured, A, B, Feature>,
-  where: MatchSpec<A, ABCHistory>
+  where: MatchSpec<A, ABCHistory>,
+  order: OrderingConstraints<A>,
 };
 
 export type Rule<
@@ -177,6 +190,18 @@ export type _TransformFuncs<C extends CaptureApplier<any, any, any, [], any>> = 
   promote: C[`promote`]
 };
 
+export type TransformParam<
+  Captured,
+  A extends Accents.AnyLayer,
+  B extends ABC.AnyAlphabet,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
+  Feature extends Accents.AccentFeatures<A>,
+> = {
+  into: IntoSpec<Captured, A, B, Feature>,
+  where: MatchSpec<A, ABCHistory>,
+  order?: OrderingConstraints<A>,
+};
+
 export interface CaptureApplier<
   Captured,
   A extends Accents.AnyLayer,
@@ -185,10 +210,10 @@ export interface CaptureApplier<
   Feature extends Accents.AccentFeatures<A>,
 > {
   transform(
-    {into, where}: {into: IntoSpec<Captured, A, A, Feature>, where: MatchSpec<A, ABCHistory>},
+    {into, where, order = {}}: TransformParam<Captured, A, A, ABCHistory, Feature>
   ): TransformRule<Captured, A, ABCHistory, Feature> & _TransformFuncs<this>;
 
   promote(
-    {into, where}: {into: IntoSpec<Captured, A, B, Feature>, where: MatchSpec<A, ABCHistory>},
+    {into, where, order = {}}: TransformParam<Captured, A, B, ABCHistory, Feature>,
   ): PromoteRule<Captured, A, B, ABCHistory, Feature> & _TransformFuncs<this>;
 }

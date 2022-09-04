@@ -14,8 +14,6 @@ import {
 import {
   CaptureApplier as ICaptureApplier,
   CapturableOr,
-  IntoSpec,
-  MatchSpec,
   _TransformFuncs,
   Force,
   NextMappedFuncs,
@@ -23,6 +21,7 @@ import {
   Rule,
   TransformRule,
   PromoteRule,
+  TransformParam,
 } from './capture-types';
 
 class CaptureApplier<
@@ -37,26 +36,28 @@ class CaptureApplier<
   ) {}
 
   transform(
-    {into, where}: {into: IntoSpec<Captured, A, A, Feature>, where: MatchSpec<A, ABCHistory>},
+    {into, where, order = {}}: TransformParam<Captured, A, A, ABCHistory, Feature>,
   ): TransformRule<Captured, A, ABCHistory, Feature> & _TransformFuncs<this> {
     return {
       type: TransformType.transformation,
       from: this.obj,
       into,
       where,
+      order,
       transform: this.transform,
       promote: this.promote,
     };
   }
 
   promote(
-    {into, where}: {into: IntoSpec<Captured, A, B, Feature>, where: MatchSpec<A, ABCHistory>},
+    {into, where, order = {}}: TransformParam<Captured, A, B, ABCHistory, Feature>,
   ): PromoteRule<Captured, A, B, ABCHistory, Feature> & _TransformFuncs<this> {
     return {
       type: TransformType.promotion,
       from: this.obj,
       into,
       where,
+      order,
       transform: this.transform,
       promote: this.promote,
     };
