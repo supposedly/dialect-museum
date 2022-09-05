@@ -16,9 +16,13 @@ type LayerValue = ABC.Base | List<Tracker>;
 class LayerHistoryEntry implements ListNode<LayerHistoryEntry> {
   next: Null<LayerHistoryEntry> = null;
 
-  append(node: LayerHistoryEntry) {
-    node.next = this.next;
-    this.next = node;
+  append(head: LayerHistoryEntry) {
+    let tail = head;
+    while (tail.next !== null) {
+      tail = tail.next;
+    }
+    tail.next = this.next;
+    this.next = head;
   }
 }
 
@@ -41,7 +45,7 @@ export class Layer {
   }
 }
 
-export class Tracker {
+export class Tracker implements ListNode<Tracker> {
   public prev: Null<Tracker> = null;
   public next: Null<Tracker> = null;
   private layers: Record<string, Null<Layer>>;
@@ -50,8 +54,7 @@ export class Tracker {
 
   constructor(layers: Layers, prev: Null<Tracker> = null) {
     if (prev !== null) {
-      this.prev = prev;
-      prev.next = this;
+      prev.append(this);
     }
     this.layers = Object.fromEntries(
       Object.keys(layers.layers).map(name => [name, null]),
@@ -65,10 +68,17 @@ export class Tracker {
     return this;
   }
 
-  append(node: Tracker) {
-    node.next = this.next;
-    this.next = node;
-    node.prev = this;
+  append(head: Tracker) {
+    let tail = head;
+    while (tail.next !== null) {
+      tail = tail.next;
+    }
+    tail.next = this.next;
+    if (this.next !== null) {
+      this.next.prev = tail;
+    }
+    this.next = head;
+    head.prev = this;
   }
 
   nextLayer(layer: string): Null<Layer> {
