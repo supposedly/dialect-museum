@@ -16,11 +16,13 @@ export class List<T extends ListNode<T>> {
           ...node,
           next: null,
           append(head) {
-            let tail = head;
-            while (tail.next !== null) {
-              tail = tail.next;
+            if (this.next !== null) {
+              let tail = head;
+              while (tail.next !== null) {
+                tail = tail.next;
+              }
+              tail.next = this.next;
             }
-            tail.next = this.next;
             this.next = head;
           },
         });
@@ -68,11 +70,13 @@ export class List<T extends ListNode<T>> {
         ...f(node),
         next: null,
         append(head) {
-          let tail = head;
-          while (tail.next !== null) {
-            tail = tail.next;
+          if (this.next !== null) {
+            let tail = head;
+            while (tail.next !== null) {
+              tail = tail.next;
+            }
+            tail.next = this.next;
           }
-          tail.next = this.next;
           this.next = head;
         },
       });
