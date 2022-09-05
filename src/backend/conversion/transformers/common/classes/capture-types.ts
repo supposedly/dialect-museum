@@ -154,11 +154,11 @@ export type TransformRule<
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
   Feature extends Accents.AccentFeatures<A>,
 > = {
-  type: TransformType.transformation,
-  from: CapturableOr<Captured, A>,
-  into: IntoSpec<Captured, A, A, Feature>,
-  where: MatchSpec<A, ABCHistory>,
-  order: OrderingConstraints<A>,
+  type: TransformType.transformation
+  from: CapturableOr<Captured, A>
+  into: IntoSpec<Captured, A, A, Feature>
+  where: MatchSpec<A, ABCHistory>
+  order: OrderingConstraints<A>
 };
 
 export type PromoteRule<
@@ -168,11 +168,11 @@ export type PromoteRule<
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
   Feature extends Accents.AccentFeatures<A>,
 > = {
-  type: TransformType.promotion,
-  from: CapturableOr<Captured, A>,
-  into: IntoSpec<Captured, A, B, Feature>,
-  where: MatchSpec<A, ABCHistory>,
-  order: OrderingConstraints<A>,
+  type: TransformType.promotion
+  from: CapturableOr<Captured, A>
+  into: IntoSpec<Captured, A, B, Feature>
+  where: MatchSpec<A, ABCHistory>
+  order: OrderingConstraints<A>
 };
 
 export type Rule<
@@ -186,7 +186,7 @@ export type Rule<
   | PromoteRule<Captured, A, B, ABCHistory, Feature>;
 
 export type _TransformFuncs<C extends CaptureApplier<any, any, any, [], any>> = {
-  transform: C[`transform`],
+  transform: C[`transform`]
   promote: C[`promote`]
 };
 
@@ -197,9 +197,9 @@ export type TransformParam<
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
   Feature extends Accents.AccentFeatures<A>,
 > = {
-  into: IntoSpec<Captured, A, B, Feature>,
-  where: MatchSpec<A, ABCHistory>,
-  order?: OrderingConstraints<A>,
+  into: IntoSpec<Captured, A, B, Feature>
+  where: MatchSpec<A, ABCHistory>
+  order?: OrderingConstraints<A>
 };
 
 export interface CaptureApplier<
