@@ -17,18 +17,20 @@ class LayerHistoryEntry implements ListNode<LayerHistoryEntry> {
   next: Null<LayerHistoryEntry> = null;
 
   append(head: LayerHistoryEntry) {
-    let tail = head;
-    while (tail.next !== null) {
-      tail = tail.next;
+    if (this.next !== null) {
+      let tail = head;
+      while (tail.next !== null) {
+        tail = tail.next;
+      }
+      tail.next = this.next;
     }
-    tail.next = this.next;
     this.next = head;
   }
 }
 
 export class Layer {
   private history: List<LayerHistoryEntry> = new List();
-  private environmentCache: Record<any, any> = {};
+  private environmentCache: Record<string, LayerValue> = {};
 
   constructor(
     private value: LayerValue,
@@ -69,12 +71,12 @@ export class Tracker implements ListNode<Tracker> {
   }
 
   append(head: Tracker) {
-    let tail = head;
-    while (tail.next !== null) {
-      tail = tail.next;
-    }
-    tail.next = this.next;
     if (this.next !== null) {
+      let tail = head;
+      while (tail.next !== null) {
+        tail = tail.next;
+      }
+      tail.next = this.next;
       this.next.prev = tail;
     }
     this.next = head;
