@@ -185,11 +185,6 @@ export type Rule<
   | TransformRule<Captured, A, ABCHistory, Feature>
   | PromoteRule<Captured, A, B, ABCHistory, Feature>;
 
-export type _TransformFuncs<C extends CaptureApplier<any, any, any, [], any>> = {
-  transform: C[`transform`]
-  promote: C[`promote`]
-};
-
 export type TransformParam<
   Captured,
   A extends Accents.AnyLayer,
@@ -211,9 +206,9 @@ export interface CaptureApplier<
 > {
   transform(
     {into, where, order = {}}: TransformParam<Captured, A, A, ABCHistory, Feature>
-  ): TransformRule<Captured, A, ABCHistory, Feature> & _TransformFuncs<this>;
+  ): TransformRule<Captured, A, ABCHistory, Feature>;
 
   promote(
     {into, where, order = {}}: TransformParam<Captured, A, B, ABCHistory, Feature>,
-  ): PromoteRule<Captured, A, B, ABCHistory, Feature> & _TransformFuncs<this>;
+  ): PromoteRule<Captured, A, B, ABCHistory, Feature>;
 }

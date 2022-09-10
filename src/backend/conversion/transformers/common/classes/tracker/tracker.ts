@@ -29,7 +29,7 @@ class LayerHistoryEntry implements ListNode<LayerHistoryEntry> {
 }
 
 export class Layer {
-  private history: List<LayerHistoryEntry> = new List();
+  private history: LayerHistoryEntry[] = [];
   private environmentCache: Record<string, LayerValue> = {};
 
   constructor(

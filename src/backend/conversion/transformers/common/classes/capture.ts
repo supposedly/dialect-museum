@@ -14,7 +14,6 @@ import {
 import {
   CaptureApplier as ICaptureApplier,
   CapturableOr,
-  _TransformFuncs,
   Force,
   NextMappedFuncs,
   CaptureFuncs,
@@ -37,29 +36,25 @@ class CaptureApplier<
 
   transform(
     {into, where, order = {}}: TransformParam<Captured, A, A, ABCHistory, Feature>,
-  ): TransformRule<Captured, A, ABCHistory, Feature> & _TransformFuncs<this> {
+  ): TransformRule<Captured, A, ABCHistory, Feature> {
     return {
       type: TransformType.transformation,
       from: this.obj,
       into,
       where,
       order,
-      transform: this.transform,
-      promote: this.promote,
     };
   }
 
   promote(
     {into, where, order = {}}: TransformParam<Captured, A, B, ABCHistory, Feature>,
-  ): PromoteRule<Captured, A, B, ABCHistory, Feature> & _TransformFuncs<this> {
+  ): PromoteRule<Captured, A, B, ABCHistory, Feature> {
     return {
       type: TransformType.promotion,
       from: this.obj,
       into,
       where,
       order,
-      transform: this.transform,
-      promote: this.promote,
     };
   }
 }
