@@ -8,18 +8,18 @@ type _ExclusifyUnion<T, K extends PropertyKey> =
 export type ExclusifyUnion<T> = _ExclusifyUnion<T, AllKeys<T>>;  // TODO: take this out of this file
 
 type MatcherFunc = (obj: any) => boolean;
-export type Matcher<T> = Exclude<T, Function> | MatcherFunc;
+type Matcher<T> = Exclude<T, Function> | MatcherFunc;
 
 export type MatchOr<T> = T extends object ? ExclusifyUnion<T | Match<T>> : (T | Match<T>);
-export type DeepMatchOr<O> = Match<O> | O | {
+export type DeepMatchOr<O> = Match<DeepMatchOr<O>> | {
   [K in keyof O]?:
     O[K] extends Record<keyof any, unknown>
       ? DeepMatchOr<O[K]>
       : Match<O[K]> | O[K]
 };
 
-export abstract class Match<T> {
-  public abstract original: Matcher<T> | Matcher<T>[];
+export class Match<T> {
+  private _justForStructuralTypecheck: T = undefined as any;
 
   // eslint-disable-next-line class-methods-use-this
   matches(_other: any) {
@@ -32,12 +32,10 @@ function verifyLiteral(o: any): o is Record<string, any> {
 }
 
 export class MatchOne<T> extends Match<T> {
-  public original: Matcher<T>;
   private matcher: MatcherFunc;
 
   constructor(obj: Matcher<T>) {
     super();
-    this.original = obj;
 
     if (obj instanceof Match) {
       // this was a nasty bug... TODO: see if can make do without the .bind()
@@ -69,12 +67,10 @@ class Not<T> extends MatchOne<T> {
 }
 
 class MatchMultiple<U> extends Match<U> {
-  public original: Matcher<U>[];
   protected objs: MatchOne<U>[];
 
   constructor(...objs: Matcher<U>[]) {
     super();
-    this.original = objs;
     this.objs = objs.map(obj => new MatchOne(obj));
   }
 
