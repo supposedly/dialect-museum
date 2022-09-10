@@ -13,17 +13,30 @@ export type Layers = {
 
 type LayerValue = ABC.Base | List<Tracker>;
 
+class LayerHistoryEntry implements ListNode<LayerHistoryEntry> {
+  next: Null<LayerHistoryEntry> = null;
+
+  append(head: LayerHistoryEntry) {
+    if (this.next !== null) {
+      let tail = head;
+      while (tail.next !== null) {
+        tail = tail.next;
+      }
+      tail.next = this.next;
+    }
+    this.next = head;
+  }
+}
+
 export class Layer {
-  private history: LayerValue[] = [];
-  private environmentCache: Record<string, LayerValue | null> = {};
+  private history: List<LayerHistoryEntry> = new List();
+  private environmentCache: Record<string, LayerValue> = {};
 
   constructor(
-    initial: LayerValue,
+    private value: LayerValue,
     private name: string,
     private parent: Tracker,
-  ) {
-    this.history.push(initial);
-  }
+  ) {}
 
   private get next(): Null<Layer> {
     return this.parent.nextLayer(this.name);

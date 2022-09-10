@@ -1,7 +1,6 @@
 /* eslint-disable max-classes-per-file */
 /* eslint-disable import/prefer-default-export */
 
-import {A, Any, List, Union} from 'ts-toolbelt';
 import * as ABC from '../../../alphabets/common';
 import * as Accents from '../../../accents/common';
 import {Narrow as $} from '../../../utils/typetools';
@@ -15,6 +14,7 @@ import {
 import {
   CaptureApplier as ICaptureApplier,
   CapturableOr,
+  _TransformFuncs,
   Force,
   NextMappedFuncs,
   CaptureFuncs,
@@ -22,82 +22,7 @@ import {
   TransformRule,
   PromoteRule,
   TransformParam,
-  InputMatchSpec,
-  MatchSpec,
 } from './capture-types';
-import {DeepMatchOr, Match, Matcher, MatchOr} from '../match';
-
-type MatchSpecOf<M extends InputMatchSpec<ABC.AnyAlphabet, OrderedObj<string, ABC.AnyAlphabet>>> =
-  M extends InputMatchSpec<infer A, infer O> ? MatchSpec<A, O> : never;
-
-type CursedFix<T> = T extends Match<DeepMatchOr<infer E>> ? DeepMatchOr<E> : T;
-type Bruh<T> = T extends Match<infer U> ? Match<U> : T;
-
-function transformMatchSpec<
-  M extends MatchOr<InputMatchSpec<
-    ABC.AnyAlphabet,
-    OrderedObj<string, ABC.AnyAlphabet>
-  >>,
->(name: string, where: M): MatchSpecOf<M> {
-  if (where instanceof Match) {
-    const reassignToHelpTS = where;
-    if (Array.isArray(reassignToHelpTS.original)) {
-      return new (
-        where.constructor as {new(a: typeof reassignToHelpTS.original): MatchSpecOf<M>}
-      )(reassignToHelpTS.original.map(value => transformMatchSpec(name, value)));
-    }
-    return new (
-      where.constructor as {new(a: typeof reassignToHelpTS.original): MatchSpecOf<M>}
-    )(transformMatchSpec(name, reassignToHelpTS.original));
-  }
-
-  const ret = {
-    next: [] as MatchSpecOf<M>[`next`],
-    prev: [] as MatchSpecOf<M>[`prev`],
-    was: `was` in where ? where.was as MatchSpecOf<M>[`was`] : undefined,
-  } as MatchSpecOf<M>;
-
-  Object.entries(where).forEach(([k, v]) => {
-    if (v === undefined) {
-      return;
-    }
-    if ((k.startsWith(`next`) && k !== `next`) || (k.startsWith(`prev`) && k !== `prev`)) {
-      const direction = k.slice(0, 4) as `next` | `prev`;
-
-      if (v instanceof Match) {
-        if (Array.isArray(v.original)) {
-          const ts = v.original;
-          ret[direction]?.push(new (
-            v.constructor as {new(a: typeof ts): Exclude<MatchSpecOf<M>[typeof direction], undefined>}
-          )(
-            v.original.map(value => ({
-              matching: {type: `${name}:${k.slice(4).toLowerCase()}`},
-              spec: value?.spec,
-              env: value?.env,
-            })),
-          ) as any);  // XXX: idk man
-        } else {
-          const ts = v.original;
-          ret[direction]?.push(new (
-            v.constructor as {new(a: typeof ts): Exclude<MatchSpecOf<M>[typeof direction], undefined>}
-          )({
-            matching: {type: `${name}:${k.slice(4).toLowerCase()}`},
-            spec: `spec` in v.original ? v.original.spec : undefined,
-            env: `env` in v.original ? v.original.env : undefined,
-          }) as any);
-        }
-        return;
-      }
-      ret[direction]?.push({
-        matching: {type: `${name}:${k.slice(4).toLowerCase()}`},
-        spec: `spec` in v ? v.spec : undefined,
-        env: `env` in v ? transformMatchSpec(name, v.env as any) : undefined,
-      });
-    }
-  });
-
-  return ret;
-}
 
 class CaptureApplier<
   Captured,
@@ -107,31 +32,34 @@ class CaptureApplier<
   Feature extends Accents.AccentFeatures<A>,
 > implements ICaptureApplier<Captured, A, B, ABCHistory, Feature> {
   constructor(
-    private name: string,
     private obj: CapturableOr<Captured, A>,
   ) {}
 
   transform(
     {into, where, order = {}}: TransformParam<Captured, A, A, ABCHistory, Feature>,
-  ): TransformRule<Captured, A, ABCHistory, Feature> {
+  ): TransformRule<Captured, A, ABCHistory, Feature> & _TransformFuncs<this> {
     return {
       type: TransformType.transformation,
       from: this.obj,
       into,
-      where: transformMatchSpec(this.name, where as any) as any,
+      where,
       order,
+      transform: this.transform,
+      promote: this.promote,
     };
   }
 
   promote(
     {into, where, order = {}}: TransformParam<Captured, A, B, ABCHistory, Feature>,
-  ): PromoteRule<Captured, A, B, ABCHistory, Feature> {
+  ): PromoteRule<Captured, A, B, ABCHistory, Feature> & _TransformFuncs<this> {
     return {
       type: TransformType.promotion,
       from: this.obj,
       into,
-      where: transformMatchSpec(this.name, where as any) as any,
+      where,
       order,
+      transform: this.transform,
+      promote: this.promote,
     };
   }
 }
@@ -177,10 +105,10 @@ export class Language<A extends Record<string, Accents.AnyLayer>[]> {
           const rules = this.rules[layer];
           const nextAlphabet = this.layers[idx + 1]?.[1];
           const capture = Object.assign(
-            (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>(layer, obj),
+            (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>(obj),
             Object.fromEntries(alphabet.types.forEach((type: string) => [
               type,
-              (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>(layer, {...obj, type}),
+              (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>({...obj, type}),
             ])),
           );
           Object.entries(createRules).forEach(([accent, createRule]) => {
