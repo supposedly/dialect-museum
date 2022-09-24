@@ -1,5 +1,9 @@
 import {Function as Func, Union} from "ts-toolbelt";
 
+export type DeepPartial<T> = T extends object ? {
+  [P in keyof T]?: DeepPartial<T[P]>;
+} : T;
+
 // https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
 // I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
 // some compilers and not others...

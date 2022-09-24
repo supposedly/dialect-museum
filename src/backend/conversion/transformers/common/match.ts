@@ -1,5 +1,5 @@
 /* eslint-disable max-classes-per-file */
-import {Narrow as $} from "../../utils/typetools";
+import {DeepPartial, Narrow as $} from "../../utils/typetools";
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? {[K in keyof U]: U[K]} : never;
@@ -7,19 +7,22 @@ type _ExclusifyUnion<T, K extends PropertyKey> =
     T extends unknown ? Id<T & Partial<Record<Exclude<K, keyof T>, never>>> : never;
 export type ExclusifyUnion<T> = _ExclusifyUnion<T, AllKeys<T>>;  // TODO: take this out of this file
 
-type MatcherFunc = (obj: any) => boolean;
-type Matcher<T> = Exclude<T, Function> | MatcherFunc;
+type MatcherFunc = (arg: any) => boolean;
+export type Matcher<T> = Exclude<T, Function> | MatcherFunc;
 
+export type DeepPartialNotMatch<T> = T extends Match<infer O> ? Match<DeepPartialNotMatch<O>> : T extends object ? {
+  [K in keyof T]?: DeepPartialNotMatch<T[K]>
+} : T;
 export type MatchOr<T> = T extends object ? ExclusifyUnion<T | Match<T>> : (T | Match<T>);
-export type DeepMatchOr<O> = Match<DeepMatchOr<O>> | {
+export type DeepMatchOr<O> = Match<DeepPartialNotMatch<O>> | DeepPartialNotMatch<O> | {
   [K in keyof O]?:
     O[K] extends Record<keyof any, unknown>
       ? DeepMatchOr<O[K]>
       : Match<O[K]> | O[K]
 };
 
-export class Match<T> {
-  private _justForStructuralTypecheck: T = undefined as any;
+export abstract class Match<T> {
+  public abstract original: T | T[];
 
   // eslint-disable-next-line class-methods-use-this
   matches(_other: any) {
@@ -28,14 +31,16 @@ export class Match<T> {
 }
 
 function verifyLiteral(o: any): o is Record<string, any> {
-  return Object.getPrototypeOf(o) === Object.prototype;
+  return o && Object.getPrototypeOf(o) === Object.prototype;
 }
 
 export class MatchOne<T> extends Match<T> {
+  public original: T;
   private matcher: MatcherFunc;
 
-  constructor(obj: Matcher<T>) {
+  constructor(obj: T) {
     super();
+    this.original = obj;
 
     if (obj instanceof Match) {
       // this was a nasty bug... TODO: see if can make do without the .bind()
@@ -44,7 +49,7 @@ export class MatchOne<T> extends Match<T> {
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       this.matcher = new All(...obj).matches;
     } else if (obj instanceof Function) {
-      this.matcher = obj;
+      this.matcher = (arg: any) => obj(arg);
     } else if (verifyLiteral(obj)) {
       const individualMatches = Object.entries(obj).map(([k, v]) => [k, new MatchOne(v)] as const);
       this.matcher = other => individualMatches.every(
@@ -67,10 +72,12 @@ class Not<T> extends MatchOne<T> {
 }
 
 class MatchMultiple<U> extends Match<U> {
+  public original: U[];
   protected objs: MatchOne<U>[];
 
-  constructor(...objs: Matcher<U>[]) {
+  constructor(...objs: U[]) {
     super();
+    this.original = objs;
     this.objs = objs.map(obj => new MatchOne(obj));
   }
 
@@ -98,13 +105,13 @@ class All<U> extends MatchMultiple<U> {
 }
 
 export default Object.assign(
-  <T>(obj: Matcher<T>) => new MatchOne(obj),
+  <T>(obj: T) => new MatchOne(obj),
   {
-    not<T>(obj: Matcher<T>) { return new Not(obj); },
+    not<T>(obj: T) { return new Not(obj); },
     // use the lowercase functions if you're passing them literals
-    any<U>(...objs: Matcher<U>[]) { return new Any(...objs); },
-    none<U>(...objs: Matcher<U>[]) { return new None(...objs); },
-    all<U>(...objs: Matcher<U>[]) { return new All(...objs); },
+    any<U>(...objs: U[]) { return new Any(...objs); },
+    none<U>(...objs: U[]) { return new None(...objs); },
+    all<U>(...objs: U[]) { return new All(...objs); },
     // use the uppercase functions if you're passing them values that are already narrowed (i think?)
     // alternative foolproof method: use the lowercase functions until it starts erroring because
     // of arguments of different types, at which point use the uppercase functions

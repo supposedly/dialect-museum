@@ -13,7 +13,7 @@ import {
   ShiftedObjOf,
   KeysAndIndicesOf,
 } from '../type';
-import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone} from '../match';
+import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone, MatchOr} from '../match';
 import {ArrayOr, DeepMerge, MergeUnion, ValuesOf} from '../../../utils/typetools';
 
 // so I can use these to force it to realize it's fine while I figure out what's even wrong
@@ -80,7 +80,7 @@ export type InputText<A extends Alphabets> = ValuesOf<FirstABC<A>>[];
 // instead of the current {nextConsonant: ..., next: ..., prevConsonant: ..., prevVowel: ...}
 // which would make things a lot easier to parse
 // but I kept running into a 'type instantiation is excessively deep and possibly infinite'!
-export type MatchSpec<
+export type InputMatchSpec<
   A extends ABC.AnyAlphabet,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
 > = DeepMatchOr<MergeUnion<
@@ -88,14 +88,14 @@ export type MatchSpec<
     [Dir in `next` | `prev`]: {
       [T in ABC.TypeNames<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-coloring bc bugged
           spec: DeepMerge<ABC._ExactAllOfType<A, T>>
-          env: MatchSpec<A, ABCHistory>
+          env: InputMatchSpec<A, ABCHistory>
         }
       }
   }>
   | {
     [Dir in `next` | `prev`]: {
       spec: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMerge<ABC._ExactAllOfType<A, T>>}>
-      env: MatchSpec<A, ABCHistory>
+      env: InputMatchSpec<A, ABCHistory>
     }
   }
   | {
@@ -104,13 +104,36 @@ export type MatchSpec<
       [KI in List.UnionOf<KeysAndIndicesOf<ABCHistory>> as Force<KI[0], string>]: ValuesOf<{
         [T in ABC.TypeNames<ABCHistory[KI[1]][1]>]: DeepMerge<ABC._ExactAllOfType<ABCHistory[KI[1]][1], T>>
       }>
-      // {_: /* see above ^ */, env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
+      // {_: /* see above ^ */, env: InputMatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
       // that doesn't work bc type instantiation is excessively deep for `env`'s value
       // so I'm gambling on hopefully never having to refer to the environment of a previous
       // layer in actual runtime code (wow runtime code is a thing that exists)
     }
   }
 >>;
+
+export type MatchSpec<
+  A extends ABC.AnyAlphabet,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
+> = MatchOr<{
+  env: Array<MatchOr<{
+    direction: `next` | `prev`
+    matching: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<A, T>>>}>
+    spec?: undefined | ValuesOf<{[T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<A, T>>>}>
+    env?: undefined | MatchSpec<A, ABCHistory>
+  }>>
+  was?: {
+    // Pre[KI[1]][1] is like `value of Pre at index I` and it's the AnyAlphabet at some layer
+    [KI in List.UnionOf<KeysAndIndicesOf<ABCHistory>> as Force<KI[0], string>]: ValuesOf<{
+      [T in ABC.TypeNames<ABCHistory[KI[1]][1]>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<ABCHistory[KI[1]][1], T>>>
+    }>
+    // {_: /* see above ^ */, env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
+    // that doesn't work bc type instantiation is excessively deep for `env`'s value
+    // but if I ever have to refer to the environment of a previous layer I can maybe just go the other way
+    // (env->was instead of was->env)
+  }
+}
+>;
 
 export type _IntoHelper<Captured, ABCValues> =
   Captured extends ABCValues
@@ -157,7 +180,7 @@ export type TransformRule<
   type: TransformType.transformation
   from: CapturableOr<Captured, A>
   into: IntoSpec<Captured, A, A, Feature>
-  where: MatchSpec<A, ABCHistory>
+  where: InputMatchSpec<A, ABCHistory>
   order: OrderingConstraints<A>
 };
 
@@ -171,7 +194,7 @@ export type PromoteRule<
   type: TransformType.promotion
   from: CapturableOr<Captured, A>
   into: IntoSpec<Captured, A, B, Feature>
-  where: MatchSpec<A, ABCHistory>
+  where: InputMatchSpec<A, ABCHistory>
   order: OrderingConstraints<A>
 };
 
@@ -193,7 +216,7 @@ export type TransformParam<
   Feature extends Accents.AccentFeatures<A>,
 > = {
   into: IntoSpec<Captured, A, B, Feature>
-  where: MatchSpec<A, ABCHistory>
+  where: InputMatchSpec<A, ABCHistory>
   order?: OrderingConstraints<A>
 };
 
@@ -205,10 +228,10 @@ export interface CaptureApplier<
   Feature extends Accents.AccentFeatures<A>,
 > {
   transform(
-    {into, where, order = {}}: TransformParam<Captured, A, A, ABCHistory, Feature>
+    {into, where, order}: TransformParam<Captured, A, A, ABCHistory, Feature>
   ): TransformRule<Captured, A, ABCHistory, Feature>;
 
   promote(
-    {into, where, order = {}}: TransformParam<Captured, A, B, ABCHistory, Feature>,
+    {into, where, order}: TransformParam<Captured, A, B, ABCHistory, Feature>,
   ): PromoteRule<Captured, A, B, ABCHistory, Feature>;
 }
