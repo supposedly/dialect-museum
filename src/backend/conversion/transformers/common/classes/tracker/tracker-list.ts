@@ -22,9 +22,9 @@ export default class TrackerList extends List<Tracker> {
 
   feed(layer: string, text: ABC.Base[]): this {
     const [first, ...rest] = text;
-    this.head = new Tracker(this.layers).feed(layer, first);
+    this.head = new Tracker(this.layers, this.rules).feed(layer, first);
     this.tail = rest.reduce(
-      (tail, unit) => new Tracker(this.layers, tail).feed(layer, unit),
+      (tail, unit) => new Tracker(this.layers, this.rules, tail).feed(layer, unit),
       this.head,
     );
     return this;
