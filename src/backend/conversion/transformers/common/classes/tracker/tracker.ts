@@ -1,14 +1,14 @@
 /* eslint-disable max-classes-per-file */
 
 import * as ABC from "../../../../alphabets/common";
-import * as Accents from "../../../../accents/common";
+import * as Layers from "../../../../layers/common";
 import {List, ListNode} from "./list";
 import {Direction, Rule} from "../capture-types";
 import {Optional} from "../../../../utils/typetools";
 import match, {Match} from "../../match";
 
-export type Layers = {
-  layers: Record<string, Accents.AnyLayer>
+export type InitialLayers = {
+  layers: Record<string, Layers.AnyLayer>
   links: Record<string, Optional<string>>
 };
 type TrackerValue = ABC.Base | List<Tracker>;
@@ -98,7 +98,7 @@ export class Tracker implements ListNode<Tracker> {
   private minLayer: Optional<string> = undefined;
 
   constructor(
-    private layers: Layers,
+    private layers: InitialLayers,
     private rules: Record<string, Record<string, Rule[]>>,
     prev: Optional<Tracker> = undefined,
   ) {

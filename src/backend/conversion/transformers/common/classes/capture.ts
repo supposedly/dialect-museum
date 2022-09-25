@@ -3,7 +3,7 @@
 /* eslint-disable import/prefer-default-export */
 
 import * as ABC from '../../../alphabets/common';
-import * as Accents from '../../../accents/common';
+import * as Layers from '../../../layers/common';
 import {Narrow as $} from '../../../utils/typetools';
 import {TrackerList} from './tracker';
 import {
@@ -115,36 +115,34 @@ function transformMatchSpec<
 
 class CaptureApplier<
   Captured,
-  A extends Accents.AnyLayer,
+  A extends Layers.AnyLayer,
   B extends ABC.AnyAlphabet,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
-  Feature extends Accents.AccentFeatures<A>,
+  Feature extends Layers.AccentFeatures<A>,
 > implements ICaptureApplier<Captured, A, B, ABCHistory, Feature> {
   constructor(
     private obj: CapturableOr<Captured, A>,
   ) {}
 
   transform(
-    {into, where, order = {}}: TransformParam<Captured, A, A, ABCHistory, Feature>,
+    {into, where}: TransformParam<Captured, A, A, ABCHistory, Feature>,
   ): TransformRule<Captured, A, ABCHistory, Feature> {
     return {
       type: TransformType.transformation,
       from: this.obj,
       into,
       where,
-      order,
     };
   }
 
   promote(
-    {into, where, order = {}}: TransformParam<Captured, A, B, ABCHistory, Feature>,
+    {into, where}: TransformParam<Captured, A, B, ABCHistory, Feature>,
   ): PromoteRule<Captured, A, B, ABCHistory, Feature> {
     return {
       type: TransformType.promotion,
       from: this.obj,
       into,
       where,
-      order,
     };
   }
 }
@@ -161,7 +159,7 @@ type UghGetABCLinearly<T extends Record<string, ABC.AnyAlphabet>[], N extends st
       : UghGetABCLinearly<Tail, N>
     : never;
 
-export class Language<A extends Record<string, Accents.AnyLayer>[]> {
+export class Language<A extends Record<string, Layers.AnyLayer>[]> {
   public readonly layers: OrderedObjOf<A>;
 
   public rules: Record<string, Record<string, Array<Rule>>>;
