@@ -9,12 +9,20 @@ import {
   DropLast,
   ObjectOf,
   OrderedObjOf,
-  TransformType,
   ShiftedObjOf,
   KeysAndIndicesOf,
 } from '../type';
 import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone, MatchOr} from '../match';
 import {ArrayOr, DeepMerge, MergeUnion, ValuesOf} from '../../../utils/typetools';
+
+export enum TransformType {
+  transformation,
+  promotion,
+}
+export enum Direction {
+  next = `next`,
+  prev = `prev`,
+}
 
 // so I can use these to force it to realize it's fine while I figure out what's even wrong
 export type Force<T, B> = T extends B ? T : never;
@@ -76,6 +84,15 @@ export type Alphabets = List.List<RawAlphabets>;
 export type FirstABC<A extends Alphabets> = OrderedObjOf<A>[0][1];
 export type InputText<A extends Alphabets> = ValuesOf<FirstABC<A>>[];
 
+export type AnyMatchSpec = MatchSpec<ABC.AnyAlphabet, OrderedObj<string, ABC.AnyAlphabet>>;
+export type AnyInputMatchSpec = InputMatchSpec<ABC.AnyAlphabet, OrderedObj<string, ABC.AnyAlphabet>>;
+export type MatchSpecEnvEntry = MatchOr<{
+  direction: Direction,
+  target: MatchOr<any>,
+  spec: MatchOr<any>,
+  env: AnyMatchSpec
+}>;
+
 // Wanted to restructure this to take {next: {consonant: ..., _: ...}, prev: {consonant: ..., vowel: ...}}
 // instead of the current {nextConsonant: ..., next: ..., prevConsonant: ..., prevVowel: ...}
 // which would make things a lot easier to parse
@@ -85,7 +102,7 @@ export type InputMatchSpec<
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
 > = DeepMatchOr<MergeUnion<
   | ValuesOf<{
-    [Dir in `next` | `prev`]: {
+    [Dir in Direction]: {
       [T in ABC.TypeNames<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-coloring bc bugged
           spec: DeepMerge<ABC._ExactAllOfType<A, T>>
           env: InputMatchSpec<A, ABCHistory>
@@ -93,7 +110,7 @@ export type InputMatchSpec<
       }
   }>
   | {
-    [Dir in `next` | `prev`]: {
+    [Dir in Direction]: {
       spec: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMerge<ABC._ExactAllOfType<A, T>>}>
       env: InputMatchSpec<A, ABCHistory>
     }
@@ -117,8 +134,8 @@ export type MatchSpec<
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
 > = MatchOr<{
   env: Array<MatchOr<{
-    direction: `next` | `prev`
-    matching: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<A, T>>>}>
+    direction: Direction
+    target: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<A, T>>>}>
     spec?: undefined | ValuesOf<{[T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<A, T>>>}>
     env?: undefined | MatchSpec<A, ABCHistory>
   }>>

@@ -1,5 +1,7 @@
 import {Function as Func, Union} from "ts-toolbelt";
 
+export type Optional<T> = T | undefined;
+
 export type DeepPartial<T> = T extends object ? {
   [P in keyof T]?: DeepPartial<T[P]>;
 } : T;

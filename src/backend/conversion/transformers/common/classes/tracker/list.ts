@@ -1,24 +1,24 @@
 export interface ListNode<T> {
-  next: T | null
+  next: T | undefined
   append(node: T): void
 }
 
 type ListNodeOf<T> = ListNode<ListNodeOf<T>> & T;
 
 export class List<T extends ListNode<T>> {
-  head: T | null = null;
-  tail: T | null = null;
+  head: T | undefined = undefined;
+  tail: T | undefined = undefined;
 
   static fromArray<R>(arr: R[]): List<ListNodeOf<R>> {
     return arr.reduce(
       (list, node) => {
         list.append({
           ...node,
-          next: null,
+          next: undefined,
           append(head) {
-            if (this.next !== null) {
+            if (this.next !== undefined) {
               let tail = head;
-              while (tail.next !== null) {
+              while (tail.next !== undefined) {
                 tail = tail.next;
               }
               tail.next = this.next;
@@ -35,7 +35,7 @@ export class List<T extends ListNode<T>> {
   toArray() {
     const arr = [];
     let node = this.head;
-    while (node !== null) {
+    while (node !== undefined) {
       arr.push(node);
       node = node.next;
     }
@@ -45,7 +45,7 @@ export class List<T extends ListNode<T>> {
   map<R extends ListNode<R>>(f: (node: T) => R): List<R> {
     const list = new List<R>();
     let node = this.head;
-    while (node !== null) {
+    while (node !== undefined) {
       list.append(f(node));
       node = node.next;
     }
@@ -55,7 +55,7 @@ export class List<T extends ListNode<T>> {
   mapToArray<R>(f: (node: T) => R): R[] {
     const arr = [];
     let node = this.head;
-    while (node !== null) {
+    while (node !== undefined) {
       arr.push(f(node));
       node = node.next;
     }
@@ -65,14 +65,14 @@ export class List<T extends ListNode<T>> {
   mapToList<R>(f: (node: T) => R): List<ListNodeOf<R>> {
     const list = new List<ListNodeOf<R>>();
     let node = this.head;
-    while (node !== null) {
+    while (node !== undefined) {
       list.append({
         ...f(node),
-        next: null,
+        next: undefined,
         append(head) {
-          if (this.next !== null) {
+          if (this.next !== undefined) {
             let tail = head;
-            while (tail.next !== null) {
+            while (tail.next !== undefined) {
               tail = tail.next;
             }
             tail.next = this.next;
@@ -87,14 +87,14 @@ export class List<T extends ListNode<T>> {
 
   forEach(f: (node: T) => void) {
     let node = this.head;
-    while (node !== null) {
+    while (node !== undefined) {
       f(node);
       node = node.next;
     }
   }
 
   append(node: T) {
-    if (this.tail === null) {
+    if (this.tail === undefined) {
       this.head = node;
     } else {
       this.tail.append(node);
@@ -103,7 +103,7 @@ export class List<T extends ListNode<T>> {
   }
 
   prepend(node: T) {
-    if (this.head === null) {
+    if (this.head === undefined) {
       this.tail = node;
     } else {
       node.append(this.head);

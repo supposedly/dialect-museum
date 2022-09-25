@@ -1,11 +1,6 @@
 import {Any, List, Union, Object as Obj} from 'ts-toolbelt';
 import {MergeUnion, Zip, ZipObj} from '../../utils/typetools';
 
-export enum TransformType {
-  transformation,
-  promotion,
-}
-
 export type UnknownList = List.List<unknown>;  // using `unknown[]` fails when `readonly unknown[]` is expected(?)
 export type OrderedObj<K = Any.Key, V = unknown> = List.List<[K, V]>;
 
