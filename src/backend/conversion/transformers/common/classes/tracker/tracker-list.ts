@@ -1,15 +1,15 @@
-import * as Accents from "../../../../accents/common";
+import * as Layers from "../../../../layers/common";
 import * as ABC from "../../../../alphabets/common";
 import {Rule} from "../capture-types";
 import {List} from "./list";
-import {Layers, Tracker} from "./tracker";
+import {InitialLayers, Tracker} from "./tracker";
 
 export default class TrackerList extends List<Tracker> {
-  private layers: Layers;
+  private layers: InitialLayers;
 
   constructor(
     private readonly rules: Record<string, Record<string, Rule[]>>,
-    layers: ReadonlyArray<[string, Accents.AnyLayer]>,
+    layers: ReadonlyArray<[string, Layers.AnyLayer]>,
   ) {
     super();
     this.layers = {

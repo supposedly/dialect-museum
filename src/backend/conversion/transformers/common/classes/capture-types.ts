@@ -3,7 +3,7 @@
 
 import {List} from 'ts-toolbelt';
 import * as ABC from '../../../alphabets/common';
-import * as Accents from '../../../accents/common';
+import * as Layers from '../../../layers/common';
 import {
   OrderedObj,
   DropLast,
@@ -33,11 +33,11 @@ export type Capturable<A extends ABC.AnyAlphabet> = ValuesOf<{
 }>;
 
 export type CaptureFuncs<
-  Curr extends Accents.AnyLayer,
+  Curr extends Layers.AnyLayer,
   Next extends ABC.AnyAlphabet,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
 > = {
-  [Feature in Accents.AccentFeatures<Curr>]?: (
+  [Feature in Layers.AccentFeatures<Curr>]?: (
     capture: (<
       // I originally put this out here in a generic so I could Function.Narrow<> it below
       // But then it turned out that its type inference was actually narrower WITHOUT Function.Narrow<> than
@@ -62,9 +62,9 @@ export type CaptureFuncs<
 };
 
 export type SelectFunc<
-  Curr extends Accents.AnyLayer,
-  Next extends Accents.AnyLayer,
-  ABCHistory extends OrderedObj<string, Accents.AnyLayer>,
+  Curr extends Layers.AnyLayer,
+  Next extends Layers.AnyLayer,
+  ABCHistory extends OrderedObj<string, Layers.AnyLayer>,
 > = (rules: CaptureFuncs<Curr, Next, ABCHistory>) => void;
 
 export type _NextMappedFuncs<
@@ -72,8 +72,8 @@ export type _NextMappedFuncs<
   _O = ObjectOf<O>, _Shifted = ShiftedObjOf<O>,
 > = {
   [KI in List.UnionOf<DropLast<KeysAndIndicesOf<O>>> as KI[0]]: SelectFunc<
-    _O[KI[0]] extends Accents.AnyLayer ? _O[KI[0]] : never,
-    _Shifted[KI[0]] extends Accents.AnyLayer ? _Shifted[KI[0]] : never,
+    _O[KI[0]] extends Layers.AnyLayer ? _O[KI[0]] : never,
+    _Shifted[KI[0]] extends Layers.AnyLayer ? _Shifted[KI[0]] : never,
     List.Extract<O, 0, KI[1]>
   >;
 };
@@ -165,11 +165,11 @@ export type _IntoHelper<Captured, ABCValues> =
 
 export type IntoSpec<
   Captured,
-  A extends Accents.AnyLayer,
+  A extends Layers.AnyLayer,
   B extends ABC.AnyAlphabet,
-  Feature extends Accents.AccentFeatures<A>,
+  Feature extends Layers.AccentFeatures<A>,
 > = Partial<Record<
-  Accents.AccentFeature<A, Feature>,
+  Layers.FeatureVariants<A, Feature>,
   | ArrayOr<ABC.ValuesOfABC<B>>
   | ((input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>, abc?: B) => ArrayOr<ABC.ValuesOfABC<B>>)
 >>;
@@ -181,74 +181,64 @@ export type CapturableOr<T, A extends ABC.AnyAlphabet> =
       ? T
       : Capturable<A>;
 
-type _OrderingConstraint<A extends Accents.AnyLayer> = Record<Accents.AccentFeatures<A>, number>;
-
-export type OrderingConstraints<A extends Accents.AnyLayer> = {
-  before?: _OrderingConstraint<A>,
-  after?: _OrderingConstraint<A>,
-};
-
 export type TransformRule<
   Captured,
-  A extends Accents.AnyLayer,
+  A extends Layers.AnyLayer,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
-  Feature extends Accents.AccentFeatures<A>,
+  Feature extends Layers.AccentFeatures<A>,
 > = {
   type: TransformType.transformation
   from: CapturableOr<Captured, A>
   into: IntoSpec<Captured, A, A, Feature>
   where: InputMatchSpec<A, ABCHistory>
-  order: OrderingConstraints<A>
 };
 
 export type PromoteRule<
   Captured,
-  A extends Accents.AnyLayer,
+  A extends Layers.AnyLayer,
   B extends ABC.AnyAlphabet,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
-  Feature extends Accents.AccentFeatures<A>,
+  Feature extends Layers.AccentFeatures<A>,
 > = {
   type: TransformType.promotion
   from: CapturableOr<Captured, A>
   into: IntoSpec<Captured, A, B, Feature>
   where: InputMatchSpec<A, ABCHistory>
-  order: OrderingConstraints<A>
 };
 
 export type Rule<
   Captured = never,
-  A extends Accents.AnyLayer = any,
+  A extends Layers.AnyLayer = any,
   B extends ABC.AnyAlphabet = any,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet> = [],
-  Feature extends Accents.AccentFeatures<A> = Accents.AccentFeatures<A>,
+  Feature extends Layers.AccentFeatures<A> = Layers.AccentFeatures<A>,
 > =
   | TransformRule<Captured, A, ABCHistory, Feature>
   | PromoteRule<Captured, A, B, ABCHistory, Feature>;
 
 export type TransformParam<
   Captured,
-  A extends Accents.AnyLayer,
+  A extends Layers.AnyLayer,
   B extends ABC.AnyAlphabet,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
-  Feature extends Accents.AccentFeatures<A>,
+  Feature extends Layers.AccentFeatures<A>,
 > = {
   into: IntoSpec<Captured, A, B, Feature>
   where: InputMatchSpec<A, ABCHistory>
-  order?: OrderingConstraints<A>
 };
 
 export interface CaptureApplier<
   Captured,
-  A extends Accents.AnyLayer,
+  A extends Layers.AnyLayer,
   B extends ABC.AnyAlphabet,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
-  Feature extends Accents.AccentFeatures<A>,
+  Feature extends Layers.AccentFeatures<A>,
 > {
   transform(
-    {into, where, order}: TransformParam<Captured, A, A, ABCHistory, Feature>
+    {into, where}: TransformParam<Captured, A, A, ABCHistory, Feature>
   ): TransformRule<Captured, A, ABCHistory, Feature>;
 
   promote(
-    {into, where, order}: TransformParam<Captured, A, B, ABCHistory, Feature>,
+    {into, where}: TransformParam<Captured, A, B, ABCHistory, Feature>,
   ): PromoteRule<Captured, A, B, ABCHistory, Feature>;
 }
