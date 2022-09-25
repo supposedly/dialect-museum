@@ -2,16 +2,14 @@
 /* eslint-disable max-classes-per-file */
 /* eslint-disable import/prefer-default-export */
 
-import {Any, List, T, Union} from 'ts-toolbelt';
 import * as ABC from '../../../alphabets/common';
 import * as Accents from '../../../accents/common';
-import {DeepPartial, Narrow as $} from '../../../utils/typetools';
+import {Narrow as $} from '../../../utils/typetools';
 import {TrackerList} from './tracker';
 import {
   OrderedObj,
   OrderedObjOf,
   MergeObjs,
-  TransformType,
 } from '../type';
 import {
   CaptureApplier as ICaptureApplier,
@@ -25,10 +23,61 @@ import {
   TransformParam,
   InputMatchSpec,
   MatchSpec,
+  MatchSpecEnvEntry,
+  AnyInputMatchSpec,
+  TransformType,
+  Direction,
 } from './capture-types';
-import {DeepMatchOr, Match, MatchOr} from '../match';
+import {DeepMatchOr, Match} from '../match';
 
-type AnyInputMatchSpec = InputMatchSpec<ABC.AnyAlphabet, OrderedObj<string, ABC.AnyAlphabet>>;
+function transformEnvEntry(
+  layer: string,
+  direction: Direction,
+  target: string,
+  constraints: DeepMatchOr<{spec: {}, env: AnyInputMatchSpec}>,
+): MatchSpecEnvEntry {
+  if (constraints instanceof Match) {
+    if (Array.isArray(constraints.original)) {
+      return new (constraints.constructor as {new(...arg: unknown[]): ReturnType<typeof transformEnvEntry>})(
+        ...constraints.original.map(value => transformEnvEntry(layer, direction, target, value)),
+      );
+    }
+    return new (constraints.constructor as {new(...arg: unknown[]): ReturnType<typeof transformEnvEntry>})(
+      transformEnvEntry(layer, direction, target, constraints.original),
+    );
+  }
+
+  const ret = {
+    direction,
+    target: target ? {type: `${layer}:${target}`} : {},
+    spec: constraints.spec,
+  };
+
+  if (constraints.env instanceof Match) {
+    if (Array.isArray(constraints.env.original)) {
+      return {
+        ...ret,
+        env: new (constraints.env.constructor as {new(...arg: unknown[]): MatchSpecOf<AnyInputMatchSpec>})(
+          // the `as any[]` is an escape hatch -- without it typescript dies bc excessive stack depth comparing types
+          ...(constraints.env.original as any[]).map(value => transformMatchSpec(layer, value)),
+        ),
+      };
+    }
+    return {
+      ...ret,
+      env: new (constraints.env.constructor as {new(...arg: unknown[]): MatchSpecOf<AnyInputMatchSpec>})(
+        transformMatchSpec(layer, constraints.env.original),
+      ),
+    };
+  }
+  return {
+    ...ret,
+    env: constraints.env === undefined
+      ? {env: [], was: {}}
+      : transformMatchSpec(layer, constraints.env),
+  };
+}
+
 type MatchSpecOf<M extends AnyInputMatchSpec> =
   M extends InputMatchSpec<infer A, infer O> ? MatchSpec<A, O> : never;
 
@@ -49,73 +98,19 @@ function transformMatchSpec<
       transformMatchSpec(layer, original),
     );
   }
-  const ret = {
-    env: [],
-    was: where.was,
-  } as MatchSpecOf<M>;
 
-  Object.entries(where).forEach(([k, v]) => {
-    if (!k.startsWith(`next`) && !k.startsWith(`prev`)) {
-      return;
-    }
-    if (v === undefined) {
-      return;
-    }
-    const direction = k.slice(0, 4) as `next` | `prev`;
-    const type = k.slice(4).toLowerCase();
-    ret.env!.push(transformMatchings(layer, direction, type, v));
-  });
-
-  return ret;
-}
-
-function transformMatchings(
-  layer: string,
-  direction: `next` | `prev`,
-  target: string,
-  constraints: DeepMatchOr<{spec: {}, env: AnyInputMatchSpec}>,
-): MatchOr<{
-  direction: typeof direction,
-  matching: MatchOr<any>,
-  spec: MatchOr<any>,
-  env: MatchSpecOf<AnyInputMatchSpec>
-}> {
-  if (constraints instanceof Match) {
-    if (Array.isArray(constraints.original)) {
-      return new (constraints.constructor as {new(...arg: unknown[]): ReturnType<typeof transformMatchings>})(
-        ...constraints.original.map(value => transformMatchings(layer, direction, target, value)),
-      );
-    }
-    return new (constraints.constructor as {new(...arg: unknown[]): ReturnType<typeof transformMatchings>})(
-      transformMatchings(layer, direction, target, constraints.original),
-    );
-  }
-  const ret = {
-    direction,
-    matching: target ? {type: `${layer}:${target}`} : {},
-    spec: constraints.spec,
-  };
-  if (constraints.env instanceof Match) {
-    if (Array.isArray(constraints.env.original)) {
-      return {
-        ...ret,
-        env: new (constraints.env.constructor as {new(...arg: unknown[]): MatchSpecOf<AnyInputMatchSpec>})(
-          // the `as any[]` is an escape hatch -- without it typescript dies bc excessive stack depth comparing types
-          ...(constraints.env.original as any[]).map(value => transformMatchSpec(layer, value)),
-        ),
-      };
-    }
-    return {
-      ...ret,
-      env: new (constraints.env.constructor as {new(...arg: unknown[]): MatchSpecOf<AnyInputMatchSpec>})(
-        transformMatchSpec(layer, constraints.env.original),
-      ),
-    };
-  }
   return {
-    ...ret,
-    env: constraints.env === undefined ? {env: [], was: {}} : transformMatchSpec(layer, constraints.env),
-  };
+    was: where.was,
+    env: Object.entries(where)
+      .filter(
+        ([k, v]) => v && (k.startsWith(`next`) || k.startsWith(`prev`)),
+      ).map(([k, v]) => transformEnvEntry(
+        layer,
+        k.slice(0, 4) as Direction,
+        k.slice(4).toLowerCase(),
+        v!,
+      )),
+  } as MatchSpecOf<M>;
 }
 
 class CaptureApplier<

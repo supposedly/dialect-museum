@@ -3,22 +3,23 @@
 import * as ABC from "../../../../alphabets/common";
 import * as Accents from "../../../../accents/common";
 import {List, ListNode} from "./list";
-import {Rule} from "../capture-types";
+import {Direction, Rule} from "../capture-types";
+import {Optional} from "../../../../utils/typetools";
+import match, {Match} from "../../match";
 
 export type Layers = {
   layers: Record<string, Accents.AnyLayer>
-  links: Record<string, Null<string>>
+  links: Record<string, Optional<string>>
 };
-type Null<T> = T | null;
 type TrackerValue = ABC.Base | List<Tracker>;
 type Environments<T> = {
   next: T
   prev: T
 };
 
-export class TrackerLayer {
+class TrackerLayer {
   private history: TrackerValue[][] = [];
-  private environmentCache: Environments<Record<string, Null<TrackerValue>>> = {next: {}, prev: {}};
+  private environmentCache: Environments<Record<string, Optional<TrackerValue>>> = {next: {}, prev: {}};
   private dependents: Map<TrackerLayer, Environments<string[]>> = new Map();
 
   constructor(
@@ -30,61 +31,82 @@ export class TrackerLayer {
     this.feed(initial);
   }
 
-  private get next(): Null<TrackerLayer> {
+  private get next(): Optional<TrackerLayer> {
     return this.parent.nextOnLayer(this.name);
   }
 
-  private get prev(): Null<TrackerLayer> {
+  private get prev(): Optional<TrackerLayer> {
     return this.parent.prevOnLayer(this.name);
   }
 
-  feed(initial: TrackerValue) {
-    // in the future this could cache this.history before clearing
-    // so that it can be restored later on if the initial is ever
-    // reset to the same thing
-    this.history.length = 0;
-    this.history.push([initial]);
-    this.invalidateDependents();
-    this.reapplyRules();
+  get current(): TrackerValue {
+    /* ... */
+  }
+
+  matches(obj: any): boolean {
+    obj = obj instanceof Match ? obj : match(obj);
+    return obj.matches(this.current);
+  }
+
+  findDependency(dir: Direction, type: Optional<string>, includeSelf = false): Optional<TrackerLayer> {
+    if (!includeSelf) {
+      return this[dir]?.findDependency(dir, type, true);
+    }
+    if (this.current) {
+      if (type === undefined) {
+        return this;
+      }
+    }
+    return this.matches({type}) ? this : this[dir]?.findDependency(dir, type, true);
+  }
+
+  reapplyRules() {
+    /* ... */
   }
 
   invalidateDependencies(environments: Environments<string[]>) {
-    environments.next.forEach(key => {
-      this.environmentCache.next[key] = null;
-    });
     environments.prev.forEach(key => {
-      this.environmentCache.prev[key] = null;
+      this.environmentCache.next[key] = undefined;
+    });
+    environments.next.forEach(key => {
+      this.environmentCache.prev[key] = undefined;
     });
   }
 
-  invalidateDependents() {
+  private invalidateDependents() {
     this.dependents.forEach((relationships, peer) => {
       peer.invalidateDependencies(relationships);
       peer.reapplyRules();
     });
   }
 
-  reapplyRules() {
-    /* ... */
+  feed(initial: TrackerValue) {
+    // in the future this could cache this.history before clearing
+    // so that it can be restored later on if the initial entry is ever
+    // reset to the same thing
+    this.history.length = 0;
+    this.history.push([initial]);
+    this.invalidateDependents();
+    this.reapplyRules();
   }
 }
 
 export class Tracker implements ListNode<Tracker> {
-  public prev: Null<Tracker> = null;
-  public next: Null<Tracker> = null;
-  private layerValues: Record<string, Null<TrackerLayer>>;
-  private minLayer: Null<string> = null;
+  public prev: Optional<Tracker> = undefined;
+  public next: Optional<Tracker> = undefined;
+  private layerValues: Record<string, Optional<TrackerLayer>>;
+  private minLayer: Optional<string> = undefined;
 
   constructor(
     private layers: Layers,
     private rules: Record<string, Record<string, Rule[]>>,
-    prev: Null<Tracker> = null,
+    prev: Optional<Tracker> = undefined,
   ) {
-    if (prev !== null) {
+    if (prev !== undefined) {
       prev.append(this);
     }
     this.layerValues = Object.fromEntries(
-      Object.keys(layers.layers).map(name => [name, null]),
+      Object.keys(layers.layers).map(name => [name, undefined]),
     );
   }
 
@@ -100,9 +122,9 @@ export class Tracker implements ListNode<Tracker> {
   }
 
   append(head: Tracker) {
-    if (this.next !== null) {
+    if (this.next !== undefined) {
       let tail = head;
-      while (tail.next !== null) {
+      while (tail.next !== undefined) {
         tail = tail.next;
       }
       tail.next = this.next;
@@ -112,19 +134,17 @@ export class Tracker implements ListNode<Tracker> {
     head.prev = this;
   }
 
-  nextOnLayer(layer: string): Null<TrackerLayer> {
-    return this.next?.findLayerForwards(layer) ?? null;
+  nextOnLayer(layer: string, includeSelf = false): Optional<TrackerLayer> {
+    if (!includeSelf) {
+      return this.next?.nextOnLayer(layer, true);
+    }
+    return this.layerValues[layer] ?? this.next?.nextOnLayer(layer, true);
   }
 
-  private findLayerForwards(layer: string): Null<TrackerLayer> {
-    return this.layerValues[layer] ?? this.next?.findLayerForwards(layer) ?? null;
-  }
-
-  prevOnLayer(layer: string): Null<TrackerLayer> {
-    return this.prev?.findLayerBackwards(layer) ?? null;
-  }
-
-  private findLayerBackwards(layer: string): Null<TrackerLayer> {
-    return this.layerValues[layer] ?? this.prev?.findLayerBackwards(layer) ?? null;
+  prevOnLayer(layer: string, includeSelf = false): Optional<TrackerLayer> {
+    if (!includeSelf) {
+      return this.prev?.prevOnLayer(layer, true);
+    }
+    return this.layerValues[layer] ?? this.prev?.prevOnLayer(layer, true);
   }
 }
