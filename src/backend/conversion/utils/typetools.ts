@@ -6,6 +6,18 @@ export type DeepPartial<T> = T extends object ? {
   [P in keyof T]?: DeepPartial<T[P]>;
 } : T;
 
+const TypeErrorTag: unique symbol = Symbol(`TypeErrorTag`); // don't export it!
+
+export type invalid<Message> = {
+  [x in keyof Message | typeof TypeErrorTag]: x extends keyof Message
+    ? Message[x & keyof Message]
+    : {readonly [TypeErrorTag]: unique symbol}; // anonymous unique symbol
+};
+
+// XXX: Until error types land or I find a workaround, THESE ARE INCORRECT! `never` doesn't halt evaluation like I want
+export type UniqueLength<T extends unknown[]> = T extends Array<infer U> ? Union.ListOf<U>[`length`] : never;
+export type UniqueArray<T extends unknown[]> = T[`length`] extends UniqueLength<T> ? T : never;
+
 // https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
 // I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
 // some compilers and not others...

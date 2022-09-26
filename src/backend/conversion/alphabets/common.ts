@@ -33,7 +33,7 @@ export type FillDefaults<Values, Types> = {
     : K extends keyof Values ? OrElse<Values[K], Types[K]> : Types[K]
 };
 
-export interface Base<T extends string = string, V = unknown> {
+export interface Base<T extends string = string, V = any> {
   type: T
   value: V
 }
@@ -58,7 +58,7 @@ export type Alphabet<
   Name extends string,
 > = {
   name: Name
-  types: Set<FundamentalNames | keyof Types>
+  types: Array<FundamentalNames | keyof Types>
   abc: MergeUnion<ValuesOf<ProtoABC>>
   /*
   // All of the base types this alphabet was created with
@@ -80,12 +80,14 @@ export type Alphabet<
 };
 export type AnyAlphabet = {
   name: string
-  types: Set<string>
+  types: string[]
   abc: Record<string, Base>
   [` exactTypes`]: Base
 };
 export type ABC<A extends AnyAlphabet> = A[`abc`];
-export type TypeNames<A extends AnyAlphabet> = A[`types`] extends Set<infer U extends string> ? U : never;
+// for some reason if the below is instead phrased as A[`types`][number] there's some
+// "circular constraint" error in capture/capture-types...
+export type TypeNames<A extends AnyAlphabet> = A[`types`] extends Array<infer U extends string> ? U : never;
 export type _ExactTypes<A extends AnyAlphabet> = A[` exactTypes`];
 export type Named<A extends AnyAlphabet, S extends TypeNames<A>> = `${A[`name`]}:${S}`;
 
@@ -114,7 +116,7 @@ export function newAlphabet<
 >(name: Name, type: Types, symbols: Symbols): Alphabet<Symbols, Types, Name> {
   return {
     name,
-    types: new Set([...fundamentalNames, ...Object.keys(type)]),
+    types: new Array([...fundamentalNames, ...Object.keys(type)]),
     abc: Object.fromEntries(
       Object.values(symbols).flatMap(group => Object.entries(group as any)),
     ),
