@@ -1,30 +1,25 @@
 import * as ABC from "../alphabets/common";
-import {Narrow as $} from "../utils/typetools";
+import {Narrow as $, UniqueArray} from "../utils/typetools";
 
-type Accents = Record<string, Set<string>>;
+type Accents = Record<string, string[]>;
 
 export type Layer<A extends ABC.AnyAlphabet, R extends Accents> = {
   accents: R
 } & A;
 
-export type AnyLayer = {
-  accents: Accents
-} & ABC.AnyAlphabet;
+export type AnyLayer = Layer<ABC.AnyAlphabet, Accents>;
 
-type ToSets<R extends Record<string, string[]>> = {
-  [K in keyof R]: Set<R[K][number]>
+type UniqueArrays<R extends Accents> = {
+  [K in keyof R]: UniqueArray<R[K]>
 };
 
 export type AccentFeatures<A extends AnyLayer> = keyof A[`accents`];
-export type FeatureVariants<A extends AnyLayer, F extends AccentFeatures<A>> =
-  A[`accents`][F] extends Set<infer U extends string>
-    ? U
-    : never;
+export type FeatureVariants<A extends AnyLayer, F extends AccentFeatures<A>> = A[`accents`][F][number];
 
 export function toLayer<
   A extends ABC.AnyAlphabet,
-  R extends Record<string, string[]>,
->(abc: A, accents: $<R>): Layer<A, ToSets<R>> {
+  R extends Accents,
+>(abc: A, accents: $<R>): Layer<A, UniqueArrays<R>> {
   return {
     ...abc,
     accents: Object.fromEntries(

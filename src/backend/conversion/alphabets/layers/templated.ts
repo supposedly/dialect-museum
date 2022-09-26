@@ -68,11 +68,11 @@ export interface Template<V> extends Base<Of<Type>, V> {
   value: V
 }
 
-export interface Suffix<V = unknown, S = unknown> extends StringSegment<V, S> {
+export interface Suffix<V = any, S = any> extends StringSegment<V, S> {
   type: Type[`suffix`]
 }
 
-export interface Delimiter<V = unknown, S = unknown> extends StringSegment<V, S> {
+export interface Delimiter<V = any, S = any> extends StringSegment<V, S> {
   type: Type[`delimiter`]
   features?: {}
 }
@@ -94,7 +94,7 @@ export interface Af3al<V extends Root = Root> extends Template<V> {
 }
 
 export interface Idafe<
-  V extends [Template<unknown>, Template<unknown>] = [Template<unknown>, Template<unknown>],
+  V extends [Template<any>, Template<any>] = [Template<any>, Template<any>],
 > extends Template<V> {
   type: Type[`idafe`]
 }
@@ -132,16 +132,16 @@ export interface Word<V extends Symbol[] = Symbol[]> extends Template<V> {
   type: Type[`word`]
 }
 
-export type SymbolOf<K extends keyof any, T extends Record<K, unknown>> = T[K] extends {symbol: string} ? T[K][`symbol`] : K;
-export type ValueOf<K extends keyof any, T extends Record<K, unknown>> = T[K] extends {value: string} ? T[K][`value`] : K;
+export type SymbolOf<K extends keyof any, T extends Record<K, any>> = T[K] extends {symbol: string} ? T[K][`symbol`] : K;
+export type ValueOf<K extends keyof any, T extends Record<K, any>> = T[K] extends {value: string} ? T[K][`value`] : K;
 // lowercase:
-export type LowercaseSymbolOf<K extends keyof any, T extends Record<K, unknown>> = K extends string ? Lowercase<SymbolOf<K, T>> : SymbolOf<K, T>;
-export type LowercaseValueOf<K extends keyof any, T extends Record<K, unknown>> = K extends string ? Lowercase<ValueOf<K, T>> : ValueOf<K, T>;
+export type LowercaseSymbolOf<K extends keyof any, T extends Record<K, any>> = K extends string ? Lowercase<SymbolOf<K, T>> : SymbolOf<K, T>;
+export type LowercaseValueOf<K extends keyof any, T extends Record<K, any>> = K extends string ? Lowercase<ValueOf<K, T>> : ValueOf<K, T>;
 
 export type SymbolValueAnd<T> = {symbol?: string, value?: string} & T;
 export type SymbolValueAndFeaturesOf<T, U extends string = never> = Record<
   string,
-  T extends {features: Readonly<Record<string, unknown>>}
+  T extends {features: Readonly<Record<string, any>>}
     ? SymbolValueAnd<Partial<T[`features`]>> & Pick<T[`features`], U>
     : SymbolValueAnd<{}>
 >;
