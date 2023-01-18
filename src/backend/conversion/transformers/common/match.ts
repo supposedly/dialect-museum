@@ -121,6 +121,9 @@ export default Object.assign(
   },
 );
 
+export function normalizeMatch(o: any) {
+  return o instanceof Match ? o : new MatchOne(o);
+}
 export type {MatchMultiple};
 export type MatchNot<T> = Not<T>;
 export type MatchAny<U> = Any<U>;
