@@ -85,7 +85,7 @@ export type FirstABC<A extends Alphabets> = OrderedObjOf<A>[0][1];
 export type InputText<A extends Alphabets> = ValuesOf<FirstABC<A>>[];
 
 export type AnyMatchSpec = MatchSpec<ABC.AnyAlphabet, OrderedObj<string, ABC.AnyAlphabet>>;
-export type AnyInputMatchSpec = InputMatchSpec<ABC.AnyAlphabet, OrderedObj<string, ABC.AnyAlphabet>>;
+export type AnyInputMatchSpec = MatchSpec<ABC.AnyAlphabet, OrderedObj<string, ABC.AnyAlphabet>>;
 export type MatchSpecEnvEntry = MatchOr<{
   direction: Direction,
   target: MatchOr<any>,
@@ -97,7 +97,7 @@ export type MatchSpecEnvEntry = MatchOr<{
 // instead of the current {nextConsonant: ..., next: ..., prevConsonant: ..., prevVowel: ...}
 // which would make things a lot easier to parse
 // but I kept running into a 'type instantiation is excessively deep and possibly infinite'!
-export type InputMatchSpec<
+export type MatchSpec<
   A extends ABC.AnyAlphabet,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
 > = DeepMatchOr<MergeUnion<
@@ -105,14 +105,14 @@ export type InputMatchSpec<
     [Dir in Direction]: {
       [T in ABC.TypeNames<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-coloring bc bugged
           spec: DeepMerge<ABC._ExactAllOfType<A, T>>
-          env: InputMatchSpec<A, ABCHistory>
+          env: MatchSpec<A, ABCHistory>
         }
       }
   }>
   | {
     [Dir in Direction]: {
       spec: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMerge<ABC._ExactAllOfType<A, T>>}>
-      env: InputMatchSpec<A, ABCHistory>
+      env: MatchSpec<A, ABCHistory>
     }
   }
   | {
@@ -128,29 +128,6 @@ export type InputMatchSpec<
     }
   }
 >>;
-
-export type MatchSpec<
-  A extends ABC.AnyAlphabet,
-  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
-> = MatchOr<{
-  env: Array<MatchOr<{
-    direction: Direction
-    target: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<A, T>>>}>
-    spec?: undefined | ValuesOf<{[T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<A, T>>>}>
-    env?: undefined | MatchSpec<A, ABCHistory>
-  }>>
-  was?: {
-    // Pre[KI[1]][1] is like `value of Pre at index I` and it's the AnyAlphabet at some layer
-    [KI in List.UnionOf<KeysAndIndicesOf<ABCHistory>> as Force<KI[0], string>]: ValuesOf<{
-      [T in ABC.TypeNames<ABCHistory[KI[1]][1]>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<ABCHistory[KI[1]][1], T>>>
-    }>
-    // {_: /* see above ^ */, env: MatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
-    // that doesn't work bc type instantiation is excessively deep for `env`'s value
-    // but if I ever have to refer to the environment of a previous layer I can maybe just go the other way
-    // (env->was instead of was->env)
-  }
-}
->;
 
 export type _IntoHelper<Captured, ABCValues> =
   Captured extends ABCValues
@@ -168,11 +145,11 @@ export type IntoSpec<
   A extends Layers.AnyLayer,
   B extends ABC.AnyAlphabet,
   Feature extends Layers.AccentFeatures<A>,
-> = Partial<Record<
+> = Record<
   Layers.FeatureVariants<A, Feature>,
   | ArrayOr<ABC.ValuesOfABC<B>>
   | ((input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>, abc?: B) => ArrayOr<ABC.ValuesOfABC<B>>)
->>;
+>;
 
 export type CapturableOr<T, A extends ABC.AnyAlphabet> =
   [T] extends [never]
@@ -190,7 +167,7 @@ export type TransformRule<
   type: TransformType.transformation
   from: CapturableOr<Captured, A>
   into: IntoSpec<Captured, A, A, Feature>
-  where: InputMatchSpec<A, ABCHistory>
+  where: MatchSpec<A, ABCHistory>
 };
 
 export type PromoteRule<
@@ -203,7 +180,7 @@ export type PromoteRule<
   type: TransformType.promotion
   from: CapturableOr<Captured, A>
   into: IntoSpec<Captured, A, B, Feature>
-  where: InputMatchSpec<A, ABCHistory>
+  where: MatchSpec<A, ABCHistory>
 };
 
 export type Rule<
@@ -224,7 +201,7 @@ export type TransformParam<
   Feature extends Layers.AccentFeatures<A>,
 > = {
   into: IntoSpec<Captured, A, B, Feature>
-  where: InputMatchSpec<A, ABCHistory>
+  where: MatchSpec<A, ABCHistory>
 };
 
 export interface CaptureApplier<

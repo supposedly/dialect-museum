@@ -21,97 +21,8 @@ import {
   TransformRule,
   PromoteRule,
   TransformParam,
-  InputMatchSpec,
-  MatchSpec,
-  MatchSpecEnvEntry,
-  AnyInputMatchSpec,
   TransformType,
-  Direction,
 } from './capture-types';
-import {DeepMatchOr, Match} from '../match';
-
-function transformEnvEntry(
-  layer: string,
-  direction: Direction,
-  target: string,
-  constraints: DeepMatchOr<{spec: {}, env: AnyInputMatchSpec}>,
-): MatchSpecEnvEntry {
-  if (constraints instanceof Match) {
-    if (Array.isArray(constraints.original)) {
-      return new (constraints.constructor as {new(...arg: unknown[]): ReturnType<typeof transformEnvEntry>})(
-        ...constraints.original.map(value => transformEnvEntry(layer, direction, target, value)),
-      );
-    }
-    return new (constraints.constructor as {new(...arg: unknown[]): ReturnType<typeof transformEnvEntry>})(
-      transformEnvEntry(layer, direction, target, constraints.original),
-    );
-  }
-
-  const ret = {
-    direction,
-    target: target ? {type: `${layer}:${target}`} : {},
-    spec: constraints.spec,
-  };
-
-  if (constraints.env instanceof Match) {
-    if (Array.isArray(constraints.env.original)) {
-      return {
-        ...ret,
-        env: new (constraints.env.constructor as {new(...arg: unknown[]): MatchSpecOf<AnyInputMatchSpec>})(
-          // the `as any[]` is an escape hatch -- without it typescript dies bc excessive stack depth comparing types
-          ...(constraints.env.original as any[]).map(value => transformMatchSpec(layer, value)),
-        ),
-      };
-    }
-    return {
-      ...ret,
-      env: new (constraints.env.constructor as {new(...arg: unknown[]): MatchSpecOf<AnyInputMatchSpec>})(
-        transformMatchSpec(layer, constraints.env.original),
-      ),
-    };
-  }
-  return {
-    ...ret,
-    env: constraints.env === undefined
-      ? {env: [], was: {}}
-      : transformMatchSpec(layer, constraints.env),
-  };
-}
-
-type MatchSpecOf<M extends AnyInputMatchSpec> =
-  M extends InputMatchSpec<infer A, infer O> ? MatchSpec<A, O> : never;
-
-function transformMatchSpec<
-  M extends InputMatchSpec<
-    ABC.AnyAlphabet,
-    OrderedObj<string, ABC.AnyAlphabet>
-  >,
->(layer: string, where: M): MatchSpecOf<M> {
-  if (where instanceof Match) {
-    const original = where.original;
-    if (Array.isArray(original)) {
-      return new (where.constructor as {new(...arg: unknown[]): MatchSpecOf<M>})(
-        ...original.map(value => transformMatchSpec(layer, value)),
-      );
-    }
-    return new (where.constructor as {new(arg: unknown): MatchSpecOf<M>})(
-      transformMatchSpec(layer, original),
-    );
-  }
-
-  return {
-    was: where.was,
-    env: Object.entries(where)
-      .filter(
-        ([k, v]) => v && (k.startsWith(`next`) || k.startsWith(`prev`)),
-      ).map(([k, v]) => transformEnvEntry(
-        layer,
-        k.slice(0, 4) as Direction,
-        k.slice(4).toLowerCase(),
-        v!,
-      )),
-  } as MatchSpecOf<M>;
-}
 
 class CaptureApplier<
   Captured,
@@ -162,7 +73,7 @@ type UghGetABCLinearly<T extends Record<string, ABC.AnyAlphabet>[], N extends st
 export class Language<A extends Record<string, Layers.AnyLayer>[]> {
   public readonly layers: OrderedObjOf<A>;
 
-  public rules: Record<string, Record<string, Array<Rule>>>;
+  public rules: Record<string, Record<string, Rule[]>>;
 
   public readonly abcs: MergeObjs<A>;
   public readonly select: NextMappedFuncs<this[`layers`]>;
@@ -194,15 +105,15 @@ export class Language<A extends Record<string, Layers.AnyLayer>[]> {
               (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>({...obj, type}),
             ])),
           );
-          Object.entries(createRules).forEach(([accent, createRule]) => {
+          Object.entries(createRules).forEach(([feature, createRule]) => {
             if (createRule === undefined) {
               // will literally never happen
               throw new Error(`I was wrong it happened`);
             }
-            if (rules[accent] === undefined) {
-              rules[accent] = [];
+            if (rules[feature] === undefined) {
+              rules[feature] = [];
             }
-            rules[accent].push(...createRule(capture, alphabet, nextAlphabet));
+            rules[feature].push(...createRule(capture, alphabet, nextAlphabet));
           });
         },
       ]),

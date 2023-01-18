@@ -9,9 +9,9 @@ type OrderingConstraints<L extends Layers.AnyLayer, E = never> =
 export type Accent<Ls extends Layers.AnyLayer[]> = {
   [L in Ls[number] as L[`name`]]: {
     [F in Layers.AccentFeatures<L>]: {
-      variants: Record<Layers.FeatureVariants<L, F>,
-        | number
-        | [number, {
+      variants: Record<
+        Layers.FeatureVariants<L, F>,
+        number | [number, {
           before?: OrderingConstraints<L, F>
           after?: OrderingConstraints<L, F>
           clear?: OrderingConstraints<L, F>
