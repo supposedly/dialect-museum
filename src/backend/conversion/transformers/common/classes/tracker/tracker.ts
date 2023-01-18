@@ -3,9 +3,9 @@
 import * as ABC from "../../../../alphabets/common";
 import * as Layers from "../../../../layers/common";
 import {List, ListNode} from "./list";
-import {Direction, Rule} from "../capture-types";
+import {Direction, Rule, TransformType} from "../capture-types";
 import {Optional} from "../../../../utils/typetools";
-import match, {Match} from "../../match";
+import match, {normalizeMatch} from "../../match";
 
 export type InitialLayers = {
   layers: Record<string, Layers.AnyLayer>
@@ -99,8 +99,7 @@ class TrackerLayer {
   }
 
   matches(obj: any): boolean {
-    obj = obj instanceof Match ? obj : match(obj);
-    return obj.matches(this.current);
+    return normalizeMatch(obj).matches(this.current);
   }
 
   findDependency(dir: Direction, type: Optional<string>, includeSelf = false): Optional<TrackerLayer> {
@@ -121,9 +120,15 @@ class TrackerLayer {
         if (!this.matches(rule.from)) {
           return;
         }
-        const where = rule.where instanceof Match ? rule.where : match(rule.where);
-        if (where.matches(this.environment)) {
-
+        if (!normalizeMatch(rule.where).matches(this.environment)) {
+          return;
+        }
+        switch (rule.type) {
+          case TransformType.promotion:
+            this.promote(/* what do i put here. does `feature` come into play? */);
+            break;
+          default:
+            throw new Error(`(chewing cereal) \`rule.type\` will never not be a member of TransformType`);
         }
       });
     });
