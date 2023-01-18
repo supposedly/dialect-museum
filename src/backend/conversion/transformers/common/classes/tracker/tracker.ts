@@ -17,10 +17,45 @@ type Environments<T> = {
   prev: T
 };
 
+class LayerHistory {
+  private history: Array<{
+    options: Record<string, TrackerValue>,
+    current: string
+  }> = [];
+
+  private indices: Record<string, number> = {};
+
+  feed(initial: TrackerValue) {
+    // in the future could this cache this.history before clearing?
+    // so that it can be restored later on if the initial entry is ever
+    // reset to the same thing
+    this.history.length = 0;
+    this.history.push({
+      options: {initial},
+      current: `initial`,
+    });
+    this.indices = {initial: 0};
+  }
+
+  insert(feature: string, options: Record<string, TrackerValue>, current: string) {
+    this.indices[feature] = this.history.length;
+    this.history.push({
+      options,
+      current,
+    });
+  }
+
+  get current(): Optional<TrackerValue> {
+    const current = this.history[this.history.length - 1];
+    return current.options[current.current];
+  }
+}
+
 class TrackerLayer {
-  private history: TrackerValue[][] = [];
-  private environmentCache: Environments<Record<string, Optional<TrackerValue>>> = {next: {}, prev: {}};
-  private dependents: Map<TrackerLayer, Environments<string[]>> = new Map();
+  private history = new LayerHistory();
+  private environmentCache: Record<`${Direction}${string}`, Optional<TrackerValue>> = {};
+  private dependents: Map<TrackerLayer, Array<`${Direction}${string}`>> = new Map();
+  private environment: Record<`${Direction}${string}`, TrackerValue | null> = {};
 
   constructor(
     initial: TrackerValue,
@@ -28,6 +63,18 @@ class TrackerLayer {
     private rules: [string, Rule[]][],
     private parent: Tracker,
   ) {
+    // annoying, this could do w/o the outer loop for speed but i think typescript doesn't
+    // understand when you try to define a getter/setter with Object.defineProperties()
+    Object.values(Direction).forEach(dir => {
+      parent.layers.layers[name].types.reduce(
+        (o, type) => Object.defineProperty(
+          o,
+          `${dir}${type}`,
+          {get: () => this.fetchDependency(dir, type) ?? null},
+        ),
+        this.environment,
+      );
+    });
     this.feed(initial);
   }
 
@@ -39,8 +86,16 @@ class TrackerLayer {
     return this.parent.prevOnLayer(this.name);
   }
 
-  get current(): TrackerValue {
-    /* ... */
+  get current(): Optional<TrackerValue> {
+    return this.history.current;
+  }
+
+  fetchDependency(dir: Direction, type: Optional<string>): Optional<TrackerValue> {
+    const typeKey = type ?? ``;
+    if (this.environmentCache[`${dir}${typeKey}`] === undefined) {
+      this.environmentCache[`${dir}${typeKey}`] = this.findDependency(dir, type)?.current;
+    }
+    return this.environmentCache[`${dir}${typeKey}`];
   }
 
   matches(obj: any): boolean {
@@ -60,34 +115,45 @@ class TrackerLayer {
     return this.matches({type}) ? this : this[dir]?.findDependency(dir, type, true);
   }
 
-  reapplyRules() {
-    /* ... */
+  applyRules() {
+    this.rules.forEach(([feature, rules]) => {
+      rules.forEach(rule => {
+        if (!this.matches(rule.from)) {
+          return;
+        }
+        const where = rule.where instanceof Match ? rule.where : match(rule.where);
+        if (where.matches(this.environment)) {
+
+        }
+      });
+    });
   }
 
-  invalidateDependencies(environments: Environments<string[]>) {
+  invalidateDependencies(environments: Array<`${Direction}${string}`>) {
+    environments.forEach(key => {
+      this.environmentCache[key] = undefined;
+    });
+    /*
     environments.prev.forEach(key => {
       this.environmentCache.next[key] = undefined;
     });
     environments.next.forEach(key => {
       this.environmentCache.prev[key] = undefined;
     });
+    */
   }
 
   private invalidateDependents() {
     this.dependents.forEach((relationships, peer) => {
       peer.invalidateDependencies(relationships);
-      peer.reapplyRules();
+      peer.applyRules();
     });
   }
 
   feed(initial: TrackerValue) {
-    // in the future this could cache this.history before clearing
-    // so that it can be restored later on if the initial entry is ever
-    // reset to the same thing
-    this.history.length = 0;
-    this.history.push([initial]);
+    this.history.feed(initial);
     this.invalidateDependents();
-    this.reapplyRules();
+    this.applyRules();
   }
 }
 
@@ -98,7 +164,7 @@ export class Tracker implements ListNode<Tracker> {
   private minLayer: Optional<string> = undefined;
 
   constructor(
-    private layers: InitialLayers,
+    public layers: InitialLayers,
     private rules: Record<string, Record<string, Rule[]>>,
     prev: Optional<Tracker> = undefined,
   ) {
@@ -106,7 +172,7 @@ export class Tracker implements ListNode<Tracker> {
       prev.append(this);
     }
     this.layerValues = Object.fromEntries(
-      Object.keys(layers.layers).map(name => [name, undefined]),
+      Object.keys(this.layers.layers).map(name => [name, undefined]),
     );
   }
 

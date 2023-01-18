@@ -53,7 +53,7 @@ export class MatchOne<T> extends Match<T> {
     } else if (verifyLiteral(obj)) {
       const individualMatches = Object.entries(obj).map(([k, v]) => [k, new MatchOne(v)] as const);
       this.matcher = other => individualMatches.every(
-        <M>([k, matcher]: readonly [string, MatchOne<M>]) => matcher.matches(other[k]),
+        ([k, matcher]: readonly [string, MatchOne<unknown>]) => matcher.matches(other[k]),
       );
     } else {
       this.matcher = other => obj === other;
