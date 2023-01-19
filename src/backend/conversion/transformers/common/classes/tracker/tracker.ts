@@ -3,19 +3,15 @@
 import * as ABC from "../../../../alphabets/common";
 import * as Layers from "../../../../layers/common";
 import {List, ListNode} from "./list";
-import {Direction, Rule, TransformType} from "../capture-types";
+import {Direction, Rule, IntoSpec, TransformType} from "../capture-types";
 import {Optional} from "../../../../utils/typetools";
-import match, {normalizeMatch} from "../../match";
+import {normalizeMatch} from "../../match";
 
 export type InitialLayers = {
   layers: Record<string, Layers.AnyLayer>
   links: Record<string, Optional<string>>
 };
-type TrackerValue = ABC.Base | List<Tracker>;
-type Environments<T> = {
-  next: T
-  prev: T
-};
+type TrackerValue = ABC.Base | List<Tracker>;  // TODO: Add functions
 
 class LayerHistory {
   private history: Array<{
@@ -125,13 +121,19 @@ class TrackerLayer {
         }
         switch (rule.type) {
           case TransformType.promotion:
-            this.promote(/* what do i put here. does `feature` come into play? */);
+            this.promote(rule.into, feature);
             break;
           default:
-            throw new Error(`(chewing cereal) \`rule.type\` will never not be a member of TransformType`);
+            throw new Error(`(eating cereal) \`rule.type\` will never not be a member of TransformType`);
         }
       });
     });
+  }
+
+  promote(into: IntoSpec<never, any, any, any>, feature: string) {
+    // XXX: is this an ok way to select the default option...?
+    // TODO: parse array into trackerlist or something ugh
+    this.history.insert(feature, into, Object.keys(into)[0]);
   }
 
   invalidateDependencies(environments: Array<`${Direction}${string}`>) {
