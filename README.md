@@ -30,7 +30,7 @@ hundred years. If it ain't broke, why break it?
 
 ### Why break it
 
-<kbd aria-role="presentation">![There was a meme that originally went "Inside Each of Us Are Two Wolves; One has depression, The other has depression; You Have Depression". This is modified to read: "Inside Each of Us Are Two ACCENT. One has R SOUND the other has NO R SOUND. You have ENGLISH LANGUAGE"](https://user-images.githubusercontent.com/32081933/137174170-78fe42cc-89c6-4412-903e-3b10a7038c9b.png)</kbd>
+<kbd aria-role="presentation">![There was this meme that originally went "Inside Each of Us Are Two Wolves; One has depression, The other has depression; You Have Depression". This is edited to: "Inside Each of Us Are Two ACCENT. One has R SOUND the other has NO R SOUND. You have ENGLISH LANGUAGE"](https://user-images.githubusercontent.com/32081933/214675441-1690f38f-633f-4a49-b7a7-6de6053b538a.png)</kbd>
 
 Look at the pronunciations they've got for the word "her" up there. They come in two accents: a
 British one that doesn't pronounce the R, and an American one that does. It does feel nice to
@@ -114,7 +114,7 @@ power of computer for great good?
 
 #### Wow, look: digital style
 
-<kbd>![Edited version of a car-salesman meme. "*Slaps roof of PC* this bad boy can fit so many (USELESS INFORMATION) in it"](https://user-images.githubusercontent.com/32081933/214670987-8476df5d-d3a1-4bd9-85cc-59a6b8ebff3c.png)</kbd>
+<kbd aria-role="presentation">![Edited version of a car-salesman meme. "*Slaps roof of PC* this bad boy can fit so many (USELESS INFORMATION) in it"](https://user-images.githubusercontent.com/32081933/214670987-8476df5d-d3a1-4bd9-85cc-59a6b8ebff3c.png)</kbd>
 
 Okay, so we're doing our stuff with computers now, not the town abacus or whatever they used before
 1970. This is what that means for us:
