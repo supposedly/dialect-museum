@@ -52,7 +52,8 @@
     "@typescript-eslint/no-use-before-define": [
       "error",
       {
-        "variables": false
+        "variables": false, // ????
+        "classes": false
       }
     ],
     "no-multi-spaces": [

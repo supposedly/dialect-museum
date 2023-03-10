@@ -5,7 +5,7 @@ import * as Layers from "../../../../layers/common";
 import {List, ListNode} from "./list";
 import {Direction, Rule, IntoSpec, TransformType} from "../capture-types";
 import {Optional, ValuesOf} from "../../../../utils/typetools";
-import {MatchOr, normalizeMatch} from "../../match";
+import {normalizeMatch} from "../../match";
 
 export type InitialLayers = {
   layers: Record<string, Layers.AnyLayer>
@@ -21,6 +21,8 @@ class LayerHistory {
   }> = [];
 
   private indices: Record<string, number> = {};
+
+  constructor(private layer: string) {}
 
   feed(initial: ABC.Base) {
     // in the future could this cache this.history before clearing?
@@ -42,18 +44,14 @@ class LayerHistory {
     });
   }
 
-  get current(): Optional<TrackerValue> {
+  get current(): Optional<PreTrackerValue> {
     const current = this.history[this.history.length - 1];
-    const preVal = current.options[current.current];
-    if (Array.isArray(preVal)) {
-      return List.fromArray(preVal);
-    }
-    return preVal;
+    return current.options[current.current];
   }
 }
 
 class TrackerLayer {
-  private history = new LayerHistory();
+  private history = new LayerHistory(this.name);
   private environmentCache: Record<`${Direction}${string}`, Optional<TrackerValue>> = {};
   private dependents: Map<TrackerLayer, Array<`${Direction}${string}`>> = new Map();
   private environment: Record<`${Direction}${string}`, TrackerValue | null> = {};
@@ -64,7 +62,7 @@ class TrackerLayer {
     private rules: [string, Rule[]][],
     private parent: Tracker,
   ) {
-    // annoying, this could do w/o the outer loop for speed but i think typescript doesn't
+    // so this could do w/o the outer loop for speed but i think typescript doesn't
     // understand when you try to define a getter/setter with Object.defineProperties()
     Object.values(Direction).forEach(dir => {
       parent.layers.layers[name].types.reduce(
@@ -88,7 +86,17 @@ class TrackerLayer {
   }
 
   get current(): Optional<TrackerValue> {
-    return this.history.current;
+    const preVal = this.history.current;
+    if (Array.isArray(preVal)) {
+      const ret = [new Tracker(this.parent.layers, this.parent.rules).feed(this.name, preVal[0])];
+      preVal.slice(1).forEach(v => ret.push(
+        new Tracker(this.parent.layers, this.parent.rules, ret[ret.length - 1])
+          .feed(this.name, v),
+      ));
+      // should this be trackerlist somehow (not sure what trackerlist is actually for now)
+      return List.fromArray(ret);
+    }
+    return preVal;
   }
 
   fetchDependency(dir: Direction, type: Optional<string>): Optional<TrackerValue> {

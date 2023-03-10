@@ -20,6 +20,36 @@ export default class TrackerList extends List<Tracker> {
     };
   }
 
+  /*
+  // XXX: what the even
+  static fromArray2(
+    arr: Tracker[],
+    rules: TrackerList[`rules`],
+    layers: ReadonlyArray<[string, Layers.AnyLayer]>
+  ): TrackerList {
+    return arr.reduce(
+      (list, tracker) => {
+        Object.defineProperties(tracker, {
+          next: {value: undefined},
+          append: {value: function append(head: Tracker) {
+            if (this.next !== undefined) {
+              let tail = head;
+              while (tail.next !== undefined) {
+                tail = tail.next;
+              }
+              tail.next = this.next;
+            }
+            this.next = head;
+          },
+        }});
+        list.append(tracker);
+        return list;
+      },
+      new TrackerList(rules, layers),
+    );
+  }
+  */
+
   feed(layer: string, text: ABC.Base[]): this {
     const [first, ...rest] = text;
     this.head = new Tracker(this.layers, this.rules).feed(layer, first);
