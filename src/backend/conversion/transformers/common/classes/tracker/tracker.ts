@@ -14,7 +14,7 @@ export type InitialLayers = {
 type PreTrackerValue = Exclude<ValuesOf<IntoSpec<any, Layers.AnyLayer, ABC.AnyAlphabet, any>>, Function>;
 type TrackerValue = ABC.Base | List<Tracker>;
 
-class LayerHistory {
+class TransformHistory {
   private history: Array<{
     options: Record<string, PreTrackerValue>,
     current: string
@@ -24,19 +24,15 @@ class LayerHistory {
 
   constructor(private layer: string) {}
 
-  feed(initial: ABC.Base) {
+  feed(options: Record<string, PreTrackerValue>, current: string, feature: string = `initial`) {
     // in the future could this cache this.history before clearing?
     // so that it can be restored later on if the initial entry is ever
     // reset to the same thing
     this.history.length = 0;
-    this.history.push({
-      options: {initial},
-      current: `initial`,
-    });
-    this.indices = {initial: 0};
+    this.insert(options, current, feature);
   }
 
-  insert(feature: string, options: Record<string, PreTrackerValue>, current: string) {
+  insert(options: Record<string, PreTrackerValue>, current: string, feature: string) {
     this.indices[feature] = this.history.length;
     this.history.push({
       options,
@@ -51,18 +47,17 @@ class LayerHistory {
 }
 
 class TrackerLayer {
-  private history = new LayerHistory(this.name);
+  private history = new TransformHistory(this.name);
   private environmentCache: Record<`${Direction}${string}`, Optional<TrackerValue>> = {};
   private dependents: Map<TrackerLayer, Array<`${Direction}${string}`>> = new Map();
   private environment: Record<`${Direction}${string}`, TrackerValue | null> = {};
 
   constructor(
-    initial: ABC.Base,
-    private name: string,
+    public name: string,
     private rules: [string, Rule[]][],
     private parent: Tracker,
   ) {
-    // so this could do w/o the outer loop for speed but i think typescript doesn't
+    // this could do w/o the outer loop for speed but i think typescript doesn't
     // understand when you try to define a getter/setter with Object.defineProperties()
     Object.values(Direction).forEach(dir => {
       parent.layers.layers[name].types.reduce(
@@ -74,7 +69,6 @@ class TrackerLayer {
         this.environment,
       );
     });
-    this.feed(initial);
   }
 
   private get next(): Optional<TrackerLayer> {
@@ -134,7 +128,10 @@ class TrackerLayer {
         }
         switch (rule.type) {
           case TransformType.promotion:
-            this.promote(rule.into, feature);
+            this.parent.promote(this, rule.into, feature);
+            break;
+          case TransformType.transformation:
+            this.transform(rule.into, feature);
             break;
           default:
             throw new Error(`(eating cereal) \`rule.type\` will never not be a member of TransformType`);
@@ -143,19 +140,14 @@ class TrackerLayer {
     });
   }
 
+  /*
   promote(into: IntoSpec<any, Layers.AnyLayer, ABC.AnyAlphabet, any>, feature: string) {
-    // XXX: is this an ok way to select the default option...?
-    // TODO: parse array into trackerlist or something ugh
-    this.history.insert(
-      feature,
-      Object.fromEntries(Object.entries(into).map(([k, v]) => {
-        if (v instanceof Function) {
-          return [k, v(this.current, this.parent.layers.layers[this.parent.nextLayer(this.name)!])];
-        }
-        return [k, v];
-      })),
-      Object.keys(into)[0],
-    );
+    this.parent.promote(this, into, feature);
+  }
+  */
+
+  transform(into: IntoSpec<any, Layers.AnyLayer, ABC.AnyAlphabet, any>, feature: string) {
+    this.history.insert();
   }
 
   invalidateDependencies(environments: Array<`${Direction}${string}`>) {
@@ -179,10 +171,15 @@ class TrackerLayer {
     });
   }
 
-  feed(initial: ABC.Base) {
-    this.history.feed(initial);
+  feed<R extends Record<string, PreTrackerValue>>(
+    initial: R,
+    current: string & keyof R,
+    feature?: string,
+  ): this {
+    this.history.feed(initial, current, feature);
     this.invalidateDependents();
     this.applyRules();
+    return this;
   }
 }
 
@@ -208,11 +205,10 @@ export class Tracker implements ListNode<Tracker> {
   feed(layer: string, unit: ABC.Base): this {
     this.minLayer = layer;
     this.layerValues[layer] = new TrackerLayer(
-      unit,
       layer,
       Object.entries(this.rules[layer]),
       this,
-    );
+    ).feed({initial: unit}, `initial`);
     return this;
   }
 
@@ -243,7 +239,29 @@ export class Tracker implements ListNode<Tracker> {
     return this.layerValues[layer] ?? this.prev?.prevOnLayer(layer, true);
   }
 
-  nextLayer(name: string): Optional<string> {
-    return this.layers.links[name];
+  promote(layer: TrackerLayer, into: IntoSpec<any, Layers.AnyLayer, ABC.AnyAlphabet, any>, feature: string) {
+    const nextLayer = this.layers.links[layer.name];
+    if (!nextLayer) {
+      return;
+    }
+    if (!this.layerValues[nextLayer]) {
+      this.layerValues[nextLayer] = new TrackerLayer(
+        nextLayer,
+        Object.entries(this.rules[nextLayer]),
+        this,
+      );
+    }
+    this.layerValues[nextLayer]!.feed(
+      Object.fromEntries(Object.entries(into).map(([k, v]) => {
+        if (v instanceof Function) {
+          return [k, v(layer.current, this.layers.layers[nextLayer])];
+        }
+        return [k, v];
+      })),
+      // XXX: is this an ok way to select the default option...?
+      // (I think so? Because promotion happens without user selection?)
+      Object.keys(into)[0],
+      feature,
+    );
   }
 }
