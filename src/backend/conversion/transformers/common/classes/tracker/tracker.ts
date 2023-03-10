@@ -204,7 +204,6 @@ class TrackerLayer {
 
   feed<R extends Record<string, PreTrackerValue>>(
     initial: R,
-    current: string & keyof R,
     feature?: string,
   ): this {
     this.history.feed(initial, feature);
@@ -285,9 +284,6 @@ export class Tracker implements ListNode<Tracker> {
     this.layerValues[nextLayer]!.feed(
       // TODO: this should probably happen back at the call site in TrackerLayer
       applyIntoSpecFunc(into, layer.current, this.layers.layers[nextLayer]),
-      // XXX: is this an ok way to select the default option...?
-      // (I think so? Because promotion happens without user selection?)
-      Object.keys(into)[0],
       feature,
     );
   }
