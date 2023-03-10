@@ -11,38 +11,70 @@ export type InitialLayers = {
   layers: Record<string, Layers.AnyLayer>
   links: Record<string, Optional<string>>
 };
-type PreTrackerValue = Exclude<ValuesOf<IntoSpec<any, Layers.AnyLayer, ABC.AnyAlphabet, any>>, Function>;
+type PreTrackerValue = Exclude<ValuesOf<IntoSpec>, Function>;
 type TrackerValue = ABC.Base | List<Tracker>;
+
+// name means to apply func [of] IntoSpec not to 'apply into [a] spec func'
+function applyIntoSpecFunc<I extends IntoSpec>(
+  intoSpec: I,
+  match: any,
+  abc: ABC.AnyAlphabet,
+): Record<keyof I, PreTrackerValue> {
+  return Object.fromEntries(
+    Object.entries(intoSpec).map(([k, v]) => {
+      if (v instanceof Function) {
+        return [k, v(match, abc)];
+      }
+      return [k, v];
+    }),
+  ) as any;  // ?????????????????
+}
 
 class TransformHistory {
   private history: Array<{
     options: Record<string, PreTrackerValue>,
-    current: string
+    current: string,
+    feature: string
   }> = [];
 
   private indices: Record<string, number> = {};
 
   constructor(private layer: string) {}
 
-  feed(options: Record<string, PreTrackerValue>, current: string, feature: string = `initial`) {
+  feed(options: Record<string, PreTrackerValue>, feature: string = `initial`) {
     // in the future could this cache this.history before clearing?
     // so that it can be restored later on if the initial entry is ever
     // reset to the same thing
     this.history.length = 0;
-    this.insert(options, current, feature);
+    this.insert(options, feature);
   }
 
-  insert(options: Record<string, PreTrackerValue>, current: string, feature: string) {
+  insert(options: Record<string, PreTrackerValue>, feature: string) {
     this.indices[feature] = this.history.length;
     this.history.push({
       options,
-      current,
+      current: Object.keys(options)[0],
+      feature,
     });
   }
 
+  select(option: string) {
+    if (!Object.hasOwnProperty.call(this.currentEntry.options, option)) {
+      throw new Error(
+        `No option '${option}' for feature ${this.currentEntry.feature}${
+        ``
+        }, only ${JSON.stringify(this.currentEntry.options)}`,
+      );
+    }
+    this.currentEntry.current = option;
+  }
+
+  private get currentEntry(): typeof this.history[number] {
+    return this.history[this.history.length - 1];
+  }
+
   get current(): Optional<PreTrackerValue> {
-    const current = this.history[this.history.length - 1];
-    return current.options[current.current];
+    return this.currentEntry.options[this.currentEntry.current];
   }
 }
 
@@ -140,14 +172,13 @@ class TrackerLayer {
     });
   }
 
-  /*
-  promote(into: IntoSpec<any, Layers.AnyLayer, ABC.AnyAlphabet, any>, feature: string) {
-    this.parent.promote(this, into, feature);
-  }
-  */
-
-  transform(into: IntoSpec<any, Layers.AnyLayer, ABC.AnyAlphabet, any>, feature: string) {
-    this.history.insert();
+  transform(into: IntoSpec, feature: string) {
+    this.history.insert(
+      // XXX: the this.parent access is sus, should the AnyLayer be stored on this or smth
+      // or maybe transform() should be on parent like promote() is... but no nah
+      applyIntoSpecFunc(into, this.current, this.parent.layers.layers[this.name]),
+      feature,
+    );
   }
 
   invalidateDependencies(environments: Array<`${Direction}${string}`>) {
@@ -176,7 +207,7 @@ class TrackerLayer {
     current: string & keyof R,
     feature?: string,
   ): this {
-    this.history.feed(initial, current, feature);
+    this.history.feed(initial, feature);
     this.invalidateDependents();
     this.applyRules();
     return this;
@@ -239,7 +270,7 @@ export class Tracker implements ListNode<Tracker> {
     return this.layerValues[layer] ?? this.prev?.prevOnLayer(layer, true);
   }
 
-  promote(layer: TrackerLayer, into: IntoSpec<any, Layers.AnyLayer, ABC.AnyAlphabet, any>, feature: string) {
+  promote(layer: TrackerLayer, into: IntoSpec, feature: string) {
     const nextLayer = this.layers.links[layer.name];
     if (!nextLayer) {
       return;
@@ -252,12 +283,8 @@ export class Tracker implements ListNode<Tracker> {
       );
     }
     this.layerValues[nextLayer]!.feed(
-      Object.fromEntries(Object.entries(into).map(([k, v]) => {
-        if (v instanceof Function) {
-          return [k, v(layer.current, this.layers.layers[nextLayer])];
-        }
-        return [k, v];
-      })),
+      // TODO: this should probably happen back at the call site in TrackerLayer
+      applyIntoSpecFunc(into, layer.current, this.layers.layers[nextLayer]),
       // XXX: is this an ok way to select the default option...?
       // (I think so? Because promotion happens without user selection?)
       Object.keys(into)[0],
