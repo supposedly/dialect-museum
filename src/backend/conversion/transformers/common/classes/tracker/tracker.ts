@@ -4,24 +4,25 @@ import * as ABC from "../../../../alphabets/common";
 import * as Layers from "../../../../layers/common";
 import {List, ListNode} from "./list";
 import {Direction, Rule, IntoSpec, TransformType} from "../capture-types";
-import {Optional} from "../../../../utils/typetools";
-import {normalizeMatch} from "../../match";
+import {Optional, ValuesOf} from "../../../../utils/typetools";
+import {MatchOr, normalizeMatch} from "../../match";
 
 export type InitialLayers = {
   layers: Record<string, Layers.AnyLayer>
   links: Record<string, Optional<string>>
 };
-type TrackerValue = ABC.Base | List<Tracker>;  // TODO: Add functions
+type PreTrackerValue = Exclude<ValuesOf<IntoSpec<any, Layers.AnyLayer, ABC.AnyAlphabet, any>>, Function>;
+type TrackerValue = ABC.Base | List<Tracker>;
 
 class LayerHistory {
   private history: Array<{
-    options: Record<string, TrackerValue>,
+    options: Record<string, PreTrackerValue>,
     current: string
   }> = [];
 
   private indices: Record<string, number> = {};
 
-  feed(initial: TrackerValue) {
+  feed(initial: ABC.Base) {
     // in the future could this cache this.history before clearing?
     // so that it can be restored later on if the initial entry is ever
     // reset to the same thing
@@ -33,7 +34,7 @@ class LayerHistory {
     this.indices = {initial: 0};
   }
 
-  insert(feature: string, options: Record<string, TrackerValue>, current: string) {
+  insert(feature: string, options: Record<string, PreTrackerValue>, current: string) {
     this.indices[feature] = this.history.length;
     this.history.push({
       options,
@@ -43,7 +44,11 @@ class LayerHistory {
 
   get current(): Optional<TrackerValue> {
     const current = this.history[this.history.length - 1];
-    return current.options[current.current];
+    const preVal = current.options[current.current];
+    if (Array.isArray(preVal)) {
+      return List.fromArray(preVal);
+    }
+    return preVal;
   }
 }
 
@@ -54,7 +59,7 @@ class TrackerLayer {
   private environment: Record<`${Direction}${string}`, TrackerValue | null> = {};
 
   constructor(
-    initial: TrackerValue,
+    initial: ABC.Base,
     private name: string,
     private rules: [string, Rule[]][],
     private parent: Tracker,
@@ -130,10 +135,19 @@ class TrackerLayer {
     });
   }
 
-  promote(into: IntoSpec<never, any, any, any>, feature: string) {
+  promote(into: IntoSpec<any, Layers.AnyLayer, ABC.AnyAlphabet, any>, feature: string) {
     // XXX: is this an ok way to select the default option...?
     // TODO: parse array into trackerlist or something ugh
-    this.history.insert(feature, into, Object.keys(into)[0]);
+    this.history.insert(
+      feature,
+      Object.fromEntries(Object.entries(into).map(([k, v]) => {
+        if (v instanceof Function) {
+          return [k, v(this.current, this.parent.layers.layers[this.parent.nextLayer(this.name)!])];
+        }
+        return [k, v];
+      })),
+      Object.keys(into)[0],
+    );
   }
 
   invalidateDependencies(environments: Array<`${Direction}${string}`>) {
@@ -157,7 +171,7 @@ class TrackerLayer {
     });
   }
 
-  feed(initial: TrackerValue) {
+  feed(initial: ABC.Base) {
     this.history.feed(initial);
     this.invalidateDependents();
     this.applyRules();
@@ -172,7 +186,7 @@ export class Tracker implements ListNode<Tracker> {
 
   constructor(
     public layers: InitialLayers,
-    private rules: Record<string, Record<string, Rule[]>>,
+    public rules: Record<string, Record<string, Rule[]>>,
     prev: Optional<Tracker> = undefined,
   ) {
     if (prev !== undefined) {
@@ -219,5 +233,9 @@ export class Tracker implements ListNode<Tracker> {
       return this.prev?.prevOnLayer(layer, true);
     }
     return this.layerValues[layer] ?? this.prev?.prevOnLayer(layer, true);
+  }
+
+  nextLayer(name: string): Optional<string> {
+    return this.layers.links[name];
   }
 }
