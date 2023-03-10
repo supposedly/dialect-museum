@@ -141,10 +141,10 @@ export type _IntoHelper<Captured, ABCValues> =
       : ABCValues;  // else again just accept everything
 
 export type IntoSpec<
-  Captured,
-  A extends Layers.AnyLayer,
-  B extends ABC.AnyAlphabet,
-  Feature extends Layers.AccentFeatures<A>,
+  Captured = any,
+  A extends Layers.AnyLayer = Layers.AnyLayer,
+  B extends ABC.AnyAlphabet = ABC.AnyAlphabet,
+  Feature extends Layers.AccentFeatures<A> = any,
 > = Record<
   Layers.FeatureVariants<A, Feature>,
   | ArrayOr<ABC.ValuesOfABC<B>>
