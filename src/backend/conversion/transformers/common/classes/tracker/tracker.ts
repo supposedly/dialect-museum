@@ -11,28 +11,11 @@ export type InitialLayers = {
   layers: Record<string, Layers.AnyLayer>
   links: Record<string, Optional<string>>
 };
-type PreTrackerValue = Exclude<ValuesOf<IntoSpec>, Function>;
 type TrackerValue = ABC.Base | List<Tracker>;
-
-// name means to apply func [of] IntoSpec not to 'apply into [a] spec func'
-function applyIntoSpecFunc<I extends IntoSpec>(
-  intoSpec: I,
-  match: any,
-  abc: ABC.AnyAlphabet,
-): Record<keyof I, PreTrackerValue> {
-  return Object.fromEntries(
-    Object.entries(intoSpec).map(([k, v]) => {
-      if (v instanceof Function) {
-        return [k, v(match, abc)];
-      }
-      return [k, v];
-    }),
-  ) as any;  // ?????????????????
-}
 
 class TransformHistory {
   private history: Array<{
-    options: Record<string, PreTrackerValue>,
+    options: Record<string, TrackerValue>,
     current: string,
     feature: string
   }> = [];
@@ -41,7 +24,7 @@ class TransformHistory {
 
   constructor(private layer: string) {}
 
-  feed(options: Record<string, PreTrackerValue>, feature: string = `initial`) {
+  feed(options: Record<string, TrackerValue>, feature: string = `initial`) {
     // in the future could this cache this.history before clearing?
     // so that it can be restored later on if the initial entry is ever
     // reset to the same thing
@@ -49,7 +32,7 @@ class TransformHistory {
     this.insert(options, feature);
   }
 
-  insert(options: Record<string, PreTrackerValue>, feature: string) {
+  insert(options: Record<string, TrackerValue>, feature: string) {
     this.indices[feature] = this.history.length;
     this.history.push({
       options,
@@ -73,7 +56,7 @@ class TransformHistory {
     return this.history[this.history.length - 1];
   }
 
-  get current(): Optional<PreTrackerValue> {
+  get current(): Optional<TrackerValue> {
     return this.currentEntry.options[this.currentEntry.current];
   }
 }
@@ -112,17 +95,30 @@ class TrackerLayer {
   }
 
   get current(): Optional<TrackerValue> {
-    const preVal = this.history.current;
-    if (Array.isArray(preVal)) {
-      const ret = [new Tracker(this.parent.layers, this.parent.rules).feed(this.name, preVal[0])];
-      preVal.slice(1).forEach(v => ret.push(
-        new Tracker(this.parent.layers, this.parent.rules, ret[ret.length - 1])
-          .feed(this.name, v),
-      ));
-      // should this be trackerlist somehow (not sure what trackerlist is actually for now)
-      return List.fromArray(ret);
-    }
-    return preVal;
+    return this.history.current;
+  }
+
+  // name means to apply func [of] IntoSpec not to 'apply into [a] spec func'
+  applyIntoSpec<I extends IntoSpec>(
+    intoSpec: I,
+    match: any,
+    abc: ABC.AnyAlphabet,
+  ): Record<keyof I, TrackerValue> {
+    return Object.fromEntries(
+      Object.entries(intoSpec).map(([k, v]) => {
+        const val = v instanceof Function ? v(match, abc) : v;
+        if (Array.isArray(val)) {
+          const ret: Tracker[] = [];
+          val.forEach(e => ret.push(
+            new Tracker(this.parent.layers, this.parent.rules, ret[ret.length - 1])  // last arg intentionally undefined on first run
+              .feed(this.name, e),
+          ));
+          // should this be trackerlist somehow (not sure what trackerlist is actually for now)
+          return [k, List.fromArray(ret)];
+        }
+        return [k, val];
+      }),
+    );
   }
 
   fetchDependency(dir: Direction, type: Optional<string>): Optional<TrackerValue> {
@@ -176,7 +172,7 @@ class TrackerLayer {
     this.history.insert(
       // XXX: the this.parent access is sus, should the AnyLayer be stored on this or smth
       // or maybe transform() should be on parent like promote() is... but no nah
-      applyIntoSpecFunc(into, this.current, this.parent.layers.layers[this.name]),
+      this.applyIntoSpec(into, this.current, this.parent.layers.layers[this.name]),
       feature,
     );
   }
@@ -202,11 +198,14 @@ class TrackerLayer {
     });
   }
 
-  feed<R extends Record<string, PreTrackerValue>>(
+  feed<R extends Record<string, TrackerValue>>(
     initial: R,
     feature?: string,
   ): this {
-    this.history.feed(initial, feature);
+    this.history.feed(
+      initial,
+      feature,
+    );
     this.invalidateDependents();
     this.applyRules();
     return this;
@@ -281,9 +280,10 @@ export class Tracker implements ListNode<Tracker> {
         this,
       );
     }
-    this.layerValues[nextLayer]!.feed(
-      // TODO: this should probably happen back at the call site in TrackerLayer
-      applyIntoSpecFunc(into, layer.current, this.layers.layers[nextLayer]),
+    const nextLayerValue = this.layerValues[nextLayer]!;
+    nextLayerValue.feed(
+      // TODO: this should maybe happen back at the call site in TrackerLayer
+      nextLayerValue.applyIntoSpec(into, layer.current, this.layers.layers[nextLayer]),
       feature,
     );
   }
