@@ -4,7 +4,7 @@ import * as ABC from "../../../../alphabets/common";
 import * as Layers from "../../../../layers/common";
 import {List, ListNode} from "./list";
 import {Direction, Rule, IntoSpec, TransformType} from "../capture-types";
-import {Optional, ValuesOf} from "../../../../utils/typetools";
+import {Optional} from "../../../../utils/typetools";
 import {normalizeMatch} from "../../match";
 
 export type InitialLayers = {
@@ -98,7 +98,8 @@ class TrackerLayer {
     return this.history.current;
   }
 
-  // name means to apply func [of] IntoSpec not to 'apply into [a] spec func'
+  // name means to apply IntoSpec not to 'apply into [a] spec'
+  // specifically, call if it's a function and turn it into a TrackerList(? or just List<Tracker>) if array
   applyIntoSpec<I extends IntoSpec>(
     intoSpec: I,
     match: any,
@@ -175,6 +176,7 @@ class TrackerLayer {
       this.applyIntoSpec(into, this.current, this.parent.layers.layers[this.name]),
       feature,
     );
+    this.invalidateDependents();
   }
 
   invalidateDependencies(environments: Array<`${Direction}${string}`>) {
