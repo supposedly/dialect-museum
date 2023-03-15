@@ -24,24 +24,40 @@ class TransformHistory {
 
   constructor(private layer: string) {}
 
+  private get currentEntry(): typeof this.history[number] {
+    return this.history[this.history.length - 1];
+  }
+
+  get current(): Optional<TrackerValue> {
+    return this.currentEntry.options[this.currentEntry.current];
+  }
+
+  get currentFeature(): Optional<string> {
+    return this.currentEntry.feature;
+  }
+
   feed(options: Record<string, TrackerValue>, feature: string = `initial`) {
     // in the future could this cache this.history before clearing?
     // so that it can be restored later on if the initial entry is ever
     // reset to the same thing
-    this.history.length = 0;
+    this.revert(null);
     this.insert(options, feature);
   }
 
-  insert(options: Record<string, TrackerValue>, feature: string) {
-    this.indices[feature] = this.history.length;
-    this.history.push({
-      options,
-      current: Object.keys(options)[0],
-      feature,
-    });
+  revert(feature: string | null) {
+    if (feature === null) {
+      this.history.length = 0;
+      return;
+    }
+    const idx = this.indices[feature];
+    if (idx === undefined || idx >= this.history.length) {
+      throw new Error(`Invalid feature selected`);
+    }
+    this.history.splice(0, idx + 1);
   }
 
-  select(option: string) {
+  select(feature: string, option: string) {
+    this.revert(feature);
     if (!Object.hasOwnProperty.call(this.currentEntry.options, option)) {
       throw new Error(
         `No option '${option}' for feature ${this.currentEntry.feature}${
@@ -52,12 +68,13 @@ class TransformHistory {
     this.currentEntry.current = option;
   }
 
-  private get currentEntry(): typeof this.history[number] {
-    return this.history[this.history.length - 1];
-  }
-
-  get current(): Optional<TrackerValue> {
-    return this.currentEntry.options[this.currentEntry.current];
+  insert(options: Record<string, TrackerValue>, feature: string) {
+    this.indices[feature] = this.history.length;
+    this.history.push({
+      options,
+      current: Object.keys(options)[0],
+      feature,
+    });
   }
 }
 
@@ -144,6 +161,11 @@ class TrackerLayer {
       }
     }
     return this.matches({type}) ? this : this[dir]?.findDependency(dir, type, true);
+  }
+
+  select(feature: string, option: string) {
+    this.history.select(feature, option);
+    this.applyRules();
   }
 
   applyRules() {
