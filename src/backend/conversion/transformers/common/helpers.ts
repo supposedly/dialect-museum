@@ -1,5 +1,3 @@
-import {DepType} from './type';
-
 function isLiteral(obj) {
   return !!obj && obj.constructor === Object;
 }
@@ -84,7 +82,7 @@ export function qualifyKeys(obj, transform = o => o) {
 }
 
 /* eslint-disable no-plusplus */
-export function extractDeps(arrowFunc: Function) {
+export function extractParams(arrowFunc: Function) {
   if (!arrowFunc) {
     return null;
   }
@@ -135,6 +133,6 @@ export function extractDeps(arrowFunc: Function) {
     }
     s = topLevelSubstrings.join(``);
   }
-  return [...s.matchAll(/(\w+)(?:\s*:\s*[^,})]+)?/g)].map(match => DepType[match[1]]);
+  return [...s.matchAll(/(\w+)(?:\s*:\s*[^,})]+)?/g)].map(match => match[1]);
 }
 /* eslint-enable no-plusplus */
