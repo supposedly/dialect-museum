@@ -12,7 +12,7 @@ import {
   ShiftedObjOf,
   KeysAndIndicesOf,
 } from '../type';
-import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone, MatchOr} from '../match';
+import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone, MatchOr, DeepMatchShield} from '../match';
 import {ArrayOr, DeepMerge, MergeUnion, ValuesOf} from '../../../utils/typetools';
 
 export enum TransformType {
@@ -93,6 +93,16 @@ export type MatchSpecEnvEntry = MatchOr<{
   env: AnyMatchSpec
 }>;
 
+type AllOfType<A extends ABC.AnyAlphabet, T extends ABC.TypeNames<A>> = DeepMerge<ABC._ExactAllOfType<A, T>>;
+type _MatchFuncEnvHelper<A extends ABC.AnyAlphabet, Cur> = MergeUnion<ValuesOf<{
+  [Dir in Direction]: {
+    [T in ABC.TypeNames<A> as Cur extends `${Dir}${Capitalize<T>}` ? never : `${Dir}${Capitalize<T>}`]: AllOfType<A, T>
+  }
+}>>;
+type _MatchFuncHelper<A extends ABC.AnyAlphabet, Cur, U> = DeepMatchOr<U> | (
+  (env: _MatchFuncEnvHelper<A, Cur>) => DeepMatchOr<U>
+);
+
 // Wanted to restructure this to take {next: {consonant: ..., _: ...}, prev: {consonant: ..., vowel: ...}}
 // instead of the current {nextConsonant: ..., next: ..., prevConsonant: ..., prevVowel: ...}
 // which would make things a lot easier to parse
@@ -100,34 +110,34 @@ export type MatchSpecEnvEntry = MatchOr<{
 export type MatchSpec<
   A extends ABC.AnyAlphabet,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
-> = DeepMatchOr<MergeUnion<
+> = MergeUnion<
   | ValuesOf<{
     [Dir in Direction]: {
-      [T in ABC.TypeNames<A> as `${Dir}${Capitalize<T>}`]: {  // Adding ` // to help GitHub's syntax-coloring bc bugged
-          spec: DeepMerge<ABC._ExactAllOfType<A, T>>
-          env: MatchSpec<A, ABCHistory>
-        }
+      [T in ABC.TypeNames<A> as `${Dir}${Capitalize<T>}`]?: MatchOr<{
+          spec?: _MatchFuncHelper<A, `${Dir}${Capitalize<T>}`, AllOfType<A, T>>
+          env?: MatchOr<MatchSpec<A, ABCHistory>>
+        }>
       }
   }>
   | {
-    [Dir in Direction]: {
-      spec: ValuesOf<{[T in ABC.TypeNames<A>]: DeepMerge<ABC._ExactAllOfType<A, T>>}>
-      env: MatchSpec<A, ABCHistory>
-    }
+    [Dir in Direction]?: MatchOr<{
+      spec?: _MatchFuncHelper<A, null, ValuesOf<{[T in ABC.TypeNames<A>]: AllOfType<A, T>}>>
+      env?: MatchOr<MatchSpec<A, ABCHistory>>
+    }>
   }
   | {
-    was: {
+    was: MatchOr<{
       // Pre[KI[1]][1] is like `value of Pre at index I` and it's the AnyAlphabet at some layer
-      [KI in List.UnionOf<KeysAndIndicesOf<ABCHistory>> as Force<KI[0], string>]: ValuesOf<{
-        [T in ABC.TypeNames<ABCHistory[KI[1]][1]>]: DeepMerge<ABC._ExactAllOfType<ABCHistory[KI[1]][1], T>>
+      [KI in List.UnionOf<KeysAndIndicesOf<ABCHistory>> as Force<KI[0], string>]?: ValuesOf<{
+        [T in ABC.TypeNames<ABCHistory[KI[1]][1]>]?: DeepMatchOr<DeepMerge<AllOfType<ABCHistory[KI[1]][1], T>>>
       }>
       // {_: /* see above ^ */, env: InputMatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
       // that doesn't work bc type instantiation is excessively deep for `env`'s value
       // so I'm gambling on hopefully never having to refer to the environment of a previous
       // layer in actual runtime code (wow runtime code is a thing that exists)
-    }
+    }>
   }
->>;
+>;
 
 export type _IntoHelper<Captured, ABCValues> =
   Captured extends ABCValues

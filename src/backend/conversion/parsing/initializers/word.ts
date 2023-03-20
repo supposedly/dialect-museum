@@ -2,7 +2,7 @@ import {contract} from '../vowels';
 import {type as segType} from '../../objects';
 import wordType from '../type';
 import * as utils from '../../utils';
-import {edit} from '../../objects/obj';
+import {edit} from '../obj';
 
 const {misc: {lastOf}} = utils;
 

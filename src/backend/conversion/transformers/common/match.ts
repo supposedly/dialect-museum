@@ -1,5 +1,5 @@
 /* eslint-disable max-classes-per-file */
-import {DeepPartial, Narrow as $} from "../../utils/typetools";
+import {Narrow as $} from "../../utils/typetools";
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? {[K in keyof U]: U[K]} : never;
@@ -10,9 +10,11 @@ export type ExclusifyUnion<T> = _ExclusifyUnion<T, AllKeys<T>>;  // TODO: take t
 type MatcherFunc = (arg: any) => boolean;
 export type Matcher<T> = Exclude<T, Function> | MatcherFunc;
 
-export type DeepPartialNotMatch<T> = T extends Match<infer O> ? Match<DeepPartialNotMatch<O>> : T extends object ? {
-  [K in keyof T]?: DeepPartialNotMatch<T[K]>
-} : T;
+export type DeepMatchShield<T> = {deepMatchShield: true, value: T};
+export type DeepPartialNotMatch<T> =
+    T extends Match<infer O> ? Match<DeepPartialNotMatch<O>>
+  : T extends object ? {[K in keyof T]?: DeepPartialNotMatch<T[K]>}
+  : T;
 export type MatchOr<T> = T extends object ? ExclusifyUnion<T | Match<T>> : (T | Match<T>);
 export type DeepMatchOr<O> = Match<DeepPartialNotMatch<O>> | DeepPartialNotMatch<O> | {
   [K in keyof O]?:
