@@ -83,7 +83,8 @@ export function qualifyKeys(obj, transform = o => o) {
     .map(transform);
 }
 
-export function extractDeps(arrowFunc) {
+/* eslint-disable no-plusplus */
+export function extractDeps(arrowFunc: Function) {
   if (!arrowFunc) {
     return null;
   }
@@ -94,8 +95,7 @@ export function extractDeps(arrowFunc) {
     const starts = [0];
     const ends = [];
 
-    let i = 0;
-    for (let c = s[i]; i < s.length; c = s[++i]) {
+    for (let i = 0, c = s[i]; i < s.length; c = s[++i]) {
       if (c === `:`) {
         let braces = 0;
         let bracks = 0;
@@ -114,6 +114,8 @@ export function extractDeps(arrowFunc) {
               break;
             case `}`:
               braces--;
+              break;
+            default:
               break;
           }
         }
@@ -135,3 +137,4 @@ export function extractDeps(arrowFunc) {
   }
   return [...s.matchAll(/(\w+)(?:\s*:\s*[^,})]+)?/g)].map(match => DepType[match[1]]);
 }
+/* eslint-enable no-plusplus */
