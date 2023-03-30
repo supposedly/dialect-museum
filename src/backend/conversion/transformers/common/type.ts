@@ -1,15 +1,17 @@
 import {Any, List, Union, Object as Obj} from 'ts-toolbelt';
-import {MergeUnion, Zip, ZipObj} from '../../utils/typetools';
+import {MergeUnion, UnionOf, Zip, ZipObj} from '../../utils/typetools';
 
 export type UnknownList = List.List<unknown>;  // using `unknown[]` fails when `readonly unknown[]` is expected(?)
 export type OrderedObj<K = Any.Key, V = unknown> = List.List<[K, V]>;
 
-export type DropLast<L extends UnknownList> = L extends [...infer Head, infer _] ? Head : [];
+export type DropLast<L extends UnknownList> = L extends readonly [...infer Head, infer _] ? Head : [];
+export type DropNone<L extends UnknownList> = DropLast<L>;
+export type LastOf<L extends UnknownList> = L extends readonly [...infer _, infer Tail] ? Tail : [];
 
-export type KeysOf<L extends OrderedObj> = L extends OrderedObj<infer K, infer V>
+export type KeysOf<L extends OrderedObj> = L extends OrderedObj<infer K extends Any.Key, infer V>
   ? {[I in keyof L]: L[I] extends [K, V] ? L[I][0] : L[I]}
   : never;
-export type ValuesOf<L extends OrderedObj> = L extends OrderedObj<infer K, infer V>
+export type ValuesOf<L extends OrderedObj> = L extends OrderedObj<infer K extends Any.Key, infer V>
   ? {[I in keyof L]: L[I] extends [K, V] ? L[I][1] : L[I]}
   : never;
 export type ObjectOf<L extends OrderedObj> = ZipObj<KeysOf<L>, ValuesOf<L>>;
@@ -24,7 +26,7 @@ export type ShiftedObjOf<L extends OrderedObj> = List.ZipObj<
 export type IndicesOf<L extends OrderedObj> = {[K in keyof L]: K};
 export type KeysAndIndicesOf<L extends OrderedObj> = Zip<KeysOf<L>, IndicesOf<L>>;
 
-export type MergeObjs<L extends List.List<Record<string, any>>> = MergeUnion<L[number]>;
+export type MergeObjs<L extends List.List<Record<string, any>>> = MergeUnion<UnionOf<L>>;
 
 type OrderedObjOfWithDupes<L extends List.List<Record<string, any>>, T extends 'keys' | 'values' | 'entries' = 'entries'> = Obj.ListOf<{
   [K in Extract<keyof L, `${number}`>]:
