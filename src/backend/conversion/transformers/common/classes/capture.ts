@@ -4,7 +4,7 @@
 
 import * as ABC from '../../../alphabets/common';
 import * as Layers from '../../../layers/common';
-import {Narrow as $} from '../../../utils/typetools';
+import {Narrow as $, Force} from '../../../utils/typetools';
 import {TrackerList} from './tracker';
 import {
   OrderedObj,
@@ -13,8 +13,8 @@ import {
 } from '../type';
 import {
   CaptureApplier as ICaptureApplier,
+  TopLayerCaptureApplier as ITopLayerCaptureApplier,
   CapturableOr,
-  Force,
   NextMappedFuncs,
   CaptureFuncs,
   Rule,
@@ -22,6 +22,7 @@ import {
   PromoteRule,
   TransformParam,
   TransformType,
+  TopLayerCaptureFuncs,
 } from './capture-types';
 
 class CaptureApplier<
@@ -51,6 +52,28 @@ class CaptureApplier<
   ): PromoteRule<Captured, A, B, ABCHistory, Feature> {
     return {
       type: TransformType.promotion,
+      from: this.obj,
+      into,
+      where,
+    };
+  }
+}
+
+class TopLayerCaptureApplier<
+  Captured,
+  A extends Layers.AnyLayer,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
+  Feature extends Layers.AccentFeatures<A>,
+> implements ITopLayerCaptureApplier<Captured, A, ABCHistory, Feature> {
+  constructor(
+    private obj: CapturableOr<Captured, A>,
+  ) {}
+
+  transform(
+    {into, where}: TransformParam<Captured, A, A, ABCHistory, Feature>,
+  ): TransformRule<Captured, A, ABCHistory, Feature> {
+    return {
+      type: TransformType.transformation,
       from: this.obj,
       into,
       where,
@@ -95,27 +118,48 @@ export class Language<A extends Record<string, Layers.AnyLayer>[]> {
     this.select = Object.fromEntries(
       this.layers.map(([layer, alphabet], idx) => [
         layer,
-        (createRules: CaptureFuncs<any, any, []>) => {
-          const rules = this.rules[layer];
-          const nextAlphabet = this.layers[idx + 1]?.[1];
-          const capture = Object.assign(
-            (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>(obj),
-            Object.fromEntries(alphabet.types.forEach((type: string) => [
-              type,
-              (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>({...obj, type}),
-            ])),
-          );
-          Object.entries(createRules).forEach(([feature, createRule]) => {
-            if (createRule === undefined) {
-              // will literally never happen
-              throw new Error(`I was wrong it happened`);
-            }
-            if (rules[feature] === undefined) {
-              rules[feature] = [];
-            }
-            rules[feature].push(...createRule(capture, alphabet, nextAlphabet));
-          });
-        },
+        idx < this.layers.length - 1
+          ? (createRules: CaptureFuncs<any, any, []>) => {
+            const rules = this.rules[layer];
+            const nextAlphabet = this.layers[idx + 1]?.[1];
+            const capture = Object.assign(
+              (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>(obj),
+              Object.fromEntries(alphabet.types.forEach((type: string) => [
+                type,
+                (obj: Partial<any> = {}) => new CaptureApplier<any, any, any, [], any>({...obj, type}),
+              ])),
+            );
+            Object.entries(createRules).forEach(([feature, createRule]) => {
+              if (createRule === undefined) {
+                // will literally never happen
+                throw new Error(`I was wrong it happened`);
+              }
+              if (rules[feature] === undefined) {
+                rules[feature] = [];
+              }
+              rules[feature].push(...createRule(capture, alphabet, nextAlphabet));
+            });
+          }
+          : (createRules: TopLayerCaptureFuncs<any, []>) => {
+              const rules = this.rules[layer];
+              const capture = Object.assign(
+                (obj: Partial<any> = {}) => new TopLayerCaptureApplier<any, any, [], any>(obj),
+                Object.fromEntries(alphabet.types.forEach((type: string) => [
+                  type,
+                  (obj: Partial<any> = {}) => new TopLayerCaptureApplier<any, any, [], any>({...obj, type}),
+                ])),
+              );
+              Object.entries(createRules).forEach(([feature, createRule]) => {
+                if (createRule === undefined) {
+                  // will literally never happen
+                  throw new Error(`I was wrong it happened`);
+                }
+                if (rules[feature] === undefined) {
+                  rules[feature] = [];
+                }
+                rules[feature].push(...createRule(capture, alphabet));
+              });
+            },
       ]),
     );
   }

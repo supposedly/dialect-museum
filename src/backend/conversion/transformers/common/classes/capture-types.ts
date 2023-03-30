@@ -1,7 +1,8 @@
 // type system likes being silly and not accepting that KeysAndIndicesOf<> produces
 // tuples [K, V] where K is a valid key and V is a valid value
 
-import {List} from 'ts-toolbelt';
+import {Any, List, Number as Num} from 'ts-toolbelt';
+import {Key} from 'ts-toolbelt/out/Any/Key';
 import * as ABC from '../../../alphabets/common';
 import * as Layers from '../../../layers/common';
 import {
@@ -11,9 +12,13 @@ import {
   OrderedObjOf,
   ShiftedObjOf,
   KeysAndIndicesOf,
+  LastOf,
+  KeysOf,
+  DropNone,
+  IndicesOf,
 } from '../type';
-import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone, MatchOr, DeepMatchShield} from '../match';
-import {ArrayOr, DeepMerge, MergeUnion, ValuesOf} from '../../../utils/typetools';
+import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone, MatchOr} from '../match';
+import {ArrayOr, DeepMerge, MergeUnion, ValuesOf, UnionOf} from '../../../utils/typetools';
 
 export enum TransformType {
   transformation,
@@ -23,10 +28,6 @@ export enum Direction {
   next = `next`,
   prev = `prev`,
 }
-
-// so I can use these to force it to realize it's fine while I figure out what's even wrong
-export type Force<T, B> = T extends B ? T : never;
-export type ForceKey<T, K> = K extends keyof T ? T[K] : never;
 
 export type Capturable<A extends ABC.AnyAlphabet> = ValuesOf<{
   [T in ABC.TypeNames<A>]: DeepMatchOr<DeepMerge<ABC._ExactAllOfType<A, T>>>
@@ -50,34 +51,66 @@ export type CaptureFuncs<
       // - a partial specification that overlaps with one or more members of the current alphabet
       // - a match() thing that says to match parts of members of the current alphabet
       O extends Capturable<Curr>,
-    >(obj: O) => CaptureApplier<typeof obj, Curr, Next, ABCHistory, Feature>)
+    >(obj: O) => CaptureApplier<typeof obj, Curr, Next, ABCHistory, Feature>
+    )
     & {
       [T in ABC.TypeNames<Curr>]: <O extends DeepMatchOr<DeepMerge<ABC._ExactAllOfType<Curr, T>>>>(
         obj: O
       ) => CaptureApplier<typeof obj, Curr, Next, ABCHistory, Feature>
     },
     abc: ABC.ABC<Curr>,
-    nextABC: ABC.ABC<Next>
+    nextABC: ABC.ABC<Next>,
   ) => Array<Rule<never, Curr, Next, ABCHistory, Feature>>
+};
+
+export type TopLayerCaptureFuncs<
+  Curr extends Layers.AnyLayer,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
+> = {
+  [Feature in Layers.AccentFeatures<Curr>]?: (
+    capture: (<
+      // I originally put this out here in a generic so I could Function.Narrow<> it below
+      // But then it turned out that its type inference was actually narrower WITHOUT Function.Narrow<> than
+      // with... and that it specifically still needs to be an `extends` generic for it to work that way,
+      // so I still can't put this directly in type position
+      // Overall what this says is that I still don't know enough about TS's type system!
+      // -------------------
+      // anyway the idea is that you can pass capture() any of the following:
+      // - an actual member of the current alphabet
+      // - a partial specification that overlaps with one or more members of the current alphabet
+      // - a match() thing that says to match parts of members of the current alphabet
+      O extends Capturable<Curr>,
+    >(obj: O) => TopLayerCaptureApplier<typeof obj, Curr, ABCHistory, Feature>
+    )
+    & {
+      [T in ABC.TypeNames<Curr>]: <O extends DeepMatchOr<DeepMerge<ABC._ExactAllOfType<Curr, T>>>>(
+        obj: O
+      ) => TopLayerCaptureApplier<typeof obj, Curr, ABCHistory, Feature>
+    },
+    abc: ABC.ABC<Curr>,
+  ) => Array<Rule<never, Curr, null, ABCHistory, Feature>>
 };
 
 export type SelectFunc<
   Curr extends Layers.AnyLayer,
-  Next extends Layers.AnyLayer,
+  Next extends ABC.AnyAlphabet | null,
   ABCHistory extends OrderedObj<string, Layers.AnyLayer>,
-> = (rules: CaptureFuncs<Curr, Next, ABCHistory>) => void;
+> = Next extends ABC.AnyAlphabet
+  ? (rules: CaptureFuncs<Curr, Next, ABCHistory>) => void
+  : (rules: TopLayerCaptureFuncs<Curr, ABCHistory>) => void;
 
 export type _NextMappedFuncs<
-  O extends OrderedObj<string, ABC.AnyAlphabet>,
-  _O = ObjectOf<O>, _Shifted = ShiftedObjOf<O>,
+  O extends OrderedObj<string, Layers.AnyLayer>,
+  _O extends Record<string, Layers.AnyLayer> = ObjectOf<O>,
+  _Shifted extends Record<string, Layers.AnyLayer> = ShiftedObjOf<O>,
 > = {
-  [KI in List.UnionOf<DropLast<KeysAndIndicesOf<O>>> as KI[0]]: SelectFunc<
-    _O[KI[0]] extends Layers.AnyLayer ? _O[KI[0]] : never,
-    _Shifted[KI[0]] extends Layers.AnyLayer ? _Shifted[KI[0]] : never,
-    List.Extract<O, 0, KI[1]>
-  >;
+  [KI in UnionOf<KeysAndIndicesOf<O>> as KI[0]]: SelectFunc<
+    _O[KI[0]],
+    _Shifted[KI[0]],
+    DropLast<List.Extract<O, 0, KI[1]>>
+  >
 };
-export type NextMappedFuncs<O extends OrderedObj<string, ABC.AnyAlphabet>> = _NextMappedFuncs<O>;
+export type NextMappedFuncs<O extends OrderedObj<string, Layers.AnyLayer>> = _NextMappedFuncs<O>;
 
 export type RawAlphabets = Record<string, NonNullable<ABC.AnyAlphabet>>;
 export type Alphabets = List.List<RawAlphabets>;
@@ -126,9 +159,9 @@ export type MatchSpec<
     }>
   }
   | {
-    was: MatchOr<{
+    was?: MatchOr<{
       // Pre[KI[1]][1] is like `value of Pre at index I` and it's the AnyAlphabet at some layer
-      [KI in List.UnionOf<KeysAndIndicesOf<ABCHistory>> as Force<KI[0], string>]?: ValuesOf<{
+      [KI in UnionOf<KeysAndIndicesOf<ABCHistory>> as KI[0]]?: ValuesOf<{
         [T in ABC.TypeNames<ABCHistory[KI[1]][1]>]?: DeepMatchOr<DeepMerge<AllOfType<ABCHistory[KI[1]][1], T>>>
       }>
       // {_: /* see above ^ */, env: InputMatchSpec<Pre[KI[1]][1], List.Extract<Pre, 0, KI[0]>>}
@@ -196,12 +229,12 @@ export type PromoteRule<
 export type Rule<
   Captured = never,
   A extends Layers.AnyLayer = any,
-  B extends ABC.AnyAlphabet = any,
+  B extends ABC.AnyAlphabet | null = any,
   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet> = [],
   Feature extends Layers.AccentFeatures<A> = Layers.AccentFeatures<A>,
 > =
   | TransformRule<Captured, A, ABCHistory, Feature>
-  | PromoteRule<Captured, A, B, ABCHistory, Feature>;
+  | (B extends ABC.AnyAlphabet ? PromoteRule<Captured, A, B, ABCHistory, Feature> : never);
 
 export type TransformParam<
   Captured,
@@ -213,6 +246,16 @@ export type TransformParam<
   into: IntoSpec<Captured, A, B, Feature>
   where: MatchSpec<A, ABCHistory>
 };
+
+// export type CaptureApplier<
+//   Captured,
+//   A extends Layers.AnyLayer,
+//   B extends ABC.AnyAlphabet | null,
+//   ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
+//   Feature extends Layers.AccentFeatures<A>,
+// > = B extends ABC.AnyAlphabet
+//   ? GeneralCaptureApplier<Captured, A, B, ABCHistory, Feature>
+//   : TopLevelCaptureApplier<Captured, A, ABCHistory, Feature>;
 
 export interface CaptureApplier<
   Captured,
@@ -228,4 +271,15 @@ export interface CaptureApplier<
   promote(
     {into, where}: TransformParam<Captured, A, B, ABCHistory, Feature>,
   ): PromoteRule<Captured, A, B, ABCHistory, Feature>;
+}
+
+export interface TopLayerCaptureApplier<
+  Captured,
+  A extends Layers.AnyLayer,
+  ABCHistory extends OrderedObj<string, ABC.AnyAlphabet>,
+  Feature extends Layers.AccentFeatures<A>,
+> extends Omit<CaptureApplier<Captured, A, never, ABCHistory, Feature>, `promote`> {
+  transform(
+    {into, where}: TransformParam<Captured, A, A, ABCHistory, Feature>
+  ): TransformRule<Captured, A, ABCHistory, Feature>;
 }

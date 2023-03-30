@@ -1,4 +1,5 @@
 import {Function as Func, Union} from "ts-toolbelt";
+import {Key} from "ts-toolbelt/out/Any/Key";
 
 export type Optional<T> = T | undefined;
 
@@ -38,28 +39,29 @@ export type DeepMerge<O> = [O] extends [object] ? {
   // so in the double-interest of not having that conditional, that `&` is my best solution
 } : O;
 
-// using ts-toolbelt's List.UnionOf<> was giving some bad "type instantiation is excessively deep and
-// possibly infinite" errors
-// this works instead and is hopefully simpler (probably don't need whatever complex failsafes List.UnionOf<> has...)
-export type UnionOf<L extends readonly unknown[]> =
-  L extends readonly [infer Head, ...infer Tail]
-    ? Head | UnionOf<Tail>
-    : never;
+export type UnionOf<L extends readonly unknown[]> = L[number];
+
+// so I can use these to force TS to realize it's fine while I figure out what's even wrong
+export type Force<T, B> = T extends B ? T : never;
+export type ForceKey<T, K> = K extends keyof T ? T[K] : never;
 
 // less weirdly-complicated than ts-toolbelt's List.Zip<>
 export type Zip<L1 extends readonly unknown[], L2 extends readonly unknown[]> =
-  [L1, L2] extends [readonly [infer A, ...infer Rest1], readonly [infer B, ...infer Rest2]]
+  [L1, L2] extends [readonly [infer A extends L1[0], ...infer Rest1], readonly [infer B extends L2[0], ...infer Rest2]]
     ? [[A, B], ...Zip<Rest1, Rest2>]
     : [];
 
-type _ZipObj<Keys extends readonly unknown[], Values extends readonly unknown[]> =
-  [Keys, Values] extends [[infer KHead extends keyof any, ...infer KTail], [infer VHead, ...infer VTail]]
+type _ZipObj<Keys extends readonly Key[], Values extends readonly unknown[]> =
+  [Keys, Values] extends [
+    [infer KHead extends Keys[0], ...infer KTail extends readonly Key[]],
+    [infer VHead extends Values[0], ...infer VTail],
+  ]
     ? Record<KHead, VHead> | _ZipObj<KTail, VTail>
     : {};
 export type ZipObj<
-  Keys extends readonly unknown[],
+  Keys extends readonly Key[],
   Values extends readonly unknown[],
-> = Union.Merge<_ZipObj<Keys, Values>>;
+> = MergeUnion<_ZipObj<Keys, Values>>;
 
 export type ValuesOf<O> = O[keyof O];
 export type ArrayOr<T> = T | T[];
