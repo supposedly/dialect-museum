@@ -1,6 +1,5 @@
 @{%
-  import * as obj from '../objects';
-  import inits from './initializers';
+  import * as _ from '../obj';
   import type from './type';
 
   import * as moo from 'moo';
