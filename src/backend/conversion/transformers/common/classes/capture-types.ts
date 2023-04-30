@@ -56,7 +56,7 @@ export type CaptureFuncs<
     & {
       [T in ABC.TypeNames<Curr>]: <O extends DeepMatchOr<DeepMerge<ABC._ExactAllOfType<Curr, T>>>>(
         obj: O
-      ) => CaptureApplier<typeof obj, Curr, Next, ABCHistory, Feature>
+      ) => CaptureApplier<MergeUnion<{type: ABC.Named<Curr, T>} | typeof obj>, Curr, Next, ABCHistory, Feature>
     },
     abc: ABC.ABC<Curr>,
     nextABC: ABC.ABC<Next>,
@@ -181,7 +181,7 @@ export type _IntoHelper<Captured, ABCValues> =
     // also check for not-match bc why not
     : Captured extends (MatchNot<infer T extends ABCValues> | MatchNone<infer T extends ABCValues>)
       ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
-      : ABCValues;  // else again just accept everything
+      : Extract<ABCValues, Captured>;  // else again just accept everything that matches the captured spec
 
 export type IntoSpec<
   Captured = any,
@@ -191,7 +191,9 @@ export type IntoSpec<
 > = Record<
   Layers.FeatureVariants<A, Feature>,
   | ArrayOr<ABC.ValuesOfABC<B>>
-  | ((input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>, abc?: B) => ArrayOr<ABC.ValuesOfABC<B>>)
+  | ((input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>, abc?: B) => (
+    ArrayOr<ValuesOf<{[T in ABC.TypeNames<B>]: Omit<AllOfType<B, T>, `symbol` | `value`>}>>
+  ))
 >;
 
 export type CapturableOr<T, A extends ABC.AnyAlphabet> =
