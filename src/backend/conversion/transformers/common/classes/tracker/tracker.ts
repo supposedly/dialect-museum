@@ -11,7 +11,8 @@ export type InitialLayers = {
   layers: Record<string, Layers.AnyLayer>
   links: Record<string, Optional<string>>
 };
-type TrackerValue = ABC.Base | List<Tracker>;
+// i think trackervalue can't require ABC.Base anymore now that IntoSpec can Omit them
+type TrackerValue = unknown; // ABC.Base | List<Tracker>;
 
 class TransformHistory {
   private history: Array<{
@@ -136,7 +137,7 @@ class TrackerLayer {
         }
         return [k, val];
       }),
-    );
+    ) as any; // idk it was complaining about k: string and not accepting any assertion of keyof I
   }
 
   fetchDependency(dir: Direction, type: Optional<string>): Optional<TrackerValue> {
