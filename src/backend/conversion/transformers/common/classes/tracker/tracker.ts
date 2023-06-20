@@ -12,7 +12,7 @@ export type InitialLayers = {
   links: Record<string, Optional<string>>
 };
 // i think trackervalue can't require ABC.Base anymore now that IntoSpec can Omit them
-type TrackerValue = unknown; // ABC.Base | List<Tracker>;
+type TrackerValue = {}; // ABC.Base | List<Tracker>;
 
 class TransformHistory {
   private history: Array<{
@@ -127,13 +127,18 @@ class TrackerLayer {
       Object.entries(intoSpec).map(([k, v]) => {
         const val = v instanceof Function ? v(match, abc) : v;
         if (Array.isArray(val)) {
-          const ret: Tracker[] = [];
-          val.forEach(e => ret.push(
-            new Tracker(this.parent.layers, this.parent.rules, ret[ret.length - 1])  // last arg intentionally undefined on first run
-              .feed(this.name, e),
-          ));
-          // should this be trackerlist somehow (not sure what trackerlist is actually for now)
-          return [k, List.fromArray(ret)];
+          const [current, ...extra] = val;
+          if (extra.length) {
+            const extraList: List<Tracker> = new List();
+            extra.forEach(e => extraList.append(
+              new Tracker(this.parent.layers, this.parent.rules, extraList.tail ?? this.parent, this.parent)
+                .feed(this.name, e),
+            ));
+            extraList.tail!.next = this.parent.next;
+            this.parent.next = extraList.head;
+            extraList.head!.prev = this.parent;
+          }
+          return [k, current];
         }
         return [k, val];
       }),
@@ -247,6 +252,7 @@ export class Tracker implements ListNode<Tracker> {
     public layers: InitialLayers,
     public rules: Record<string, Record<string, Rule[]>>,
     prev: Optional<Tracker> = undefined,
+    public was: Optional<Tracker> = undefined,
   ) {
     if (prev !== undefined) {
       prev.append(this);
