@@ -187,6 +187,13 @@ export const consonants = {
     manner: $Manner.plosive,
     voiced: false,
   },
+  null: {
+    symbol: `0`,
+    location: null,
+    articulator: null,
+    manner: null,
+    voiced: false,
+  },
 };
 
 export const vowels = {

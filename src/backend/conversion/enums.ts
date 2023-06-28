@@ -12,14 +12,18 @@ Also, because of ordering, be careful (at least IMHO) to only use extend()
 if shared entries will also share indices in each extending enum
 */
 
+import {ListOf} from "ts-toolbelt/out/Union/ListOf";
 import {MergeUnion} from "./utils/typetools";
 
 const SPACE = 0x20;  // char code of space
 const SPECIAL = `  `;
-const MAKE_SPECIAL = (s: string) => `${SPECIAL}${s.toUpperCase()}`;
+const MAKE_SPECIAL = <S extends string>(s: S): `${typeof SPECIAL}${Uppercase<S>}` => (
+  `${SPECIAL}${s.toUpperCase() as Uppercase<S>}`
+);
 const LAST = MAKE_SPECIAL(`LAST`);
-const NOT_SPECIAL = ([k, _]: [string, string]) => !k.startsWith(SPECIAL);
-const IS_SPECIAL = (k: string) => k.startsWith(SPECIAL);  // very consistency
+const IS_SPECIAL = (k: string) => k.startsWith(SPECIAL);
+const NOT_SPECIAL = (k: string) => !IS_SPECIAL(k);
+const NOT_SPECIAL_ENTRY = ([k, _]: [string, string]) => !k.startsWith(SPECIAL);
 
 type DISTRIBUTE = any;
 type WS = `\n  ` | ` ` | `  ` | `\n`;
@@ -142,7 +146,7 @@ function renumber<E extends EnumType>(e: E, from: number | null): E {
   if (from === null || from === undefined) {
     return unordered ? e : Object.fromEntries(
       Object.entries(e)
-        .filter(NOT_SPECIAL)
+        .filter(NOT_SPECIAL_ENTRY)
         .map(([k, v]) => [k, v.slice(2)]),
     ) as any;
   }
@@ -156,7 +160,7 @@ function renumber<E extends EnumType>(e: E, from: number | null): E {
   return {
     ...Object.fromEntries(
       Object.entries(e)
-        .filter(NOT_SPECIAL)
+        .filter(NOT_SPECIAL_ENTRY)
         .map(([k, v]) => [
           k,
           `${String.fromCharCode(from + v.charCodeAt(0) - offset)} ${v.slice(2)}`,
@@ -191,6 +195,11 @@ export function index<E extends EnumType>(member: E[keyof E]): number {
     throw new Error(`Unordered enum member has no index`);
   }
   return member.charCodeAt(0);
+}
+
+export function keys<E extends EnumType>(e: E): ListOf<keyof E> {
+  // don't have to check for unordered here, vacuous
+  return Object.keys(e).filter(NOT_SPECIAL) as any;
 }
 
 export const $Articulator = enumerate(`articulator`, `

@@ -11,12 +11,12 @@ import {
   Of, EnumOf, enumerate,
   Ps, Gn, Nb, TamToken, VerbWazn, PPWazn, VoiceToken, HigherWazn,
 } from "../../enums";
-import {basic, Symbol} from "../basic-symbols";
+import {basic, AlphabetSymbol} from "../basic-symbols";
 
 export const NAME = `templated`;
 type $<T> = Function.Narrow<T>;
 
-type Root = [Symbol, Symbol, Symbol, Symbol?];
+type Root = [AlphabetSymbol, AlphabetSymbol, AlphabetSymbol, AlphabetSymbol?];
 
 export type Types = {
   word: Word,
@@ -43,6 +43,8 @@ export const $Type: EnumOf<typeof NAME, keyof Types> = enumerate(NAME, `
   participle
   masdar
   verb
+  boundary
+  literal
 `);
 export type Type = typeof $Type;
 
@@ -81,13 +83,8 @@ export interface Pronoun<
   P extends Of<Ps> = Of<Ps>,
   N extends Of<Nb> = Of<Nb>,
   G extends Of<Gn> = Of<Gn>,
-> extends Template<`${P}${G}${N}`> {
+> extends Template<Readonly<{person: P, number: N, gender: G}>> {
   type: Type[`pronoun`]
-  features: Readonly<{
-    person: P,
-    number: N,
-    gender: G
-  }>
 }
 export interface Af3al<V extends Root = Root> extends Template<V> {
   type: Type[`af3al`]
@@ -128,7 +125,7 @@ export interface Verb<V extends Root = Root> extends Template<V> {
   }>
 }
 
-export interface Word<V extends Symbol[] = Symbol[]> extends Template<V> {
+export interface Word<V extends AlphabetSymbol[] = AlphabetSymbol[]> extends Template<V> {
   type: Type[`word`]
 }
 
@@ -182,13 +179,12 @@ export function pronouns<T extends `${Of<Ps>}${Of<Gn>}${Of<Nb>}`[]>(p: T): Prono
   return Object.fromEntries(
     p.map(s => [s, {
         type: $Type.pronoun,
-        value: s,
-        /* symbol: none */
-        features: {
+        value: {
           person: s[0],
-          gender: s[1],
-          number: s[2],
+          number: s[1],
+          gender: s[2],
         },
+        /* symbol: none */
       } as PronounString<typeof s>]),
   ) as any;
 }

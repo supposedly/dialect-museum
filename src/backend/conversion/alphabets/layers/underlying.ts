@@ -25,6 +25,8 @@ export const $Type: EnumOf<typeof NAME, keyof Types> = enumerate(NAME, `
   suffix
   delimiter
   pronoun
+  boundary
+  literal
 `);
 export type Type = typeof $Type;
 
