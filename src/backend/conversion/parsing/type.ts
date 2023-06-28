@@ -1,23 +1,12 @@
-enum ObjType {
-  // XXX: it's important (as long as i'm using this hack enum func) for `suffix` and `prefix` to
-  // remain at position 0 in this order, just like in the segment-type enum over in ../objects
-  // (what's actually important is that they just have the same indices but w/e)
-  // the reason it's important is in word.js
-  suffix,
-  prefix,
-  augmentation,
-  pronoun,
-  stem,
-  word,
-  syllable,
-  // tag types
-  pp,
-  verb,
-  l,
-  idafe,
-  tif3il,
-  af3al,
-  number,
-}
+import {type CategorizedSymbol} from "../alphabets/basic-symbols";
+import {ValuesOf} from "../utils/typetools";
 
-export default ObjType;
+export type SymbolWrapper = ValuesOf<{
+  [K in keyof CategorizedSymbol]: {
+    type: K
+    meta: (K extends `consonant` ? {
+          emphatic: boolean,
+        } : never)
+    value: CategorizedSymbol[K]
+  }
+}>;

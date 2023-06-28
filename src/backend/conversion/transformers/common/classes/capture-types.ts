@@ -1,7 +1,7 @@
 // type system likes being silly and not accepting that KeysAndIndicesOf<> produces
 // tuples [K, V] where K is a valid key and V is a valid value
 
-import {Any, List, Number as Num} from 'ts-toolbelt';
+import {Any, List, Number as Num, Union} from 'ts-toolbelt';
 import {Key} from 'ts-toolbelt/out/Any/Key';
 import * as ABC from '../../../alphabets/common';
 import * as Layers from '../../../layers/common';
@@ -183,6 +183,23 @@ export type _IntoHelper<Captured, ABCValues> =
       ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
       : Extract<ABCValues, Captured>;  // else again just accept everything that matches the captured spec
 
+export interface Anchor<T extends boolean, V> {
+  anchor: T,
+  val: V
+}
+
+type TrueAnchor = Pick<Anchor<true, unknown>, `anchor`>;
+type NeutralizeAnchor<U> = U extends TrueAnchor ? TrueAnchor : U;
+// this currently does not work -- it doesn't forbid multiple anchors
+// i think maybe the array type is being generalized and i'm too far out of
+// the game atm to remember how to force it to be literal
+type OnlyOneAnchor<A> = A extends unknown[]
+  ? List.Length<Union.ListOf<NeutralizeAnchor<A[number]>>> extends List.Length<A>
+    ? A
+    : never
+  : never;
+type AnchoredArrayOr<T> = T | OnlyOneAnchor<Array<(T | Anchor<boolean, T | undefined>)>>;
+
 export type IntoSpec<
   Captured = any,
   A extends Layers.AnyLayer = Layers.AnyLayer,
@@ -191,9 +208,13 @@ export type IntoSpec<
 > = Record<
   Layers.FeatureVariants<A, Feature>,
   | ArrayOr<ABC.ValuesOfABC<B>>
-  | ((input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>, abc?: B) => (
-    ArrayOr<ValuesOf<{[T in ABC.TypeNames<B>]: Omit<AllOfType<B, T>, `symbol` | `value`>}>>
-  ))
+  | ((
+      input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>,
+      anchor: <T>(val?: T) => Anchor<true, typeof val>,
+      abc?: B
+    ) => AnchoredArrayOr<
+      ValuesOf<{[T in ABC.TypeNames<B>]: Omit<AllOfType<B, T>, `symbol` | `value`>}>
+    >)
 >;
 
 export type CapturableOr<T, A extends ABC.AnyAlphabet> =
