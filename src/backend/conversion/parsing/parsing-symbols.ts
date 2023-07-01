@@ -1,5 +1,5 @@
 export * from '../alphabets/basic-symbols';
-export const symbols = {
+export const symbol = {
   emphatic: `*`,
   stressed: `"`,
   nasalized: `N`,

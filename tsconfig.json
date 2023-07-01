@@ -1,12 +1,17 @@
 {
     "include": [
-        "src/**/*"
+        "src/**/*",
     ],
     "exclude": [
         "node_modules/*",
         "public/*"
     ],
     "compilerOptions": {
+        "jsx": "preserve",
+        "jsxImportSource": "solid-js",
+        "types": [
+            "vite/client"
+        ],
         "target": "es6",
         "strict": true,
         "noImplicitAny": true,
