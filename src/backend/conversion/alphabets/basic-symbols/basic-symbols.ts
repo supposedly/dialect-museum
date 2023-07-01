@@ -6,7 +6,7 @@ import {
 } from "../../enums";
 import {narrow} from "../../utils/typetools";
 
-export const consonants = {
+export const consonant = {
   h: {
     location: $Location.glottis,
     articulator: $Articulator.throat,
@@ -196,7 +196,7 @@ export const consonants = {
   },
 };
 
-export const vowels = {
+export const vowel = {
   a: {symbol: `a`},
   aa: {symbol: `A`},
   AA: {symbol: `&`},  // lowered aa, like in شاي
@@ -210,11 +210,11 @@ export const vowels = {
   i: {symbol: `i`},  // default unspecified-tenseness i (= kasra)
   ii: {symbol: `I`},
 
-  U: {symbol: `0`},  /* lax u, specifically for unstressed open syllables
-                      * like l08C instead of lu8C (is that a thing?)
-                      */
-  u: {symbol: `u`},  // default unspecified-tenseness u (= damme)
-  uu: {symbol: `U`},
+  U: {symbol: `0`, rounded: true},  /* lax u, specifically for unstressed open syllables
+                                     * like l08C instead of lu8C (is that a thing?)
+                                     */
+  u: {symbol: `u`, rounded: true},  // default unspecified-tenseness u (= damme)
+  uu: {symbol: `U`, rounded: true},
 
   e: {symbol: `e`},  /* word-final for *-a, like hYdIke
                       * plus undecided on e.g. hEdIk vs hedIk (or just hYdIk?) for the short pron of هيديك
@@ -223,14 +223,14 @@ export const vowels = {
                       */
   ee: {symbol: `E`},
 
-  o: {symbol: `o`},  // motEr?
-  oo: {symbol: `O`},
+  o: {symbol: `o`, rounded: true},  // motEr?
+  oo: {symbol: `O`, rounded: true},
 
   ay: {symbol: `Y`, diphthongal: true},
-  aw: {symbol: `W`, diphthongal: true},
+  aw: {symbol: `W`, diphthongal: true, rounded: true},
 };
 
-export const suffixes = {
+export const suffix = {
   // fem suffix is its own thing bc -a vs -e vs -i variation
   c: {value: `fem`},
   // not sure if this is a good idea?
@@ -266,7 +266,7 @@ export const suffixes = {
   },
 };
 
-export const delimiters = {
+export const delimiter = {
   Of: {  // introduces idafe pronouns
     symbol: `-`,
     value: `genitive`,
@@ -279,7 +279,7 @@ export const delimiters = {
   Dative: {symbol: `|`},  // this stands for the dative L
 };
 
-export const pronouns = narrow([
+export const pronoun = narrow([
   `${$P.first }${$G.masc  }${$N.singular}`,  // -e according to loun
   `${$P.first }${$G.fem   }${$N.singular}`,  // -i according to loun
   `${$P.first }${$G.common}${$N.singular}`,  // the normal neutral one idk

@@ -11,18 +11,19 @@ import {
   Of, EnumOf, enumerate,
   Ps, Gn, Nb, TamToken, VerbWazn, PPWazn, VoiceToken, HigherWazn,
 } from "../../enums";
-import {basic, AlphabetSymbol} from "../basic-symbols";
+import * as basic from "../basic-symbols";
 
 export const NAME = `templated`;
 type $<T> = Function.Narrow<T>;
 
-type Root = [AlphabetSymbol, AlphabetSymbol, AlphabetSymbol, AlphabetSymbol?];
+type Root = [basic.AlphabetSymbol, basic.AlphabetSymbol, basic.AlphabetSymbol, basic.AlphabetSymbol?];
 
 export type Types = {
   word: Word,
   suffix: Suffix
   delimiter: Delimiter
   pronoun: Pronoun
+  l: L
   af3al: Af3al
   idafe: Idafe
   number: Number
@@ -37,6 +38,7 @@ export const $Type: EnumOf<typeof NAME, keyof Types> = enumerate(NAME, `
   suffix
   delimiter
   pronoun
+  l
   af3al
   idafe
   number
@@ -86,6 +88,11 @@ export interface Pronoun<
 > extends Template<Readonly<{person: P, number: N, gender: G}>> {
   type: Type[`pronoun`]
 }
+
+export interface L extends Template<undefined> {
+  type: Type[`l`]
+}
+
 export interface Af3al<V extends Root = Root> extends Template<V> {
   type: Type[`af3al`]
 }
@@ -125,7 +132,7 @@ export interface Verb<V extends Root = Root> extends Template<V> {
   }>
 }
 
-export interface Word<V extends AlphabetSymbol[] = AlphabetSymbol[]> extends Template<V> {
+export interface Word<V extends basic.AlphabetSymbol[] = basic.AlphabetSymbol[]> extends Template<V> {
   type: Type[`word`]
 }
 
@@ -193,15 +200,16 @@ export default newAlphabet(
   NAME,
   cheat<Types>($Type),  // see cheat()'s function comment
   {
-    suffix: suffixes(basic.suffixes),
-    delimiter: delimiters(basic.delimiters),
-    pronoun: pronouns(basic.pronouns),
+    word: {},
+    delimiter: delimiters(basic.delimiter),
+    suffix: suffixes(basic.suffix),
+    pronoun: pronouns(basic.pronoun),
+    l: {l: {type: $Type.l, meta: {fus7a: false}, features: {}, value: undefined}},
     af3al: {},
     idafe: {},
     number: {},
     participle: {},
     masdar: {},
     verb: {},
-    word: {},
   },
 );
