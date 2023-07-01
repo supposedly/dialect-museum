@@ -1,4 +1,5 @@
 @{%
+  // @ts-nocheck
   import * as _ from './obj';
   import {$Type} from '../alphabets/layers/templated'; // this hardcoding (which is necessary) makes it seem like this file should be somewhere else idk
   // or at least the hardcoding should be in this directory's index.ts maybe?
@@ -6,9 +7,7 @@
   import * as enums from '../enums';
 
   import * as moo from 'moo';
-  import * as sym from '../parsing-symbols';
-
-  const _ = obj.obj;
+  import * as sym from './parsing-symbols';
 
   // // generate regex
   // const r = (strings, ...interp) => new RegExp(
@@ -19,15 +18,20 @@
   // );
 
   // generate diff symbols (applies to all but consonants which need special treatment)
-  const generate = (...categories) => categories.forEach(category => ([s]) => ({
-    match: sym[category][s].symbol?? s,
-    value: () => {
-      type: $UnderlyingType[category],
-      value: sym[category][s]
-    }
-  }));
+  const generate = (...categories) => categories.map(category => ([s]) => {
+    const {symbol, value, ...features} = sym[category][s];
+    return {
+      match: symbol ?? s,
+      value: () => ({
+        type: $UnderlyingType[category],
+        value: value ?? symbol,
+        symbol: symbol ?? value,
+        features,
+      })
+    };
+  });
 
-  const [v, s, d, p, $] = generate(`vowel`, `suffix`, `delimiter`, `pronoun`, `symbol`);
+  const [v, s, d, $] = generate(`vowel`, `suffix`, `delimiter`, `symbol`);
 
   // generate with emphatic
   const c = ([s]) => ({
@@ -143,16 +147,17 @@
         push: `augmentation`
       },
 
-      ws: /[^\S\r\n]+/
+      ws: /[^\S\r\n]+/,
+      noBoundary: `.`
     },
     augmentation: {
       pronoun: {
-        match: new RegExp(sym.pronouns.join(`|`)),
+        match: new RegExp(sym.pronoun.join(`|`)),
         pop: 1
       }
     },
     tag: {
-      pronoun: new RegExp(sym.pronouns.join(`|`)),
+      pronoun: new RegExp(sym.pronoun.join(`|`)),
       tam: fromEnum(enums.$TamToken),
       voice: fromEnum(enums.$VoiceToken),
       verbWazn: fromEnum(enums.$VerbWazn, `v`),
@@ -182,7 +187,11 @@
 @lexer lexer
 @preprocessor typescript
 
-passage -> term (__ term {% ([ , term]) => [_.obj($Type.boundary, ` `), term] %}):* {% ([a, b]) => [a, ...b.flat()] %}
+passage -> term ((
+    __WS | __BOUNDARY {% id %}
+  ) term {%
+    ([[boundary], term]) => boundary ? [boundary, term] : [term]
+  %}):* {% ([a, b]) => [a, ...b.flat()] %}
 
 term ->
     expr {% id %}
@@ -220,10 +229,10 @@ expr ->
 # XXX TODO: this sucks
 number ->
   "(" ctx_tags:? %number ("-":? {% ([c]) => Boolean(c) %}) ")" {%
-    ([ , ctx , { value: quantity }, isConstruct ]) => init($Type.number, { gender: null, isConstruct }, { gender: null, quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
+    ([ , ctx , { value: quantity }, isConstruct ]) => _.obj($Type.number, { gender: null, isConstruct }, { gender: null, quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
   %}
   | "(" ctx_tags:? %genderedNumber %numberGender ("-":? {% ([c]) => Boolean(c) %}) ")" {%
-    ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => init($Type.number, { gender, isConstruct }, { gender, quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
+    ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => _.obj($Type.number, { gender, isConstruct }, { gender, quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
   %}
 
 af3al -> "(af3al" filter_suffix:? ctx_tags:? __ root ")" {%
@@ -245,7 +254,7 @@ tif3il -> "(tif3il"
     $Type.tif3il,
     { root },
     {},
-    (),
+    {},
     ctx
   )
 %}
@@ -279,7 +288,7 @@ verb ->
     __ pronoun
     __ root
   ")"  {%
-    ([ , ctx ,, wazn ,, tam ,, subject ,, root]) => init(
+    ([ , ctx ,, wazn ,, tam ,, subject ,, root]) => _.obj(
       $Type.verb,
       { subject, tam, wazn },
       { root },
@@ -309,11 +318,7 @@ suffix ->
 # here and change `([value]) =>` to `([{ value }])) =>`
 word ->
     segment:+ {%
-      ([values]) => init(
-        $Type.word,
-        { },
-        values
-      )
+      ([values]) => _.obj($Type.word, values)
     %}
   | "(ctx" ctx_tags __ word ")" {% ([ , ctx ,, word]) => ctx.map(word.ctx) %}
 
@@ -321,7 +326,7 @@ ctx_tags -> (__ %openCtx %ctxItem %closeCtx {% ([ ,, { value }]) => value %}):+ 
   ([values]) => values
 %}
 
-segment -> (consonant | vowel) {% id %}
+segment -> (consonant {% id %} | vowel {% id %}) {% id %}
 
 # the {value} here ISN'T the {value} from my own schema -- it's instead from moo,
 # which provides us our own object as the {value} of its own lex-result object
@@ -330,7 +335,7 @@ short_vowel -> (%a | %iLax | %i | %uLax | %u | %e | %o)  {% ([[{ value }]]) => _
 long_vowel -> (%aa | %aaLowered | %ae | %ii | %uu | %ee | %oo | %ay | %aw)  {% ([[{ value }]]) => _.process(value) %}
 
 root -> consonant consonant consonant consonant:?
-consonant -> strong_consonant  {% id %} | weak_consonant {% id %}
+consonant -> strong_consonant {% id %} | weak_consonant {% id %}
 weak_consonant -> %openWeakConsonant strong_consonant %closeWeakConsonant  {%
   ([ , value]) => _.edit(value, { meta: { weak: true }})
 %}
@@ -367,5 +372,7 @@ NEGATIVE -> %negative {% processToken %}
 STRESSED -> %stressed  {% processToken %}
 NASAL -> %nasal {% processToken %}
 __ -> %ws  {% processToken %}
+__WS -> %ws {% ([value]) => _.obj($Type.boundary, value) %}
+__BOUNDARY -> %noBoundary  {% () => null %}
 
 # a good example of <e> and <*>: hexxa* for donkeys (alternative form: hixx)

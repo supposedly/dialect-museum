@@ -17,6 +17,7 @@ generate.ts = generate.typescript = function (parser, exportName) {
   output +=  "// http://github.com/Hardmath123/nearley\n";
   output +=  "// Bypasses TS6133. Allow declared but unused functions.\n";
   output +=  "// @ts-ignore\n";
+  output +=  "// @ts-nocheck\n";
   output += "function id(d: any[]): any { return d[0]; }\n";
 
   // i'm not using this (see comment in compile.js) and it causes errors with tokens like `2` and `3`
