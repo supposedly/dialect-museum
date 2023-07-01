@@ -5,7 +5,7 @@ import {
   Articulator, Location, Manner,
   Ps, Gn, Nb,
 } from "../../enums";
-import {basic} from "../basic-symbols";
+import * as basic from "../basic-symbols";
 
 export const NAME = `underlying`;
 type $<T> = Function.Narrow<T>;
@@ -212,10 +212,10 @@ export default newAlphabet(
   NAME,
   cheat<Types>($Type),  // see cheat()'s function comment
   {
-    consonant: consonants(basic.consonants),
-    vowel: vowels(basic.vowels),
-    suffix: suffixes(basic.suffixes),
-    delimiter: delimiters(basic.delimiters),
-    pronoun: pronouns(basic.pronouns),
+    consonant: consonants(basic.consonant),
+    vowel: vowels(basic.vowel),
+    suffix: suffixes(basic.suffix),
+    delimiter: delimiters(basic.delimiter),
+    pronoun: pronouns(basic.pronoun),
   },
 );
