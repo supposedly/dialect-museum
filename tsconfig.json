@@ -1,0 +1,27 @@
+{
+    "include": [
+        "src/**/*",
+    ],
+    "exclude": [
+        "node_modules/*",
+        "public/*"
+    ],
+    "compilerOptions": {
+        "jsx": "preserve",
+        "jsxImportSource": "solid-js",
+        "types": [
+            "vite/client"
+        ],
+        "target": "es6",
+        "strict": true,
+        "noImplicitAny": true,
+        "exactOptionalPropertyTypes": true,
+        /* below are options i copied in once i removed the 'extends svelte' thing */
+        "moduleResolution": "node",
+        "isolatedModules": true,
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+    }
+}

@@ -1,9 +1,11 @@
 /test.*
+**/test.*.ts
 
 # svelte
 .DS_Store
 node_modules
 /node_modules/
+/_node_modules/
 /public/build/
 
 # local env files

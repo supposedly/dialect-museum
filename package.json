@@ -7,99 +7,30 @@
     "dev": "npm run g && rollup -c -w",
     "start": "sirv public --no-clear",
     "bundle": "browserify test.js -o test.bundle.js",
-    "g": "node ./nearleyc src/backend/conversion/parsing/grammar.ne -s .js",
-    "commit": "npm run g && git add src/backend/conversion/parsing/grammar.js && git commit"
+    "g": "node ./nearleyc src/backend/conversion/parsing/grammar.ne -s .ts",
+    "commit": "npm run g && git add src/backend/conversion/parsing/grammar.ts && git commit"
   },
   "dependencies": {
     "@popperjs/core": "^2.10.1",
+    "@types/nearley": "^2.11.2",
     "moo": "^0.5.1",
     "nearley": "^2.20.1",
-    "sirv-cli": "^1.0.0",
-    "svelte-tabs": "^1.1.0",
+    "solid-js": "^1.7.7",
+    "ts-toolbelt": "^9.6.0",
     "weighted": "^0.3.0"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^17.0.0",
-    "@rollup/plugin-node-resolve": "^11.0.0",
-    "@types/nearley": "^2.11.2",
-    "open": "^8.2.1",
-    "rollup": "^2.3.4",
-    "rollup-plugin-css-only": "^3.1.0",
-    "rollup-plugin-livereload": "^2.0.0",
-    "rollup-plugin-svelte": "^7.0.0",
-    "rollup-plugin-terser": "^7.0.0",
-    "svelte": "^3.42.4"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/vue3-essential",
-      "@vue/airbnb"
-    ],
-    "ignorePatterns": "grammar.js",
-    "parserOptions": {
-      "parser": "babel-eslint"
-    },
-    "rules": {
-      "linebreak-style": "off",
-      "max-classes-per-file": [
-        "warn",
-        1
-      ],
-      "quotes": [
-        "warn",
-        "backtick",
-        {
-          "avoidEscape": true
-        }
-      ],
-      "prefer-destructuring": "off",
-      "arrow-parens": [
-        "warn",
-        "as-needed",
-        {
-          "requireForBlockBody": false
-        }
-      ],
-      "no-use-before-define": [
-        "error",
-        {
-          "variables": false
-        }
-      ],
-      "no-multi-spaces": [
-        "warn",
-        {
-          "ignoreEOLComments": true
-        }
-      ],
-      "no-param-reassign": "off",
-      "object-curly-spacing": [
-        "error",
-        "never"
-      ],
-      "object-curly-newline": "off",
-      "no-underscore-dangle": "off",
-      "no-unused-vars": [
-        "error",
-        {
-          "argsIgnorePattern": "^_"
-        }
-      ],
-      "comma-dangle": [
-        "error",
-        {
-          "arrays": "always-multiline",
-          "objects": "always-multiline",
-          "imports": "always-multiline",
-          "exports": "always-multiline",
-          "functions": "only-multiline"
-        }
-      ]
-    }
+    "@types/moo": "^0.5.5",
+    "@types/weighted": "^0.3.0",
+    "@typescript-eslint/eslint-plugin": "^4.32.0",
+    "@typescript-eslint/parser": "^4.32.0",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-airbnb-typescript": "^14.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "solid-devtools": "^0.27.3",
+    "vite": "^4.3.9",
+    "vite-plugin-solid": "^2.7.0"
   },
   "browserslist": [
     "> 1% and last 2 versions",
