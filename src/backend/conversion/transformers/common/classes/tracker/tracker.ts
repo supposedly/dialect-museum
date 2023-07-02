@@ -5,7 +5,7 @@ import * as Layers from "../../../../layers/common";
 import {List, ListNode} from "./list";
 import {Direction, Rule, IntoSpec, TransformType} from "../capture-types";
 import {Optional} from "../../../../utils/typetools";
-import {normalizeMatch} from "../../match";
+import match from "../../match";
 
 export type InitialLayers = {
   layers: Record<string, Layers.AnyLayer>
@@ -13,6 +13,7 @@ export type InitialLayers = {
 };
 // i think trackervalue can't require ABC.Base anymore now that IntoSpec can Omit them
 type TrackerValue = {}; // ABC.Base | List<Tracker>;
+const ANCHOR = {};
 
 class TransformHistory {
   private history: Array<{
@@ -81,9 +82,9 @@ class TransformHistory {
 
 class TrackerLayer {
   private history = new TransformHistory(this.name);
-  private environmentCache: Record<`${Direction}${string}`, Optional<TrackerValue>> = {};
+  private environmentCache: Record<`${Direction}${string}`, Optional<TrackerLayer>> = {};
   private dependents: Map<TrackerLayer, Array<`${Direction}${string}`>> = new Map();
-  private environment: Record<`${Direction}${string}`, TrackerValue | null> = {};
+  private environment: Record<`${Direction}${string}`, TrackerLayer | null> = {};
 
   constructor(
     public name: string,
@@ -97,7 +98,10 @@ class TrackerLayer {
         (o, type) => Object.defineProperty(
           o,
           `${dir}${type}`,
-          {get: () => this.fetchDependency(dir, type) ?? null},
+          {
+            get: () => this.fetchDependency(dir, type) ?? null,
+            enumerable: true,
+          },
         ),
         this.environment,
       );
@@ -120,53 +124,77 @@ class TrackerLayer {
   // specifically, call if it's a function and turn it into a TrackerList(? or just List<Tracker>) if array
   applyIntoSpec<I extends IntoSpec>(
     intoSpec: I,
-    match: any,
+    from: any,
     abc: ABC.AnyAlphabet,
   ): Record<keyof I, TrackerValue> {
     return Object.fromEntries(
       Object.entries(intoSpec).map(([k, v]) => {
-        const val = v instanceof Function ? v(match, abc) : v;
+        let anchor: any = ANCHOR;
+        const assignToAnchor = (value: any = anchor) => { anchor = value; return value; };
+        const val = v instanceof Function ? v(from, assignToAnchor, abc) : v;
         if (Array.isArray(val)) {
-          const [current, ...extra] = val;
-          if (extra.length) {
-            const extraList: List<Tracker> = new List();
-            extra.forEach(e => extraList.append(
-              new Tracker(this.parent.layers, this.parent.rules, extraList.tail ?? this.parent, this.parent)
+          const anchorIdx = val.findIndex(target => anchor === target);
+
+          if (anchorIdx > 1) {
+            const beforeList: List<Tracker> = new List();
+            val.slice(undefined, anchorIdx).forEach(e => beforeList.append(
+              new Tracker(this.parent.layers, this.parent.rules, beforeList.tail ?? this.parent, this.parent)
+              .feed(this.name, e),
+            ));
+            beforeList.head!.prev = this.parent.prev;
+            this.parent.prev = beforeList.tail;
+            beforeList.tail!.next = this.parent;
+          }
+
+          if (anchorIdx < val.length - 2) {
+            const afterList: List<Tracker> = new List();
+            val.slice(anchorIdx + 1).forEach(e => afterList.append(
+              new Tracker(this.parent.layers, this.parent.rules, afterList.tail ?? this.parent, this.parent)
                 .feed(this.name, e),
             ));
-            extraList.tail!.next = this.parent.next;
-            this.parent.next = extraList.head;
-            extraList.head!.prev = this.parent;
+            afterList.tail!.next = this.parent.next;
+            this.parent.next = afterList.head;
+            afterList.head!.prev = this.parent;
           }
-          return [k, current];
+
+          return [k, anchor === ANCHOR ? null : anchor];
         }
         return [k, val];
       }),
     ) as any; // idk it was complaining about k: string and not accepting any assertion of keyof I
   }
 
-  fetchDependency(dir: Direction, type: Optional<string>): Optional<TrackerValue> {
-    const typeKey = type ?? ``;
-    if (this.environmentCache[`${dir}${typeKey}`] === undefined) {
-      this.environmentCache[`${dir}${typeKey}`] = this.findDependency(dir, type)?.current;
+  fetchDependency(dir: Direction, type: Optional<string>): Optional<TrackerLayer> {
+    const dirType: `${Direction}${string}` = `${dir}${type ?? ``}`;
+    if (this.environmentCache[dirType] === undefined) {
+      this.environmentCache[dirType] = this.findDependency(dir, type);
     }
-    return this.environmentCache[`${dir}${typeKey}`];
+    return this.environmentCache[dirType];
   }
 
   matches(obj: any): boolean {
-    return normalizeMatch(obj).matches(this.current);
+    return match({
+      spec: this.current,
+      env: {
+        ...Object.fromEntries(
+          Object.keys(this.environment).map(k => [
+            k,
+            (o: any) => this.environment[k as `${Direction}${string}`]?.matches(o),
+          ]),
+        ),
+        was: (o: Record<string, any>) => this.parent.was(o),
+      },
+    }).matches(obj);
   }
 
   findDependency(dir: Direction, type: Optional<string>, includeSelf = false): Optional<TrackerLayer> {
     if (!includeSelf) {
       return this[dir]?.findDependency(dir, type, true);
     }
-    if (this.current) {
-      if (type === undefined) {
-        return this;
-      }
+    if (this.current && type === undefined) {
+      return this;
     }
-    return this.matches({type}) ? this : this[dir]?.findDependency(dir, type, true);
+    return this.matches({spec: {type}}) ? this : this[dir]?.findDependency(dir, type, true);
   }
 
   select(feature: string, option: string) {
@@ -177,10 +205,7 @@ class TrackerLayer {
   applyRules() {
     this.rules.forEach(([feature, rules]) => {
       rules.forEach(rule => {
-        if (!this.matches(rule.from)) {
-          return;
-        }
-        if (!normalizeMatch(rule.where).matches(this.environment)) {
+        if (!this.matches({spec: rule.from, env: rule.where})) {
           return;
         }
         switch (rule.type) {
@@ -252,7 +277,7 @@ export class Tracker implements ListNode<Tracker> {
     public layers: InitialLayers,
     public rules: Record<string, Record<string, Rule[]>>,
     prev: Optional<Tracker> = undefined,
-    public was: Optional<Tracker> = undefined,
+    public root: Optional<Tracker> = undefined,
   ) {
     if (prev !== undefined) {
       prev.append(this);
@@ -285,18 +310,26 @@ export class Tracker implements ListNode<Tracker> {
     head.prev = this;
   }
 
+  getValue(layer: string): Optional<TrackerLayer> {
+    const layerValue = this.layerValues[layer];
+    if (!layerValue || layerValue.current === null) {
+      return undefined;
+    }
+    return layerValue;
+  }
+
   nextOnLayer(layer: string, includeSelf = false): Optional<TrackerLayer> {
     if (!includeSelf) {
       return this.next?.nextOnLayer(layer, true);
     }
-    return this.layerValues[layer] ?? this.next?.nextOnLayer(layer, true);
+    return this.getValue(layer) ?? this.next?.nextOnLayer(layer, true);
   }
 
   prevOnLayer(layer: string, includeSelf = false): Optional<TrackerLayer> {
     if (!includeSelf) {
       return this.prev?.prevOnLayer(layer, true);
     }
-    return this.layerValues[layer] ?? this.prev?.prevOnLayer(layer, true);
+    return this.getValue(layer) ?? this.prev?.prevOnLayer(layer, true);
   }
 
   promote(layer: TrackerLayer, into: IntoSpec, feature: string) {
@@ -317,5 +350,24 @@ export class Tracker implements ListNode<Tracker> {
       nextLayerValue.applyIntoSpec(into, layer.current, this.layers.layers[nextLayer]),
       feature,
     );
+  }
+
+  was(layers: Record<string, any>): boolean {
+    const foreignEntries: typeof layers = {};
+    const allOK = Object.entries(layers).every(([layer, v]) => {
+      if (!this.getValue(layer)) {
+        foreignEntries[layer] = v;
+        return true;
+      }
+      return this.getValue(layer)!.matches({spec: v});
+    });
+    if (!allOK) {
+      return false;
+    }
+    if (Object.keys(foreignEntries).length) {
+      // FIXME: this is a contradiction in the edge case that there's no root but there are foreign entries
+      return this.root?.was(foreignEntries) ?? true;
+    }
+    return true;
   }
 }
