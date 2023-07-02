@@ -183,13 +183,6 @@ export type _IntoHelper<Captured, ABCValues> =
       ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
       : Extract<ABCValues, Captured>;  // else again just accept everything that matches the captured spec
 
-export type _IntoModifyHelper<
-  Captured,
-  A extends ABC.AnyAlphabet,
-  _HelperOutput extends object = _IntoHelper<Captured, ABC.ValuesOfABC<A>>,
-  _Type extends ABC.TypeNames<A> = _HelperOutput extends {type: ABC.TypeNames<A>} ? _HelperOutput[`type`] : never,
-> = <O extends Omit<AllOfType<A, _Type>, `type`>>(edit: O) => Obj.Merge<_HelperOutput, O>;
-
 export type IntoSpec<
   Captured = any,
   A extends Layers.AnyLayer = Layers.AnyLayer,
@@ -200,10 +193,7 @@ export type IntoSpec<
   | ArrayOr<ABC.ValuesOfABC<B>>
   | (
       (
-        input: {
-          value: _IntoHelper<Captured, ABC.ValuesOfABC<A>>,
-          modify: _IntoModifyHelper<Captured, A>
-        },
+        input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>,
         anchor: <T>(val?: T) => T,
         abc?: B
       ) => ArrayOr<ValuesOf<{[T in ABC.TypeNames<B>]: Omit<AllOfType<B, T>, `symbol` | `value`>}>>

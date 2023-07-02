@@ -1,58 +1,57 @@
-function isLiteral(obj) {
+function isLiteral(obj: any) {
   return !!obj && obj.constructor === Object;
 }
 
-function isEmpty(obj) {
+function isEmpty(obj: any): boolean | null {
   if (!isLiteral(obj)) {
     return null;
   }
+  // eslint-disable-next-line no-restricted-syntax, guard-for-in
   for (const _ in obj) {
     return false;
   }
   return true;
 }
 
-function deepCopy(obj) {
+function deepCopy(obj: any) {
   if (!isLiteral(obj)) {
     return obj;
   }
-  const copy = {};
-  for (const key in obj) {
+  const copy: Record<string, any> = {};
+  Object.keys(obj).forEach(key => {
     if (isLiteral(obj[key])) {
       copy[key] = deepCopy(obj[key]);
     } else {
       copy[key] = obj[key];
     }
-  }
+  });
   return copy;
 }
 
-function mergeObjects(a, b) {
-  const merged = {};
-  for (const key in b) {
+export function mergeObjects(a: any, b: any) {
+  const merged: Record<string, any> = {};
+
+  Object.keys(b).forEach(key => {
     if (isLiteral(a[key]) && isLiteral(b[key])) {
       merged[key] = mergeObjects(a[key], b[key]);
     } else {
       merged[key] = deepCopy(b[key]);
     }
-  }
-  for (const key in a) {
-    // if key already encountered in b, ignore it here
-    // (aka always favor later objects)
-    if (Object.hasOwnProperty.call(merged, key)) {
-      continue;
-    }
-    merged[key] = a[key];
-  }
+  });
+
+  Object.keys(a)
+    .filter(key => !Object.hasOwnProperty.call(merged, key))
+    .forEach(key => { merged[key] = a[key]; });
+
   return merged;
 }
 
-function trimAndUpdate(obj, mold) {
+function trimAndUpdate(obj: any, mold: any) {
   if (isEmpty(mold)) {
     return deepCopy(obj);
   }
-  const molded = {};
-  for (const key in mold) {
+  const molded: Record<string, any> = {};
+  Object.keys(mold).forEach(key => {
     if (isLiteral(obj[key]) && isLiteral(mold[key])) {
       molded[key] = trimAndUpdate(obj[key], mold[key]);
     } else if (isEmpty(mold[key])) {
@@ -60,16 +59,16 @@ function trimAndUpdate(obj, mold) {
     } else {
       molded[key] = mold[key];
     }
-  }
+  });
   return molded;
 }
 
-export function moldObject(obj, ...molds) {
+export function moldObject(obj: any, ...molds: any) {
   // TODO: there's probably a way to collapse this into just one function call
-  return trimAndUpdate(obj, molds.reduce((acc, cur) => mergeObjects(acc, cur), {}));
+  return trimAndUpdate(obj, molds.reduce((acc: any, cur: any) => mergeObjects(acc, cur), {}));
 }
 
-export function qualifyKeys(obj, transform = o => o) {
+export function qualifyKeys(obj: any, transform = (o: any) => o): any[] {
   if (!isLiteral(obj)) {
     return [];
   }

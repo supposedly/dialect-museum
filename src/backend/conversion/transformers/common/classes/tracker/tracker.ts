@@ -6,6 +6,7 @@ import {List, ListNode} from "./list";
 import {Direction, Rule, IntoSpec, TransformType} from "../capture-types";
 import {Optional} from "../../../../utils/typetools";
 import match from "../../match";
+import {mergeObjects} from "../../helpers";
 
 export type InitialLayers = {
   layers: Record<string, Layers.AnyLayer>
@@ -130,8 +131,11 @@ class TrackerLayer {
     return Object.fromEntries(
       Object.entries(intoSpec).map(([k, v]) => {
         let anchor: any = ANCHOR;
-        const assignToAnchor = (value: any = anchor) => { anchor = value; return value; };
-        const val = v instanceof Function ? v(from, assignToAnchor, abc) : v;
+        const val = v instanceof Function ? v(
+          from,
+          (value: any = anchor) => { anchor = value; return value; },
+          abc,
+        ) : v;
         if (Array.isArray(val)) {
           const anchorIdx = val.findIndex(target => anchor === target);
 
