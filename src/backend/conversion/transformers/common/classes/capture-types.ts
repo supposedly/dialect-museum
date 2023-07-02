@@ -1,7 +1,7 @@
 // type system likes being silly and not accepting that KeysAndIndicesOf<> produces
 // tuples [K, V] where K is a valid key and V is a valid value
 
-import {Any, List, Number as Num, Union} from 'ts-toolbelt';
+import {Any, List, Number as Num, Union, Object as Obj} from 'ts-toolbelt';
 import {Key} from 'ts-toolbelt/out/Any/Key';
 import * as ABC from '../../../alphabets/common';
 import * as Layers from '../../../layers/common';
@@ -183,6 +183,13 @@ export type _IntoHelper<Captured, ABCValues> =
       ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
       : Extract<ABCValues, Captured>;  // else again just accept everything that matches the captured spec
 
+export type _IntoModifyHelper<
+  Captured,
+  A extends ABC.AnyAlphabet,
+  _HelperOutput extends object = _IntoHelper<Captured, ABC.ValuesOfABC<A>>,
+  _Type extends ABC.TypeNames<A> = _HelperOutput extends {type: ABC.TypeNames<A>} ? _HelperOutput[`type`] : never,
+> = <O extends Omit<AllOfType<A, _Type>, `type`>>(edit: O) => Obj.Merge<_HelperOutput, O>;
+
 export type IntoSpec<
   Captured = any,
   A extends Layers.AnyLayer = Layers.AnyLayer,
@@ -193,7 +200,10 @@ export type IntoSpec<
   | ArrayOr<ABC.ValuesOfABC<B>>
   | (
       (
-        input: _IntoHelper<Captured, ABC.ValuesOfABC<A>>,
+        input: {
+          value: _IntoHelper<Captured, ABC.ValuesOfABC<A>>,
+          modify: _IntoModifyHelper<Captured, A>
+        },
         anchor: <T>(val?: T) => T,
         abc?: B
       ) => ArrayOr<ValuesOf<{[T in ABC.TypeNames<B>]: Omit<AllOfType<B, T>, `symbol` | `value`>}>>
