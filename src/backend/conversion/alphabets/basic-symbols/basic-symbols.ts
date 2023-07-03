@@ -271,9 +271,9 @@ export const delimiter = {
     symbol: `-`,
     value: `genitive`,
   },
-  Object: {symbol: `.`},  // introduces verbs and active participles
+  Object: {symbol: `:`},  // introduces verbs and active participles
   PseudoSubject: {  // s*arr:3ms/s*all:3ms, badd:3ms/bidd:3ms, أوعك أصحك etc
-    symbol: `:`,
+    symbol: `~`,
     value: `pseudo-subject`,
   },
   Dative: {symbol: `|`},  // this stands for the dative L

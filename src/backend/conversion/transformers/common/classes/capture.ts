@@ -109,8 +109,8 @@ export class Language<A extends Record<string, Layers.AnyLayer>[]> {
   // to actually agree with me about what I'm assigning
   // In other words I'm making two assumptions here: first that my runtime
   // code is correct and says the same thing as my mapped types (which I
-  // gotta verify manually in eg REPL), and second that my handmade
-  // mapped types know more than the type inference below would
+  // gotta verify through practice unfortunately), and second that my
+  // handmade mapped types know more than the type inference below would
   constructor(...abcs: $<A>) {
     this.abcs = Object.assign({}, ...abcs);
     this.layers = abcs.map(o => Object.entries(o)) as any;

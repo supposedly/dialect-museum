@@ -1,4 +1,4 @@
-import {createEffect, type Component, createSignal, createRenderEffect, Setter} from 'solid-js';
+import {createEffect, type Component, createSignal, createRenderEffect, Setter, ErrorBoundary} from 'solid-js';
 
 import {Parser, Grammar} from "nearley";
 import styles from './App.module.css';
@@ -24,11 +24,28 @@ function bind(el: HTMLInputElement, accessor: typeof createSignal<string>) {
   });
 }
 
+function parse(input: string) {
+  try {
+    return {
+      success: true,
+      value: JSON.stringify(new Parser(compiledGrammar).feed(input).results, null, 2),
+    };
+  } catch (e: any) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    return {
+      success: false,
+      value: e.toString(),
+    };
+  }
+}
+
 const App: Component = () => {
   const [input, setInput] = createSignal(``);
+  const result = () => parse(input());
   return <div>
     <input type="text" use:bind={[input, setInput]}></input>
-    <pre>{JSON.stringify(new Parser(compiledGrammar).feed(input()).results, null, 2)}</pre>
+    <pre style={{color: result().success ? undefined : `red`}}>{result().value}</pre>
   </div>;
 };
 

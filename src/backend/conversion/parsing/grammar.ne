@@ -25,7 +25,7 @@
       value: () => ({
         type: $UnderlyingType[category],
         value: value ?? symbol,
-        symbol: symbol ?? value,
+        symbol: symbol ?? s,
         features,
       })
     };
@@ -48,10 +48,15 @@
   });
 
   // generate tokens from enum
-  const fromEnum = (fenum, prefix = ``) => ({
-    match: new RegExp(enums.keys(fenum).map(k => `${prefix}:k`).join(`|`)),
-    value: k => fenum[k]
-  });
+  const fromEnum = (fenum, prefix = ``) => prefix
+    ? {
+      match: new RegExp(enums.keys(fenum).map(k => `${prefix}:${k}`).join(`|`)),
+      value: k => fenum[k.substring(k.indexOf(`:`) + 1)]
+    }
+    : {
+      match: new RegExp(enums.keys(fenum).join(`|`)),
+      value: k => fenum[k]
+    };
 
   const lexer = moo.states({
     main: {
@@ -187,9 +192,7 @@
 @lexer lexer
 @preprocessor typescript
 
-passage -> term ((
-    __WS | __BOUNDARY {% id %}
-  ) term {%
+passage -> term ((__WS | __NOBOUNDARY) term {%
     ([[boundary], term]) => boundary ? [boundary, term] : [term]
   %}):* {% ([a, b]) => [a, ...b.flat()] %}
 
@@ -216,7 +219,7 @@ idafe ->
     )
   %}
 
-l -> "(l)"  {% () => _.obj($Type.l) %}
+l -> "(l" ")"  {% () => _.obj($Type.l) %}
 
 expr ->
     word  {% id %}
@@ -235,7 +238,7 @@ number ->
     ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => _.obj($Type.number, { gender, isConstruct }, { gender, quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
   %}
 
-af3al -> "(af3al" filter_suffix:? ctx_tags:? __ root ")" {%
+af3al -> "(af3al" ctx_tags:? __ root ")" {%
   ([ , suffix, ctx ,, root]) => _.obj(
     $Type.af3al,
     { root },
@@ -246,7 +249,6 @@ af3al -> "(af3al" filter_suffix:? ctx_tags:? __ root ")" {%
 %}
 
 tif3il -> "(tif3il"
-    filter_suffix:?
     ctx_tags:?
     __ root
   ")" {%
@@ -264,16 +266,16 @@ tif3il -> "(tif3il"
 # and the first vowel in fa3len participles is a~i
 pp -> "(pp"
     ctx_tags:?
-    __ suffixed_wazn
+    __ ppWazn
     __ voice
     __ pronoun
     __ root
   ")"  {%
-    ([ , ctx ,, {wazn, suffix} ,, voice ,, subject ,, root]) => _.obj(
+    ([ , ctx ,, wazn ,, voice ,, subject ,, root]) => _.obj(
       $Type.pp,
-      { root },
+      { root, subject, voice, wazn: wazn.substring(2) },
       {},
-      { subject, voice, wazn },
+      {},
       ctx
     )
   %}
@@ -283,21 +285,19 @@ pp -> "(pp"
 verb ->
   "(verb"
     ctx_tags:?
-    __ wazn
+    __ verbWazn
     __ tam
     __ pronoun
     __ root
   ")"  {%
     ([ , ctx ,, wazn ,, tam ,, subject ,, root]) => _.obj(
       $Type.verb,
-      { subject, tam, wazn },
-      { root },
+      { root, subject, tam, wazn: wazn.substring(2) },
+      {},
+      {},
       ctx
     )
   %}
-
-suffixed_wazn -> %openTag %wazn filter_suffix:? %closeTag {% ([, {value: wazn}, suffix]) => ({wazn, suffix}) %}
-filter_suffix -> "_" suffix {% ([ , suffix]) => suffix %}
 
 suffix ->
     FEM
@@ -351,7 +351,8 @@ augmentation -> delimiter pronoun
 pronoun -> %openTag %pronoun %closeTag  {% ([ , { value }]) => _.obj($Type.pronoun, value) %}
 tam -> %openTag %tam %closeTag  {% ([ , { value }]) => value %}
 voice -> %openTag %voice %closeTag  {% ([ , { value }]) => value %}
-wazn -> %openTag %wazn %closeTag  {% ([ , { value }]) => value %}
+verbWazn -> %openTag %verbWazn %closeTag  {% ([ , { value }]) => value %}
+ppWazn -> %openTag %ppWazn %closeTag  {% ([ , { value }]) => value %}
 
 # ditto
 delimiter ->
@@ -373,6 +374,6 @@ STRESSED -> %stressed  {% processToken %}
 NASAL -> %nasal {% processToken %}
 __ -> %ws  {% processToken %}
 __WS -> %ws {% ([value]) => _.obj($Type.boundary, value) %}
-__BOUNDARY -> %noBoundary  {% () => null %}
+__NOBOUNDARY -> %noBoundary  {% () => null %}
 
 # a good example of <e> and <*>: hexxa* for donkeys (alternative form: hixx)

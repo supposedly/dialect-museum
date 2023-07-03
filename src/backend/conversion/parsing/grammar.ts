@@ -31,7 +31,7 @@ function id(d: any[]): any { return d[0]; }
       value: () => ({
         type: $UnderlyingType[category],
         value: value ?? symbol,
-        symbol: symbol ?? value,
+        symbol: symbol ?? s,
         features,
       })
     };
@@ -54,10 +54,15 @@ function id(d: any[]): any { return d[0]; }
   });
 
   // generate tokens from enum
-  const fromEnum = (fenum, prefix = ``) => ({
-    match: new RegExp(enums.keys(fenum).map(k => `${prefix}:k`).join(`|`)),
-    value: k => fenum[k]
-  });
+  const fromEnum = (fenum, prefix = ``) => prefix
+    ? {
+      match: new RegExp(enums.keys(fenum).map(k => `${prefix}:${k}`).join(`|`)),
+      value: k => fenum[k.substring(k.indexOf(`:`) + 1)]
+    }
+    : {
+      match: new RegExp(enums.keys(fenum).join(`|`)),
+      value: k => fenum[k]
+    };
 
   const lexer = moo.states({
     main: {
@@ -221,7 +226,7 @@ const grammar: Grammar = {
   ParserRules: [
     {"name": "passage$ebnf$1", "symbols": []},
     {"name": "passage$ebnf$1$subexpression$1$subexpression$1", "symbols": ["__WS"]},
-    {"name": "passage$ebnf$1$subexpression$1$subexpression$1", "symbols": ["__BOUNDARY"], "postprocess": id},
+    {"name": "passage$ebnf$1$subexpression$1$subexpression$1", "symbols": ["__NOBOUNDARY"]},
     {"name": "passage$ebnf$1$subexpression$1", "symbols": ["passage$ebnf$1$subexpression$1$subexpression$1", "term"], "postprocess": 
         ([[boundary], term]) => boundary ? [boundary, term] : [term]
           },
@@ -247,7 +252,7 @@ const grammar: Grammar = {
           $Type.idafe, {}, { possessee, possessor }, ctx
         )
           },
-    {"name": "l", "symbols": [{"literal":"(l)"}], "postprocess": () => _.obj($Type.l)},
+    {"name": "l", "symbols": [{"literal":"(l"}, {"literal":")"}], "postprocess": () => _.obj($Type.l)},
     {"name": "expr", "symbols": ["word"], "postprocess": id},
     {"name": "expr", "symbols": ["pp"]},
     {"name": "expr", "symbols": ["verb"]},
@@ -270,11 +275,9 @@ const grammar: Grammar = {
     {"name": "number", "symbols": [{"literal":"("}, "number$ebnf$2", ({type: "genderedNumber"}), ({type: "numberGender"}), "number$subexpression$2", {"literal":")"}], "postprocess": 
         ([ , ctx , { value: quantity }, { value: gender }, isConstruct ]) => _.obj($Type.number, { gender, isConstruct }, { gender, quantity: quantity.slice(1) /* getting rid of the # */ }, ctx)
           },
-    {"name": "af3al$ebnf$1", "symbols": ["filter_suffix"], "postprocess": id},
+    {"name": "af3al$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "af3al$ebnf$1", "symbols": [], "postprocess": () => null},
-    {"name": "af3al$ebnf$2", "symbols": ["ctx_tags"], "postprocess": id},
-    {"name": "af3al$ebnf$2", "symbols": [], "postprocess": () => null},
-    {"name": "af3al", "symbols": [{"literal":"(af3al"}, "af3al$ebnf$1", "af3al$ebnf$2", "__", "root", {"literal":")"}], "postprocess": 
+    {"name": "af3al", "symbols": [{"literal":"(af3al"}, "af3al$ebnf$1", "__", "root", {"literal":")"}], "postprocess": 
         ([ , suffix, ctx ,, root]) => _.obj(
           $Type.af3al,
           { root },
@@ -283,11 +286,9 @@ const grammar: Grammar = {
           ctx
         )
         },
-    {"name": "tif3il$ebnf$1", "symbols": ["filter_suffix"], "postprocess": id},
+    {"name": "tif3il$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "tif3il$ebnf$1", "symbols": [], "postprocess": () => null},
-    {"name": "tif3il$ebnf$2", "symbols": ["ctx_tags"], "postprocess": id},
-    {"name": "tif3il$ebnf$2", "symbols": [], "postprocess": () => null},
-    {"name": "tif3il", "symbols": [{"literal":"(tif3il"}, "tif3il$ebnf$1", "tif3il$ebnf$2", "__", "root", {"literal":")"}], "postprocess": 
+    {"name": "tif3il", "symbols": [{"literal":"(tif3il"}, "tif3il$ebnf$1", "__", "root", {"literal":")"}], "postprocess": 
         ([ , suffix, ctx ,, root]) => _.obj(
           $Type.tif3il,
           { root },
@@ -298,29 +299,26 @@ const grammar: Grammar = {
         },
     {"name": "pp$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "pp$ebnf$1", "symbols": [], "postprocess": () => null},
-    {"name": "pp", "symbols": [{"literal":"(pp"}, "pp$ebnf$1", "__", "suffixed_wazn", "__", "voice", "__", "pronoun", "__", "root", {"literal":")"}], "postprocess": 
-        ([ , ctx ,, {wazn, suffix} ,, voice ,, subject ,, root]) => _.obj(
+    {"name": "pp", "symbols": [{"literal":"(pp"}, "pp$ebnf$1", "__", "ppWazn", "__", "voice", "__", "pronoun", "__", "root", {"literal":")"}], "postprocess": 
+        ([ , ctx ,, wazn ,, voice ,, subject ,, root]) => _.obj(
           $Type.pp,
-          { root },
+          { root, subject, voice, wazn: wazn.substring(2) },
           {},
-          { subject, voice, wazn },
+          {},
           ctx
         )
           },
     {"name": "verb$ebnf$1", "symbols": ["ctx_tags"], "postprocess": id},
     {"name": "verb$ebnf$1", "symbols": [], "postprocess": () => null},
-    {"name": "verb", "symbols": [{"literal":"(verb"}, "verb$ebnf$1", "__", "wazn", "__", "tam", "__", "pronoun", "__", "root", {"literal":")"}], "postprocess": 
+    {"name": "verb", "symbols": [{"literal":"(verb"}, "verb$ebnf$1", "__", "verbWazn", "__", "tam", "__", "pronoun", "__", "root", {"literal":")"}], "postprocess": 
         ([ , ctx ,, wazn ,, tam ,, subject ,, root]) => _.obj(
           $Type.verb,
-          { subject, tam, wazn },
-          { root },
+          { root, subject, tam, wazn: wazn.substring(2) },
+          {},
+          {},
           ctx
         )
           },
-    {"name": "suffixed_wazn$ebnf$1", "symbols": ["filter_suffix"], "postprocess": id},
-    {"name": "suffixed_wazn$ebnf$1", "symbols": [], "postprocess": () => null},
-    {"name": "suffixed_wazn", "symbols": [({type: "openTag"}), ({type: "wazn"}), "suffixed_wazn$ebnf$1", ({type: "closeTag"})], "postprocess": ([, {value: wazn}, suffix]) => ({wazn, suffix})},
-    {"name": "filter_suffix", "symbols": [{"literal":"_"}, "suffix"], "postprocess": ([ , suffix]) => suffix},
     {"name": "suffix", "symbols": ["FEM"]},
     {"name": "suffix", "symbols": ["AN"]},
     {"name": "suffix", "symbols": ["DUAL"]},
@@ -412,7 +410,8 @@ const grammar: Grammar = {
     {"name": "pronoun", "symbols": [({type: "openTag"}), ({type: "pronoun"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => _.obj($Type.pronoun, value)},
     {"name": "tam", "symbols": [({type: "openTag"}), ({type: "tam"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => value},
     {"name": "voice", "symbols": [({type: "openTag"}), ({type: "voice"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => value},
-    {"name": "wazn", "symbols": [({type: "openTag"}), ({type: "wazn"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => value},
+    {"name": "verbWazn", "symbols": [({type: "openTag"}), ({type: "verbWazn"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => value},
+    {"name": "ppWazn", "symbols": [({type: "openTag"}), ({type: "ppWazn"}), ({type: "closeTag"})], "postprocess": ([ , { value }]) => value},
     {"name": "delimiter", "symbols": [({type: "objectDelimiter"})], "postprocess": processToken},
     {"name": "delimiter", "symbols": [({type: "genitiveDelimiter"})], "postprocess": processToken},
     {"name": "delimiter", "symbols": [({type: "pseudoSubjectDelimiter"})], "postprocess": processToken},
@@ -430,7 +429,7 @@ const grammar: Grammar = {
     {"name": "NASAL", "symbols": [({type: "nasal"})], "postprocess": processToken},
     {"name": "__", "symbols": [({type: "ws"})], "postprocess": processToken},
     {"name": "__WS", "symbols": [({type: "ws"})], "postprocess": ([value]) => _.obj($Type.boundary, value)},
-    {"name": "__BOUNDARY", "symbols": [({type: "noBoundary"})], "postprocess": () => null}
+    {"name": "__NOBOUNDARY", "symbols": [({type: "noBoundary"})], "postprocess": () => null}
   ],
   ParserStart: "passage",
 };
