@@ -12,8 +12,8 @@ Also, because of ordering, be careful (at least IMHO) to only use extend()
 if shared entries will also share indices in each extending enum
 */
 
-import {ListOf} from "ts-toolbelt/out/Union/ListOf";
-import {MergeUnion} from "./utils/typetools";
+import {type ListOf} from "ts-toolbelt/out/Union/ListOf";
+import {type MergeUnion} from "./utils/typetools";
 
 const SPACE = 0x20;  // char code of space
 const SPECIAL = `  `;

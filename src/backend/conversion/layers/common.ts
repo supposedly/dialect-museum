@@ -1,5 +1,5 @@
 import * as ABC from "../alphabets/common";
-import {Narrow as $, UniqueArray} from "../utils/typetools";
+import {type Narrow as $, type UniqueArray} from "../utils/typetools";
 
 type Features = Record<string, string[]>;
 
