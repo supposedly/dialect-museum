@@ -6,12 +6,17 @@
         "node_modules/*",
         "public/*"
     ],
+    "references": [
+        {
+            "path": "./tsconfig.app.json"
+        },
+        {
+            "path": "./tsconfig.node.json"
+        }
+    ],
     "compilerOptions": {
         "jsx": "preserve",
         "jsxImportSource": "solid-js",
-        "types": [
-            "vite/client"
-        ],
         "target": "es2020",
         "strict": true,
         "noImplicitAny": true,

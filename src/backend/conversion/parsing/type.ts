@@ -1,5 +1,5 @@
 import {type CategorizedSymbol} from "../alphabets/basic-symbols";
-import {ValuesOf} from "../utils/typetools";
+import {type ValuesOf} from "../utils/typetools";
 
 export type SymbolWrapper = ValuesOf<{
   [K in keyof CategorizedSymbol]: {

@@ -1,5 +1,5 @@
 /* eslint-disable max-classes-per-file */
-import {Narrow as $} from "../../utils/typetools";
+import {type Narrow as $} from "../../utils/typetools";
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 type Id<T> = T extends infer U ? {[K in keyof U]: U[K]} : never;

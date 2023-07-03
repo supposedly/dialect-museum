@@ -1,9 +1,9 @@
 import {Function, Union} from "ts-toolbelt";
-import {cheat, Base, newAlphabet, FillDefaults} from "../common";
+import {cheat, type Base, newAlphabet, type FillDefaults} from "../common";
 import {
-  Of, EnumOf, enumerate,
-  Articulator, Location, Manner,
-  Ps, Gn, Nb,
+  type Of, type EnumOf, enumerate,
+  type Articulator, type Location, type Manner,
+  type Ps, type Gn, type Nb,
 } from "../../enums";
 import * as basic from "../basic-symbols";
 

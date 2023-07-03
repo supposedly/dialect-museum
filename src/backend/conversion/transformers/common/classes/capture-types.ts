@@ -2,23 +2,23 @@
 // tuples [K, V] where K is a valid key and V is a valid value
 
 import {Any, List, Number as Num, Union, Object as Obj} from 'ts-toolbelt';
-import {Key} from 'ts-toolbelt/out/Any/Key';
+import {type Key} from 'ts-toolbelt/out/Any/Key';
 import * as ABC from '../../../alphabets/common';
 import * as Layers from '../../../layers/common';
 import {
-  OrderedObj,
-  DropLast,
-  ObjectOf,
-  OrderedObjOf,
-  ShiftedObjOf,
-  KeysAndIndicesOf,
-  LastOf,
-  KeysOf,
-  DropNone,
-  IndicesOf,
+  type OrderedObj,
+  type DropLast,
+  type ObjectOf,
+  type OrderedObjOf,
+  type ShiftedObjOf,
+  type KeysAndIndicesOf,
+  type LastOf,
+  type KeysOf,
+  type DropNone,
+  type IndicesOf,
 } from '../type';
-import {DeepMatchOr, MatchAny, MatchOne, MatchNot, MatchNone, MatchOr} from '../match';
-import {ArrayOr, DeepMerge, MergeUnion, ValuesOf, UnionOf} from '../../../utils/typetools';
+import {type DeepMatchOr, type MatchAny, MatchOne, type MatchNot, type MatchNone, type MatchOr} from '../match';
+import {type ArrayOr, type DeepMerge, type MergeUnion, type ValuesOf, type UnionOf} from '../../../utils/typetools';
 
 export enum TransformType {
   transformation,
@@ -51,12 +51,12 @@ export type CaptureFuncs<
       // - a partial specification that overlaps with one or more members of the current alphabet
       // - a match() thing that says to match parts of members of the current alphabet
       O extends Capturable<Curr>,
-    >(obj: O) => CaptureApplier<typeof obj, Curr, Next, ABCHistory, Feature>
+    >(obj: O) => CaptureApplier<O, Curr, Next, ABCHistory, Feature>
     )
     & {
       [T in ABC.TypeNames<Curr>]: <O extends DeepMatchOr<DeepMerge<ABC._ExactAllOfType<Curr, T>>>>(
         obj: O
-      ) => CaptureApplier<MergeUnion<{type: ABC.Named<Curr, T>} | typeof obj>, Curr, Next, ABCHistory, Feature>
+      ) => CaptureApplier<MergeUnion<{type: ABC.Named<Curr, T>} | O>, Curr, Next, ABCHistory, Feature>
     },
     abc: ABC.ABC<Curr>,
     nextABC: ABC.ABC<Next>,
@@ -80,12 +80,12 @@ export type TopLayerCaptureFuncs<
       // - a partial specification that overlaps with one or more members of the current alphabet
       // - a match() thing that says to match parts of members of the current alphabet
       O extends Capturable<Curr>,
-    >(obj: O) => TopLayerCaptureApplier<typeof obj, Curr, ABCHistory, Feature>
+    >(obj: O) => TopLayerCaptureApplier<O, Curr, ABCHistory, Feature>
     )
     & {
       [T in ABC.TypeNames<Curr>]: <O extends DeepMatchOr<DeepMerge<ABC._ExactAllOfType<Curr, T>>>>(
         obj: O
-      ) => TopLayerCaptureApplier<typeof obj, Curr, ABCHistory, Feature>
+      ) => TopLayerCaptureApplier<O, Curr, ABCHistory, Feature>
     },
     abc: ABC.ABC<Curr>,
   ) => Array<Rule<never, Curr, null, ABCHistory, Feature>>

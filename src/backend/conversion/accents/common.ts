@@ -1,5 +1,5 @@
 import * as Layers from "../layers/common";
-import {Narrow as $, UniqueArray} from "../utils/typetools";
+import {type Narrow as $, type UniqueArray} from "../utils/typetools";
 
 type OrderingConstraints<L extends Layers.AnyLayer, E = never> =
   | Exclude<Layers.AccentFeatures<L>, E>

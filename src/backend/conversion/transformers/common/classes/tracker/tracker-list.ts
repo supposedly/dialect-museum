@@ -1,8 +1,8 @@
 import * as Layers from "../../../../layers/common";
 import * as ABC from "../../../../alphabets/common";
-import {Rule} from "../capture-types";
+import {type Rule} from "../capture-types";
 import {List} from "./list";
-import {InitialLayers, Tracker} from "./tracker";
+import {type InitialLayers, Tracker} from "./tracker";
 
 export default class TrackerList extends List<Tracker> {
   private layers: InitialLayers;

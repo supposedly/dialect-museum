@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
 // I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
-import {MergeUnion, ValuesOf, Narrow as $} from "../utils/typetools";
+import {type MergeUnion, type ValuesOf, type Narrow as $} from "../utils/typetools";
 
 export type Widen<T> =
   T extends boolean ? boolean

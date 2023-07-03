@@ -6,10 +6,10 @@
 // TODO: figure out what word.meta should look like
 
 import {Function, Union} from "ts-toolbelt";
-import {cheat, Base, newAlphabet} from "../common";
+import {cheat, type Base, newAlphabet} from "../common";
 import {
-  Of, EnumOf, enumerate,
-  Ps, Gn, Nb, TamToken, VerbWazn, PPWazn, VoiceToken, HigherWazn,
+  type Of, type EnumOf, enumerate,
+  type Ps, type Gn, type Nb, type TamToken, type VerbWazn, type PPWazn, type VoiceToken, type HigherWazn,
 } from "../../enums";
 import * as basic from "../basic-symbols";
 

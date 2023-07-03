@@ -2,9 +2,9 @@
 
 import * as ABC from "../../../../alphabets/common";
 import * as Layers from "../../../../layers/common";
-import {List, ListNode} from "./list";
-import {Direction, Rule, IntoSpec, TransformType} from "../capture-types";
-import {Optional} from "../../../../utils/typetools";
+import {List, type ListNode} from "./list";
+import {Direction, type Rule, type IntoSpec, TransformType} from "../capture-types";
+import {type Optional} from "../../../../utils/typetools";
 import match from "../../match";
 import {mergeObjects} from "../../helpers";
 
@@ -82,7 +82,7 @@ class TransformHistory {
 }
 
 class TrackerLayer {
-  private history = new TransformHistory(this.name);
+  private history: TransformHistory;
   private environmentCache: Record<`${Direction}${string}`, Optional<TrackerLayer>> = {};
   private dependents: Map<TrackerLayer, Array<`${Direction}${string}`>> = new Map();
   private environment: Record<`${Direction}${string}`, TrackerLayer | null> = {};
@@ -92,6 +92,7 @@ class TrackerLayer {
     private rules: [string, Rule[]][],
     private parent: Tracker,
   ) {
+    this.history = new TransformHistory(this.name);
     // this could do w/o the outer loop for speed but i think typescript doesn't
     // understand when you try to define a getter/setter with Object.defineProperties()
     Object.values(Direction).forEach(dir => {

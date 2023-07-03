@@ -4,25 +4,25 @@
 
 import * as ABC from '../../../alphabets/common';
 import * as Layers from '../../../layers/common';
-import {Narrow as $, Force} from '../../../utils/typetools';
+import {type Narrow as $, type Force} from '../../../utils/typetools';
 import {TrackerList} from './tracker';
 import {
-  OrderedObj,
-  OrderedObjOf,
-  MergeObjs,
+  type OrderedObj,
+  type OrderedObjOf,
+  type MergeObjs,
 } from '../type';
 import {
-  CaptureApplier as ICaptureApplier,
-  TopLayerCaptureApplier as ITopLayerCaptureApplier,
-  CapturableOr,
-  NextMappedFuncs,
-  CaptureFuncs,
-  Rule,
-  TransformRule,
-  PromoteRule,
-  TransformParam,
+  type CaptureApplier as ICaptureApplier,
+  type TopLayerCaptureApplier as ITopLayerCaptureApplier,
+  type CapturableOr,
+  type NextMappedFuncs,
+  type CaptureFuncs,
+  type Rule,
+  type TransformRule,
+  type PromoteRule,
+  type TransformParam,
   TransformType,
-  TopLayerCaptureFuncs,
+  type TopLayerCaptureFuncs,
 } from './capture-types';
 
 class CaptureApplier<

@@ -1,4 +1,4 @@
-import {MergeUnion, ValuesOf} from "../../utils/typetools";
+import {type MergeUnion, type ValuesOf} from "../../utils/typetools";
 import * as basic from "./basic-symbols";
 
 export * from "./basic-symbols";

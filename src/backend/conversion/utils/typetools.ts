@@ -1,5 +1,5 @@
 import {Function as Func, Union} from "ts-toolbelt";
-import {Key} from "ts-toolbelt/out/Any/Key";
+import {type Key} from "ts-toolbelt/out/Any/Key";
 
 export type Optional<T> = T | undefined;
 
