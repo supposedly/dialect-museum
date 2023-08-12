@@ -5,7 +5,7 @@ import * as Layers from "../../../../layers/common";
 import {List, type ListNode} from "./list";
 import {Direction, type Rule, type IntoSpec, TransformType} from "../capture-types";
 import {type Optional} from "../../../../utils/typetools";
-import match from "../../match";
+import match, { matcher } from "../../match";
 import {mergeObjects} from "../../helpers";
 
 export type InitialLayers = {
@@ -178,7 +178,8 @@ class TrackerLayer {
   }
 
   matches(obj: any): boolean {
-    return match({
+    // TODO: check this for accuracy, lazy replacement
+    return matcher.one(match.one({
       spec: this.current,
       env: {
         ...Object.fromEntries(
@@ -189,7 +190,7 @@ class TrackerLayer {
         ),
         was: (o: Record<string, any>) => this.parent.was(o),
       },
-    }).matches(obj);
+    }), obj);
   }
 
   findDependency(dir: Direction, type: Optional<string>, includeSelf = false): Optional<TrackerLayer> {
@@ -210,7 +211,7 @@ class TrackerLayer {
   applyRules() {
     this.rules.forEach(([feature, rules]) => {
       rules.forEach(rule => {
-        if (!this.matches({spec: rule.from, env: rule.where})) {
+        if (!this.matches({spec: rule.from, env: rule.where ?? {}})) {
           return;
         }
         switch (rule.type) {

@@ -4,7 +4,24 @@ import { ref, computed } from 'vue';
 import { Parser, Grammar } from 'nearley';
 import grammar from "../backend/conversion/parsing/grammar";
 
+import { Language } from '../backend/conversion/transformers/common/classes/capture';
+import templated from '../backend/conversion/layers/layers/templated';
+import underlying from '../backend/conversion/layers/layers/underlying';
+
 const compiledGrammar = Grammar.fromCompiled(grammar);
+
+const language = new Language({ templated }, { underlying });
+
+language.select.templated({
+  v_a_pst: (capture, templated, underlying) => [
+    capture(templated.c).promote({
+      into: {
+        e: underlying.e,
+        i: underlying.i
+      },
+    })
+  ],
+});
 
 const input = ref(``);
 const result = computed(() => {

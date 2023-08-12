@@ -17,7 +17,7 @@ import {
   type DropNone,
   type IndicesOf,
 } from '../type';
-import {type DeepMatchOr, type MatchAny, MatchOne, type MatchNot, type MatchNone, type MatchOr} from '../match';
+import {type DeepMatchOr, type MatchAny, type MatchOne, type MatchNot, type MatchNone, type MatchOr} from '../match';
 import {type ArrayOr, type DeepMerge, type MergeUnion, type ValuesOf, type UnionOf} from '../../../utils/typetools';
 
 export enum TransformType {
@@ -176,10 +176,10 @@ export type _IntoHelper<Captured, ABCValues> =
   Captured extends ABCValues
   ? Captured  // capture(abc.letter) means use that letter directly
   // else check inside match
-  : Captured extends (MatchOne<infer T extends ABCValues> | MatchAny<infer T extends ABCValues>)
+  : Captured extends (MatchOne<infer T extends ABCValues> | MatchAny<Array<infer T extends ABCValues>>)
     ? T  // capture(match.any([abc.letter1, abc.letter2])) means use letter1 | letter2 directly
     // also check for not-match bc why not
-    : Captured extends (MatchNot<infer T extends ABCValues> | MatchNone<infer T extends ABCValues>)
+    : Captured extends (MatchNot<infer T extends ABCValues, ABCValues> | MatchNone<Array<infer T extends ABCValues>, ABCValues>)
       ? Exclude<ABCValues, T>  // capture(match.not(abc.letter)) means all letters except that one
       : Extract<ABCValues, Captured>;  // else again just accept everything that matches the captured spec
 
@@ -189,7 +189,7 @@ export type IntoSpec<
   B extends ABC.AnyAlphabet = ABC.AnyAlphabet,
   Feature extends Layers.AccentFeatures<A> = any,
 > = Record<
-  Layers.FeatureVariants<A, Feature>,
+  Layers.FeatureVariants<A, Feature>[`length`] extends 0 ? `default` : Layers.FeatureVariants<A, Feature>,
   | ArrayOr<ABC.ValuesOfABC<B>>
   | (
       (
@@ -216,7 +216,7 @@ export type TransformRule<
   type: TransformType.transformation
   from: CapturableOr<Captured, A>
   into: IntoSpec<Captured, A, A, Feature>
-  where: MatchSpec<A, ABCHistory>
+  where?: MatchSpec<A, ABCHistory>
 };
 
 export type PromoteRule<
@@ -229,7 +229,7 @@ export type PromoteRule<
   type: TransformType.promotion
   from: CapturableOr<Captured, A>
   into: IntoSpec<Captured, A, B, Feature>
-  where: MatchSpec<A, ABCHistory>
+  where?: MatchSpec<A, ABCHistory>
 };
 
 export type Rule<
@@ -250,7 +250,7 @@ export type TransformParam<
   Feature extends Layers.AccentFeatures<A>,
 > = {
   into: IntoSpec<Captured, A, B, Feature>
-  where: MatchSpec<A, ABCHistory>
+  where?: MatchSpec<A, ABCHistory>
 };
 
 // export type CaptureApplier<
