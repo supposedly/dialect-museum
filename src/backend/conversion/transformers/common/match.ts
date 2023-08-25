@@ -7,19 +7,23 @@ type Guards = {
   bigint: bigint
   boolean: boolean
   symbol: symbol
+  undefined: undefined
+  null: null,
+  any: ValuesOf<Omit<Guards, `any`>> | {[key: number]: Guards[`any`]} & {length: number} | {[key: string]: Guards[`any`]}
 };
 type Primitive = ValuesOf<Guards>;
 type PrimitiveToString<
   T extends Primitive,
   _Helper = keyof Guards,
-  _GuardsEntries = _Helper extends keyof Guards ? [_Helper, Guards[_Helper]] : never
+  _GuardsEntries = (_Helper extends keyof Guards ? [_Helper, Guards[_Helper]] : never)
 > = _GuardsEntries extends [infer S, T] ? S : never;
-
-type ArrayOr<T> = T | ReadonlyArray<T>;
 
 export type Match =
   | {
     match: `single`
+    value: MatchSchema
+  } | {
+    match: `literal`
     value: MatchSchema
   } | {
     match: `any`
@@ -38,7 +42,7 @@ export type Match =
     }
   } | {
     match: `custom`
-    value: (arg: UnionToIntersection<ArrayOr<Primitive> | ArrayOr<Match>>) => boolean
+    value: (other: never) => boolean
   };
 
 type PickMatch<M extends Match[`match`]> = Extract<Match, {match: M}>;
@@ -50,6 +54,8 @@ export type MatchSubtypes<T> =
   : T extends MatchInstance<`any`> ? MatchInstance<`single`, T[`value`][number]> | MatchInstance<`any`, ReadonlyArray<T[`value`][number]>>
   : T extends MatchInstance<`all`> ? MatchInstance<`single`, UnionToIntersection<T[`value`][number]>>
   : T extends MatchInstance<`guard`> ? MatchInstance<`single`, Guards[T[`value`]]> | MatchInstance<`any`, ReadonlyArray<Guards[T[`value`]]>>
+  // todo: this needs to incorporate MatchAsType<> i think (but does something similar apply to the others then?)
+  : T extends MatchInstance<`array`> ? MatchInstance<`any`, ReadonlyArray<T>>
   : T;
 
 type MatchesExtendingTuple<T> =
@@ -68,7 +74,7 @@ type MatchesExtendingTuple<T> =
 export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
   | (
     T extends MatchInstance<infer _ extends Match[`match`]>
-      ? MatchSubtypes<T>
+      ? MatchSubtypes<T> | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
       : T extends MatchSchema ? (
         | MatchInstance<`single`, T>
         | MatchInstance<`any`, ReadonlyArray<T>>
@@ -82,14 +88,14 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
         | MatchesExtendingTuple<T>
         | (Tail[number] extends Head ? MatchInstance<`array`, {length: T[`length`], fill: Head | MatchesExtending<Head>}> : never)
       )
-      : 
-    T extends ReadonlyArray<infer U extends MatchSchema>
-      ? MatchInstance<`array`, {length: T[`length`], fill: U | MatchesExtending<U>}>
-      : never
+      : T extends ReadonlyArray<infer U extends MatchSchema>
+        ? MatchInstance<`array`, {length: T[`length`], fill: U | MatchesExtending<U>}>
+        : never
   )
   | (boolean extends T ? PickMatch<`guard`> & {value: `boolean`} : never)
   | (_Primitive extends T ? T extends Primitive ? PickMatch<`guard`> & {value: PrimitiveToString<T>} : never : never);
 
+export type DeepMatchAsType<T> = {[K in keyof T]: DeepMatchAsType<MatchAsType<T[K]>>};
 export type MatchAsType<T> = 
   T extends MatchInstance<`array`> ? {readonly length: MatchAsType<T[`value`][`length`]>} & ReadonlyArray<MatchAsType<T[`value`][`fill`]>>
   : T extends MatchInstance<`guard`> ? Guards[MatchAsType<T[`value`]>]
@@ -99,7 +105,7 @@ export type MatchAsType<T> =
   : T extends MatchInstance<`single`> ? T[`value`]
   : T;
 
-type MatchSchema =
+export type MatchSchema =
   | Primitive
   | Match
   | ReadonlyArray<MatchSchema>
@@ -116,7 +122,101 @@ export type MatchSchemaOf<O> =
     : {readonly [K in keyof O]?: MatchSchemaOf<O[K]>}
   );
 
+const matchFactory = <const T extends Match[`match`]>(match: T) => {
+  return <const V extends ValueOfMatch<T>>(value: V) => ({
+    match,
+    value
+  });
+};
+
+export const match: {[M in Match as M[`match`]]: <const T extends M[`value`]>(value: T) => {match: M[`match`], value: T}} = {
+  single: matchFactory(`single`),
+  literal: matchFactory(`literal`),
+  any: matchFactory(`any`),
+  all: matchFactory(`all`),
+  array: matchFactory(`array`),
+  guard: matchFactory(`guard`),
+  custom: matchFactory(`custom`),
+};
+
+function isLiteral(o: any): o is Record<string, any> {
+  return o && Object.getPrototypeOf(o) === Object.prototype;
+}
+
+export const matchers = {
+  single<const Self extends ValueOfMatch<`single`>>(self: Self, other: unknown): boolean {
+    if (matchers.literal(
+      {
+        match: {match: `any`, value: Object.keys(this) as ReadonlyArray<Match[`match`]>},
+        value: {match: `guard`, value: `any`}
+      },
+      self
+    )) {
+      return (this[self[`match`]] as any)(self[`value`], other);
+    }
+    return this.literal(self, other);
+  },
+  literal<const Self extends ValueOfMatch<`literal`>>(self: Self, other: unknown): other is DeepMatchAsType<Self> {
+    if (Array.isArray(self)) {
+      if (!Array.isArray(other)) {
+        return false;
+      }
+      return self.every((item, idx) => item === other[idx]);
+    }
+    if (isLiteral(self)) {
+      if (!isLiteral(other)) {
+        return false;
+      }
+      return Object.keys(self).every(k => k in other && this.single((self as any)[k], other[k]))
+    }
+    return self === other;
+  },
+  any<const Self extends ValueOfMatch<`any`>>(self: Self, other: unknown): boolean {
+    return self.some(item => this.single(item, other));
+  },
+  all<const Self extends ValueOfMatch<`all`>>(self: Self, other: unknown): boolean {
+    return self.every(item => this.single(item, other));
+  },
+  guard<const Self extends ValueOfMatch<`guard`>>(self: Self, other: unknown): other is Guards[Self] {
+    if (self === `any`) {
+      return true;
+    }
+    if (self === `null`) {
+      return other === null;
+    }
+    return typeof other === self;
+  },
+  array<const Self extends ValueOfMatch<`array`>>({length, fill}: Self, other: unknown): boolean {
+    return Array.isArray(other) && this.single({length}, other) && other.every(item => item === fill);
+  },
+  custom<const Self extends ValueOfMatch<`custom`>>(self: Self, other: unknown): boolean {
+    // XXX: more elegant way to make the compiler happy here?
+    return self(other as never);
+  }
+} satisfies {[M in Match as M[`match`]]: <const Self extends M[`value`]>(self: Self, other: unknown) => boolean};
+
+declare const bruv: any;
+if (matchers.literal({match: `any`, value: Object.keys(matchers) as ReadonlyArray<Match[`match`]>} as const, bruv)) {
+  bruv
+}
+
+type Uh = MatchAsType<{
+  match: {match: `any`, value: ReadonlyArray<Match[`match`]>},
+  value: {match: `guard`, value: `any`}
+}>;
+
+export function matches<Self extends MatchSchema>(self: Self, other: unknown) {}
+
+const oops = 5 satisfies MatchSchema;
+const eewr = {} as const as any satisfies MatchSchemaOf<typeof oops>;
+
 /*
+const bruh = {a: {match: `array`, value: {length: {match: `guard`, value: `number`}, fill: {match: `guard`, value: `number`}}}} as const satisfies MatchSchema;
+const bruv = {a: {match: `custom`, value: (arg) => true}} as const satisfies MatchSchemaOf<typeof bruh>;
+
+type Frick = MatchSchemaOf<1[]>;
+const freck = {match: `custom`, value: arg => arg[2] === arg[1]} satisfies Frick;
+
 type tset<O> = {readonly [K in keyof O]+?: MatchSchemaOf<O[K]>};
 
 const test = {a: [1, 2, [{match: `any`, value: [3, 4]}]]} as const satisfies MatchSchema;
@@ -159,4 +259,36 @@ type D<T> = T extends readonly [] | readonly [infer Head, ...infer Tail] ? {[K i
 type ER = D<[1, 2]>
 
 type What = MatchesExtending<2 | 1 | 3>;
+
+const a = {a: 1, b: {match: `array`, value: {length: {match: `guard`, value: `number`}, fill: {match: `any`, value: [1, 2, 3]}}}} as const satisfies MatchSchema;
+const b = {a: 1, b: {match: `array`, value: {length: {match: `guard`, value: `number`}, fill: 1}}} as const satisfies MatchSchemaOf<typeof a>;
+const c = {a: 1, b: {match: `array`, value: {length: {match: `guard`, value: `number`}, fill: {match: `any`, value: [2, 3]}}}} as const satisfies MatchSchemaOf<typeof a>;
+const d = {a: 1, b: {match: `array`, value: {length: {match: `any`, value: [5, 6, 7]}, fill: 3}}} as const satisfies MatchSchemaOf<typeof a>;
+const e = {
+  b: [1, 2, 3, 2, 3]
+} as const satisfies MatchSchemaOf<typeof a>;
+const f = {
+  a: 1,
+  b: [3, 3, 3, 3, 3]
+} as const satisfies MatchSchemaOf<typeof d>;
+const g = {
+  a: 1,
+  b: {4: 3}
+} as const satisfies MatchSchemaOf<typeof f>;
+
+const fna = {a: 1, b: match.array({length: match.guard(`number`), fill: match.any([`1`, `2`, `3`, 1, 2, 3])})} as const satisfies MatchSchema;
+const fnb = {a: 1, b: match.array({length: match.guard(`number`), fill: `1`})} as const satisfies MatchSchemaOf<typeof fna>;
+const fnc = {a: 1, b: match.array({length: match.guard(`number`), fill: match.any([`2`, `3`])})} as const satisfies MatchSchemaOf<typeof fna>;
+const fnd = {a: 1, b: match.array({length: {match: `single`, value: 5}, fill: {match: `single`, value: 3}})} as const satisfies MatchSchemaOf<typeof fna>;
+const fne = {
+  b: [1, 2, 3, 2, 3]
+} as const satisfies MatchSchemaOf<typeof fna>;
+const fnf = {
+  a: 1,
+  b: [3, 3, 3, 3, 3]
+} as const satisfies MatchSchemaOf<typeof fnd>;
+const fng = {
+  a: 1,
+  b: {4: 3}
+} as const satisfies MatchSchemaOf<typeof fnf>;
 */
