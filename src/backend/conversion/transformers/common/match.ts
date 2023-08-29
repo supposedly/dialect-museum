@@ -1,7 +1,6 @@
 import type {Merge} from "ts-toolbelt/out/Object/Merge";
 
-import {type ValuesOf} from "../../utils/typetools";
-// type ValuesOf<O> = O[keyof O];
+type ValuesOf<O> = O[keyof O];
 type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? (U extends any ? I extends U ? I : never : never) : never;
 
 export type Guards = {
@@ -12,6 +11,7 @@ export type Guards = {
   symbol: symbol
   undefined: undefined
   null: null,
+  any: ValuesOf<Omit<Guards, `any`>> | {[key: number]: Guards[`any`]} & {length: number} | {[key: string]: Guards[`any`]}
 };
 type Primitive = ValuesOf<Guards>;
 type PrimitiveToString<
@@ -50,10 +50,8 @@ export type Match =
 type PickMatch<M extends Match[`match`]> = Extract<Match, {match: M}>;
 type ValueOfMatch<M extends Match[`match`]> = PickMatch<M>[`value`];
 type MatchInstance<M extends Match[`match`], V extends ValueOfMatch<M> = ValueOfMatch<M>> = {match: M, value: V};
-type UMatchInstance<M extends Match[`match`], V> = {match: M, value: V};
-
-type AsTypeOr<M extends Match> = M | MatchAsType<M>;
-type ArrayToIntersection<Arr extends ReadonlyArray<unknown>> = Arr extends [infer Head, ...infer Tail] ? Head & ArrayToIntersection<Tail> : {};
+type ArrayTypeMatchInstance<V extends {length: unknown, fill: unknown}> = V extends ValueOfMatch<`array`> ? {match: `array`, value: V} : never;
+type UMatchInstance<M extends Match[`match`], V> = {match: M, value: V}
 
 type MatchesExtendingTuple<T> =
   T extends readonly [infer Head extends MatchSchema, ...infer Tail extends ReadonlyArray<MatchSchema>]
@@ -64,10 +62,10 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
   | (
     T extends Match ? (
       | T
-      | MatchInstance<`single`, T | MatchAsType<T>>
-      | MatchInstance<`any`, ReadonlyArray<T | MatchAsType<T> | MatchesExtending<T>>>
-      | MatchInstance<`all`, ReadonlyArray<T | MatchAsType<T> | MatchesExtending<T>>>
-      | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
+      | UMatchInstance<`single`, T | Partial<MatchAsType<T>>>
+      | UMatchInstance<`any`, ReadonlyArray<T | Partial<MatchAsType<T>> | MatchesExtending<T>>>
+      | UMatchInstance<`all`, ReadonlyArray<T | Partial<MatchAsType<T>> | MatchesExtending<T>>>
+      | UMatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
     ) //MatchSubtypes<T> | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
     : T extends MatchSchema ? (
       | MatchInstance<`single`, T>
@@ -80,7 +78,7 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
     T extends readonly [infer Head extends MatchSchema, ...infer Tail extends ReadonlyArray<MatchSchema>]
     ? (
       | MatchesExtendingTuple<T>
-      | (Tail[number] extends Head ? MatchInstance<`array`, {length: T[`length`], fill: MatchSchemaOf<Head>}> : never)
+      | (Tail[number] extends Head ? ArrayTypeMatchInstance<{length: T[`length`], fill: MatchSchemaOf<Head>}> : never)
     )
     : T extends ReadonlyArray<infer U extends MatchSchema>
     ? MatchInstance<`array`, {length: T[`length`], fill: U}>
@@ -89,14 +87,16 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
   | (boolean extends T ? MatchInstance<`guard`, `boolean`> : never)
   | (_Primitive extends T ? T extends Primitive ? MatchInstance<`guard`, PrimitiveToString<T>> : never : never);
 
+type MergeArray<Arr extends ReadonlyArray<unknown>> = Arr extends readonly [infer Head extends object, ...infer Tail] ? Merge<MatchAsType<Head>, MergeArray<Tail>> : {};
+
 export type DeepMatchAsType<T> = {[K in keyof T]: DeepMatchAsType<MatchAsType<T[K]>>};
 export type MatchAsType<T> =
-  T extends MatchInstance<`array`> ? Merge<{readonly length: MatchAsType<T[`value`][`length`]>}, Readonly<ArrayLike<MatchAsType<T[`value`][`fill`]>>>>
+  T extends MatchInstance<`array`> ? {readonly length: MatchAsType<T[`value`][`length`]>} & Readonly<ArrayLike<MatchAsType<T[`value`][`fill`]>>>
   : T extends MatchInstance<`guard`> ? Guards[T[`value`]]
   : T extends MatchInstance<`custom`> ? T[`value`]
-  : T extends MatchInstance<`any`> ? T[`value`][number]
-  : T extends MatchInstance<`all`> ? ArrayToIntersection<T[`value`]>
-  : T extends MatchInstance<`single`> ? T[`value`]
+  : T extends MatchInstance<`any`> ? MatchAsType<T[`value`][number]>
+  : T extends MatchInstance<`all`> ? MatchAsType<MergeArray<T[`value`]>>
+  : T extends MatchInstance<`single`> ? MatchAsType<T[`value`]>
   : T;
 
 export type MatchSchema =
@@ -174,9 +174,9 @@ export const matchers = {
     return self.every(item => this.single(item, other));
   },
   guard<const Self extends ValueOfMatch<`guard`>>(self: Self, other: unknown): other is Guards[Self] {
-    // if (self === `any`) {
-    //   return true;
-    // }
+    if (self === `any`) {
+      return true;
+    }
     if (self === `null`) {
       return other === null;
     }
@@ -291,4 +291,8 @@ const fng = {
   a: 1,
   b: {4: 3},
 } as const satisfies MatchSchemaOf<typeof fnf>;
+
+const tetetst = {match: `all`, value: [{match: `any`, value: [{a: 1}, {b: 1}]}, {c: 1}]} as const satisfies MatchSchema;
+type Huh = MatchSchemaOf<typeof tetetst>;
+const etetst2 = {a: 1, b: 1, c: 1} as const satisfies MatchSchemaOf<typeof tetetst>;
 */
