@@ -22,29 +22,29 @@ type PrimitiveToString<
 
 export type Match =
   | {
-    match: `single`
+    readonly match: `single`
     value: MatchSchema
   } | {
-    match: `literal`
-    value: MatchSchema
+    readonly match: `literal`
+    readonly value: MatchSchema
   } | {
-    match: `any`
-    value: ReadonlyArray<MatchSchema>
+    readonly match: `any`
+    readonly value: ReadonlyArray<MatchSchema>
   } | {
-    match: `all`
-    value: ReadonlyArray<MatchSchema>
+    readonly match: `all`
+    readonly value: ReadonlyArray<MatchSchema>
   } | {
-    match: `guard`
-    value: keyof Guards
+    readonly match: `guard`
+    readonly value: keyof Guards
   } | {
-    match: `array`
-    value: {
+    readonly match: `array`
+    readonly value: {
       length: number | MatchesExtending<number>
       fill: MatchSchema
     }
   } | {
-    match: `custom`
-    value: (other: never) => boolean
+    readonly match: `custom`
+    readonly value: (other: never) => boolean
   };
 
 type PickMatch<M extends Match[`match`]> = Extract<Match, {match: M}>;
@@ -61,11 +61,11 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
     T extends Match ? (
       | T
       | Partial<MatchAsType<T>>
-      | (T extends PickMatch<`single`> ? never : MatchInstance<`single`, T | Partial<MatchAsType<T>>>)
+      | (T extends PickMatch<`single`> ? never : MatchInstance<`single`, T | PartialMatchAsType<T>>)
       | (T extends PickMatch<`array`> ? MatchInstance<`array`, {
-        length: MatchesExtending<T[`value`][`length`]>,
-        fill: MatchesExtending<T[`value`][`fill`]>
-      }> : never)
+          length: T[`value`][`length`] | MatchesExtending<T[`value`][`length`]>,
+          fill: T[`value`][`fill`] | MatchesExtending<T[`value`][`fill`]>
+        }> : never)
       | MatchInstance<`any`, ReadonlyArray<T | MatchSchemaOf<T>>>
       | MatchInstance<`all`, ReadonlyArray<T | MatchSchemaOf<T>>>
       | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
