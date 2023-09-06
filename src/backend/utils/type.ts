@@ -1,5 +1,5 @@
 import {Any, List, Union, Object as Obj} from 'ts-toolbelt';
-import {type MergeUnion, type UnionOf, type Zip, type ZipObj} from '../../utils/typetools';
+import {type MergeUnion, type UnionOf, type Zip, type ZipObj} from './typetools';
 
 export type UnknownList = List.List<unknown>;  // using `unknown[]` fails when `readonly unknown[]` is expected(?)
 export type OrderedObj<K = Any.Key, V = unknown> = List.List<[K, V]>;
