@@ -47,8 +47,8 @@ export type Match =
     readonly value: (other: never) => boolean
   };
 
-type PickMatch<M extends Match[`match`]> = Extract<Match, {match: M}>;
-type ValueOfMatch<M extends Match[`match`]> = PickMatch<M>[`value`];
+export type PickMatch<M extends Match[`match`]> = Extract<Match, {match: M}>;
+export type ValueOfMatch<M extends Match[`match`]> = PickMatch<M>[`value`];
 export type MatchInstance<M extends Match[`match`], V> = {match: M, value: V};
 
 type MatchesExtendingTuple<T> =
@@ -58,7 +58,7 @@ type MatchesExtendingTuple<T> =
 
 export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
   | (
-    T extends Match ? (
+    [T] extends [Match] ? (
       | T
       | Partial<MatchAsType<T>>
       | (T extends PickMatch<`single`> ? never : MatchInstance<`single`, T | PartialMatchAsType<T>>)
@@ -70,7 +70,7 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
       | MatchInstance<`all`, ReadonlyArray<T | MatchSchemaOf<T>>>
       | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
     ) //MatchSubtypes<T> | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
-    : T extends MatchSchema ? (
+    : [T] extends [MatchSchema] ? (
       | MatchInstance<`single`, Partial<T>>
       | MatchInstance<`any`, ReadonlyArray<T | MatchSchemaOf<T>>>
       | MatchInstance<`all`, ReadonlyArray<T | MatchSchemaOf<T>>>
@@ -162,17 +162,13 @@ function isLiteral(o: any): o is Record<string, any> {
 }
 
 export const matchers = {
-  single<const Self extends ValueOfMatch<`single`>>(self: Self, other: unknown): boolean {
-    if (matchers.literal(
-      {
-        match: {match: `any`, value: Object.keys(this) as ReadonlyArray<Match[`match`]>},
-        value: {match: `guard`, value: `any`},
-      },
-      self
-    )) {
-      return (this[self[`match`]] as any)(self[`value`], other);
+  single<const Self extends ValueOfMatch<`single`>>(self: Self, other: unknown): other is MatchAsType<Self> {
+    if (isLiteral(self) && `match` in self && `value` in self) {
+      if (typeof self.match === `string` && self.match in matchers) {
+        return (matchers[self.match as keyof typeof matchers] as any)(self.value, other);
+      }
     }
-    return this.literal(self, other);
+    return matchers.literal(self, other);
   },
   literal<const Self extends ValueOfMatch<`literal`>>(self: Self, other: unknown): other is MatchAsType<Self> {
     if (Array.isArray(self)) {
@@ -185,15 +181,15 @@ export const matchers = {
       if (!isLiteral(other)) {
         return false;
       }
-      return Object.keys(self).every(k => k in other && this.single((self as any)[k], other[k]))
+      return Object.keys(self).every(k => k in other && matchers.single((self as any)[k], other[k]))
     }
     return self === other;
   },
   any<const Self extends ValueOfMatch<`any`>>(self: Self, other: unknown): boolean {
-    return self.some(item => this.single(item, other));
+    return self.some(item => matchers.single(item, other));
   },
   all<const Self extends ValueOfMatch<`all`>>(self: Self, other: unknown): boolean {
-    return self.every(item => this.single(item, other));
+    return self.every(item => matchers.single(item, other));
   },
   guard<const Self extends ValueOfMatch<`guard`>>(self: Self, other: unknown): other is Guards[Self] {
     if (self === `any`) {
