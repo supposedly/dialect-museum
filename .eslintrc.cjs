@@ -5,7 +5,7 @@ module.exports = {
   "root": true,
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.json",
+    "project": "tsconfig.eslint.json",
     "ecmaVersion": "latest"
   },
   "plugins": [
@@ -20,13 +20,15 @@ module.exports = {
   "ignorePatterns": [
     "grammar.ts",
     "*.config.js",
-    "*.config.ts"
+    "*.config.ts",
+    ".eslintrc.cjs",
+    "test.*.ts"
   ],
   "settings": {
     "import/resolver": {
       "node": {
         "extensions": [
-          ".tsx"
+          ".tsx",
         ]
       }
     }

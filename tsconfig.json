@@ -1,6 +1,10 @@
 {
     "include": [
-        "src/**/*",
+        "src/**/*.ts",
+        "src/**/*.d.ts",
+        "src/**/*.tsx",
+        "src/**/*.vue",
+        "test.alsdfjalsdfaklsdfjalskjf.ts"
     ],
     "exclude": [
         "node_modules/*",
@@ -21,6 +25,7 @@
         "strict": true,
         "noImplicitAny": true,
         "exactOptionalPropertyTypes": true,
+        "noErrorTruncation": true,
         /* below are options i copied in once i removed the 'extends svelte' thing */
         "moduleResolution": "node",
         "isolatedModules": true,

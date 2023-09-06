@@ -1,5 +1,6 @@
 import {Function as Func, Union} from "ts-toolbelt";
 import {type Key} from "ts-toolbelt/out/Any/Key";
+import type { ReadonlyDeep } from "ts-toolbelt/out/Object/Readonly";
 
 export type Optional<T> = T | undefined;
 
@@ -24,6 +25,9 @@ export type UniqueArray<T extends unknown[]> = T[`length`] extends UniqueLength<
 // some compilers and not others...
 export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
 export type MergeUnion<U> = UnionToIntersection<U> extends infer O ? {[K in keyof O]: O[K]} : never;
+
+// https://stackoverflow.com/a/59687759
+export type IsUnion<T, U extends T = T> =  T extends unknown ? [U] extends [T] ? false : true : false;
 
 // Same as MergeUnion<> but recursive
 export type DeepMerge<O> = [O] extends [object] ? {
@@ -67,6 +71,9 @@ export type ValuesOf<O> = O[keyof O];
 export type ArrayOr<T> = T | T[];
 
 export type Narrow<T> = Func.Narrow<T>;
+
+// export type DeepReadonly<T> = {readonly [K in keyof T]: DeepReadonly<T[K]>}
+export type DeepReadonly<T> = T extends unknown ? Readonly<ReadonlyDeep<T>> : never;
 
 export function narrow<T>(o: Narrow<T>): T {
   return o as T;

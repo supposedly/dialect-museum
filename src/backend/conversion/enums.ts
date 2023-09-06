@@ -267,10 +267,10 @@ export const $PPWazn = extend($HigherWazn, `
 export type PPWazn = typeof $PPWazn;
 
 export const $TamToken = enumerate(`tam`, `
-  pst
-  sbjv
-  ind
-  imp
+  past
+  subjunctive
+  indicative
+  imperative
 `);
 export type TamToken = typeof $TamToken;
 
@@ -297,8 +297,8 @@ export const $Nb = enumerate(``, `
 export type Nb = typeof $Nb;
 
 export const $Gn = enumerate(``, `
-  masc = m
-  fem = f
+  masculine = m
+  feminine = f
   common = c
 `, false);
 export type Gn = typeof $Gn;
