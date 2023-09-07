@@ -171,7 +171,7 @@ const verb = templated.promote.verb(underlying, {
     ],
   },
   ftv3vl: {
-    feed: (vowel1: `a` | `i`, vowel2: `a` | `i`) => ({root: [f, c, l]}) => [
+    feed: (vowel1: `a` | `i`, vowel2: `a` | `i`) => ({root: [f, c, _]}) => [
       {consonant: f},
       {consonant: letters.consonant.t},
       {vowel: letters.vowel[vowel1]},
@@ -180,7 +180,7 @@ const verb = templated.promote.verb(underlying, {
     ],
   },
   ftv3v: {
-    feed: (vowel1: `a` | `i`, vowel2: `a` | `i`) => ({root: [f, c, l]}) => [
+    feed: (vowel1: `a` | `i`, vowel2: `a` | `i`) => ({root: [f, c, _]}) => [
       {consonant: f},
       {consonant: letters.consonant.t},
       {vowel: letters.vowel[vowel1]},

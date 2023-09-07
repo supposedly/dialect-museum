@@ -18,8 +18,8 @@ export type Alphabet = {
   ctx: Record<string, Match>
   types: Record<string, Record<string, Match>>
   traits: Record<string, Record<string, MatchSchema>>
-  transform: Record<string, Function>
-  promote: Record<string, Function>
+  transform: Record<string, (...args: never[]) => unknown>
+  promote: Record<string, (...args: never[]) => unknown>
 };
 
 export type ObjectFromPath<Path extends ReadonlyArray<keyof any>, Leaf> = Path extends [infer Head extends keyof any, ...infer Tail extends Array<keyof any>]
@@ -142,9 +142,9 @@ export const alphabet = <
   const O extends AlphabetInput,
   const Traits extends {[K in keyof O[`types`]]?: Record<string, ApplyMatchSchemaOf<O[`types`][K]>>}
 >(
-  alphabet: O,
-  traits: Traits
-): {
+    alphabet: O,
+    traits: Traits
+  ): {
   name: O[`name`]
   types: NormalizeToMatch<O[`types`]>
   ctx: NormalizeToMatch<O[`ctx`]>
@@ -168,10 +168,10 @@ export const alphabet = <
     ) => R
   }
 } => ({
-  name: alphabet.name,
-  ctx: alphabet.ctx as any,
-  types: alphabet.types as any,
-  traits,
-  transform: {} as any,
-  promote: {} as any,
-});
+    name: alphabet.name,
+    ctx: alphabet.ctx as any,
+    types: alphabet.types as any,
+    traits,
+    transform: {} as any,
+    promote: {} as any,
+  });

@@ -181,7 +181,7 @@ export const matchers = {
       if (!isLiteral(other)) {
         return false;
       }
-      return Object.keys(self).every(k => k in other && matchers.single((self as any)[k], other[k]))
+      return Object.keys(self).every(k => k in other && matchers.single((self as any)[k], other[k]));
     }
     return self === other;
   },
