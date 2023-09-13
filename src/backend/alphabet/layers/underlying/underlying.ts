@@ -3,12 +3,12 @@ import {alphabet} from "../../alphabet";
 export const underlying = alphabet({
   name: `underlying`,
   context: {
-    affected: {match: `guard`, value: `boolean`},
+    affected: {match: `type`, value: `boolean`},
   },
   types: {
     consonant: {
-      voiced: {match: `guard`, value: `boolean`},
-      emphatic: {match: `guard`, value: `boolean`},
+      voiced: {match: `type`, value: `boolean`},
+      emphatic: {match: `type`, value: `boolean`},
       articulator: [`throat`, `tongue`, `lips`],
       location: [
         `glottis`,
@@ -33,9 +33,9 @@ export const underlying = alphabet({
     vowel: {
       height: [`high`, `mid`, `low`],
       backness: [`front`, `mid`, `back`],
-      /* tense: {match: `guard`, value: `boolean`}, */
-      round: {match: `guard`, value: `boolean`},
-      long: {match: `guard`, value: `boolean`},
+      /* tense: {match: `type`, value: `boolean`}, */
+      round: {match: `type`, value: `boolean`},
+      long: {match: `type`, value: `boolean`},
     },
     suffix: {
       value: [

@@ -7,22 +7,22 @@ import {underlying} from "../underlying/underlying";
 export const templated = alphabet({
   name: `templated`,
   context: {
-    affected: {match: `guard`, value: `boolean`},
+    affected: {match: `type`, value: `boolean`},
   },
   types: {
     boundary: {
-      word: {match: `guard`, value: `boolean`},
-      pause: {match: `guard`, value: `boolean`},
-      sentence: {match: `guard`, value: `boolean`},
+      word: {match: `type`, value: `boolean`},
+      pause: {match: `type`, value: `boolean`},
+      sentence: {match: `type`, value: `boolean`},
     },
     literal: {
-      value: {match: `guard`, value: `string`},
+      value: {match: `type`, value: `string`},
     },
     word: {
       value: {
         match: `array`,
         value: {
-          length: {match: `guard`, value: `number`},
+          length: {match: `type`, value: `number`},
           fill: {
             match: `any`,
             value: [
@@ -63,7 +63,7 @@ export const templated = alphabet({
           length: {match: `any`, value: [3, 4]},
           fill: {
             ...underlying.types.consonant,
-            weak: {match: `guard`, value: `boolean`},
+            weak: {match: `type`, value: `boolean`},
           },
         },
       },
@@ -97,7 +97,7 @@ export const templated = alphabet({
           length: {match: `any`, value: [3, 4]},
           fill: {
             ...underlying.types.consonant,
-            weak: {match: `guard`, value: `boolean`},
+            weak: {match: `type`, value: `boolean`},
           },
         },
       },
@@ -110,7 +110,7 @@ export const templated = alphabet({
           length: {match: `any`, value: [3, 4]},
           fill: {
             ...underlying.types.consonant,
-            weak: {match: `guard`, value: `boolean`},
+            weak: {match: `type`, value: `boolean`},
           },
         },
       },
@@ -140,13 +140,13 @@ export const templated = alphabet({
           length: {match: `any`, value: [3, 4]},
           fill: {
             ...underlying.types.consonant,
-            weak: {match: `guard`, value: `boolean`},
+            weak: {match: `type`, value: `boolean`},
           },
         },
       },
     },
     number: {
-      value: {match: `guard`, value: `number`},
+      value: {match: `type`, value: `number`},
     },
     suffix: underlying.types.suffix,
     delimiter: underlying.types.delimiter,

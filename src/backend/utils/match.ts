@@ -34,7 +34,7 @@ export type Match =
     readonly match: `all`
     readonly value: ReadonlyArray<MatchSchema>
   } | {
-    readonly match: `guard`
+    readonly match: `type`
     readonly value: keyof Guards
   } | {
     readonly match: `array`
@@ -88,8 +88,8 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
     ? MatchInstance<`array`, {length: T[`length`], fill: U}>
     : never
   )
-  | (boolean extends T ? MatchInstance<`guard`, `boolean`> : never)
-  | (_Primitive extends T ? T extends Primitive ? MatchInstance<`guard`, PrimitiveToString<T>> : never : never);
+  | (boolean extends T ? MatchInstance<`type`, `boolean`> : never)
+  | (_Primitive extends T ? T extends Primitive ? MatchInstance<`type`, PrimitiveToString<T>> : never : never);
 
 
 type Merge<A, B> = {
@@ -113,7 +113,7 @@ export type MatchAsType<T> =
     readonly [index: number]: MatchAsType<T[`value`][`fill`]>
     [Symbol.iterator](): Iterator<MatchAsType<T[`value`][`fill`]>>
   }
-  : T extends PickMatch<`guard`> ? Guards[T[`value`]]
+  : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? T[`value`]
   : T extends PickMatch<`any`> ? MatchAsType<T[`value`][number]>
   : T extends PickMatch<`all`> ? MatchAsType<MergeArray<T[`value`]>>
@@ -127,7 +127,7 @@ export type PartialMatchAsType<T> =
     readonly [index: number]: PartialMatchAsType<T[`value`][`fill`]>
     [Symbol.iterator]?(): Iterator<PartialMatchAsType<T[`value`][`fill`]>>
   }
-  : T extends PickMatch<`guard`> ? Guards[T[`value`]]
+  : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? T[`value`]
   : T extends PickMatch<`any`> ? PartialMatchAsType<T[`value`][number]>
   : T extends PickMatch<`all`> ? PartialMatchAsType<MergeArray<T[`value`]>>
@@ -196,7 +196,7 @@ export const matchers = {
   all<const Self extends ValueOfMatch<`all`>>(self: Self, other: unknown): boolean {
     return self.every(item => matchers.single(item, other));
   },
-  guard<const Self extends ValueOfMatch<`guard`>>(self: Self, other: unknown): other is Guards[Self] {
+  type<const Self extends ValueOfMatch<`type`>>(self: Self, other: unknown): other is Guards[Self] {
     if (self === `any`) {
       return true;
     }
