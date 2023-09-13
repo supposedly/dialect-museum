@@ -1,7 +1,5 @@
-import {T} from "ts-toolbelt";
 import {type Match, type MatchSchemaOf, type MatchSchema, type MatchAsType, type MatchInstance} from "../utils/match";
 import {type ValuesOf} from "../utils/typetools";
-import path from "path";
 
 export type AlphabetInput = {
   name: string
@@ -149,7 +147,9 @@ function normalizeToMatch<const O extends Record<string, Match | ReadonlyArray<s
 ): NormalizeToMatch<O> {
   const ret = {} as Record<string, Match>;
   for (const key in o) {
-    ret[key] = Array.isArray(o[key]) ? {match: `any`, value: o[key] as string[]} : o[key] as Match;
+    ret[key] = Array.isArray(o[key])
+      ? {match: `any`, value: o[key] as string[]}
+      : o[key] as Match;
   }
   return ret as NormalizeToMatch<O>;
 }
@@ -167,7 +167,7 @@ function objectFromPath<
   return ret;
 }
 
-function qualifiedPathsOf<
+export function qualifiedPathsOf<
   const O extends Record<string, Match | ReadonlyArray<string> | Record<string, MatchSchema>>,
   const Path extends ReadonlyArray<string>,
 >(

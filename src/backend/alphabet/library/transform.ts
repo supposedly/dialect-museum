@@ -1,5 +1,5 @@
 import {MergeUnion, ValuesOf} from "../../utils/typetools";
-import {QualifiedPathsOf, Modify, AlphabetInput, Promote, ApplyMatchAsType} from "../alphabet";
+import {QualifiedPathsOf, Modify, AlphabetInput, Promote, ApplyMatchAsType, qualifiedPathsOf} from "../alphabet";
 
 type OptionalParams<T> = T | {feed: (...args: never[]) => T};
 
@@ -37,6 +37,20 @@ type ConvertShorthand<
     : never
 };
 
+function fixShorthand(args: ReadonlyArray<Record<string, unknown>>) {
+  return args.map(o => {
+    if (`type` in o) {
+      return o;
+    }
+    const type = Object.keys(o).find(k => k !== `context`)!;
+    return {
+      type,
+      features: (o as Record<string, unknown>)[type],
+      context: o.context,
+    };
+  });
+}
+
 export function modify<
   const ABC extends AlphabetInput,
   const T extends keyof ABC[`types`] & string,
@@ -45,12 +59,14 @@ export function modify<
   abc: ABC,
   type: T,
   createLibrary: (
-    array: ConvertShorthand<ABC>,
+    fix: ConvertShorthand<ABC>,
     features: QualifiedPathsOf<ABC[`types`][T], [`features`]>,
   ) => R,
 ): R {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return createLibrary((): any => {}, abc.types[type] as any);
+  return createLibrary(
+    fixShorthand as ConvertShorthand<ABC>,
+    qualifiedPathsOf(abc.types[type] as ABC[`types`][T], [`features`])
+  );
 }
 
 export function promote<
@@ -63,8 +79,8 @@ export function promote<
   type: T,
   nextABC: NextABC,
   createLibrary: (
-    array: ConvertShorthand<NextABC>,
+    fix: ConvertShorthand<NextABC>,
   ) => R,
 ): R {
-  return createLibrary((): any => {});  // eslint-disable-line @typescript-eslint/no-explicit-any
+  return createLibrary(fixShorthand as ConvertShorthand<NextABC>);
 }
