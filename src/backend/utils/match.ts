@@ -13,12 +13,18 @@ export type Guards = {
     | {length: number, [index: number]: Guards[`any`]}
     | {[key: string]: Guards[`any`]}
 };
-type Primitive = ValuesOf<Guards>;
+type Primitive = (
+  | ValuesOf<Omit<Guards, `any`>>
+  | {length: number, [index: number]: Guards[`any`]}
+  | {[key: string]: Guards[`any`]}
+);
 type PrimitiveToString<
   T extends Primitive,
   _Helper = keyof Guards,
   _GuardsEntries = (_Helper extends keyof Guards ? [_Helper, Guards[_Helper]] : never)
 > = _GuardsEntries extends [infer S, T] ? S : never;
+
+type ArrayOr<T> = T | ReadonlyArray<T>;
 
 export type Match =
   | {
@@ -44,7 +50,9 @@ export type Match =
     }
   } | {
     readonly match: `custom`
-    readonly value: (other: never) => boolean
+    readonly value: (ArrayOr<Primitive> | ArrayOr<Match>) extends infer U
+      ? U extends unknown ? (arg: U) => boolean : never
+      : never
   };
 
 export type PickMatch<M extends Match[`match`]> = Extract<Match, {match: M}>;

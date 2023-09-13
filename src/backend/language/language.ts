@@ -15,7 +15,7 @@ export const language = <
       | {modify: {[T in keyof Pair[0][`types`]]: Modify<T, Pair[0]>}}
       | (Pair[1] extends undefined ? never : {
         promote: {
-          [T in keyof Pair[0][`types`]]: Promote<T, Pair[0], Pair[1] & Alphabet>
+          [T in keyof Pair[0][`types`]]: Promote<T, Pair[0], Pair[1] extends Alphabet ? Pair[1] : never>
         }
       })
     >
