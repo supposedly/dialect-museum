@@ -3,49 +3,54 @@ import {type MergeUnion, type ValuesOf} from "../utils/typetools";
 
 export type AlphabetInput = {
   name: string
-  ctx: Record<string, Match>
+  context: Record<string, Match>
   types: Record<
     string,
     Record<
       string,
-      | ReadonlyArray<string>
-      | Match
+      (ReadonlyArray<string> | Match)
     >
   >
 };
 export type Alphabet = {
   name: string
-  ctx: Record<string, Match>
+  context: Record<string, Match>
   types: Record<string, Record<string, Match>>
   traits: Record<string, Record<string, MatchSchema>>
-  transform: Record<string, (...args: never[]) => unknown>
+  modify: Record<string, (...args: never[]) => unknown>
   promote: Record<string, (...args: never[]) => unknown>
 };
 
-export type ObjectFromPath<Path extends ReadonlyArray<keyof any>, Leaf> = Path extends [infer Head extends keyof any, ...infer Tail extends Array<keyof any>]
+export type ObjectFromPath<
+  Path extends ReadonlyArray<string>,
+  Leaf
+> = Path extends [infer Head extends string, ...infer Tail extends Array<string>]
   ? {[K in Head]: ObjectFromPath<Tail, Leaf>}
   : Leaf;
 
-export type QualifiedPathsOf<O, Path extends Array<keyof any> = []> = {
-  [K in keyof O]: O[K] extends MatchInstance<`any`, ReadonlyArray<infer U extends string>> | ReadonlyArray<infer U extends string> ?
-    QualifiedPathsOf<{[J in U]: J}, [...Path, K]>
-    : O[K] extends Match ? ObjectFromPath<
-        Path,
-        <const M extends Partial<MatchAsType<O[K]>> extends infer Deferred ? Deferred : never>(m: M) => ObjectFromPath<[...Path, K], M>
-      >
-    : ObjectFromPath<Path, O[K]>
+export type QualifiedPathsOf<O, Path extends Array<string> = []> = {
+  [K in keyof O & string]: O[K] extends (
+    | MatchInstance<`any`, ReadonlyArray<infer U extends string>>
+    | ReadonlyArray<infer U extends string>
+   )
+    ? QualifiedPathsOf<{[J in U]: J}, [...Path, K]>
+    : O[K] extends Match
+      ? <const M extends Partial<MatchAsType<O[K]>> extends infer Deferred ? Deferred : never>(
+        m: M
+      ) => ObjectFromPath<[...Path, K], M>
+      : ObjectFromPath<Path, O[K]>
 };
 
 export type ApplyMatchSchemaOf<O> = {
-  [K in keyof O]?: O[K] extends infer Deferred ?
-    Deferred extends Match ? MatchSchemaOf<Deferred>
+  [K in keyof O]?: O[K] extends infer Deferred
+    ? Deferred extends Match ? MatchSchemaOf<Deferred>
     : Deferred extends ReadonlyArray<infer U extends MatchSchema> ? MatchSchemaOf<U>
     : never : never
 };
 export type ApplyMatchAsType<O> = {
   [K in keyof O]: O[K] extends infer Deferred
     ? Deferred extends Match ? MatchAsType<Deferred>
-    : Deferred extends ReadonlyArray<infer U extends MatchSchema> ? MatchAsType<U>
+    : Deferred extends ReadonlyArray<infer U extends string> ? U
     : never : never
 };
 export type NormalizeToMatch<O> = {
@@ -57,7 +62,7 @@ export type NormalizeToMatch<O> = {
 };
 
 /* 
-transform: {
+modify: {
   [T in keyof O[`types`]: <const R extends Record<string, unknown>>(
     createRules: (
       capture: <const C extends MatchSchemaOf<ProcessType<O[`types`][T]>> extends infer Deferred ? Deferred : never>(schema: C) => {
@@ -118,60 +123,102 @@ promote: {
 type InPlaceOrEject<A, B = A> = A | {[Dir in `left` | `right` | `replace`]?: B};
 
 type Modification<T extends keyof ABC[`types`], ABC extends AlphabetInput> =
-  ((input: ApplyMatchAsType<ABC[`types`][T]>) => ReadonlyArray<Partial<ApplyMatchAsType<ABC[`types`][T]>>>);
+  (input: ApplyMatchAsType<ABC[`types`][T]>) => ReadonlyArray<
+    Partial<ApplyMatchAsType<ABC[`types`][T]>> extends infer O
+      ? {features?: O, context?: ApplyMatchAsType<ABC[`context`]>}
+      : never
+  >;
+
+export type MembersWithContext<ABC extends AlphabetInput> = ValuesOf<{
+  [K in keyof ABC[`types`]]: {
+    type: K,
+    features: ApplyMatchAsType<ABC[`types`][K]>,
+    context?: ApplyMatchAsType<ABC[`context`]>
+  }
+}>;
 
 type Replacement<T extends keyof CurrentABC[`types`], CurrentABC extends AlphabetInput, NextABC extends AlphabetInput> =
-  ((input: ApplyMatchAsType<CurrentABC[`types`][T]>) => ReadonlyArray<ValuesOf<{
-    [K in keyof NextABC[`types`]]: MergeUnion<{context?: ApplyMatchAsType<CurrentABC[`ctx`]>} | {[k in K]: ApplyMatchAsType<NextABC[`types`][K]>}>
-  }>>);
+  ((input: ApplyMatchAsType<CurrentABC[`types`][T]>) => ReadonlyArray<MembersWithContext<NextABC>>);
 
-type Transform<
+export type Modify<
   T extends keyof CurrentABC[`types`],
   CurrentABC extends AlphabetInput
 > = InPlaceOrEject<Modification<T, CurrentABC>, Replacement<T, CurrentABC, CurrentABC>>;
 
-type Promote<
+export type Promote<
   T extends keyof CurrentABC[`types`],
   CurrentABC extends AlphabetInput,
   NextABC extends AlphabetInput
 > = InPlaceOrEject<Replacement<T, CurrentABC, NextABC>>;
 
-type OptionalParams<T> = T | {feed: (...args: never[]) => T}
+type Rule<
+  T extends keyof ABC[`types`],
+  ABC extends AlphabetInput,
+  NextABC extends AlphabetInput | undefined = undefined,
+> = {
+  from: MatchSchemaOf<
+    NormalizeToMatch<ABC[`types`]>[T] extends infer O extends MatchSchema
+      ? {features: O, context: ApplyMatchAsType<ABC[`context`]>}
+      : never
+  >
+  into: ReadonlyArray<
+    NextABC extends undefined
+      ? Modify<T, ABC>
+      // wow if you phrase the below as `NextABC & AlphabetInput` it hits you with
+      // a "Type instantiation is excessively deep and possibly infinite" that's
+      // not easy to diagnose
+      : Promote<T, ABC, NextABC extends AlphabetInput ? NextABC : never>
+  >
+};
 
 export const alphabet = <
-  const O extends AlphabetInput,
-  const Traits extends {[K in keyof O[`types`]]?: Record<string, ApplyMatchSchemaOf<O[`types`][K]>>}
+  const ABC extends AlphabetInput,
+  const Traits extends {[K in keyof ABC[`types`]]?: Record<string, ApplyMatchSchemaOf<ABC[`types`][K]>>},
 >(
-    alphabet: O,
-    traits: Traits
+    alphabet: ABC,
+    traits: Traits,
   ): {
-  name: O[`name`]
-  types: NormalizeToMatch<O[`types`]>
-  ctx: NormalizeToMatch<O[`ctx`]>
+  name: ABC[`name`]
+  types: NormalizeToMatch<ABC[`types`]>
+  context: NormalizeToMatch<ABC[`context`]>
   traits: Traits
-  transform: {
-    [T in keyof O[`types`]]: <
-      const R extends Record<string, OptionalParams<Transform<T, O>>>
+  modify: {
+    [T in keyof ABC[`types`]]: <
+      const S extends Record<string, Record<string, Rule<T, ABC>>>,
     >(
-      createLibrary: (features: QualifiedPathsOf<O[`types`][T]>) => R,
-      rules: (library: R) => R,
-    ) => R
+      createRules: (
+        sources: {
+          features: QualifiedPathsOf<ABC[`types`][T], [`features`]>,
+          traits: QualifiedPathsOf<Traits[T], [`features`]>,
+          context: QualifiedPathsOf<ABC[`context`], [`context`]>,
+        },
+      ) => S,
+    ) => S
   }
   promote: {
-    [T in keyof O[`types`]]: <
-      const ABC extends Alphabet,
-      const R extends Record<string, OptionalParams<Promote<T, O, ABC>>>
+    [T in keyof ABC[`types`]]: <
+      const NextABC extends AlphabetInput,
+      const S extends Record<string, Record<string, Rule<T, ABC, NextABC>>>,
     >(
-      alphabet: ABC,
-      library: R,
-      rules: Record<string, unknown>
-    ) => R
+      nextAlphabet: NextABC,
+      createRules: (
+        sources: {
+          features: QualifiedPathsOf<ABC[`types`][T], [`features`]>,
+          traits: QualifiedPathsOf<Traits[T], [`features`]>,
+          context: QualifiedPathsOf<ABC[`context`], [`context`]>,
+        },
+      ) => S,
+    ) => S
   }
 } => ({
     name: alphabet.name,
-    ctx: alphabet.ctx as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    context: alphabet.context as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     types: alphabet.types as any,
     traits,
-    transform: {} as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    modify: {} as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     promote: {} as any,
   });

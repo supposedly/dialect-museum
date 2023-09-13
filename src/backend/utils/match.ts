@@ -10,7 +10,7 @@ export type Guards = {
   null: null,
   any:
     | ValuesOf<Omit<Guards, `any`>>
-    | {length: number, [key: number]: Guards[`any`]}
+    | {length: number, [index: number]: Guards[`any`]}
     | {[key: string]: Guards[`any`]}
 };
 type Primitive = ValuesOf<Guards>;
@@ -143,7 +143,7 @@ export type MatchSchema =
   | ((arg: never) => boolean);
 
 export type MatchSchemaOf<O extends MatchSchema> =
-  | O
+  // | O
   | MatchesExtending<O>
   | PartialMatchAsType<O>
   | (
@@ -157,15 +157,15 @@ export type MatchSchemaOf<O extends MatchSchema> =
     : never
   );
 
-function isLiteral(o: any): o is Record<string, any> {
-  return o && Object.getPrototypeOf(o) === Object.prototype;
+function isLiteral(o: unknown): o is Record<string, unknown> {
+  return o !== null && o !== undefined && Object.getPrototypeOf(o) === Object.prototype;
 }
 
 export const matchers = {
   single<const Self extends ValueOfMatch<`single`>>(self: Self, other: unknown): other is MatchAsType<Self> {
     if (isLiteral(self) && `match` in self && `value` in self) {
       if (typeof self.match === `string` && self.match in matchers) {
-        return (matchers[self.match as keyof typeof matchers] as any)(self.value, other);
+        return (matchers[self.match as keyof typeof matchers] as CallableFunction)(self.value, other);
       }
     }
     return matchers.literal(self, other);
@@ -181,7 +181,12 @@ export const matchers = {
       if (!isLiteral(other)) {
         return false;
       }
-      return Object.keys(self).every(k => k in other && matchers.single((self as any)[k], other[k]));
+      return Object.keys(self).every(
+        k => k in other && matchers.single(
+          (self as Record<string, MatchSchema>)[k],
+          other[k]
+        )
+      );
     }
     return self === other;
   },

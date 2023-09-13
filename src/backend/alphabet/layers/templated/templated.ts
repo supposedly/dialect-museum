@@ -6,10 +6,18 @@ import {underlying} from "../underlying/underlying";
 */
 export const templated = alphabet({
   name: `templated`,
-  ctx: {
+  context: {
     affected: {match: `guard`, value: `boolean`},
   },
   types: {
+    boundary: {
+      word: {match: `guard`, value: `boolean`},
+      pause: {match: `guard`, value: `boolean`},
+      sentence: {match: `guard`, value: `boolean`},
+    },
+    literal: {
+      value: {match: `guard`, value: `string`},
+    },
     word: {
       value: {
         match: `array`,

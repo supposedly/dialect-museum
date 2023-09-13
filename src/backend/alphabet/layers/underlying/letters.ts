@@ -1,6 +1,8 @@
 import type {ApplyMatchAsType} from "../../alphabet";
 import type {underlying} from "./underlying";
 
+type Letters = {[K in keyof typeof underlying.types]: Record<string, ApplyMatchAsType<typeof underlying.types[K]>>};
+
 export const letters = {
   consonant: {
     h: {
@@ -216,4 +218,4 @@ export const letters = {
   delimiter: {},
   pronoun: {},
   suffix: {},
-} as const satisfies {[K in keyof typeof underlying.types]: Record<string, ApplyMatchAsType<typeof underlying.types[K]>>};
+} as const satisfies Letters;

@@ -2,7 +2,7 @@ import {alphabet} from "../../alphabet";
 
 export const underlying = alphabet({
   name: `underlying`,
-  ctx: {
+  context: {
     affected: {match: `guard`, value: `boolean`},
   },
   types: {
@@ -33,7 +33,7 @@ export const underlying = alphabet({
     vowel: {
       height: [`high`, `mid`, `low`],
       backness: [`front`, `mid`, `back`],
-      // tense: {match: `guard`, value: `boolean`},
+      /* tense: {match: `guard`, value: `boolean`}, */
       round: {match: `guard`, value: `boolean`},
       long: {match: `guard`, value: `boolean`},
     },
