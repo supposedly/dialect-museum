@@ -143,7 +143,7 @@ type PromoteFuncs<ABC extends AlphabetInput, Traits extends TraitsOf<ABC>> = {
 };
 
 function normalizeToMatch<const O extends Record<string, Match | ReadonlyArray<string>>>(
-  o: O
+  o: O,
 ): NormalizeToMatch<O> {
   const ret = {} as Record<string, Match>;
   for (const key in o) {
@@ -156,7 +156,7 @@ function normalizeToMatch<const O extends Record<string, Match | ReadonlyArray<s
 
 function objectFromPath<
   const Path extends ReadonlyArray<string>,
-  const Leaf
+  const Leaf,
 >(path: Path, leaf: Leaf): ObjectFromPath<Path, Leaf> {
   const ret = {} as ObjectFromPath<Path, Leaf>;
   let current: unknown = ret;
@@ -190,6 +190,8 @@ export function qualifiedPathsOf<
     return [k, objectFromPath([...path, k], v)];
   }));
 }
+
+const test = qualifiedPathsOf({a: {b: 1}}, [`features`]);
 
 export const alphabet = <
   const ABC extends AlphabetInput,
