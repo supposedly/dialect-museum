@@ -2,10 +2,7 @@
 import {ref, computed} from 'vue';
 
 import {Parser, Grammar} from 'nearley';
-import grammar from "../backend/parsing/grammar";
-
-import {templated} from '../backend/alphabet/layers/templated/templated';
-import {underlying} from '../backend/alphabet/layers/underlying/underlying';
+import grammar from "./backend/parsing/grammar";
 
 const compiledGrammar = Grammar.fromCompiled(grammar);
 
