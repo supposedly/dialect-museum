@@ -1,6 +1,5 @@
-import {MergeUnion} from "../../../../../utils/typetools";
-import type {ApplyMatchAsType} from "../../../../alphabet";
-import {promote as lib} from "../../../../library/transform";
+import type {ApplyMatchAsType} from "/lib/alphabet/alphabet";
+import {promote as lib} from "/lib/alphabet/library/transform";
 import {templated} from "../../../templated/templated";
 import {letters} from "../../../underlying/letters";
 import {underlying} from "../../../underlying/underlying";

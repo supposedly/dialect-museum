@@ -1,4 +1,4 @@
-import type {ApplyMatchAsType} from "../../alphabet";
+import type {ApplyMatchAsType} from "/lib/alphabet/alphabet";
 import type {underlying} from "./underlying";
 
 type Letters = {[K in keyof typeof underlying.types]: Record<string, ApplyMatchAsType<typeof underlying.types[K]>>};

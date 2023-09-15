@@ -1,4 +1,4 @@
-import {type ValuesOf} from "../utils/typetools";
+import {type ValuesOf} from "/library/utils/typetools";
 
 export type SymbolWrapper = ValuesOf<{
   [K in keyof never]: {

@@ -1,5 +1,5 @@
 import {templated} from "../../templated";
-import {modify as lib} from "../../../../library/transform";
+import {modify as lib} from "/lib/alphabet/library/transform";
 
 const library = lib(templated, `pronoun`, (_, features) => ({
   gender: {

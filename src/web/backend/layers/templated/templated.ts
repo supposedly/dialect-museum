@@ -1,4 +1,4 @@
-import {alphabet} from "../../alphabet";
+import {alphabet} from "/lib/alphabet/alphabet";
 import {underlying} from "../underlying/underlying";
 
 /*

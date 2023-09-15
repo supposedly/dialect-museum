@@ -1,4 +1,4 @@
-export * from '../alphabet/layers/underlying/letters';
+export * from '../layers/underlying/letters';
 export const symbol = {
   emphatic: `*`,
   stressed: `"`,

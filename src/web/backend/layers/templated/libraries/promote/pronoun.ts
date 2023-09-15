@@ -1,7 +1,7 @@
 import {underlying} from '../../../underlying/underlying';
 import {templated} from '../../templated';
 import {letters} from '../../../underlying/letters';
-import {promote as lib} from '../../../../library/transform';
+import {promote as lib} from '/lib/alphabet/library/transform';
 
 const library = lib(templated, `pronoun`, underlying, fix => ({
   nonpast: {
