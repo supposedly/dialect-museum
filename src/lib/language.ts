@@ -1,7 +1,5 @@
-import {Alphabet, Modify, Promote} from '../alphabet/alphabet';
-import {MergeUnion} from '../utils/typetools';
-import {underlying} from '../alphabet/layers/underlying/underlying';
-import {templated} from '../alphabet/layers/templated/templated';
+import {Alphabet, Modify, Promote} from './alphabet';
+import {MergeUnion} from './utils/typetools';
 
 type ZipWithNext<Arr extends ReadonlyArray<unknown>> =
   Arr extends readonly [infer Head extends Arr[number], ...infer Tail]
@@ -23,15 +21,6 @@ export const language = <
 >(abcs: ABCs, libraries: Libraries): {
   modify: {[ABC in ABCs[number] as ABC[`name`]]: ABC}
 } => ({}) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-
-const wat = language([templated, underlying],
-  {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    templated: {modify: {} as any, promote: {} as any},
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    underlying: {modify: {} as any},
-  }
-);//.modify.;
 
 /*
 I get it (update: nvm this is still missing something I'm just not sure what -- think about .dropIn()...)

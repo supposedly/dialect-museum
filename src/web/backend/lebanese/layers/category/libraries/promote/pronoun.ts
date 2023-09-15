@@ -1,9 +1,9 @@
 import {underlying} from '../../../underlying/underlying';
-import {templated} from '../../templated';
+import {category} from '../../category';
 import {letters} from '../../../underlying/letters';
-import {promote as lib} from '/lib/alphabet/library/transform';
+import {promote as lib} from '/lib/transform';
 
-const library = lib(templated, `pronoun`, underlying, fix => ({
+const library = lib(category, `pronoun`, underlying, fix => ({
   nonpast: {
     $_: () => fix({consonant: letters.consonant.$}),
     a_: () => fix({vowel: letters.vowel.a}),
@@ -106,7 +106,7 @@ const library = lib(templated, `pronoun`, underlying, fix => ({
   },
 }));
 
-templated.promote.pronoun(underlying, ({features}) => ({
+category.promote.pronoun(underlying, ({features}) => ({
   prefix: {
     cs1: {
       from: {match: `all`, value: [

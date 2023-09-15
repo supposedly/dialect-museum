@@ -1,5 +1,5 @@
-import {MergeUnion, ValuesOf} from "../../utils/typetools";
-import {QualifiedPathsOf, Modify, AlphabetInput, Promote, ApplyMatchAsType, qualifiedPathsOf} from "../alphabet";
+import {MergeUnion, ValuesOf} from "./utils/typetools";
+import {QualifiedPathsOf, Modify, AlphabetInput, Promote, ApplyMatchAsType, qualifiedPathsOf} from "./alphabet";
 
 type OptionalParams<T> = T | {feed: (...args: never[]) => T};
 
@@ -37,7 +37,7 @@ type ConvertShorthand<
     : never
 };
 
-function fixShorthand(args: ReadonlyArray<Record<string, unknown>>) {
+function fixShorthand(...args: ReadonlyArray<Record<string, unknown>>) {
   return args.map(o => {
     if (`type` in o) {
       return o;

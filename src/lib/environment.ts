@@ -1,6 +1,6 @@
-import {MatchSchemaOf} from "../../utils/match";
-import {MergeUnion, ValuesOf} from "../../utils/typetools";
-import {AlphabetInput, Alphabet, ApplyMatchAsType, MembersWithContext} from "../alphabet";
+import {MatchSchemaOf} from "./utils/match";
+import {MergeUnion, ValuesOf} from "./utils/typetools";
+import {AlphabetInput, Alphabet, ApplyMatchAsType, MembersWithContext} from "./alphabet";
 
 type _EnvironmentSpecsRecurse<
   ABC extends AlphabetInput,

@@ -1,5 +1,5 @@
-import {type Match, type MatchSchemaOf, type MatchSchema, type MatchAsType, type MatchInstance} from "../utils/match";
-import {type ValuesOf} from "../utils/typetools";
+import {type Match, type MatchSchemaOf, type MatchSchema, type MatchAsType, type MatchInstance} from "./utils/match";
+import {type ValuesOf} from "./utils/typetools";
 
 export type AlphabetInput = {
   name: string

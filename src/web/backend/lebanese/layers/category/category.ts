@@ -1,11 +1,11 @@
-import {alphabet} from "/lib/alphabet/alphabet";
+import {alphabet} from "/lib/alphabet";
 import {underlying} from "../underlying/underlying";
 
 /*
   idafe
 */
-export const templated = alphabet({
-  name: `templated`,
+export const category = alphabet({
+  name: `category`,
   context: {
     affected: {match: `type`, value: `boolean`},
   },

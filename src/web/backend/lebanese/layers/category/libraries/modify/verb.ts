@@ -1,7 +1,7 @@
-import {modify as lib} from "/lib/alphabet/library/transform";
-import {templated} from "../../templated";
+import {modify as lib} from "/lib/transform";
+import {category} from "../../category";
 
-const library = lib(templated, `verb`, x => ({
+const library = lib(category, `verb`, x => ({
   conjugation: {
     prefix: {
       left: ({subject: pronoun}) => x({pronoun}),
@@ -16,7 +16,7 @@ const library = lib(templated, `verb`, x => ({
   },
 }));
 
-const man = templated.modify.verb(({features, traits}) => ({
+category.modify.verb(({features, traits}) => ({
   conjugation: {
     suffix: {
       from: features.tam.past,
