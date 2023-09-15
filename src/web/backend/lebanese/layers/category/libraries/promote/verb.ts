@@ -1,6 +1,6 @@
 import type {ApplyMatchAsType} from "/lib/alphabet";
 import {promote as lib} from "/lib/transform";
-import {templated} from "../../../templated/templated";
+import {category} from "../../../category";
 import {letters} from "../../../underlying/letters";
 import {underlying} from "../../../underlying/underlying";
 
@@ -28,7 +28,7 @@ function tenseLongVowel(vowel: `a` | `i` | `u`): ApplyMatchAsType<typeof underly
   }
 }
 
-const library = lib(templated, `verb`, underlying, fix => ({
+const library = lib(category, `verb`, underlying, fix => ({
   affix: {
     n_: {
       left: () => fix({consonant: letters.consonant.n}),
@@ -218,6 +218,6 @@ const library = lib(templated, `verb`, underlying, fix => ({
   },
 }));
 
-const verb = templated.promote.verb(underlying, features => ({
+const verb = category.promote.verb(underlying, features => ({
   
 }));
