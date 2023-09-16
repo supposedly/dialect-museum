@@ -28,19 +28,19 @@ function tenseLongVowel(vowel: `a` | `i` | `u`): ApplyMatchAsType<typeof underly
   }
 }
 
-const library = lib(category, `verb`, underlying, fix => ({
+const library = lib(category, `verb`, underlying, x => ({
   affix: {
     n_: {
-      left: () => fix({consonant: letters.consonant.n}),
+      left: () => x({consonant: letters.consonant.n}),
     },
     st_: {
-      left: () => fix(
+      left: () => x(
         {consonant: letters.consonant.s},
         {consonant: letters.consonant.t},
       ),
     },
     sta_: {
-      left: () => fix(
+      left: () => x(
         {consonant: letters.consonant.s},
         {consonant: letters.consonant.t},
         {vowel: letters.vowel.a},
@@ -48,7 +48,7 @@ const library = lib(category, `verb`, underlying, fix => ({
     },
     v_: {
       feed: (vowel: `a` | `i`) => ({
-        left: () => fix(
+        left: () => x(
           {consonant: letters.consonant.$},
           {vowel: letters.vowel[vowel]},
         ),
@@ -57,7 +57,7 @@ const library = lib(category, `verb`, underlying, fix => ({
   },
   template: {
     fv33: {
-      feed: (vowel: `a` | `i` | `u`) => ({root: [f, c]}) => fix(
+      feed: (vowel: `a` | `i` | `u`) => ({root: [f, c]}) => x(
         {consonant: f},
         {vowel: letters.vowel[vowel]},
         {consonant: c},
@@ -65,7 +65,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     fv3vl: {
-      feed: (vowel1: `a` | `i` | `u`, vowel2: `a` | `i` | `u`) => ({root: [f, c, l]}) => fix(
+      feed: (vowel1: `a` | `i` | `u`, vowel2: `a` | `i` | `u`) => ({root: [f, c, l]}) => x(
         {consonant: f},
         {vowel: letters.vowel[vowel1]},
         {consonant: c},
@@ -74,7 +74,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     f3vl: {
-      feed: (vowel: `a` | `i` | `u`) => ({root: [f, c, l]}) => fix(
+      feed: (vowel: `a` | `i` | `u`) => ({root: [f, c, l]}) => x(
         {consonant: f},
         {consonant: c},
         {vowel: letters.vowel[vowel]},
@@ -82,7 +82,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     f3vvl: {
-      feed: (vowel: `a` | `i` | `u` | `e` | `o`) => ({root: [f, c, l]}) => fix(
+      feed: (vowel: `a` | `i` | `u` | `e` | `o`) => ({root: [f, c, l]}) => x(
         {consonant: f},
         {consonant: c},
         {vowel: laxLongVowel(vowel)},
@@ -90,7 +90,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     fv3v: {
-      feed: (vowel: `a` | `i`) => ({root: [f, c]}) => fix(
+      feed: (vowel: `a` | `i`) => ({root: [f, c]}) => x(
         {consonant: f},
         {vowel: letters.vowel[vowel]},
         {consonant: c},
@@ -98,28 +98,28 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     f3vv: {
-      feed: (vowel: `a` | `i` | `u`) => ({root: [f, c]}) => fix(
+      feed: (vowel: `a` | `i` | `u`) => ({root: [f, c]}) => x(
         {consonant: f},
         {consonant: c},
         {vowel: tenseLongVowel(vowel)},
       ),
     },
     f3v: {
-      feed: (vowel: `a` | `i` | `u`) => ({root: [f, c]}) => fix(
+      feed: (vowel: `a` | `i` | `u`) => ({root: [f, c]}) => x(
         {consonant: f},
         {consonant: c},
         {vowel: letters.vowel[vowel]},
       ),
     },
     fvvl: {
-      feed: (vowel: `a` | `i` | `u`) => ({root: [f, _, l]}) => fix(
+      feed: (vowel: `a` | `i` | `u`) => ({root: [f, _, l]}) => x(
         {consonant: f},
         {vowel: tenseLongVowel(vowel)},
         {consonant: l},
       ),
     },
     fa33vl: {
-      feed: (vowel: `a` | `i`) => ({root: [f, c, l]}) => fix(
+      feed: (vowel: `a` | `i`) => ({root: [f, c, l]}) => x(
         {consonant: f},
         {vowel: letters.vowel.a},
         {consonant: c},
@@ -129,7 +129,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     fa33v: {
-      feed: (vowel: `a` | `i`) => ({root: [f, c]}) => fix(
+      feed: (vowel: `a` | `i`) => ({root: [f, c]}) => x(
         {consonant: f},
         {vowel: letters.vowel.a},
         {consonant: c},
@@ -138,7 +138,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     fe3vl: {
-      feed: (vowel: `a` | `i`) => ({root: [f, c, l]}) => fix(
+      feed: (vowel: `a` | `i`) => ({root: [f, c, l]}) => x(
         {consonant: f},
         {vowel: letters.vowel.aa},
         {consonant: c},
@@ -147,7 +147,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     fe3v: {
-      feed: (vowel: `a` | `i`) => ({root: [f, c]}) => fix(
+      feed: (vowel: `a` | `i`) => ({root: [f, c]}) => x(
         {consonant: f},
         {vowel: letters.vowel.aa},
         {consonant: c},
@@ -155,7 +155,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     ftv33: {
-      feed: (vowel: `a` | `i` | `u`) => ({root: [f, c]}) => fix(
+      feed: (vowel: `a` | `i` | `u`) => ({root: [f, c]}) => x(
         {consonant: f},
         {consonant: letters.consonant.t},
         {vowel: letters.vowel[vowel]},
@@ -164,7 +164,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     ftv3vl: {
-      feed: (vowel1: `a` | `i`, vowel2: `a` | `i`) => ({root: [f, c]}) => fix(
+      feed: (vowel1: `a` | `i`, vowel2: `a` | `i`) => ({root: [f, c]}) => x(
         {consonant: f},
         {consonant: letters.consonant.t},
         {vowel: letters.vowel[vowel1]},
@@ -173,7 +173,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     ftv3v: {
-      feed: (vowel1: `a` | `i`, vowel2: `a` | `i`) => ({root: [f, c]}) => fix(
+      feed: (vowel1: `a` | `i`, vowel2: `a` | `i`) => ({root: [f, c]}) => x(
         {consonant: f},
         {consonant: letters.consonant.t},
         {vowel: letters.vowel[vowel1]},
@@ -182,14 +182,14 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     ftvvl: {
-      feed: (vowel: `a` | `i`) => ({root: [f, _, l]}) => fix(
+      feed: (vowel: `a` | `i`) => ({root: [f, _, l]}) => x(
         {consonant: f},
         {consonant: letters.consonant.t},
         {vowel: tenseLongVowel(vowel)},
         {consonant: l},
       ),
     },
-    f3all: ({root: [f, c, l]}) => fix(
+    f3all: ({root: [f, c, l]}) => x(
       {consonant: f},
       {consonant: c},
       {vowel: letters.vowel.a},
@@ -197,7 +197,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       {consonant: l},
     ),
     fa3lv2: {
-      feed: (vowel: `a` | `i`) => ({root: [f, c, l, q]}) => fix(
+      feed: (vowel: `a` | `i`) => ({root: [f, c, l, q]}) => x(
         {consonant: f},
         {vowel: letters.vowel.a},
         {consonant: c},
@@ -207,7 +207,7 @@ const library = lib(category, `verb`, underlying, fix => ({
       ),
     },
     fa3lv: {
-      feed: (vowel: `a` | `i`) => ({root: [f, c, l]}) => fix(
+      feed: (vowel: `a` | `i`) => ({root: [f, c, l]}) => x(
         {consonant: f},
         {vowel: letters.vowel.a},
         {consonant: c},

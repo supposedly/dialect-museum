@@ -3,64 +3,64 @@ import {category} from '../../category';
 import {letters} from '../../../underlying/letters';
 import {promote as lib} from '/lib/transform';
 
-const library = lib(category, `pronoun`, underlying, fix => ({
+const library = lib(category, `pronoun`, underlying, x => ({
   nonpast: {
-    $_: () => fix({consonant: letters.consonant.$}),
-    a_: () => fix({vowel: letters.vowel.a}),
-    t_: () => fix({consonant: letters.consonant.t}),
-    n_: () => fix({consonant: letters.consonant.n}),
-    _y_: () => fix({consonant: letters.consonant.y}),
-    _i: () => fix({vowel: letters.vowel.i}),
-    _u: () => fix({vowel: letters.vowel.u}),
-    _w: () => fix({consonant: letters.consonant.w}),
+    $_: () => x({consonant: letters.consonant.$}),
+    a_: () => x({vowel: letters.vowel.a}),
+    t_: () => x({consonant: letters.consonant.t}),
+    n_: () => x({consonant: letters.consonant.n}),
+    _y_: () => x({consonant: letters.consonant.y}),
+    _i: () => x({vowel: letters.vowel.i}),
+    _u: () => x({vowel: letters.vowel.u}),
+    _w: () => x({consonant: letters.consonant.w}),
   },
   past: {
-    _t: () => fix({consonant: letters.consonant.t}),
-    _vt: {feed: (vowel: `a` | `i`) => (() => fix(
+    _t: () => x({consonant: letters.consonant.t}),
+    _vt: {feed: (vowel: `a` | `i`) => (() => x(
       {vowel: letters.vowel[vowel]},
       {consonant: letters.consonant.t},
     ))},
-    _tu: () => fix(
+    _tu: () => x(
       {consonant: letters.consonant.t},
       {vowel: letters.vowel.u},
     ),
   },
   enclitic: {
-    _ni: () => fix(
+    _ni: () => x(
       {consonant: letters.consonant.n},
       {vowel: letters.vowel.i},
     ),
-    _na: () => fix(
+    _na: () => x(
       {consonant: letters.consonant.n},
       {vowel: letters.vowel.a},
     ),
-    _ak: () => fix(
+    _ak: () => x(
       {vowel: letters.vowel.a},
       {consonant: letters.consonant.k},
     ),
-    _k: () => fix({consonant: letters.consonant.k}),
-    _ik: () => fix(
+    _k: () => x({consonant: letters.consonant.k}),
+    _ik: () => x(
       {vowel: letters.vowel.i},
       {consonant: letters.consonant.k},
     ),
-    _ki: () => fix(
+    _ki: () => x(
       {consonant: letters.consonant.k},
       {vowel: letters.vowel.i},
     ),
-    _kun: () => fix(
+    _kun: () => x(
       {consonant: letters.consonant.k},
       {vowel: letters.vowel.u},
       {consonant: letters.consonant.n},
     ),
-    _o: () => fix(
+    _o: () => x(
       {vowel: letters.vowel.o},
     ),
-    _h: () => fix({consonant: letters.consonant.h}),
-    _ha: () => fix(
+    _h: () => x({consonant: letters.consonant.h}),
+    _ha: () => x(
       {consonant: letters.consonant.h},
       {vowel: letters.vowel.a},
     ),
-    _hun: () => fix(
+    _hun: () => x(
       {consonant: letters.consonant.h},
       {vowel: letters.vowel.u},
       {consonant: letters.consonant.n},
@@ -70,34 +70,34 @@ const library = lib(category, `pronoun`, underlying, fix => ({
     hxx: {
       feed: (vowel: `u` | `i`, consonant?: `y` | `w` | `n` | `m`) => () =>
         consonant
-          ? fix(
+          ? x(
             {consonant: letters.consonant.h},
             {vowel: letters.vowel[vowel]},
             {consonant: letters.consonant[consonant]}
           )
-          : fix(
+          : x(
             {consonant: letters.consonant.h},
             {vowel: letters.vowel[`${vowel}${vowel}` as `uu` | `ii`]},
           ),
     },
     _ce: {
-      feed: (consonant: `y` | `w` | `n` | `m`) => () => fix(
+      feed: (consonant: `y` | `w` | `n` | `m`) => () => x(
         {consonant: letters.consonant[consonant]},
         {vowel: letters.vowel.e},
       ),
     },
     _v: {
-      feed: (vowel: `a` | `i` | `e`) => () => fix(
+      feed: (vowel: `a` | `i` | `e`) => () => x(
         {vowel: letters.vowel[vowel]},
       ),
     },
-    $int: () => fix(
+    $int: () => x(
       {consonant: letters.consonant.$},
       {vowel: letters.vowel.i},
       {consonant: letters.consonant.n},
       {consonant: letters.consonant.t},
     ),
-    $ana: () => fix(
+    $ana: () => x(
       {consonant: letters.consonant.$},
       {vowel: letters.vowel.a},
       {consonant: letters.consonant.n},
