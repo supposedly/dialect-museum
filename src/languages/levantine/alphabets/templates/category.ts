@@ -1,5 +1,52 @@
 import {alphabet} from "/lib/alphabet";
 import {underlying} from "../underlying/underlying";
+import {MatchAsType} from "/lib/utils/match";
+
+const rootType = {match: `array`, value: {
+  length: {match: `any`, value: [3, 4]},
+  fill: {
+    ...underlying.types.consonant,
+    weak: {match: `type`, value: `boolean`},
+  },
+}} as const;
+
+const rootTraits = {
+  triliteral: {
+    root: {
+      match: `all`,
+      value: [
+        {length: 3},
+        // XXX: this will probably accidentally work in practice but i probably x2 want an actual equality check
+        {match: `custom`, value: (root: MatchAsType<typeof rootType>) => root[1] !== root[2]},
+      ],
+    },
+  },
+  biliteral: {
+    root: {
+      match: `all`,
+      value: [
+        {length: 3},
+        // XXX: this will probably accidentally work in practice but i probably x2 want an actual equality check
+        {match: `custom`, value: (root: MatchAsType<typeof rootType>) => root[1] === root[2]},
+      ],
+    },
+  },
+  quadriliteral: {
+    root: {length: 4},
+  },
+  assimilated: {
+    root: {0: {weak: true}},
+  },
+  hollow: {
+    root: {1: {weak: true}},
+  },
+  defectiveTriliteral: {
+    root: {2: {weak: true}, length: 3},
+  },
+  defectiveQuadriliteral: {
+    root: {3: {weak: true}, length: 4},
+  },
+} as const;
 
 /*
   idafe
@@ -34,6 +81,7 @@ export const category = alphabet({
       },
     },
     verb: {
+      root: rootType,
       subject: {match: `single`, value: underlying.types.pronoun},
       tam: [`past`, `subjunctive`, `indicative`, `imperative`],
       theme: [`a`, `i`, `u`],
@@ -54,18 +102,9 @@ export const category = alphabet({
         `tfa3la2`,
         `stfa3la2`,
       ],
-      root: {
-        match: `array`,
-        value: {
-          length: {match: `any`, value: [3, 4]},
-          fill: {
-            ...underlying.types.consonant,
-            weak: {match: `type`, value: `boolean`},
-          },
-        },
-      },
     },
     participle: {
+      root: rootType,
       subject: {match: `single`, value: underlying.types.pronoun},
       voice: [`active`, `passive`],
       shape: [
@@ -88,31 +127,13 @@ export const category = alphabet({
         `tfa3la2`,
         `stfa3la2`,
       ],
-      root: {
-        match: `array`,
-        value: {
-          length: {match: `any`, value: [3, 4]},
-          fill: {
-            ...underlying.types.consonant,
-            weak: {match: `type`, value: `boolean`},
-          },
-        },
-      },
     },
     l: {},
     af3al: {
-      root: {
-        match: `array`,
-        value: {
-          length: {match: `any`, value: [3, 4]},
-          fill: {
-            ...underlying.types.consonant,
-            weak: {match: `type`, value: `boolean`},
-          },
-        },
-      },
+      root: rootType,
     },
     masdar: {
+      root: rootType,
       shape: [
         `fa33al`,
         `tfa33al`,
@@ -129,16 +150,6 @@ export const category = alphabet({
         `tfa3la2`,
         `stfa3la2`,
       ],
-      root: {
-        match: `array`,
-        value: {
-          length: {match: `any`, value: [3, 4]},
-          fill: {
-            ...underlying.types.consonant,
-            weak: {match: `type`, value: `boolean`},
-          },
-        },
-      },
     },
     number: {
       value: {match: `type`, value: `number`},
@@ -148,39 +159,11 @@ export const category = alphabet({
     pronoun: underlying.types.pronoun,
   },
 }, {
+  participle: rootTraits,
+  af3al: rootTraits,
+  masdar: rootTraits,
   verb: {
-    triliteral: {
-      root: {
-        match: `all`,
-        value: [
-          {length: 3},
-          // XXX: this will probably accidentally work in practice but i probably x2 want an actual equality check
-          {match: `custom`, value: root => root[1] !== root[2]},
-        ],
-      },
-    },
-    biliteral: {
-      root: {
-        match: `all`,
-        value: [
-          {length: 3},
-          // XXX: this will probably accidentally work in practice but i probably x2 want an actual equality check
-          {match: `custom`, value: root => root[1] === root[2]},
-        ],
-      },
-    },
-    quadriliteral: {
-      root: {length: 4},
-    },
-    assimilated: {
-      root: {0: {weak: true}},
-    },
-    hollow: {
-      root: {1: {weak: true}},
-    },
-    defective: {
-      root: {2: {weak: true}},
-    },
+    ...rootTraits,
     nonpast: {
       tam: {
         match: `any`,
