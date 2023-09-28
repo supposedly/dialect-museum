@@ -1,28 +1,4 @@
 /* eslint-disable max-len */
-import {Alphabet, Modify, Promote} from './alphabet';
-import {MergeUnion} from './utils/typetools';
-
-type ZipWithNext<Arr extends ReadonlyArray<unknown>> =
-  Arr extends readonly [infer Head extends Arr[number], ...infer Tail]
-    ? readonly [Head, Tail[0]] | ZipWithNext<Tail>
-    : never;
-
-export const language = <
-  const ABCs extends ReadonlyArray<Alphabet>,
-  const Libraries extends {
-    [Pair in ZipWithNext<ABCs> as Pair[0][`name`]]: MergeUnion<
-      | {modify: {[T in keyof Pair[0][`types`]]: Modify<T, Pair[0]>}}
-      | (Pair[1] extends undefined ? never : {
-        promote: {
-          [T in keyof Pair[0][`types`]]: Promote<T, Pair[0], Pair[1] extends Alphabet ? Pair[1] : never>
-        }
-      })
-    >
-  },
->(abcs: ABCs, libraries: Libraries): {
-  modify: {[ABC in ABCs[number] as ABC[`name`]]: ABC}
-} => ({}) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-
 /*
 I get it (update: nvm this is still missing something I'm just not sure what -- think about .dropIn()...)
 
@@ -207,8 +183,8 @@ const bruh = odds.mutuallyExclusiveOrWhateverItShouldBeCalledIdkIGotA2.8InStats(
 const beforeA = language.underlying.whatever.pronoun.extend(
   {env: {nextVowel: a}},
   ({prefix}, addSetting) => [
-    prefix.sg1.a(25%_);
-    prefix.sg1.i(75%_);
+    prefix.sg1.a(25%);
+    prefix.sg1.i(75%);
     addSetting(prefix.sg1, `idk exactly how this works lmao but it's needed bc the frontend has to be able to expose this new rule as a setting`);
   ]
 );

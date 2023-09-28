@@ -24,7 +24,7 @@ type _EnvironmentSpecsRecurse<
       : never
   )
 >;
-type EnvironmentSpecs<
+export type EnvironmentSpecs<
   ABC extends AlphabetInput,
   ABCHistory extends ReadonlyArray<Alphabet> | undefined = undefined
 > = MatchSchemaOf<_EnvironmentSpecsRecurse<ABC, ABCHistory>> extends infer Deferred ? Deferred : never;

@@ -1,52 +1,13 @@
 import {alphabet} from "/lib/alphabet";
 import {underlying} from "../underlying/underlying";
-import {MatchAsType} from "/lib/utils/match";
 
-const rootType = {match: `array`, value: {
+const root = {match: `array`, value: {
   length: {match: `any`, value: [3, 4]},
   fill: {
     ...underlying.types.consonant,
     weak: {match: `type`, value: `boolean`},
   },
 }} as const;
-
-const rootTraits = {
-  triliteral: {
-    root: {
-      match: `all`,
-      value: [
-        {length: 3},
-        // XXX: this will probably accidentally work in practice but i probably x2 want an actual equality check
-        {match: `custom`, value: (root: MatchAsType<typeof rootType>) => root[1] !== root[2]},
-      ],
-    },
-  },
-  biliteral: {
-    root: {
-      match: `all`,
-      value: [
-        {length: 3},
-        // XXX: this will probably accidentally work in practice but i probably x2 want an actual equality check
-        {match: `custom`, value: (root: MatchAsType<typeof rootType>) => root[1] === root[2]},
-      ],
-    },
-  },
-  quadriliteral: {
-    root: {length: 4},
-  },
-  assimilated: {
-    root: {0: {weak: true}},
-  },
-  hollow: {
-    root: {1: {weak: true}},
-  },
-  defectiveTriliteral: {
-    root: {2: {weak: true}, length: 3},
-  },
-  defectiveQuadriliteral: {
-    root: {3: {weak: true}, length: 4},
-  },
-} as const;
 
 /*
   idafe
@@ -81,7 +42,7 @@ export const templates = alphabet({
       },
     },
     verb: {
-      root: rootType,
+      root,
       subject: {match: `single`, value: underlying.types.pronoun},
       tam: [`past`, `subjunctive`, `indicative`, `imperative`],
       theme: [`a`, `i`, `u`],
@@ -104,7 +65,7 @@ export const templates = alphabet({
       ],
     },
     participle: {
-      root: rootType,
+      root,
       subject: {match: `single`, value: underlying.types.pronoun},
       voice: [`active`, `passive`],
       shape: [
@@ -130,10 +91,10 @@ export const templates = alphabet({
     },
     l: {},
     af3al: {
-      root: rootType,
+      root,
     },
     masdar: {
-      root: rootType,
+      root,
       shape: [
         `fa33al`,
         `tfa33al`,
@@ -159,16 +120,51 @@ export const templates = alphabet({
     pronoun: underlying.types.pronoun,
   },
 }, {
-  participle: rootTraits,
-  af3al: rootTraits,
-  masdar: rootTraits,
   verb: {
-    ...rootTraits,
     nonpast: {
       tam: {
         match: `any`,
         value: [`imperative`, `indicative`, `subjunctive`],
       },
+    },
+  },
+},
+{
+  has: {root},
+  traits: {
+    geminate: {
+      root: {match: `any`, value: [
+        {match: `all`, value: [
+          {length: 3},
+          {match: `custom`, value: root => Object.entries(root[1]).every(
+            ([k, v]) => v === root[2][k as keyof typeof root[1]]
+          )},
+        ]},
+        {match: `all`, value: [
+          {length: 4},
+          {match: `custom`, value: root => Object.entries(root[2]).every(
+            ([k, v]) => v === root[3][k as keyof typeof root[2]]
+          )},
+        ]},
+      ]},
+    },
+    triliteral: {
+      root: {length: 3},
+    },
+    quadriliteral: {
+      root: {length: 4},
+    },
+    assimilated: {
+      root: {0: {weak: true}},
+    },
+    hollow: {
+      root: {1: {weak: true}},
+    },
+    defective: {
+      root: {match: `any`, value: [
+        {2: {weak: true}, length: 3},
+        {3: {weak: true}, length: 4},
+      ]},
     },
   },
 });

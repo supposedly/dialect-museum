@@ -3,7 +3,20 @@
 // some compilers and not others...
 export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
 export type MergeUnion<U> = UnionToIntersection<U> extends infer O ? {[K in keyof O]: O[K]} : never;
-
+export type Merge<A, B> = A extends object ? B extends object ? {
+  [K in keyof A | keyof B]: 
+    K extends keyof A & keyof B
+    ? Merge<A[K], B[K]>
+    : K extends keyof B
+    ? B[K]
+    : K extends keyof A
+    ? A[K]
+    : never;
+} : A & B : A & B;
+export type MergeArray<Arr extends ReadonlyArray<unknown>> =
+  Arr extends readonly [infer Head] ? Head
+  : Arr extends readonly [infer Head, ...infer Tail] ? Merge<Head, MergeArray<Tail>>
+  : never;
 // https://stackoverflow.com/a/59687759
 export type IsUnion<T, U extends T = T> = T extends unknown ? [U] extends [T] ? false : true : false;
 
