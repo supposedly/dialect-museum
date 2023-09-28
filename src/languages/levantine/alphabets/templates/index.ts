@@ -1,1 +1,1 @@
-export {category} from './category';
+export {templates} from './templates';

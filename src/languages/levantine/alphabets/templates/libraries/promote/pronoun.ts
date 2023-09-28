@@ -1,9 +1,9 @@
 import {underlying} from '../../../underlying/underlying';
-import {category} from '../../category';
+import {templates} from '../../templates';
 import {letters} from '../../../underlying/letters';
 import {promote as lib} from '/lib/transform';
 
-const library = lib(category, `pronoun`, underlying, x => ({
+const library = lib(templates, `pronoun`, underlying, x => ({
   nonpast: {
     $_: () => x({consonant: letters.consonant.$}),
     a_: () => x({vowel: letters.vowel.a}),
@@ -106,7 +106,7 @@ const library = lib(category, `pronoun`, underlying, x => ({
   },
 }));
 
-category.promote.pronoun(underlying, ({features}) => ({
+templates.promote.pronoun(underlying, ({features}) => ({
   prefix: {
     cs1: {
       from: {match: `all`, value: [

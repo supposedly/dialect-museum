@@ -51,7 +51,7 @@ const rootTraits = {
 /*
   idafe
 */
-export const category = alphabet({
+export const templates = alphabet({
   name: `category`,
   context: {
     affected: {match: `type`, value: `boolean`},

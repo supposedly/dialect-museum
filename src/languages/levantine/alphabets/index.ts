@@ -1,2 +1,2 @@
-export {category} from './category';
+export {templates} from './templates';
 export {underlying} from './underlying';

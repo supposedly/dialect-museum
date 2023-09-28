@@ -1,14 +1,14 @@
-import {category} from "../../category";
+import {templates} from "../../templates";
 import {modify as lib} from "/lib/transform";
 
-const library = lib(category, `pronoun`, (_, features) => ({
+const library = lib(templates, `pronoun`, (_, features) => ({
   gender: {
     masculine: () => [features.gender.masculine],
     common: () => [features.gender.common],
   },
 }));
 
-export default category.modify.pronoun(({features}) => ({
+export default templates.modify.pronoun(({features}) => ({
   gender: {
     genderNeutralPlural: {
       from: features.number.plural,
