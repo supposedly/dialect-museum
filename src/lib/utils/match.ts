@@ -68,7 +68,7 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
   | (
     [T] extends [Match] ? (
       | T
-      | Partial<MatchAsType<T>>
+      | PartialMatchAsType<T>
       | (T extends PickMatch<`single`> ? never : MatchInstance<`single`, T | PartialMatchAsType<T>>)
       | (T extends PickMatch<`array`> ? MatchInstance<`array`, {
           length: T[`value`][`length`] | MatchesExtending<T[`value`][`length`]>,
@@ -77,7 +77,7 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
       | MatchInstance<`any`, ReadonlyArray<T | MatchSchemaOf<T>>>
       | MatchInstance<`all`, ReadonlyArray<T | MatchSchemaOf<T>>>
       | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
-    ) //MatchSubtypes<T> | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
+    )
     : [T] extends [MatchSchema] ? (
       | MatchInstance<`single`, Partial<T>>
       | MatchInstance<`any`, ReadonlyArray<T | MatchSchemaOf<T>>>
@@ -141,7 +141,7 @@ export type PartialMatchAsType<T> =
   : T extends PickMatch<`all`> ? PartialMatchAsType<MergeArray<T[`value`]>>
   : T extends PickMatch<`single`> ? PartialMatchAsType<T[`value`]>
   : T extends Record<string, unknown> ? {[K in keyof T]?: PartialMatchAsType<T[K]>}
-  : T;
+  : Partial<T>;
 
 export type MatchSchema =
   | Primitive

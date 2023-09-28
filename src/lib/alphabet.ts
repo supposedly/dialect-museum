@@ -191,8 +191,6 @@ export function qualifiedPathsOf<
   }));
 }
 
-const test = qualifiedPathsOf({a: {b: 1}}, [`features`]);
-
 export const alphabet = <
   const ABC extends AlphabetInput,
   const Traits extends TraitsOf<ABC>,
