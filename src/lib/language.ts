@@ -177,18 +177,53 @@ const finalVowel = whatever.pronoun(features => ({
 /*
 {at: 1, inject: letters.consonant.t}
 inject(1,letters.consonant.t)
+
 // these are in a file called like underlying/pronoun/prefix.ts or whatever
 
 const bruh = odds.mutuallyExclusiveOrWhateverItShouldBeCalledIdkIGotA2.8InStats();
 const beforeA = language.underlying.whatever.pronoun.extend(
   {env: {nextVowel: a}},
   ({prefix}, addSetting) => [
-    prefix.sg1.a(25%);
-    prefix.sg1.i(75%);
+    prefix.sg1.a(`25%`);
+    prefix.sg1.i(`75%`);
     addSetting(prefix.sg1, `idk exactly how this works lmao but it's needed bc the frontend has to be able to expose this new rule as a setting`);
   ]
 );
-  
+
+const firstPerson = language.underlying.whatever.pronoun(({prefix}, when) => [
+  prefix.sg1.i();
+  prefix.sg1.a(25, when.beforeVowel(letters.vowel.a)),
+  prefix.sg1.i(75, when.beforeVowel(letters.vowel.a)),
+]);,
+
+(
+  // this one line is in suffix.ts, added later
+  const thirdPersonFeminine = underlying.pronoun(({suffix}, when) => [
+    suffix.fsg3.it(),
+    suffix.fsg3.it(100, when.afterVowel(letters.vowel.i)),  // when.after.underlying.verb({wazn: `fi3il`})
+    suffix.fsg3.at(100, when.before(`delimiter`))
+  ]);
+
+  // (for salam el rassi)
+  const thirdPersonFeminine = underlying.pronoun(({suffix}, when) => [
+    suffix.fsg3.it(100, when.afterVowel(letters.vowel.i)),  // when.after.underlying.verb({wazn: `fi3il`})
+    suffix.fsg3.at(),
+  ]);
+
+  // i think this is correct
+  // further wrap-up thoughts on rule packs and rules:
+  // i don't know yet how rule packs' default() will work, how do you know which rules with only one variant to run lol
+  // i also don't yet know how constraining will be relayed to the frontend but it'll look like underlying.pronoun.constrain()? or underlying.pronoun.new()?? not quite sure
+  // test case: imagine you need to create a new standalone pronoun 'huuze' for 3ms or whatever lol
+  // as for rules, i think i understand now
+  // you just export a flat {} object of vars, like standalone.ts will export {firstPerson, secondPerson, thirdPerson} or whatever
+  // except jk you actually export an object {rules: ^that, orderings: [[]], children: {}}
+  // and you import your children from subdirs
+  // in orderings you can refer either to your own exported rules or to ones from children, which are accessible by name thanks to the rule format
+  // i guess you have to actually export someFunc({rules: etc, orderings: etc, children: etc}) if you want to refer to them as you go along not 100% sure
+)
+
+
 // notice how the ({prefix}) param is self-documenting, I thought that was really neat
 const firstPerson = language.underlying.whatever.pronoun(({prefix}) => [
   prefix.sg1.i(),
@@ -397,6 +432,8 @@ const thirdPerson = language.etc.pronoun(({standalone}) => [
         ending: {
           we() {...},
           te() {...},
+          ta() {...},
+          tu() {...},
         }
       },
       fsg3: {
@@ -407,6 +444,9 @@ const thirdPerson = language.etc.pronoun(({standalone}) => [
           te() {...},
         }
       }
+    },
+    prefix: {
+
     }
   },
   verb: {
