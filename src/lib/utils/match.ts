@@ -1,4 +1,3 @@
-import {U} from "ts-toolbelt";
 import {Merge, MergeUnion, ValuesOf} from "./typetools";
 
 export type Guards = {
@@ -92,7 +91,7 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
       | (Tail[number] extends Head ? MatchInstance<`array`, {length: T[`length`], fill: MatchSchemaOf<Head>}> : never)
     )
     : T extends ReadonlyArray<infer U extends MatchSchema>
-    ? MatchInstance<`array`, {length: T[`length`], fill: U}>
+    ? MatchInstance<`array`, {length: T[`length`] | MatchesExtending<T[`length`]>, fill: U | MatchesExtending<U>}>
     : never
   )
   | (boolean extends T ? MatchInstance<`type`, `boolean`> : never)
@@ -109,13 +108,24 @@ type InferArrayType<
     >
   > : never;
 
+type PartialInferArrayType<
+  Arr extends ReadonlyArray<unknown>
+> = Arr extends ReadonlyArray<(infer U) | (MatchInstance<Match[`match`], infer U>)>
+  ? PartialMatchAsType<
+    Exclude<U,
+      | Match
+      | ReadonlyArray<unknown>
+      | ((...args: never) => boolean)
+    >
+  > : never;
+
 type MergeArray<Arr extends ReadonlyArray<unknown>> =
   Arr extends readonly [infer Head] ? MatchAsType<Head>
   : Arr extends readonly [infer Head, ...infer Tail]
-    ? Merge<MatchAsType<Head>, MergeArray<Tail>> : never  // copout */
-    // : number extends Arr[`length`]
-    //   ? MergeUnion<InferArrayType<Arr>>
-    //   : never;
+    ? Merge<MatchAsType<Head>, MergeArray<Tail>> /*: never  // copout */
+    : number extends Arr[`length`]
+      ? MergeUnion<InferArrayType<Arr>>
+      : never;
 
 export type MatchAsType<T> =
   T extends PickMatch<`array`> ? {
@@ -126,8 +136,8 @@ export type MatchAsType<T> =
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
-    ? number extends T[`value`][`length`] ? never  // copout */
-      // ? InferArrayType<T[`value`]>
+    ? number extends T[`value`][`length`] /*? never  // copout */
+      ? InferArrayType<T[`value`]>
       : MatchAsType<T[`value`][number]>
   : T extends PickMatch<`all`> ? MatchAsType<MergeArray<T[`value`]>>
   : T extends PickMatch<`single`> ? MatchAsType<T[`value`]>
@@ -143,8 +153,8 @@ export type PartialMatchAsType<T> =
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
-    ? number extends T[`value`][`length`] ? never  // copout */
-      // ? InferArrayType<T[`value`]>
+    ? number extends T[`value`][`length`] /*? never  // copout */
+      ? PartialInferArrayType<T[`value`]>
       : PartialMatchAsType<T[`value`][number]>
   : T extends PickMatch<`all`> ? PartialMatchAsType<MergeArray<T[`value`]>>
   : T extends PickMatch<`all`> ? PartialMatchAsType<MergeArray<T[`value`]>>
