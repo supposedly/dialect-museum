@@ -184,29 +184,62 @@ const bruh = odds.mutuallyExclusiveOrWhateverItShouldBeCalledIdkIGotA2.8InStats(
 const beforeA = language.underlying.whatever.pronoun.extend(
   {env: {nextVowel: a}},
   ({prefix}, addSetting) => [
-    prefix.sg1.a(`25%`);
-    prefix.sg1.i(`75%`);
+    prefix.sg1.a(25);
+    prefix.sg1.i(75);
     addSetting(prefix.sg1, `idk exactly how this works lmao but it's needed bc the frontend has to be able to expose this new rule as a setting`);
   ]
 );
 
 const firstPerson = language.underlying.whatever.pronoun(({prefix}, when) => [
-  prefix.sg1.i();
-  prefix.sg1.a(25, when.beforeVowel(letters.vowel.a)),
-  prefix.sg1.i(75, when.beforeVowel(letters.vowel.a)),
+  prefix.sg1.a(`less`, when.beforeVowel(letters.vowel.a)),
+  prefix.sg1.i(`more`, when.beforeVowel(letters.vowel.a)),
+  prefix.sg1.i(),
 ]);,
 
 (
   // this one line is in suffix.ts, added later
-  const thirdPersonFeminine = underlying.pronoun(({suffix}, when) => [
+  const thirdPersonFeminine = underlying.pronoun(({suffix}, where) => [
+    suffix.fsg3.it(`always`, where.afterVowel(letters.vowel.i)),  // where.after.templates.verb({wazn: `fi3il`})
+    suffix.fsg3.at(`always`, where.before(`delimiter`))
     suffix.fsg3.it(),
-    suffix.fsg3.it(100, when.afterVowel(letters.vowel.i)),  // when.after.underlying.verb({wazn: `fi3il`})
-    suffix.fsg3.at(100, when.before(`delimiter`))
+  ]);
+
+  const thirdPersonFeminine = underlying.pronoun(({suffix}, where) => [
+    suffix.fsg3.it.inFi3il(25),
+    suffix.fsg3.at.inFi3il(75),
+    suffix.fsg3.at.nonFinal(),
+    suffix.fsg3.it(),
+  ]);
+
+  const thirdPersonFeminine = underlying.pronoun(({suffix}, ({suffix: {fsg3: when}})) => [
+    when.inFi3il(
+      suffix.fsg3.it(90),
+      suffix.fsg3.at(10),
+    ),
+    when.nonFinal(
+      suffix.fsg3.at()
+    ),
+    when.default(
+      suffix.fsg3.it(),
+    ),
+  ]);
+
+  const thirdPersonFeminine = underlying.pronoun.suffix.fsg3((fsg3, when) => [
+    when.inFi3il(
+      fsg3.it(90),
+      fsg3.at(10),
+    ),
+    when.nonFinal(
+      fsg3.at()
+    ),
+    when.default(
+      fsg3.it(),
+    ),
   ]);
 
   // (for salam el rassi)
-  const thirdPersonFeminine = underlying.pronoun(({suffix}, when) => [
-    suffix.fsg3.it(100, when.afterVowel(letters.vowel.i)),  // when.after.underlying.verb({wazn: `fi3il`})
+  const thirdPersonFeminine = underlying.pronoun(({suffix}, where) => [
+    suffix.fsg3.it(100, where.afterVowel(letters.vowel.i)),  // where.after.templates.verb({wazn: `fi3il`})
     suffix.fsg3.at(),
   ]);
 
@@ -228,7 +261,12 @@ const firstPerson = language.underlying.whatever.pronoun(({prefix}, when) => [
 const firstPerson = language.underlying.whatever.pronoun(({prefix}) => [
   prefix.sg1.i(),
   prefix.pl1.ni(),
-]);,
+]);
+
+const firstPerson = underlying.pronoun.prefix(variant => [
+  variant.sg1.i(),
+  variant.pl1.ni(),
+]);
 
 // prefix.msg2.ti(),
 // prefix.fsg2.ti(),
@@ -335,14 +373,41 @@ const triliteralBasic = language.whatever.verb(({past}) => [
 // .../prefix.ts
 const prefix = rulePack(templated, underlying, {spec: `pronoun`, env: {next: `verb`}});
 
-const sg1 = prefix({
-  a: [letters.consonant.$, letters.vowel.a],
-  i: [letters.consonant.$, letters.vowel.i],
-});
+const sg1 = prefix({person: `first`, number: `singular`},
+  {
+    a: [letters.consonant.$, letters.vowel.a],
+    i: [letters.consonant.$, letters.vowel.i],
+    beforeA({before}, {consonant, vowel}) { return before(consonant, consonant, vowel(letters.vowel.a)); },
+    beforeW({before}, {boundary, consonant}) {
+      return match.any(
+        before(boundary, consonant(letters.consonant.w)),
+        before(consonant(letters.consonant.w)),
+      );
+    }
+  },
+);
 
-const pl1 = prefix({
-  ni: [letters.consonant.n, letters.vowel.i]
-});
+const sg1 = prefix({person: `first`, number: `singular`},
+  {
+    a: [letters.consonant.$, letters.vowel.a],
+    i: [letters.consonant.$, letters.vowel.i],
+  },
+  {
+    beforeA({before}, {consonant, vowel}) { return before(consonant, consonant, vowel(letters.vowel.a)); },
+    beforeW({before}, {boundary, consonant}) {
+      return match.any(
+        before(boundary, consonant(letters.consonant.w)),
+        before(consonant(letters.consonant.w)),
+      );
+    }
+  },
+);
+
+const pl1 = prefix({person: `first`, number: `plural`},
+  {
+    ni: [letters.consonant.n, letters.vowel.i]
+  }
+);
 
 const __2 = prefix([letters.consonant.t, letters.vowel.i]);  // maybe lib.ci(letters.consonant.t)? and for the others lib.ci(letters.consonant.$) and stuff?
 

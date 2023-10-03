@@ -1,5 +1,5 @@
 import {U} from "ts-toolbelt";
-import {Merge, ValuesOf} from "./typetools";
+import {Merge, MergeUnion, ValuesOf} from "./typetools";
 
 export type Guards = {
   string: string
@@ -112,10 +112,10 @@ type InferArrayType<
 type MergeArray<Arr extends ReadonlyArray<unknown>> =
   Arr extends readonly [infer Head] ? MatchAsType<Head>
   : Arr extends readonly [infer Head, ...infer Tail]
-    ? Merge<MatchAsType<Head>, MergeArray<Tail>>  /* : never  // copout */
-    : number extends Arr[`length`]
-      ? InferArrayType<Arr>
-      : never;
+    ? Merge<MatchAsType<Head>, MergeArray<Tail>> : never  // copout */
+    // : number extends Arr[`length`]
+    //   ? MergeUnion<InferArrayType<Arr>>
+    //   : never;
 
 export type MatchAsType<T> =
   T extends PickMatch<`array`> ? {
@@ -126,8 +126,8 @@ export type MatchAsType<T> =
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
-    ? number extends T[`value`][`length`] /* ? never  // copout */
-      ? InferArrayType<T[`value`]>
+    ? number extends T[`value`][`length`] ? never  // copout */
+      // ? InferArrayType<T[`value`]>
       : MatchAsType<T[`value`][number]>
   : T extends PickMatch<`all`> ? MatchAsType<MergeArray<T[`value`]>>
   : T extends PickMatch<`single`> ? MatchAsType<T[`value`]>
@@ -143,8 +143,8 @@ export type PartialMatchAsType<T> =
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
-    ? number extends T[`value`][`length`] /* ? never  // copout */
-      ? InferArrayType<T[`value`]>
+    ? number extends T[`value`][`length`] ? never  // copout */
+      // ? InferArrayType<T[`value`]>
       : PartialMatchAsType<T[`value`][number]>
   : T extends PickMatch<`all`> ? PartialMatchAsType<MergeArray<T[`value`]>>
   : T extends PickMatch<`all`> ? PartialMatchAsType<MergeArray<T[`value`]>>

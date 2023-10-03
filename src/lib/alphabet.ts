@@ -17,8 +17,6 @@ export type Alphabet = {
   context: Record<string, Match>
   types: Record<string, Record<string, Match>>
   traits: Record<string, Record<string, MatchSchema>>
-  modify: Record<string, (...args: never[]) => unknown>
-  promote: Record<string, (...args: never[]) => unknown>
 };
 
 export type ObjectFromPath<
@@ -59,89 +57,16 @@ export type NormalizeToMatch<O> = {
     : O[K]
 };
 
-type InPlaceOrEject<A, B = A> = A | {[Dir in `left` | `right` | `replace`]?: B};
-
-type Modification<T extends keyof ABC[`types`], ABC extends AlphabetInput> =
-  (input: ApplyMatchAsType<ABC[`types`][T]>) => ReadonlyArray<
-    Partial<ApplyMatchAsType<ABC[`types`][T]>> extends infer O
-      ? {features?: O, context?: ApplyMatchAsType<ABC[`context`]>}
-      : never
-  >;
-
 export type MembersWithContext<ABC extends AlphabetInput> = ValuesOf<{
-  [T in keyof ABC[`types`]]:
-    | T
-    | {
-      type: T,
-      features: ApplyMatchAsType<ABC[`types`][T]>,
-      context?: ApplyMatchAsType<ABC[`context`]>
-    }
+  [T in keyof ABC[`types`]]: {
+    type: T,
+    features: ApplyMatchAsType<ABC[`types`][T]>,
+    context?: ApplyMatchAsType<ABC[`context`]>
+  }
 }>;
-
-type Replacement<T extends keyof CurrentABC[`types`], CurrentABC extends AlphabetInput, NextABC extends AlphabetInput> =
-  ((input: ApplyMatchAsType<CurrentABC[`types`][T]>) => ReadonlyArray<MembersWithContext<NextABC>>);
-
-export type Modify<
-  T extends keyof CurrentABC[`types`],
-  CurrentABC extends AlphabetInput
-> = InPlaceOrEject<Modification<T, CurrentABC>, Replacement<T, CurrentABC, CurrentABC>>;
-
-export type Promote<
-  T extends keyof CurrentABC[`types`],
-  CurrentABC extends AlphabetInput,
-  NextABC extends AlphabetInput
-> = InPlaceOrEject<Replacement<T, CurrentABC, NextABC>>;
-
-type Rule<
-  T extends keyof ABC[`types`],
-  ABC extends AlphabetInput,
-  NextABC extends AlphabetInput | undefined = undefined,
-> = {
-  from: MatchSchemaOf<
-    NormalizeToMatch<ABC[`types`][T]> extends infer O extends MatchSchema
-      ? {features: O, context: ApplyMatchAsType<ABC[`context`]>}
-      : never
-  >
-  into: ReadonlyArray<
-    NextABC extends undefined
-      ? Modify<T, ABC>
-      // wow if you phrase the below as `NextABC & AlphabetInput` it hits you with
-      // a "Type instantiation is excessively deep and possibly infinite" that's
-      // not easy to diagnose
-      : Promote<T, ABC, NextABC extends AlphabetInput ? NextABC : never>
-  >
-};
-
-type Sources<
-  T extends keyof ABC[`types`],
-  ABC extends AlphabetInput,
-  Traits extends Record<keyof ABC[`types`], MatchSchema>
-> = {
-  features: QualifiedPathsOf<ABC[`types`][T], [`features`]>,
-  traits: QualifiedPathsOf<Traits[T], [`features`]>,
-  context: QualifiedPathsOf<ABC[`context`], [`context`]>,
-};
 
 type TraitsOf<ABC extends AlphabetInput> = {
   [K in keyof ABC[`types`]]?: Record<string, ApplyMatchSchemaOf<ABC[`types`][K]>>
-};
-
-type ModifyFuncs<ABC extends AlphabetInput, Traits extends TraitsOf<ABC>> = {
-  [T in keyof ABC[`types`]]: <
-    const S extends Record<string, Record<string, Rule<T, ABC>>>,
-  >(
-    createRules: (sources: Sources<T, ABC, Traits>) => S,
-  ) => S
-};
-
-type PromoteFuncs<ABC extends AlphabetInput, Traits extends TraitsOf<ABC>> = {
-  [T in keyof ABC[`types`]]: <
-    const NextABC extends AlphabetInput,
-    const S extends Record<string, Record<string, Rule<T, ABC, NextABC>>>,
-  >(
-    nextAlphabet: NextABC,
-    createRules: (sources: Sources<T, ABC, Traits>) => S,
-  ) => S
 };
 
 type NormalizeTypes<Types extends AlphabetInput[`types`]> = {[K in keyof Types]: NormalizeToMatch<Types[K]>};

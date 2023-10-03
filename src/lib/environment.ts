@@ -1,32 +1,33 @@
 import {MatchSchemaOf} from "./utils/match";
 import {MergeUnion, ValuesOf} from "./utils/typetools";
-import {AlphabetInput, Alphabet, ApplyMatchAsType, MembersWithContext} from "./alphabet";
+import {Alphabet, ApplyMatchAsType, MembersWithContext} from "./alphabet";
 
-type _EnvironmentSpecsRecurse<
-  ABC extends AlphabetInput,
-  ABCHistory extends ReadonlyArray<Alphabet> | undefined = undefined
+type _SpecsRecurse<
+  ABC extends Alphabet,
+  ABCHistory extends ReadonlyArray<Alphabet> | undefined = undefined,
+  T extends keyof ABC[`types`] = string
 > = MergeUnion<
-  | {[Dir in `next` | `prev`]?: {
-    spec: MembersWithContext<ABC>,
-    env: _EnvironmentSpecsRecurse<ABC, ABCHistory> extends infer Deferred ? Deferred : never
-  }}
-  | ValuesOf<{
-    [K in keyof ABC[`types`] & string]: {
-      [Dir in `next` | `prev` as `${Dir}${Capitalize<K>}`]?: {
-        spec: ApplyMatchAsType<ABC[`types`][K]>
-        env: _EnvironmentSpecsRecurse<ABC, ABCHistory> extends infer Deferred ? Deferred : never
-      }
-    }
-  }>
-  | (
-    ABCHistory extends ReadonlyArray<infer U extends Alphabet>
-      ? {was: {[A in U as A[`name`]]: MembersWithContext<A>}}
-      : never
+  | {
+    spec: T extends keyof ABC[`types`]
+      ? ApplyMatchAsType<ABC[`types`][T]>
+      : MembersWithContext<ABC> | keyof ABC[`types`]
+    environment: MergeUnion<
+      | {[Dir in `next` | `prev`]?: _SpecsRecurse<ABC, ABCHistory>}
+      | ValuesOf<{
+        [K in keyof ABC[`types`] & string]: {
+          [Dir in `next` | `prev` as `${Dir}${Capitalize<K>}`]?: _SpecsRecurse<ABC, ABCHistory, K>
+        }
+      }>
+    >
+  }
+  | (ABCHistory extends ReadonlyArray<infer U extends Alphabet> ?
+    {was: {[A in U as A[`name`]]: _SpecsRecurse<A>}}
+    : never
   )
 >;
-export type EnvironmentSpecs<
-  ABC extends AlphabetInput,
-  ABCHistory extends ReadonlyArray<Alphabet> | undefined = undefined
-> = MatchSchemaOf<_EnvironmentSpecsRecurse<ABC, ABCHistory>> extends infer Deferred ? Deferred : never;
 
-export type EnvironmentLibrary<ABC extends AlphabetInput> = Record<string, EnvironmentSpecs<ABC>>;
+
+export type Specs<
+  ABC extends Alphabet,
+  ABCHistory extends ReadonlyArray<Alphabet> | undefined = undefined
+> = MatchSchemaOf<_SpecsRecurse<ABC, ABCHistory>> extends infer Deferred ? Deferred : never;
