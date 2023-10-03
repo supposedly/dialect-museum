@@ -1,3 +1,4 @@
+import {U} from "ts-toolbelt";
 import {Merge, ValuesOf} from "./typetools";
 
 export type Guards = {
@@ -50,9 +51,7 @@ export type Match =
     }
   } | {
     readonly match: `custom`
-    readonly value: (ArrayOr<Primitive> | ArrayOr<Match>) extends infer U
-      ? U extends unknown ? (arg: U) => boolean : never
-      : never
+    readonly value: (arg: never) => boolean
   };
 
 export type PickMatch<M extends Match[`match`]> = Extract<Match, {match: M}>;
@@ -69,13 +68,13 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
     [T] extends [Match] ? (
       | T
       | PartialMatchAsType<T>
-      | (T extends PickMatch<`single`> ? never : MatchInstance<`single`, T | PartialMatchAsType<T>>)
+      | (T extends PickMatch<`single`> ? never : MatchInstance<`single`, PartialMatchAsType<T>>)
       | (T extends PickMatch<`array`> ? MatchInstance<`array`, {
           length: T[`value`][`length`] | MatchesExtending<T[`value`][`length`]>,
           fill: T[`value`][`fill`] | MatchesExtending<T[`value`][`fill`]>
         }> : never)
-      | MatchInstance<`any`, ReadonlyArray<T | MatchSchemaOf<T>>>
-      | MatchInstance<`all`, ReadonlyArray<T | MatchSchemaOf<T>>>
+      | MatchInstance<`any`, ReadonlyArray<MatchSchemaOf<T>>>
+      | MatchInstance<`all`, ReadonlyArray<MatchSchemaOf<T>>>
       | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
     )
     : [T] extends [MatchSchema] ? (
@@ -99,11 +98,24 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
   | (boolean extends T ? MatchInstance<`type`, `boolean`> : never)
   | (_Primitive extends T ? T extends Primitive ? MatchInstance<`type`, PrimitiveToString<T>> : never : never);
 
+type InferArrayType<
+  Arr extends ReadonlyArray<unknown>
+> = Arr extends ReadonlyArray<(infer U) | (MatchInstance<Match[`match`], infer U>)>
+  ? MatchAsType<
+    Exclude<U,
+      | Match
+      | ReadonlyArray<unknown>
+      | ((...args: never) => boolean)
+    >
+  > : never;
 
 type MergeArray<Arr extends ReadonlyArray<unknown>> =
   Arr extends readonly [infer Head] ? MatchAsType<Head>
-  : Arr extends readonly [infer Head, ...infer Tail] ? Merge<MatchAsType<Head>, MergeArray<Tail>>
-  : never;
+  : Arr extends readonly [infer Head, ...infer Tail]
+    ? Merge<MatchAsType<Head>, MergeArray<Tail>>  /* : never  // copout */
+    : number extends Arr[`length`]
+      ? InferArrayType<Arr>
+      : never;
 
 export type MatchAsType<T> =
   T extends PickMatch<`array`> ? {
@@ -112,8 +124,11 @@ export type MatchAsType<T> =
     [Symbol.iterator](): Iterator<MatchAsType<T[`value`][`fill`]>>
   }
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
-  : T extends PickMatch<`custom`> ? T[`value`]
-  : T extends PickMatch<`any`> ? MatchAsType<T[`value`][number]>
+  : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
+  : T extends PickMatch<`any`>
+    ? number extends T[`value`][`length`] /* ? never  // copout */
+      ? InferArrayType<T[`value`]>
+      : MatchAsType<T[`value`][number]>
   : T extends PickMatch<`all`> ? MatchAsType<MergeArray<T[`value`]>>
   : T extends PickMatch<`single`> ? MatchAsType<T[`value`]>
   : T extends Record<string, unknown> ? {[K in keyof T]: MatchAsType<T[K]>}
@@ -126,8 +141,12 @@ export type PartialMatchAsType<T> =
     [Symbol.iterator]?(): Iterator<PartialMatchAsType<T[`value`][`fill`]>>
   }
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
-  : T extends PickMatch<`custom`> ? T[`value`]
-  : T extends PickMatch<`any`> ? PartialMatchAsType<T[`value`][number]>
+  : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
+  : T extends PickMatch<`any`>
+    ? number extends T[`value`][`length`] /* ? never  // copout */
+      ? InferArrayType<T[`value`]>
+      : PartialMatchAsType<T[`value`][number]>
+  : T extends PickMatch<`all`> ? PartialMatchAsType<MergeArray<T[`value`]>>
   : T extends PickMatch<`all`> ? PartialMatchAsType<MergeArray<T[`value`]>>
   : T extends PickMatch<`single`> ? PartialMatchAsType<T[`value`]>
   : T extends Record<string, unknown> ? {[K in keyof T]?: PartialMatchAsType<T[K]>}
@@ -154,6 +173,8 @@ export type MatchSchemaOf<O extends MatchSchema> =
     : O extends {[key: string]: MatchSchema} ? {readonly [K in keyof O]?: MatchSchemaOf<O[K]>}
     : never
   );
+
+export type SafeMatchSchemaOf<O extends MatchSchema> = MatchSchemaOf<O> extends infer Deferred ? Deferred : never;
 
 function isLiteral(o: unknown): o is Record<string, unknown> {
   return o !== null && o !== undefined && Object.getPrototypeOf(o) === Object.prototype;
