@@ -7,29 +7,19 @@ export type Guards = {
   boolean: boolean
   symbol: symbol
   undefined: undefined
-  null: null,
-  any:
-    | ValuesOf<Omit<Guards, `any`>>
-    | {length: number, [index: number]: Guards[`any`]}
-    | {[key: string]: Guards[`any`]}
+  null: null
 };
-type Primitive = (
-  | ValuesOf<Omit<Guards, `any`>>
-  | {length: number, [index: number]: Guards[`any`]}
-  | {[key: string]: Guards[`any`]}
-);
-type PrimitiveToString<
-  T extends Primitive,
-  _Helper = keyof Guards,
-  _GuardsEntries = (_Helper extends keyof Guards ? [_Helper, Guards[_Helper]] : never)
-> = _GuardsEntries extends [infer S, T] ? S : never;
-
-type ArrayOr<T> = T | ReadonlyArray<T>;
+type Danger = {
+  primitive: ValuesOf<Guards>
+  object: {[key: string]: ValuesOf<Danger>}
+  array: {length: number, [index: number]: ValuesOf<Danger>}
+}
+type Primitive = ValuesOf<Guards>;
 
 export type Match =
   | {
     readonly match: `single`
-    value: MatchSchema
+    readonly value: MatchSchema
   } | {
     readonly match: `literal`
     readonly value: MatchSchema
@@ -42,6 +32,9 @@ export type Match =
   } | {
     readonly match: `type`
     readonly value: keyof Guards
+  } | {
+    readonly match: `danger`
+    readonly value: keyof Danger
   } | {
     readonly match: `array`
     readonly value: {
@@ -62,7 +55,7 @@ type MatchesExtendingTuple<T> =
   ? readonly [Head | MatchesExtending<Head>, ...MatchesExtendingTuple<Tail>]
   : readonly [];
 
-export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
+export type MatchesExtending<T> =
   | (
     [T] extends [Match] ? (
       | T
@@ -95,28 +88,34 @@ export type MatchesExtending<T, _Primitive extends Primitive = Primitive> =
     : never
   )
   | (boolean extends T ? MatchInstance<`type`, `boolean`> : never)
-  | (_Primitive extends T ? T extends Primitive ? MatchInstance<`type`, PrimitiveToString<T>> : never : never);
+  // | (_Primitive extends T ? T extends Primitive ? MatchInstance<`type`, PrimitiveToString<T>> : never : never)
+  | ValuesOf<{[K in keyof Guards]: T extends Guards[K] ? MatchInstance<`type`, K> : never}>
+  | ValuesOf<{[K in keyof Danger]: T extends Danger[K] ? MatchInstance<`danger`, K> : never}>;
 
 type InferArrayType<
   Arr extends ReadonlyArray<unknown>
 > = Arr extends ReadonlyArray<(infer U) | (MatchInstance<Match[`match`], infer U>)>
   ? MatchAsType<
-    Exclude<U,
+    | Exclude<U,
+      | string
       | Match
       | ReadonlyArray<unknown>
       | ((...args: never) => boolean)
     >
+    | (U extends unknown ? string extends U ? string : never : never)
   > : never;
 
 type PartialInferArrayType<
   Arr extends ReadonlyArray<unknown>
 > = Arr extends ReadonlyArray<(infer U) | (MatchInstance<Match[`match`], infer U>)>
   ? PartialMatchAsType<
-    Exclude<U,
+    | Exclude<U,
+      | string
       | Match
       | ReadonlyArray<unknown>
       | ((...args: never) => boolean)
     >
+    | (U extends unknown ? string extends U ? string : never : never)
   > : never;
 
 type MergeArray<Arr extends ReadonlyArray<unknown>> =
@@ -128,7 +127,8 @@ type MergeArray<Arr extends ReadonlyArray<unknown>> =
       : never;
 
 export type MatchAsType<T> =
-  T extends PickMatch<`array`> ? {
+  T extends PickMatch<`danger`> ? never
+  : T extends PickMatch<`array`> ? {
     readonly length: MatchAsType<T[`value`][`length`]>
     readonly [index: number]: MatchAsType<T[`value`][`fill`]>
     [Symbol.iterator](): Iterator<MatchAsType<T[`value`][`fill`]>>
@@ -145,7 +145,8 @@ export type MatchAsType<T> =
   : T;
 
 export type PartialMatchAsType<T> =
-  T extends PickMatch<`array`> ? {
+  T extends PickMatch<`danger`> ? never
+  : T extends PickMatch<`array`> ? {
     readonly length?: PartialMatchAsType<T[`value`][`length`]>
     readonly [index: number]: PartialMatchAsType<T[`value`][`fill`]>
     [Symbol.iterator]?(): Iterator<PartialMatchAsType<T[`value`][`fill`]>>
@@ -163,6 +164,7 @@ export type PartialMatchAsType<T> =
   : Partial<T>;
 
 export type MatchSchema =
+  | null
   | Primitive
   | Match
   | ReadonlyArray<MatchSchema>
@@ -226,13 +228,22 @@ export const matchers = {
     return self.every(item => matchers.single(item, other));
   },
   type<const Self extends ValueOfMatch<`type`>>(self: Self, other: unknown): other is Guards[Self] {
-    if (self === `any`) {
-      return true;
-    }
     if (self === `null`) {
       return other === null;
     }
     return typeof other === self;
+  },
+  danger<const Self extends ValueOfMatch<`danger`>>(self: Self, other: unknown): other is Danger[Self] {
+    if (self === `object`) {
+      return other !== null && typeof other === `object`;
+    }
+    if (self === `array`) {
+      return Array.isArray(other);
+    }
+    if (self === `primitive`) {
+      return other === null || typeof other !== `object`;
+    }
+    return false;
   },
   array<const Self extends ValueOfMatch<`array`>>({length, fill}: Self, other: unknown): boolean {
     return Array.isArray(other) && this.single({length}, other) && other.every(item => item === fill);
