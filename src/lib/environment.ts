@@ -1,45 +1,43 @@
 import {MatchAsType, MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from "./utils/match";
 import {IsUnion, MergeUnion, ValuesOf} from "./utils/typetools";
-import {Alphabet, ApplyMatchAsType, MembersWithContext, QualifiedPathsOf} from "./alphabet";
+import {Alphabet, MembersWithContext, QualifiedPathsOf} from "./alphabet";
 
 export type NestedArray<T> = ReadonlyArray<T | NestedArray<T>>;
 export type NestedArrayOr<T> = T | ReadonlyArray<NestedArrayOr<T>>;
 
-export type Specs<
+type Spec<ABC extends Alphabet> = (
+  | MembersWithContext<ABC> | keyof ABC[`types`]
+  | ((types: TypesFuncs<ABC>) => MembersWithContext<ABC>)
+);
+type Env<ABC extends Alphabet> = (
+  | {[Dir in `next` | `prev`]?: NestedArray<MembersWithContext<ABC>>}
+  | EnvironmentFunc<ABC>
+);
+
+type _Specs<
   ABC extends Alphabet,
   ABCHistory extends ReadonlyArray<Alphabet> | undefined = undefined,
-  T extends keyof ABC[`types`] = string
-> =
-  | MatchSchemaOf<MergeUnion<
-    | {
-      spec:
-        | (T extends keyof ABC[`types`]
-            ? ApplyMatchAsType<ABC[`types`][T]>
-            : MembersWithContext<ABC> | keyof ABC[`types`]
-        )
-        | ((types: TypesFuncs<ABC>) => MembersWithContext<ABC>)
-      env:
-        | {[Dir in `next` | `prev`]?: NestedArray<MembersWithContext<ABC>>} 
-        | EnvironmentFunc<ABC>
-    }
-    | (ABCHistory extends ReadonlyArray<infer U extends Alphabet> ?
-      {was: {[A in U as A[`name`]]: Specs<A>}}
-      : never
-    )
-  >>
-  // this is so broken
-  // it only works because of the EXACT configuration of this union, the unions of
-  // spec: and env: above with these function types, and the fact that
-  // PartialMatchAsType doesn't special-case functions to not Partial<> them
-  // changing any one of those facts makes generic params that extend Specs<...> not
-  // recognize methods either with or without this union
-  // meanwhile in the current state of things this union somehow allows you to mix and
-  // match methods (ie spec func, env record or vice versa) and removing it allows you
-  // to do neither
+> = MergeUnion<
   | {
-    spec?: ((types: TypesFuncs<ABC>) => MembersWithContext<ABC>)
-    env?: EnvironmentFunc<ABC>
-  };
+    spec?: Spec<ABC>
+    env?: Env<ABC>
+  }
+  | (ABCHistory extends ReadonlyArray<infer U extends Alphabet> ?
+    ABCHistory[`length`] extends 0 ? never : {
+      was?: {
+        [A in U as A[`name`]]: {
+          spec: Spec<A>,
+          env: Env<A>
+        }
+      }}
+    : never
+  )
+>;
+
+export type Specs<
+  ABC extends Alphabet,
+  ABCHistory extends ReadonlyArray<Alphabet> | undefined = []
+> = MatchSchemaOf<_Specs<ABC, ABCHistory>>;
 
 type _TypesFuncDefault<T, D extends MatchSchema> = MatchAsType<SafeMatchSchemaOf<D> extends T ? D : T>;
 type _TypesFuncVF<in out Source extends Alphabet, in out T extends keyof Source[`types`]> = (
@@ -89,13 +87,16 @@ export type TypesFuncs<Source extends Alphabet> = {
     const Context extends SafeMatchSchemaOf<Source[`context`]>,
     const ContextF extends _TypesFuncContextF<Source>
   >(segment: Context | ContextF) => ({
-    segment: _TypesFuncContextF<Source> extends ContextF
+    context: _TypesFuncContextF<Source> extends ContextF
     ? _TypesFuncDefault<Context, Source[`context`]>
     : MatchAsType<ReturnType<ContextF>>
   })
 );
 
-export type EnvironmentFunc<Source extends Alphabet> = (
+export type EnvironmentFunc<
+  Source extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet> | undefined = undefined
+> = (
   env: {
     before<
       const Arr extends ReadonlyArray<SafeMatchSchemaOf<NestedArrayOr<MembersWithContext<Source>>>>
@@ -106,4 +107,6 @@ export type EnvironmentFunc<Source extends Alphabet> = (
   },
   types: TypesFuncs<Source>,
   context: QualifiedPathsOf<Source[`context`]>
-) => Specs<Source>;
+  // if i change the def of MatchSchema's function variant to => MatchSchema instead of => unknown this errors lol
+  // bc recursive reference that apparently isn't an issue with => unknown??
+  ) => Specs<Source, Dependencies>;

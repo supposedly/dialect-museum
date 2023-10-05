@@ -166,15 +166,16 @@ export type PartialMatchAsType<T> =
   : T extends PickMatch<`all`> ? PartialMatchAsType<MergeArray<T[`value`]>>
   : T extends PickMatch<`single`> ? PartialMatchAsType<T[`value`]>
   : T extends Record<string, unknown> ? {[K in keyof T]?: PartialMatchAsType<T[K]>}
+  : T extends ((...args: never) => unknown) ? T  // Partial<some function type> is never (??)
   : Partial<T>;
 
 export type MatchSchema =
   | null
+  | ((...args: never) => unknown)
   | Primitive
   | Match
   | ReadonlyArray<MatchSchema>
-  | {[key: string]: MatchSchema}
-  | ((arg: never) => boolean);
+  | {[key: string]: MatchSchema};
 
 export type MatchSchemaOf<O extends MatchSchema> =
   // | O
