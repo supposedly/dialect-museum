@@ -1,3 +1,8 @@
+// broken: MatchAsType<MatchesExtending<{a: 4}>>, InferArrayType<readonly MatchSchemaOf<4 | null>[]>
+// weirdly MatchAsType<MatchesExtending<null | {a: 4}>> is fine
+// these are eminently fixable but right now it's not a priority
+// btw can maybe do better than MatchAsType<MatchSchemaOf<4>> resolving to number
+
 import {Merge, MergeUnion, ValuesOf} from "./typetools";
 
 export type Guards = {
@@ -73,7 +78,7 @@ export type MatchesExtending<T> =
       | MatchInstance<`single`, Partial<T>>
       | MatchInstance<`any`, ReadonlyArray<T | MatchSchemaOf<T>>>
       | MatchInstance<`all`, ReadonlyArray<T | MatchSchemaOf<T>>>
-      | MatchInstance<`custom`, (arg: T) => boolean>
+      | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
       | (T extends Record<string, unknown> ? {[K in keyof T]: MatchesExtending<T[K]>} : never)
     ) : never
   )
@@ -89,15 +94,15 @@ export type MatchesExtending<T> =
   )
   | (boolean extends T ? MatchInstance<`type`, `boolean`> : never)
   // | (_Primitive extends T ? T extends Primitive ? MatchInstance<`type`, PrimitiveToString<T>> : never : never)
-  | ValuesOf<{[K in keyof Guards]: T extends Guards[K] ? MatchInstance<`type`, K> : never}>
-  | ValuesOf<{[K in keyof Danger]: T extends Danger[K] ? MatchInstance<`danger`, K> : never}>;
+  | {[K in keyof Guards]: T extends Guards[K] ? MatchInstance<`type`, K> : never}[keyof Guards]
+  | {[K in keyof Danger]: T extends Danger[K] ? MatchInstance<`danger`, K> : never}[keyof Danger];
 
 type InferArrayType<
   Arr extends ReadonlyArray<unknown>
 > = Arr extends ReadonlyArray<(infer U) | (MatchInstance<Match[`match`], infer U>)>
   ? MatchAsType<
     | Exclude<U,
-      | string
+      | keyof Guards
       | Match
       | ReadonlyArray<unknown>
       | ((...args: never) => boolean)

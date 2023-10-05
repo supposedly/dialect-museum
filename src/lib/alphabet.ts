@@ -34,8 +34,8 @@ export type QualifiedPathsOf<O, Path extends ReadonlyArray<string> = readonly []
     ? QualifiedPathsOf<{[J in U]: J}, [...Path, K]>
   : O[K] extends Match
     ? <const M extends Partial<MatchAsType<O[K]>> extends infer Deferred ? Deferred : never>(
-      m: M
-    ) => ObjectFromPath<[...Path, K], M>
+      ...args: (boolean extends M ? ([] | [M]) : [M])  // hacky: `extends M` is evaluated before inference I think
+    ) => ObjectFromPath<[...Path, K], boolean extends M ? true : M>  // but this `extends M` is after inference
   : ObjectFromPath<Path, O[K]>
 };
 
@@ -59,8 +59,8 @@ export type NormalizeToMatch<O> = {
 
 export type MembersWithContext<ABC extends AlphabetInput> = ValuesOf<{
   [T in keyof ABC[`types`]]: {
-    type: T,
-    features: ApplyMatchAsType<ABC[`types`][T]>,
+    type?: T,
+    features?: ApplyMatchAsType<ABC[`types`][T]>,
     context?: ApplyMatchAsType<ABC[`context`]>
   }
 }>;
@@ -138,6 +138,9 @@ export function qualifiedPathsOf<
     }
     if (`match` in v && v[`match`] === `any` && `value` in v && Array.isArray(v[`value`])) {
       return [k, qualifiedPathsOf(Object.fromEntries(v[`value`].map(k => [k, k])), [...path, k])];
+    }
+    if (`match` in v && v[`match`] === `type` && `value` in v && v[`value`] === `boolean`) {
+      return [k, (m: boolean = true) => objectFromPath([...path, k], m)];
     }
     if (`match` in v) {
       return [k, (m: unknown) => objectFromPath([...path, k], m)];

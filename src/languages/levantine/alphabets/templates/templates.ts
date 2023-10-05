@@ -1,12 +1,21 @@
 import {alphabet} from "/lib/alphabet";
 import {underlying} from "../underlying/underlying";
+import {Merge} from "/lib/utils/typetools";
+import {MatchInstance} from "/lib/utils/match";
+
+function withFlags<
+  const Original extends object,
+  const Names extends ReadonlyArray<string>
+>(original: Original, ...names: Names): Merge<Original, {[Name in Names[number]]: MatchInstance<`type`, `boolean`>}> {
+  return {
+    ...original,
+    ...Object.fromEntries(names.map(name => [name, {match: `type`, value: `boolean`}])),
+  } as Merge<Original, {[Name in Names[number]]: MatchInstance<`type`, `boolean`>}>;
+}
 
 const root = {match: `array`, value: {
   length: {match: `any`, value: [3, 4]},
-  fill: {
-    ...underlying.types.consonant,
-    weak: {match: `type`, value: `boolean`},
-  },
+  fill: withFlags(underlying.types.consonant, `weak`, `affected`),
 }} as const;
 
 /*
@@ -19,9 +28,13 @@ export const templates = alphabet({
   },
   types: {
     boundary: {
-      word: {match: `type`, value: `boolean`},
-      pause: {match: `type`, value: `boolean`},
-      sentence: {match: `type`, value: `boolean`},
+      value: {match: `type`, value: `string`},
+      spacing: [
+        `before`,
+        `after`,
+        `around`,
+      ],
+      pausal: {match: `type`, value: `boolean`},
     },
     literal: {
       value: {match: `type`, value: `string`},
@@ -34,8 +47,8 @@ export const templates = alphabet({
           fill: {
             match: `any`,
             value: [
-              underlying.types.consonant,
-              underlying.types.vowel,
+              withFlags(underlying.types.consonant, `affected`),
+              withFlags(underlying.types.vowel, `affected`),
             ],
           },
         },
