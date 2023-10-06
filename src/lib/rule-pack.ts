@@ -220,9 +220,9 @@ const final = finalize(bruv);
 
 final.what((is, when) => [
   is.woah.etc(3),
-  // when.beforeA(
-  //   is.woah.etc(4)
-  // ),
+  when.beforeA(
+    is.woah.etc(4)
+  ),
 ]);
 
 final.what((is, when) => {const test = is.woah.etc(3); const wat = test.for.value; return [];});

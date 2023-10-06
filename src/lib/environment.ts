@@ -62,7 +62,9 @@ type _FeaturesCond<Source extends Alphabet, T extends keyof Source[`types`], V, 
 type _ContextCond<Source extends Alphabet, Context, ContextF extends (...args: never) => unknown> = _TypesFuncContextF<Source> extends ContextF
   ? _TypesFuncDefault<Context, Source[`context`]>
   : MatchAsType<ReturnType<ContextF>>;
-export type TypesFunc<Source extends Alphabet, T extends keyof Source[`types`]> =
+// these two `in out` annotations are the O-rings that would've saved the challenger
+// literally went from almost 13k lines of analyze-trace output to nil
+export type TypesFunc<in out Source extends Alphabet, in out T extends keyof Source[`types`]> =
   <
     // typing V and Context as unions of (obj | func) was really hard on the compiler for some reason
     // it would sporadically decide that only the object half of that union was valid and reject
