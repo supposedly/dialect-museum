@@ -12,15 +12,16 @@ import {MatchInstance, MatchSchema, MatchSchemaOf} from "./utils/match";
 import {underlying} from "/languages/levantine/alphabets";
 
 type NestedRecord<T> = {[key: string]: T | NestedRecord<T>};
+type NestedRecordOr<T> = T | {[key: string]: NestedRecordOr<T>};
 
-type Ruleset<Name, For, Into> = {
-  name: Name
-  for: For
-  into: Into
-};
+type Rule = {
+  name: string,
+  for: unknown,
+  into: NestedRecordOr<ReadonlyArray<unknown>>
+}
 
-type RulesetPack<
-  Targets,
+type Ruleset<
+  Targets extends Record<string, Rule>,
   Constraints
 > = {
   targets: Targets,
@@ -29,11 +30,25 @@ type RulesetPack<
 
 type Packed<Spec> = {
   [key: string]:
-    | RulesetPack<unknown, unknown>
+    | Ruleset<Record<string, Rule>, unknown>
     | Packed<Spec>,
 } & {spec: Spec};
 
-function rulePack<
+type ProcessPack<RulePack extends Packed<unknown>> = {
+  [K in keyof RulePack]: RulePack[K] extends Ruleset<infer Targets, infer Constraints>
+    ? Ruleset<
+      {[T in keyof Targets]: {
+        name: Targets[T][`name`]
+        for: MatchInstance<`all`, readonly [Targets[T][`for`], RulePack[`spec`]]>,
+        into: Targets[T][`into`]
+      }},
+      Constraints
+    >
+    : RulePack[K] extends Packed<unknown> ? ProcessPack<RulePack[K]>
+    : never
+}
+
+export function rulePack<
   const Source extends Alphabet,
   const Target extends Alphabet,
   const Dependencies extends ReadonlyArray<Alphabet>,
@@ -47,7 +62,7 @@ function rulePack<
   pack<
     const R extends Record<
       string,
-      | RulesetPack<unknown, unknown>
+      | Ruleset<Record<string, Rule>, unknown>
       | Packed<Spec>
     >
   >(r: R): Packed<Spec>
@@ -59,17 +74,21 @@ function rulePack<
     extraSpec: ExtraSpec,
     targets: Targets,
     constraints?: Constraints
-  ): {
-    targets: {
-      [K in keyof Targets]: {
+  ): Ruleset<
+    {
+      [K in keyof Targets & string]: {
         name: K,
         for: ExtraSpec,
         into: Targets[K]
       }
-    }
-    constraints: Constraints
-  },
+    },
+    Constraints
+  >
 } {
+  return null as any;
+}
+
+function finalize<const RulePack extends Packed<unknown>>(pack: RulePack): ProcessPack<RulePack> {
   return null as any;
 }
 
