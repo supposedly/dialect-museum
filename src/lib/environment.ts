@@ -5,11 +5,11 @@ import {Alphabet, MembersWithContext, QualifiedPathsOf} from "./alphabet";
 export type NestedArray<T> = ReadonlyArray<T | NestedArray<T>>;
 export type NestedArrayOr<T> = T | ReadonlyArray<NestedArrayOr<T>>;
 
-type Spec<ABC extends Alphabet> = (
+export type Spec<ABC extends Alphabet> = (
   | MembersWithContext<ABC> | keyof ABC[`types`]
   | ((types: TypesFuncs<ABC>) => MembersWithContext<ABC>)
 );
-type Env<ABC extends Alphabet> = (
+export type Env<ABC extends Alphabet> = (
   | {[Dir in `next` | `prev`]?: NestedArray<MembersWithContext<ABC>>}
   | EnvironmentFunc<ABC>
 );
@@ -36,7 +36,7 @@ type _Specs<
 
 export type Specs<
   ABC extends Alphabet,
-  ABCHistory extends ReadonlyArray<Alphabet> | undefined = []
+  ABCHistory extends ReadonlyArray<Alphabet> | undefined = undefined
 > = MatchSchemaOf<_Specs<ABC, ABCHistory>>;
 
 type _TypesFuncDefault<T, D extends MatchSchema> = MatchAsType<SafeMatchSchemaOf<D> extends T ? D : T>;

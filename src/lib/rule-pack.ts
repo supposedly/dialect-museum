@@ -8,10 +8,30 @@
 // it's uglier but since it's still doable i think it's ok
 import {Alphabet, MembersWithContext} from "./alphabet";
 import {EnvironmentFunc, Specs} from "./environment";
-import {MatchInstance} from "./utils/match";
+import {MatchInstance, MatchSchema, MatchSchemaOf} from "./utils/match";
 import {underlying} from "/languages/levantine/alphabets";
 
 type NestedRecord<T> = {[key: string]: T | NestedRecord<T>};
+
+type Ruleset<Name, For, Into> = {
+  name: Name
+  for: For
+  into: Into
+};
+
+type RulesetPack<
+  Targets,
+  Constraints
+> = {
+  targets: Targets,
+  constraints: Constraints
+};
+
+type Packed<Spec> = {
+  [key: string]:
+    | RulesetPack<unknown, unknown>
+    | Packed<Spec>,
+} & {spec: Spec};
 
 function rulePack<
   const Source extends Alphabet,
@@ -24,10 +44,13 @@ function rulePack<
   dependencies: Dependencies,
   spec: Spec
 ): {
-  pack<const R extends Record<
-    string,
-    any
-  >>(r: R): R
+  pack<
+    const R extends Record<
+      string,
+      | RulesetPack<unknown, unknown>
+      | Packed<Spec>
+    >
+  >(r: R): Packed<Spec>
   <
     const ExtraSpec extends Specs<Source>,
     const Targets extends NestedRecord<ReadonlyArray<MembersWithContext<Target>>>,
@@ -40,7 +63,7 @@ function rulePack<
     targets: {
       [K in keyof Targets]: {
         name: K,
-        for: MatchInstance<`all`, [Spec, ExtraSpec]>,
+        for: ExtraSpec,
         into: Targets[K]
       }
     }
@@ -50,7 +73,8 @@ function rulePack<
   return null as any;
 }
 
-const test = rulePack(underlying, underlying, [underlying], {});
+const test = rulePack(underlying, underlying, [underlying], {spec: {context: {affected: true}}});
+const test2 = rulePack(underlying, underlying, [underlying], {spec: {type: `consonant`, context: {affected: true}}});
 
 const what = test({
   spec: {context: {affected: true}},
@@ -102,3 +126,9 @@ const what3 = test({
     }
   ),
 });
+
+type Wa = typeof what3;
+
+const bruv = test2.pack({what});
+
+const bruh = test.pack({bruv});
