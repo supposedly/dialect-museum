@@ -14,37 +14,48 @@ import {underlying} from "/languages/levantine/alphabets";
 type NestedRecord<T> = {[key: string]: T | NestedRecord<T>};
 type NestedRecordOr<T> = T | {[key: string]: NestedRecordOr<T>};
 
-type Rule = {
+type Ruleset = {
   name: string,
   for: unknown,
   into: NestedRecordOr<ReadonlyArray<unknown>>
 }
 
-type Ruleset<
-  Targets extends Record<string, Rule>,
-  Constraints
+type RulesetWrapper<
+  Rules extends Record<string, Ruleset>,
+  Constraints extends Record<string, (...args: never) => unknown>
 > = {
-  targets: Targets,
+  rules: Rules,
   constraints: Constraints
 };
 
-type Packed<Spec> = {
-  [key: string]:
-    | Ruleset<Record<string, Rule>, unknown>
-    | Packed<Spec>,
-} & {spec: Spec};
+type DefaultWrapper = RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: never) => unknown>>;
 
-type ProcessPack<RulePack extends Packed<unknown>> = {
-  [K in keyof RulePack]: RulePack[K] extends Ruleset<infer Targets, infer Constraints>
-    ? Ruleset<
-      {[T in keyof Targets]: {
-        name: Targets[T][`name`]
-        for: MatchInstance<`all`, readonly [Targets[T][`for`], RulePack[`spec`]]>,
-        into: Targets[T][`into`]
-      }},
+type Packed<R extends Record<
+  string,
+  unknown
+>, Spec> = {
+  children: R
+  specs: Spec
+};
+
+type RuleFuncs<Wrapper extends RulesetWrapper<Record<string, Ruleset>, Record<string, ((...args: never) => unknown)>>> = {
+  [K in keyof Wrapper[`rules`]]: // is this right lol u need both the record stuff and the callable part
+  unknown
+};
+
+type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown>> = {
+  [K in keyof RulePack]: RulePack[K] extends RulesetWrapper<infer Targets, infer Constraints>
+    ? RuleFuncs<RulesetWrapper<
+      {
+        [T in keyof Targets]: {
+          name: Targets[T][`name`]
+          for: MatchInstance<`all`, readonly [Targets[T][`for`], RulePack[`specs`]]>,
+          into: Targets[T][`into`]
+        }
+      },
       Constraints
-    >
-    : RulePack[K] extends Packed<unknown> ? ProcessPack<RulePack[K]>
+    >>
+    : RulePack[K] extends Packed<Record<string, unknown>, unknown> ? ProcessPack<RulePack[K]>
     : never
 }
 
@@ -62,10 +73,10 @@ export function rulePack<
   pack<
     const R extends Record<
       string,
-      | Ruleset<Record<string, Rule>, unknown>
-      | Packed<Spec>
+      | RulesetWrapper<Record<string, Ruleset>, Record<string, ((...args: never) => unknown)>>
+      | Packed<Record<string, unknown>, Spec>
     >
-  >(r: R): Packed<Spec>
+  >(r: R): Packed<R, Spec>
   <
     const ExtraSpec extends Specs<Source>,
     const Targets extends NestedRecord<ReadonlyArray<MembersWithContext<Target>>>,
@@ -74,7 +85,7 @@ export function rulePack<
     extraSpec: ExtraSpec,
     targets: Targets,
     constraints?: Constraints
-  ): Ruleset<
+  ): RulesetWrapper<
     {
       [K in keyof Targets & string]: {
         name: K,
@@ -93,21 +104,22 @@ function finalize<const RulePack extends Packed<unknown>>(pack: RulePack): Proce
 }
 
 const test = rulePack(underlying, underlying, [underlying], {spec: {context: {affected: true}}});
-const test2 = rulePack(underlying, underlying, [underlying], {spec: {type: `consonant`, context: {affected: true}}});
+const test2 = rulePack(underlying, underlying, [underlying], {spec: {context: {affected: true}}});
 
-const what = test({
+const what = test2({
   spec: {context: {affected: true}},
-  env: (where, segment) => where.before(segment(context => context.affected())),
+  env: (where, segment) => where.before(segment({affected: true})),
 },
 {
-  woah: [{type: `consonant`, features: {} as any}],
+  woah: {etc: [{type: `consonant`, features: {} as any}]},
 },
 {
   beforeA: ({before}, {consonant, vowel}, {affected}) => (
+    // {env: {next: [{type: `consonant`}, {type: `consonant`, features: {match: `custom`, value: test => test.articulator === `lips`}}, {type: `vowel`, features: {round: true}}]}}
     before(
       consonant(),
       consonant({match: `custom`, value: test => test.articulator === `lips`}),
-      vowel(features => features.round())
+      vowel({round: true})
     )
   ),
 },
@@ -122,9 +134,10 @@ const what2 = test({
 },
 {
   beforeA: ({before}, {consonant, vowel}, {affected}) => (
+    // {env: {next: [{type: `consonant`, features: {articulator: `lips`}}, {type: `vowel`, features: {backness: `back`}}]}}
     before(
-      consonant(features => features.articulator.lips),
-      vowel(features => features.backness.back)
+      consonant({articulator: `lips`}),
+      vowel({backness: `back`})
     )
   ),
 });
@@ -148,6 +161,12 @@ const what3 = test({
 
 type Wa = typeof what3;
 
-const bruv = test2.pack({what});
+type Wat = typeof what;
 
-const bruh = test.pack({bruv});
+const wat = what;
+
+const eee = what.rules.woah.for;
+
+const bruv = test2.pack({what});
+type Waft = typeof bruv[`children`][`what`][`rules`][`woah`][`into`];
+const bruh = test.pack({what2, bruv});
