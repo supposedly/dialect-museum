@@ -97,19 +97,21 @@ export type TypesFuncs<Source extends Alphabet> = {
   })
 );
 
-// type _ArrType<Source extends Alphabet> = ReadonlyArray<SafeMatchSchemaOf<NestedArrayOr<MembersWithContext<Source>>>>;
-type _ArrType<Source extends Alphabet> = ReadonlyArray<unknown>;
+type _ArrType<Source extends Alphabet> = ReadonlyArray<SafeMatchSchemaOf<NestedArrayOr<MembersWithContext<Source>>>>;
+// type _ArrType<Source extends Alphabet> = ReadonlyArray<unknown>;
 export type EnvironmentFunc<
   Source extends Alphabet,
   Dependencies extends ReadonlyArray<Alphabet> | undefined = undefined
 > = (
   env: {
-    before<
-      const Arr extends _ArrType<Source>
-    >(...arr: Arr): {env: {next: Arr}},
-    after<
-      const Arr extends _ArrType<Source>
-    >(...arr: Arr): {env: {prev: Arr}},
+    before: {
+      <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {next: Arr}}
+      slow<const Arr extends _ArrType<Source>>(...arr: Arr): {env: {next: Arr}}
+    },
+    after: {
+      <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {prev: Arr}}
+      slow<const Arr extends _ArrType<Source>>(...arr: Arr): {env: {prev: Arr}}
+    }
   },
   types: TypesFuncs<Source>,
   context: QualifiedPathsOf<Source[`context`]>
