@@ -7,7 +7,7 @@
 // }
 // it's uglier but since it's still doable i think it's ok
 import {Alphabet, MembersWithContext} from "./alphabet";
-import {EnvironmentFunc, Specs} from "./environment";
+import {EnvironmentFunc, NestedArray, Specs} from "./environment";
 import {MatchInstance, MatchSchema, MatchSchemaOf} from "./utils/match";
 import {underlying} from "/languages/levantine/alphabets";
 
@@ -15,7 +15,7 @@ type NestedRecord<T> = {[key: string]: T | NestedRecord<T>};
 type NestedRecordOr<T> = T | {[key: string]: NestedRecordOr<T>};
 
 type Ruleset = {
-  name: string,
+  // name: string,
   for: unknown,
   into: NestedRecordOr<ReadonlyArray<unknown>>
 }
@@ -38,26 +38,53 @@ type Packed<R extends Record<
   specs: Spec
 };
 
-type RuleFuncs<Wrapper extends RulesetWrapper<Record<string, Ruleset>, Record<string, ((...args: never) => unknown)>>> = {
-  [K in keyof Wrapper[`rules`]]: // is this right lol u need both the record stuff and the callable part
-  unknown
+type IntoToFunc<
+  Into extends NestedRecordOr<ReadonlyArray<unknown>>,
+  Spec
+> = Into extends ReadonlyArray<unknown>
+  ? (odds: number) => ({for: Spec, into: Into})
+  : Into extends NestedRecord<ReadonlyArray<unknown>> ? {[K in keyof Into]: IntoToFunc<Into[K], Spec>}
+  : never;
+type RulesetToFunc<Rules extends Record<string, Ruleset>> = {
+  [K in keyof Rules]: IntoToFunc<Rules[K][`into`], Rules[K][`for`]>
 };
 
+type ConstraintsToFuncs<Constraints extends Record<string, ((...args: never) => unknown)>> = {
+  [K in keyof Constraints]: <
+    const Arr extends ReadonlyArray<({for: unknown, into: unknown})>
+  >(...args: Arr) => {
+    [Index in keyof Arr]: {
+      for: MatchInstance<`all`, readonly [Arr[Index][`for`], ReturnType<Constraints[K]>]>,
+      into: Arr[Index][`into`]}
+    }
+};
+
+type RuleFunc<
+  Wrapper extends RulesetWrapper<
+    Record<string, Ruleset>,
+    Record<string, ((...args: never) => unknown)>
+  >,
+  R extends NestedArray<Ruleset>
+> = (
+  item: RulesetToFunc<Wrapper[`rules`]>,
+  when: ConstraintsToFuncs<Wrapper[`constraints`]>
+) => R;
+
 type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown>> = {
-  [K in keyof RulePack]: RulePack[K] extends RulesetWrapper<infer Targets, infer Constraints>
-    ? RuleFuncs<RulesetWrapper<
+  [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends RulesetWrapper<infer Targets, infer Constraints>
+    ? <const R extends NestedArray<Ruleset>>(fn: RuleFunc<RulesetWrapper<
       {
-        [T in keyof Targets]: {
-          name: Targets[T][`name`]
+        [T in keyof Targets & string]: {
+          // name: Targets[T][`name`]
           for: MatchInstance<`all`, readonly [Targets[T][`for`], RulePack[`specs`]]>,
           into: Targets[T][`into`]
         }
       },
       Constraints
-    >>
+    >, R>) => R
     : RulePack[K] extends Packed<Record<string, unknown>, unknown> ? ProcessPack<RulePack[K]>
     : never
-}
+};
 
 export function rulePack<
   const Source extends Alphabet,
@@ -88,7 +115,7 @@ export function rulePack<
   ): RulesetWrapper<
     {
       [K in keyof Targets & string]: {
-        name: K,
+        // name: K,
         for: ExtraSpec,
         into: Targets[K]
       }
@@ -99,7 +126,8 @@ export function rulePack<
   return null as any;
 }
 
-function finalize<const RulePack extends Packed<unknown>>(pack: RulePack): ProcessPack<RulePack> {
+// need to add defaults, maybe null
+function finalize<const RulePack extends Packed<Record<string, unknown>, unknown>>(pack: RulePack): ProcessPack<RulePack> {
   return null as any;
 }
 
@@ -170,3 +198,12 @@ const eee = what.rules.woah.for;
 const bruv = test2.pack({what});
 type Waft = typeof bruv[`children`][`what`][`rules`][`woah`][`into`];
 const bruh = test.pack({what2, bruv});
+
+const final = finalize(bruv);
+
+final.what((is, when) => [
+  is.woah.etc(3),
+  // when.beforeA(
+  //   is.woah.etc(4)
+  // ),
+]);
