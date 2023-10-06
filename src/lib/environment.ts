@@ -1,5 +1,5 @@
 import {MatchAsType, MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from "./utils/match";
-import {IsUnion, MergeUnion, ValuesOf} from "./utils/typetools";
+import {IsUnion, Merge, MergeUnion, ValuesOf} from "./utils/typetools";
 import {Alphabet, MembersWithContext, QualifiedPathsOf} from "./alphabet";
 
 export type NestedArray<T> = ReadonlyArray<T | NestedArray<T>>;
@@ -14,23 +14,26 @@ export type Env<ABC extends Alphabet> = (
   | EnvironmentFunc<ABC>
 );
 
+type Test = Merge<{spec?: unknown, env?: unknown}, unknown>;
+type Tast = MergeUnion<{spec?: unknown, env?: unknown} | {was?: unknown}>;
+
 type _Specs<
   ABC extends Alphabet,
   ABCHistory extends ReadonlyArray<Alphabet> | undefined = undefined,
-> = MergeUnion<
-  | {
+> = Merge<
+  {
     spec?: Spec<ABC>
     env?: Env<ABC>
-  }
-  | (ABCHistory extends ReadonlyArray<infer U extends Alphabet> ?
-    ABCHistory[`length`] extends 0 ? never : {
+  },
+  (ABCHistory extends ReadonlyArray<infer U extends Alphabet> ?
+    ABCHistory[`length`] extends 0 ? unknown : {
       was?: {
         [A in U as A[`name`]]: {
           spec: Spec<A>,
           env: Env<A>
         }
       }}
-    : never
+    : unknown
   )
 >;
 

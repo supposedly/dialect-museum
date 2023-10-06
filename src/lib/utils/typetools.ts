@@ -12,7 +12,7 @@ export type Merge<A, B> = A extends object ? B extends object ? {
     : K extends keyof A
     ? A[K]
     : never;
-} : A & B : A & B;
+} : A : B;
 export type MergeArray<Arr extends ReadonlyArray<unknown>> =
   Arr extends readonly [infer Head] ? Head
   : Arr extends readonly [infer Head, ...infer Tail] ? Merge<Head, MergeArray<Tail>>

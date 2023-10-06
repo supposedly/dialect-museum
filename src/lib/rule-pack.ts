@@ -9,6 +9,7 @@
 import {Alphabet, MembersWithContext} from "./alphabet";
 import {EnvironmentFunc, NestedArray, Specs} from "./environment";
 import {MatchInstance, MatchSchema, MatchSchemaOf} from "./utils/match";
+import {Merge} from "./utils/typetools";
 import {underlying} from "/languages/levantine/alphabets";
 
 type NestedRecord<T> = {[key: string]: T | NestedRecord<T>};
@@ -30,23 +31,36 @@ type RulesetWrapper<
 
 type DefaultWrapper = RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: never) => unknown>>;
 
+type Unfunc<T, Key extends string> = T extends {[K in Key]: (...args: never) => unknown}
+  ? ReturnType<T[Key]>
+  : T extends {[K in Key]: {match: unknown, value: readonly unknown[]}}
+  ? {match: T[Key][`match`], value: {[Index in keyof T[Key][`value`]]: Unfunc<T[Key][`value`][Index], Key>}}
+  : T extends {[K in Key]: unknown}
+  ? {[K in Key]: T[Key]}
+  : T extends {match: unknown, value: readonly unknown[]}
+  ? {match: T[`match`], value: {[Index in keyof T[`value`]]: Unfunc<T[`value`][Index], Key>}}
+  : never;
+
 type Packed<R extends Record<
   string,
   unknown
 >, Spec> = {
   children: R
-  specs: Spec
+  specs: Merge<Unfunc<Spec, `spec`>, Unfunc<Spec, `env`>>
 };
 
 type IntoToFunc<
   Into extends NestedRecordOr<ReadonlyArray<unknown>>,
   Spec
 > = Into extends ReadonlyArray<unknown>
-  ? (odds: number) => ({for: Spec, into: Into})
+  ? (odds: number) => ({for: Merge<Unfunc<Spec, `spec`>, Unfunc<Spec, `env`>>, into: Into})
   : Into extends NestedRecord<ReadonlyArray<unknown>> ? {[K in keyof Into]: IntoToFunc<Into[K], Spec>}
   : never;
 type RulesetToFunc<Rules extends Record<string, Ruleset>> = {
-  [K in keyof Rules]: IntoToFunc<Rules[K][`into`], Rules[K][`for`]>
+  [K in keyof Rules]: IntoToFunc<
+    Rules[K][`into`],
+    Merge<Unfunc<Rules[K][`for`], `spec`>, Unfunc<Rules[K][`for`], `env`>>
+  >
 };
 
 type ConstraintsToFuncs<Constraints extends Record<string, ((...args: never) => unknown)>> = {
@@ -76,7 +90,10 @@ type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown>> = {
       {
         [T in keyof Targets & string]: {
           // name: Targets[T][`name`]
-          for: MatchInstance<`all`, readonly [Targets[T][`for`], RulePack[`specs`]]>,
+          for: MatchInstance<`all`, readonly [
+            Targets[T][`for`],
+            RulePack[`specs`],
+          ]>,
           into: Targets[T][`into`]
         }
       },
@@ -136,7 +153,7 @@ const test2 = rulePack(underlying, underlying, [underlying], {spec: {context: {a
 
 const what = test2({
   spec: {context: {affected: true}},
-  env: (where, segment) => where.before(segment({affected: true})),
+  env: (where, segment) => where.before(segment({affected: false})),
 },
 {
   woah: {etc: [{type: `consonant`, features: {} as any}]},
@@ -207,3 +224,5 @@ final.what((is, when) => [
   //   is.woah.etc(4)
   // ),
 ]);
+
+final.what((is, when) => {const test = is.woah.etc(3); const wat = test.for.value; return [];});
