@@ -26,14 +26,14 @@ type _Specs<
     env?: Env<ABC>
   },
   (ABCHistory extends ReadonlyArray<infer U extends Alphabet> ?
-    ABCHistory[`length`] extends 0 ? unknown : {
+    ABCHistory[`length`] extends 0 ? never : {
       was?: {
         [A in U as A[`name`]]: {
           spec: Spec<A>,
           env: Env<A>
         }
       }}
-    : unknown
+    : never
   )
 >;
 
@@ -44,7 +44,10 @@ export type Specs<
 
 type _TypesFuncDefault<T, D extends MatchSchema> = MatchAsType<SafeMatchSchemaOf<D> extends T ? D : T>;
 type _TypesFuncVF<in out Source extends Alphabet, in out T extends keyof Source[`types`]> = (
-  (features: QualifiedPathsOf<Source[`types`][T]>) => SafeMatchSchemaOf<Source[`types`][T]>
+  (
+    features: QualifiedPathsOf<Source[`types`][T]>,
+    traits: T extends keyof Source[`traits`] ? Source[`traits`][T] : never
+  ) => SafeMatchSchemaOf<Source[`types`][T]>
 );
 type _TypesFuncContextF<in out Source extends Alphabet> = (
   ((context: QualifiedPathsOf<Source[`context`]>) => SafeMatchSchemaOf<Source[`context`]>)

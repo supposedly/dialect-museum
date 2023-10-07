@@ -3,7 +3,7 @@
 // some compilers and not others...
 export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
 export type MergeUnion<U> = UnionToIntersection<U> extends infer O ? {[K in keyof O]: O[K]} : never;
-export type Merge<A, B> = A extends object ? B extends object ? {
+export type Merge<A, B> = [B] extends [never] ? A : [A] extends [never] ? B : A extends object ? B extends object ? {
   [K in keyof A | keyof B]: 
     K extends keyof A & keyof B
     ? Merge<A[K], B[K]>
@@ -24,3 +24,6 @@ export type UnionOf<L extends readonly unknown[]> = L[number];
 
 export type ValuesOf<O> = O[keyof O];
 export type ArrayOr<T> = T | T[];
+
+type Bruh<A, B> = [B] extends [never] ? A : 3;
+type Test = Bruh<{a: 1}, never>;
