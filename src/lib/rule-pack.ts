@@ -8,8 +8,8 @@
 // it's uglier but since it's still doable i think it's ok
 import {Alphabet, MembersWithContext} from "./alphabet";
 import {EnvironmentFunc, NestedArray, Specs} from "./environment";
-import {MatchInstance, MatchSchema, MatchSchemaOf} from "./utils/match";
-import {Merge} from "./utils/typetools";
+import {MatchAsType, MatchInstance, MatchSchema, MatchSchemaOf} from "./utils/match";
+import {IsUnion, Merge, ValuesOf} from "./utils/typetools";
 import {underlying} from "/languages/levantine/alphabets";
 
 type NestedRecord<T> = {[key: string]: T | NestedRecord<T>};
@@ -41,25 +41,31 @@ type Unfunc<T, Key extends string> = T extends {[K in Key]: (...args: never) => 
   ? {match: T[`match`], value: {[Index in keyof T[`value`]]: Unfunc<T[`value`][Index], Key>}}
   : never;
 
+type UnfuncSpec<Spec> = Spec extends ({spec: unknown, env?: unknown} | {spec: unknown})
+  ? Merge<Unfunc<Spec, `spec`>, Unfunc<Spec, `env`>>
+  : Spec extends {match: unknown, value: readonly unknown[]}
+  ? {match: Spec[`match`], value: {[Index in keyof Spec[`value`]]: UnfuncSpec<Spec[`value`][Index]>}}
+  : Spec;
+
 type Packed<R extends Record<
   string,
   unknown
 >, Spec> = {
   children: R
-  specs: Merge<Unfunc<Spec, `spec`>, Unfunc<Spec, `env`>>
+  specs: UnfuncSpec<Spec>
 };
 
 type IntoToFunc<
   Into extends NestedRecordOr<ReadonlyArray<unknown>>,
   Spec
 > = Into extends ReadonlyArray<unknown>
-  ? (odds: number) => ({for: Merge<Unfunc<Spec, `spec`>, Unfunc<Spec, `env`>>, into: Into})
+  ? (odds: number) => ({for: UnfuncSpec<Spec>, into: Into})
   : Into extends NestedRecord<ReadonlyArray<unknown>> ? {[K in keyof Into]: IntoToFunc<Into[K], Spec>}
   : never;
 type RulesetToFunc<Rules extends Record<string, Ruleset>> = {
   [K in keyof Rules]: IntoToFunc<
     Rules[K][`into`],
-    Merge<Unfunc<Rules[K][`for`], `spec`>, Unfunc<Rules[K][`for`], `env`>>
+    UnfuncSpec<Rules[K][`for`]>
   >
 };
 
@@ -99,9 +105,48 @@ type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown>> = {
       },
       Constraints
     >, R>) => R
-    : RulePack[K] extends Packed<Record<string, unknown>, unknown> ? ProcessPack<RulePack[K]>
+    : RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown> ? ProcessPack<RulePack[`children`][K]>
     : never
 };
+
+type OnlyOneTarget<Targets> = Targets extends ReadonlyArray<Ruleset>
+  ? true
+  : Targets extends Record<string, unknown>
+  ? IsUnion<keyof Targets> extends false ? OnlyOneTarget<Targets[string]> : false
+  : false;
+type GetOneTarget<Targets> = Targets extends NestedArray<Ruleset>
+  ? Targets
+  : Targets extends Record<string, unknown>
+  ? IsUnion<keyof Targets> extends false ? GetOneTarget<Targets[string]> : never
+  : never;
+
+type ExtractDefaults<RulePack extends Packed<Record<string, unknown>, unknown>> = Merge<
+  {
+    [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown>
+      ? ProcessPack<RulePack[`children`][K]>
+      : never
+  },
+  {
+    [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends RulesetWrapper<infer Targets, infer Constraints>
+      ? keyof Constraints extends never ? OnlyOneTarget<Targets> extends true ?
+        RuleFunc<
+          RulesetWrapper<
+            {[T in keyof Targets]: {
+              for: MatchInstance<`all`, readonly [Targets[T][`for`], RulePack[`specs`]]>
+              into: Targets[T][`into`]
+            }},
+            Constraints
+          >,
+          GetOneTarget<Targets>
+        >
+      : never : never : never;
+  }
+>;
+
+type UnfuncTargets<Targets> = Targets extends (...args: never) => unknown
+  ? ReturnType<Targets>
+  : Targets extends ReadonlyArray<unknown> ? Targets
+  : {[K in keyof Targets]: UnfuncTargets<Targets[K]>};
 
 export function rulePack<
   const Source extends Alphabet,
@@ -123,7 +168,13 @@ export function rulePack<
   >(r: R): Packed<R, Spec>
   <
     const ExtraSpec extends Specs<Source>,
-    const Targets extends NestedRecord<ReadonlyArray<MembersWithContext<Target>>>,
+    const Targets extends NestedRecord<
+      | ReadonlyArray<MembersWithContext<Target>>
+      | ((
+        captured: MatchAsType<MatchInstance<`all`, readonly [UnfuncSpec<Spec>, UnfuncSpec<ExtraSpec>]>>,
+        // {preject, postject, mock, etc}
+      ) => ReadonlyArray<MembersWithContext<Target>>)
+    >,
     const Constraints extends Record<string, EnvironmentFunc<Source, Dependencies>>
   >(
     extraSpec: ExtraSpec,
@@ -133,8 +184,8 @@ export function rulePack<
     {
       [K in keyof Targets & string]: {
         // name: K,
-        for: ExtraSpec,
-        into: Targets[K]
+        for: UnfuncSpec<ExtraSpec>,
+        into: UnfuncTargets<Targets>[K]
       }
     },
     Constraints
@@ -164,7 +215,8 @@ const what = test2({
     before(
       consonant(),
       consonant({match: `custom`, value: test => test.articulator === `lips`}),
-      vowel({round: true})
+      vowel(features => features.round()),
+      vowel({round: true}),
     )
   ),
 },
@@ -178,11 +230,12 @@ const what2 = test({
   woah: {test: [{type: `consonant`, features: {} as any}]},
 },
 {
-  beforeA: ({before}, {consonant, vowel}, {affected}) => (
+  beforeA: ({before}, {consonant, vowel, suffix}, {affected}) => (
     // {env: {next: [{type: `consonant`, features: {articulator: `lips`}}, {type: `vowel`, features: {backness: `back`}}]}}
     before(
-      consonant({articulator: `lips`}),
-      vowel({backness: `back`})
+      consonant(features => features.articulator.lips),
+      vowel(features => features.backness.back),
+      suffix((features, traits) => traits.plural)
     )
   ),
 });
@@ -193,7 +246,7 @@ const what3 = test({
 },
 {
   base: {
-    etc: [{type: `consonant`, features: {} as any}],
+    etc: test => [{type: `consonant`, features: {} as any}],
   },
 },
 {
@@ -218,11 +271,14 @@ const bruh = test.pack({what2, bruv});
 
 const final = finalize(bruv);
 
-final.what((is, when) => [
+const yiss = final.what((is, when) => [
   is.woah.etc(3),
   when.beforeA(
     is.woah.etc(4)
   ),
 ]);
+
+
+yiss[1][0].for;
 
 final.what((is, when) => {const test = is.woah.etc(3); const wat = test.for.value; return [];});
