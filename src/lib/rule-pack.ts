@@ -59,7 +59,7 @@ type IntoToFunc<
   Into extends NestedRecordOr<ReadonlyArray<unknown>>,
   Spec
 > = Into extends ReadonlyArray<unknown>
-  ? (odds: number) => ({for: UnfuncSpec<Spec>, into: Into})
+  ? (odds?: number) => ({for: UnfuncSpec<Spec>, into: Into})
   : Into extends NestedRecord<ReadonlyArray<unknown>> ? {[K in keyof Into]: IntoToFunc<Into[K], Spec>}
   : never;
 type RulesetToFunc<Rules extends Record<string, Ruleset>> = {
@@ -109,16 +109,16 @@ type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown>> = {
     : never
 };
 
-type OnlyOneTarget<Targets> = Targets extends ReadonlyArray<Ruleset>
+type OnlyOneTarget<Into> = Into extends NestedArray<unknown>
   ? true
-  : Targets extends Record<string, unknown>
-  ? IsUnion<keyof Targets> extends false ? OnlyOneTarget<Targets[string]> : false
+  : Into extends Record<string, unknown>
+  ? IsUnion<keyof Into> extends false ? OnlyOneTarget<Into[keyof Into]> : false
   : false;
-type GetOneTarget<Targets> = Targets extends NestedArray<Ruleset>
-  ? Targets
-  : Targets extends Record<string, unknown>
-  ? IsUnion<keyof Targets> extends false ? GetOneTarget<Targets[string]> : never
-  : never;
+type GetOneTarget<Into> = Into extends NestedArray<unknown>
+  ? Into
+  : Into extends Record<string, unknown>
+  ? IsUnion<keyof Into> extends false ? Record<keyof Into, GetOneTarget<Into[keyof Into]>> : false
+  : false;
 
 type ExtractDefaults<RulePack extends Packed<Record<string, unknown>, unknown>> = Merge<
   {
@@ -128,18 +128,15 @@ type ExtractDefaults<RulePack extends Packed<Record<string, unknown>, unknown>> 
   },
   {
     [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends RulesetWrapper<infer Targets, infer Constraints>
-      ? keyof Constraints extends never ? OnlyOneTarget<Targets> extends true ?
-        RuleFunc<
-          RulesetWrapper<
-            {[T in keyof Targets]: {
-              for: MatchInstance<`all`, readonly [Targets[T][`for`], RulePack[`specs`]]>
-              into: Targets[T][`into`]
-            }},
-            Constraints
-          >,
-          GetOneTarget<Targets>
-        >
-      : never : never : never;
+    ? keyof Constraints extends never ? {
+      [T in keyof Targets]: 
+        OnlyOneTarget<Targets[T][`into`]> extends true ?
+          RulesetToFunc<Record<T, {
+            for: MatchInstance<`all`, readonly [Targets[T][`for`], RulePack[`specs`]]>
+            into: Targets[T][`into`]
+          }>>[T]
+        : never
+      } : never : never
   }
 >;
 
@@ -195,13 +192,34 @@ export function rulePack<
 }
 
 // need to add defaults, maybe null
-function finalize<const RulePack extends Packed<Record<string, unknown>, unknown>>(pack: RulePack): ProcessPack<RulePack> {
+function finalize<const RulePack extends Packed<Record<string, unknown>, unknown>>(pack: RulePack): ProcessPack<RulePack> & {
+  defaults: ExtractDefaults<RulePack>
+} {
   return null as any;
 }
 
 const test = rulePack(underlying, underlying, [underlying], {spec: {context: {affected: true}}});
 const test2 = rulePack(underlying, underlying, [underlying], {spec: {context: {affected: true}}});
 
+const defaultTest = test2({
+  spec: {context: {affected: true}},
+  env: (where, segment) => where.before(segment({affected: false})),
+},
+{
+  woah: [{type: `consonant`, features: {} as any}],
+},
+{
+  // beforeA: ({before}, {consonant, vowel}, {affected}) => (
+  //   // {env: {next: [{type: `consonant`}, {type: `consonant`, features: {match: `custom`, value: test => test.articulator === `lips`}}, {type: `vowel`, features: {round: true}}]}}
+  //   before(
+  //     consonant(),
+  //     consonant({match: `custom`, value: test => test.articulator === `lips`}),
+  //     vowel(features => features.round()),
+  //     vowel({round: true}),
+  //   )
+  // ),
+},
+);
 const what = test2({
   spec: {context: {affected: true}},
   env: (where, segment) => where.before(segment({affected: false})),
@@ -259,13 +277,13 @@ const what3 = test({
 
 type Wa = typeof what3;
 
-type Wat = typeof what;
+type Wat = typeof defaultTest;
 
-const wat = what;
+const wat = defaultTest;
 
-const eee = what.rules.woah.for;
+const eee = defaultTest.rules.woah.for;
 
-const bruv = test2.pack({what});
+const bruv = test2.pack({defaultTest, what});
 type Waft = typeof bruv[`children`][`what`][`rules`][`woah`][`into`];
 const bruh = test.pack({what2, bruv});
 
@@ -277,6 +295,8 @@ const yiss = final.what((is, when) => [
     is.woah.etc(4)
   ),
 ]);
+
+const tesdt = final.defaults.defaultTest.woah();
 
 
 yiss[1][0].for;
