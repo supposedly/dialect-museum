@@ -25,5 +25,8 @@ export type UnionOf<L extends readonly unknown[]> = L[number];
 export type ValuesOf<O> = O[keyof O];
 export type ArrayOr<T> = T | T[];
 
-type Bruh<A, B> = [B] extends [never] ? A : 3;
-type Test = Bruh<{a: 1}, never>;
+export type NestedArray<T> = ReadonlyArray<T | NestedArray<T>>;
+export type NestedArrayOr<T> = T | ReadonlyArray<NestedArrayOr<T>>;
+
+export type NestedRecord<T> = {[key: string]: T | NestedRecord<T>};
+export type NestedRecordOr<T> = T | {[key: string]: NestedRecordOr<T>};

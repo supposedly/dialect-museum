@@ -1,9 +1,6 @@
-import {MatchAsType, MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from "./utils/match";
-import {IsUnion, Merge, MergeUnion, ValuesOf} from "./utils/typetools";
-import {Alphabet, MembersWithContext, QualifiedPathsOf} from "./alphabet";
-
-export type NestedArray<T> = ReadonlyArray<T | NestedArray<T>>;
-export type NestedArrayOr<T> = T | ReadonlyArray<NestedArrayOr<T>>;
+import {MatchAsType, MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from "/lib/utils/match";
+import {IsUnion, Merge, MergeUnion, NestedArray, NestedArrayOr, ValuesOf} from "/lib/utils/typetools";
+import {Alphabet, MembersWithContext, QualifiedPathsOf} from "/lib/alphabet";
 
 export type Spec<ABC extends Alphabet> = (
   | MembersWithContext<ABC> | keyof ABC[`types`]
@@ -13,9 +10,6 @@ export type Env<ABC extends Alphabet> = (
   | {[Dir in `next` | `prev`]?: NestedArray<MembersWithContext<ABC>>}
   | EnvironmentFunc<ABC>
 );
-
-type Test = Merge<{spec?: unknown, env?: unknown}, unknown>;
-type Tast = MergeUnion<{spec?: unknown, env?: unknown} | {was?: unknown}>;
 
 type _Specs<
   ABC extends Alphabet,
