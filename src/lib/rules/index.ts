@@ -1,8 +1,8 @@
-export {rulePack, finalize} from "./funcs";
+export {rulePack, finalize} from "./public";
 
 // testing
 
-import {rulePack, finalize} from "./funcs";
+import {rulePack, finalize} from "./public";
 import {underlying} from "/languages/levantine/alphabets";
 
 
@@ -13,12 +13,16 @@ const test2 = rulePack(underlying, underlying, [underlying], {spec: {context: {a
 const defaultTest = test2({
   spec: {context: {affected: true}},
   env: (where, segment) => where.before(segment({affected: false})),
+  was: {underlying: {spec: `consonant`}},
 },
+operations => ({
+  woah: [
+    operations.mock(({consonant}) => consonant(features => features.articulator.lips)),
+    operations.mock.was.underlying(({consonant}) => consonant(features => features.articulator.lips)),
+  ],
+}),
 {
-  woah: [{type: `consonant`, features: {} as any}],
-},
-{
-  // beforeA: ({before}, {consonant, vowel}, {affected}) => (
+  // beforeA: ({before}, {consonant, vowel}) => (
   //   // {env: {next: [{type: `consonant`}, {type: `consonant`, features: {match: `custom`, value: test => test.articulator === `lips`}}, {type: `vowel`, features: {round: true}}]}}
   //   before(
   //     consonant(),
@@ -29,15 +33,19 @@ const defaultTest = test2({
   // ),
 },
 );
+
+type Brr = typeof defaultTest.rules;
+
 const what = test2({
-  spec: {context: {affected: true}},
-  env: (where, segment) => where.before(segment({affected: false})),
+  spec: {type: `consonant`, context: {affected: true}},
+  env: (where, segment) => ({match: `any`, value: [where.before(segment({affected: false})), where.after(segment.consonant({articulator: `lips`}))]}),
 },
 {
-  woah: {etc: [{type: `consonant`, features: {} as any}]},
+  woah: {etc: [{} as any]},
+  test: (c, e) => [{} as any],
 },
 {
-  beforeA: ({before}, {consonant, vowel}, {affected}) => (
+  beforeA: ({before}, {consonant, vowel}) => (
     // {env: {next: [{type: `consonant`}, {type: `consonant`, features: {match: `custom`, value: test => test.articulator === `lips`}}, {type: `vowel`, features: {round: true}}]}}
     before(
       consonant(),
@@ -46,6 +54,10 @@ const what = test2({
       vowel({round: true}),
     )
   ),
+  man: (env, segment) => {
+    const tedst = segment.vowel(features => features.round());
+    return null as never;
+  },
 },
 );
 
@@ -54,10 +66,10 @@ const what2 = test({
   env: {next: [{type: `consonant`, features: {emphatic: true}}]},
 },
 {
-  woah: {test: [{type: `consonant`, features: {} as any}]},
+  woah: {test: [{type: `consonant`, features: {} as any, context: {} as any}]},
 },
 {
-  beforeA: ({before}, {consonant, vowel, suffix}, {affected}) => (
+  beforeA: ({before}, {consonant, vowel, suffix}) => (
     // {env: {next: [{type: `consonant`, features: {articulator: `lips`}}, {type: `vowel`, features: {backness: `back`}}]}}
     before(
       consonant(features => features.articulator.lips),
@@ -68,16 +80,16 @@ const what2 = test({
 });
 
 const what3 = test({
-  spec: {context: {affected: true}},
+  spec: segment => segment(context => context.affected()),
   env: {next: [{type: `consonant`, features: {emphatic: true}}]},
 },
 {
   base: {
-    etc: test => [{type: `consonant`, features: {} as any}],
+    etc: test => [{type: `consonant`, features: {} as any, context: {} as any}],
   },
 },
 {
-  beforeA: ({before}, {consonant, vowel}, {affected}) => (
+  beforeA: ({before}, {consonant, vowel}) => (
     {
       was: {underlying: {spec: `consonant`}},
     }
@@ -99,15 +111,15 @@ const bruh = test.pack({what2, bruv});
 const final = finalize(bruv);
 
 const yiss = final.what((is, when) => [
-  is.woah.etc(3),
   when.beforeA(
-    is.woah.etc(4)
+    is.woah.etc(),
   ),
+  is.woah.etc(),
 ]);
 
 const tesdt = final.defaults.defaultTest.woah();
 
 
-yiss[1][0].for;
+yiss[0][0].for;
 
 final.what((is, when) => {const test = is.woah.etc(3); const wat = test.for.value; return [];});

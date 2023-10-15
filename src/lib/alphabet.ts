@@ -57,11 +57,25 @@ export type NormalizeToMatch<O> = {
     : O[K]
 };
 
-export type MembersWithContext<ABC extends AlphabetInput> = ValuesOf<{
-  [T in keyof ABC[`types`]]: {
+export type PartialMembersWithContext<ABC extends AlphabetInput> = ValuesOf<{
+  [T in keyof ABC[`types`] & string]: {
     type?: T,
-    features?: ApplyMatchAsType<ABC[`types`][T]>,
-    context?: ApplyMatchAsType<ABC[`context`]>
+    features?: Partial<ApplyMatchAsType<ABC[`types`][T]>>,
+    context?: Partial<ApplyMatchAsType<ABC[`context`]>>
+  }
+}>;
+
+export type MembersWithContext<ABC extends AlphabetInput> = ValuesOf<{
+  // without this `& string` the following fails:
+  //   type Foo<T extends MembersWithContext<Alphabet>> = ...;
+  //   type Bar<T extends Alphabet> = Foo<MembersWithContext<T>>;
+  // with a message indicating that the values of `type:` are incompatible
+  // this ends up being v annoying to trace if the error is hidden within
+  // more than one layer of parameterized types!
+  [T in keyof ABC[`types`] & string]: {
+    type: T,
+    features: ApplyMatchAsType<ABC[`types`][T]>,
+    context: ApplyMatchAsType<ABC[`context`]>
   }
 }>;
 
@@ -127,25 +141,26 @@ export function qualifiedPathsOf<
   const Path extends ReadonlyArray<string>,
 >(
   o: O,
-  path: Path
+  path?: Path
 ): QualifiedPathsOf<O, Path> {
+  const defaultPath = path ?? [];
   return Object.fromEntries(Object.entries(o).map(([k, v]) => {
     if (v === null || typeof v !== `object`) {
-      return [k, objectFromPath(path, v)];
+      return [k, objectFromPath(defaultPath, v)];
     }
     if (Array.isArray(v)) {
-      return [k, qualifiedPathsOf(Object.fromEntries(v.map(k => [k, k])), [...path, k])];
+      return [k, qualifiedPathsOf(Object.fromEntries(v.map(k => [k, k])), [...defaultPath, k])];
     }
     if (`match` in v && v[`match`] === `any` && `value` in v && Array.isArray(v[`value`])) {
-      return [k, qualifiedPathsOf(Object.fromEntries(v[`value`].map(k => [k, k])), [...path, k])];
+      return [k, qualifiedPathsOf(Object.fromEntries(v[`value`].map(k => [k, k])), [...defaultPath, k])];
     }
     if (`match` in v && v[`match`] === `type` && `value` in v && v[`value`] === `boolean`) {
-      return [k, (m: boolean = true) => objectFromPath([...path, k], m)];
+      return [k, (m: boolean = true) => objectFromPath([...defaultPath, k], m)];
     }
     if (`match` in v) {
-      return [k, (m: unknown) => objectFromPath([...path, k], m)];
+      return [k, (m: unknown) => objectFromPath([...defaultPath, k], m)];
     }
-    return [k, objectFromPath([...path, k], v)];
+    return [k, objectFromPath([...defaultPath, k], v)];
   }));
 }
 

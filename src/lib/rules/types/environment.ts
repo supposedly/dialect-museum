@@ -1,40 +1,36 @@
 import {MatchAsType, MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from "/lib/utils/match";
-import {IsUnion, Merge, MergeUnion, NestedArray, NestedArrayOr, ValuesOf} from "/lib/utils/typetools";
-import {Alphabet, MembersWithContext, QualifiedPathsOf} from "/lib/alphabet";
+import {IsUnion, NestedArray, NestedArrayOr, ValuesOf} from "/lib/utils/typetools";
+import {Alphabet, PartialMembersWithContext, QualifiedPathsOf} from "/lib/alphabet";
 
 export type Spec<ABC extends Alphabet> = (
-  | MembersWithContext<ABC> | keyof ABC[`types`]
-  | ((types: TypesFuncs<ABC>) => MembersWithContext<ABC>)
+  | PartialMembersWithContext<ABC> | (keyof ABC[`types`] & string)
+  | ((types: TypesFuncs<ABC>) => PartialMembersWithContext<ABC>)
 );
 export type Env<ABC extends Alphabet> = (
-  | {[Dir in `next` | `prev`]?: NestedArray<MembersWithContext<ABC>>}
+  | {[Dir in `next` | `prev`]?: NestedArray<PartialMembersWithContext<ABC>>}
   | EnvironmentFunc<ABC>
 );
 
-type _Specs<
+export type SpecsNoMatch<
   ABC extends Alphabet,
-  ABCHistory extends ReadonlyArray<Alphabet> | undefined = undefined,
-> = Merge<
-  {
-    spec?: Spec<ABC>
-    env?: Env<ABC>
-  },
-  (ABCHistory extends ReadonlyArray<infer U extends Alphabet> ?
-    ABCHistory[`length`] extends 0 ? never : {
-      was?: {
-        [A in U as A[`name`]]: {
-          spec: Spec<A>,
-          env: Env<A>
-        }
-      }}
-    : never
-  )
->;
+  ABCHistory extends ReadonlyArray<Alphabet> = readonly [],
+  OmitKeys extends `spec` | `env` | `was` = never,
+> = Omit<{
+  spec: Spec<ABC>
+  env: Env<ABC>
+  was: {
+    [A in ABCHistory[number] as A[`name`]]: {
+      spec?: Spec<A>,
+      env?: Env<A>
+    }
+  }
+}, OmitKeys>;
 
 export type Specs<
   ABC extends Alphabet,
-  ABCHistory extends ReadonlyArray<Alphabet> | undefined = undefined
-> = MatchSchemaOf<_Specs<ABC, ABCHistory>>;
+  ABCHistory extends ReadonlyArray<Alphabet> = readonly [],
+  OmitKeys extends `spec` | `env` | `was` = never,
+> = MatchSchemaOf<SpecsNoMatch<ABC, ABCHistory, OmitKeys>> extends infer T extends MatchSchema ? T : never;
 
 type _TypesFuncDefault<T, D extends MatchSchema> = MatchAsType<SafeMatchSchemaOf<D> extends T ? D : T>;
 type _TypesFuncVF<in out Source extends Alphabet, in out T extends keyof Source[`types`]> = (
@@ -51,10 +47,11 @@ type _VCond<Source extends Alphabet, T extends keyof Source[`types`]> = (
     ? SafeMatchSchemaOf<Source[`types`][T]>
     : SafeMatchSchemaOf<ValuesOf<Source[`types`][T]>>
 );
+
 type _FeaturesCond<Source extends Alphabet, T extends keyof Source[`types`], V, VF extends (...args: never) => unknown> = _TypesFuncVF<Source, T> extends VF
   ? IsUnion<keyof Source[`types`][T]> extends true
     ? _TypesFuncDefault<V, Source[`types`][T]>
-    : {[K in keyof Source[`types`][T]]: _TypesFuncDefault<V, Source[`types`][T]>}
+    : {[K in keyof Source[`types`][T]]: _TypesFuncDefault<V, ValuesOf<Source[`types`][T]>>}
   : MatchAsType<ReturnType<VF>>;
 type _ContextCond<Source extends Alphabet, Context, ContextF extends (...args: never) => unknown> = _TypesFuncContextF<Source> extends ContextF
   ? _TypesFuncDefault<Context, Source[`context`]>
@@ -89,7 +86,7 @@ export type TypesFunc<in out Source extends Alphabet, in out T extends keyof Sou
 ;
 
 export type TypesFuncs<Source extends Alphabet> = {
-  [T in keyof Source[`types`]]: TypesFunc<Source, T>
+  [T in keyof Source[`types`] & string]: TypesFunc<Source, T>
 } & (
   <
     const Context extends SafeMatchSchemaOf<Source[`context`]>,
@@ -99,24 +96,49 @@ export type TypesFuncs<Source extends Alphabet> = {
   })
 );
 
-type _ArrType<Source extends Alphabet> = ReadonlyArray<SafeMatchSchemaOf<NestedArrayOr<MembersWithContext<Source>>>>;
+type _ArrType<Source extends Alphabet> = ReadonlyArray<SafeMatchSchemaOf<NestedArrayOr<PartialMembersWithContext<Source>>>>;
+export type EnvironmentHelpers<ABC extends Alphabet> = {
+  before: {
+    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {prev: Arr}}
+    // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {env: {prev: Arr}}
+  },
+  after: {
+    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {next: Arr}}
+    // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {env: {next: Arr}}
+  }
+};
+
+export type EnvironmentHelpersNextLast<ABC extends Alphabet> = {
+  next: {
+    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {next: Arr}}
+    slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {env: {next: Arr}}
+  },
+  last: {
+    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {prev: Arr}}
+    slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {env: {prev: Arr}}
+  }
+};
+
+export type SpecsFuncs<Source extends Alphabet> = {
+  env: EnvironmentHelpers<Source>,
+  types: TypesFuncs<Source>,
+};
+
 // type _ArrType<Source extends Alphabet> = ReadonlyArray<unknown>;
 export type EnvironmentFunc<
   Source extends Alphabet,
-  Dependencies extends ReadonlyArray<Alphabet> | undefined = undefined
+  Dependencies extends ReadonlyArray<Alphabet> = readonly []
 > = (
-  env: {
-    before: {
-      <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {next: Arr}}
-      slow<const Arr extends _ArrType<Source>>(...arr: Arr): {env: {next: Arr}}
-    },
-    after: {
-      <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {prev: Arr}}
-      slow<const Arr extends _ArrType<Source>>(...arr: Arr): {env: {prev: Arr}}
-    }
-  },
+  env: EnvironmentHelpers<Source>,
   types: TypesFuncs<Source>,
-  context: QualifiedPathsOf<Source[`context`]>
 // if i change the def of MatchSchema's function variant to => MatchSchema instead of => unknown this errors lol
 // bc recursive reference that apparently isn't an issue with => unknown??
 ) => Specs<Source, Dependencies>;
+
+
+// !!! here lurketh something sinister !!!
+// i think my entire type system is glued together by lies
+// try it yourself: type Foo<T extends TypesFuncs<Alphabet>> = T; type Bar<T extends Alphabet> = Foo<TypesFuncs<T>>;
+// opened the gates of hell chasing these errors down and got absolutely nowhere so i decided to just ignore the lie
+// and find another way to do the thing i was trying to do :---) (i think this came up while trying to implement
+// operations for the first time, see corroborating comment in func.ts)

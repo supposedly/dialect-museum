@@ -21,35 +21,39 @@ type Danger = {
 }
 type Primitive = ValuesOf<Guards>;
 
-export type Match =
-  | {
-    readonly match: `single`
-    readonly value: MatchSchema
-  } | {
-    readonly match: `literal`
-    readonly value: MatchSchema
-  } | {
-    readonly match: `any`
-    readonly value: ReadonlyArray<MatchSchema>
-  } | {
-    readonly match: `all`
-    readonly value: ReadonlyArray<MatchSchema>
-  } | {
-    readonly match: `type`
-    readonly value: keyof Guards
-  } | {
-    readonly match: `danger`
-    readonly value: keyof Danger
-  } | {
-    readonly match: `array`
-    readonly value: {
-      length: number | MatchesExtending<number>
-      fill: MatchSchema
-    }
-  } | {
-    readonly match: `custom`
-    readonly value: (arg: never) => boolean
-  };
+export type Match = {
+  readonly match: `single`
+  readonly value: MatchSchema
+} | {
+  readonly match: `any`
+  readonly value: ReadonlyArray<MatchSchema>
+} | {
+  readonly match: `all`
+  readonly value: ReadonlyArray<MatchSchema>
+} | {
+  readonly match: `type`
+  readonly value: keyof Guards
+} | {
+  readonly match: `danger`
+  readonly value: keyof Danger
+} | {
+  readonly match: `array`
+  readonly value: {
+    length: number | MatchesExtending<number>
+    fill: MatchSchema
+  }
+} | {
+  readonly match: `custom`
+  readonly value: (arg: never) => boolean
+};
+
+// separating this out to take some load off the compiler when processing the Match union
+// (the only reason it was originally part of Match was for generating the literal() method
+// in the `matchers` obj below, otherwise i think it's equivalent to `single`)
+type Literal = {
+  readonly match: `literal`
+  readonly value: MatchSchema
+};
 
 export type PickMatch<M extends Match[`match`]> = Extract<Match, {match: M}>;
 export type ValueOfMatch<M extends Match[`match`]> = PickMatch<M>[`value`];
@@ -158,7 +162,7 @@ export type MatchAsType<T> =
   : T;
 
 export type PartialMatchAsType<T> =
-  Match extends T ? Partial<Exclude<Match[`value`], Match>>
+  Match extends T ? {match: Match[`match`], value: Partial<Match[`value`]>}
   : T extends PickMatch<`danger`> ? never
   : T extends PickMatch<`array`> ? {
     readonly length?: PartialMatchAsType<T[`value`][`length`]>
@@ -178,6 +182,7 @@ export type PartialMatchAsType<T> =
   : Partial<T>;
 
 export type MatchSchema =
+  | undefined
   | null
   | ((...args: never) => unknown)
   | Primitive
@@ -215,7 +220,7 @@ export const matchers = {
     }
     return matchers.literal(self, other);
   },
-  literal<const Self extends ValueOfMatch<`literal`>>(self: Self, other: unknown): other is MatchAsType<Self> {
+  literal<const Self extends MatchSchema>(self: Self, other: unknown): other is MatchAsType<Self> {
     if (Array.isArray(self)) {
       if (!Array.isArray(other)) {
         return false;
@@ -266,4 +271,4 @@ export const matchers = {
     // XXX: more elegant way to make the compiler happy here?
     return self(other as never);
   },
-} satisfies {[M in Match as M[`match`]]: <const Self extends M[`value`]>(self: Self, other: unknown) => boolean};
+} satisfies {[M in Match | Literal as M[`match`]]: <const Self extends M[`value`]>(self: Self, other: unknown) => boolean};

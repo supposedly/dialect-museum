@@ -19,15 +19,28 @@ export type RulesetWrapper<
   constraints: Constraints
 };
 
-export type Unfunc<T, Key extends string> = T extends {[K in Key]: (...args: never) => unknown}
+export type Unfunc<
+  T extends object | ((...args: never) => unknown),
+  Key extends string
+> = T extends {[K in Key]: (...args: never) => unknown}
   ? ReturnType<T[Key]>
-  : T extends {[K in Key]: {match: unknown, value: readonly unknown[]}}
-  ? {match: T[Key][`match`], value: {[Index in keyof T[Key][`value`]]: Unfunc<T[Key][`value`][Index], Key>}}
+  : T extends {[K in Key]: {match: unknown, value: ReadonlyArray<object | ((...args: never) => unknown)>}}
+  ? {match: T[Key][`match`], value: {
+    [Index in keyof T[Key][`value`]]:
+      Index extends number
+        ? Unfunc<T[Key][`value`][Index], Key>
+        : T[Key][`value`][Index]
+  }}
   : T extends {[K in Key]: unknown}
   ? {[K in Key]: T[Key]}
-  : T extends {match: unknown, value: readonly unknown[]}
-  ? {match: T[`match`], value: {[Index in keyof T[`value`]]: Unfunc<T[`value`][Index], Key>}}
-  : never;
+  : T extends {match: unknown, value: ReadonlyArray<object | ((...args: never) => unknown)>}
+  ? {match: T[`match`], value: {
+    [Index in keyof T[`value`]]:
+      Index extends number
+        ? Unfunc<T[`value`][Index], Key>
+        : T[`value`][Index]
+  }}
+  : T;
 
 export type UnfuncSpec<Spec> = Spec extends ({spec: unknown, env?: unknown} | {spec: unknown})
   ? Merge<Unfunc<Spec, `spec`>, Unfunc<Spec, `env`>>

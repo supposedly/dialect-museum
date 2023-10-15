@@ -28,5 +28,5 @@ export type ArrayOr<T> = T | T[];
 export type NestedArray<T> = ReadonlyArray<T | NestedArray<T>>;
 export type NestedArrayOr<T> = T | ReadonlyArray<NestedArrayOr<T>>;
 
-export type NestedRecord<T> = {[key: string]: T | NestedRecord<T>};
-export type NestedRecordOr<T> = T | {[key: string]: NestedRecordOr<T>};
+export type NestedRecord<T> = {[key: string]: T | NestedRecord<T>, [noArraysBruh: number]: never};
+export type NestedRecordOr<T> = T | {[key: string]: NestedRecordOr<T>, [noArraysBruh: number]: never};
