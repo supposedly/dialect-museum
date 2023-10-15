@@ -1,5 +1,5 @@
 import {Alphabet} from "../alphabet";
-import {operations, processPack, unfuncSpec} from "./funcs";
+import {extractDefaults, operations, processPack, unfuncSpec} from "./funcs";
 import {Specs} from "./types/environment";
 import {ProcessPack, ExtractDefaults} from "./types/finalize";
 import {PackRulesets, CreateRuleset, SpecOperations} from "./types/func";
@@ -70,6 +70,6 @@ export function finalize<
 >(pack: RulePack): ProcessPack<RulePack> & {defaults: ExtractDefaults<RulePack>} {
   return {
     ...processPack(pack),
-    defaults: null as any,
+    defaults: extractDefaults(pack),
   };
 }

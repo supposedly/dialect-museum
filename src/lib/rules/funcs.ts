@@ -2,7 +2,7 @@ import {Alphabet, qualifiedPathsOf} from "../alphabet";
 import {MatchAsType, MatchInstance, MatchSchema, SafeMatchSchemaOf} from "../utils/match";
 import {NestedRecordOr, ValuesOf} from "../utils/typetools";
 import {ContextFunc, EnvironmentFunc, EnvironmentHelpers, Spec, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
-import {ProcessPack, RuleFunc} from "./types/finalize";
+import {ExtractDefaults, ProcessPack, RuleFunc} from "./types/finalize";
 import {IntoSpec, SpecOperations} from "./types/func";
 import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec, UnfuncTargets} from "./types/helpers";
 
@@ -172,6 +172,7 @@ export function processPack<
     ReadonlyArray<Alphabet>
   >
 >(pack: RulePack): ProcessPack<RulePack> {
+  const specsFns = specsFuncs(pack.source);
   return Object.fromEntries(Object.entries(pack.children).map(([k, v]) => {
     if (`rules` in v) {
       return [k,
@@ -189,13 +190,15 @@ export function processPack<
             // when:
             Object.fromEntries(Object.entries(v.constraints).map(([constraintName, constraint]) => [
               constraintName,
-              (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(arg => ({
-                for: {match: `all`, value: [
-                  arg.for,
-                  constraint(),
-                ]},
-                into: arg.into,
-              })),
+              (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
+                arg => ({
+                  for: {match: `all`, value: [
+                    arg.for,
+                    constraint(specsFns.env as never, specsFns.types as never),
+                  ]},
+                  into: arg.into,
+                })
+              ),
             ]))
           )
         ) as any,
@@ -204,4 +207,58 @@ export function processPack<
       return [k, processPack(v as any)];
     }
   }));
+}
+
+// type OnlyOneTarget<Into> = Into extends NestedArray<unknown>
+//   ? true
+//   : Into extends Record<string, unknown>
+//   ? IsUnion<keyof Into> extends false ? OnlyOneTarget<Into[keyof Into]> : false
+//   : false;
+
+function onlyOneTarget(into: object): boolean {
+  if (Array.isArray(into)) {
+    return true;
+  }
+  if (Object.keys(into).length !== 1) {
+    return false;
+  }
+  return Object.values(into).every(onlyOneTarget);
+}
+
+export function extractDefaults<
+  RulePack extends Packed<
+    Record<string,
+      | RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: ReadonlyArray<never>) => unknown>>
+      | Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+    >,
+    unknown,
+    Alphabet,
+    Alphabet,
+    ReadonlyArray<Alphabet>
+  >
+>(
+  pack: RulePack
+): ExtractDefaults<RulePack> {
+  return Object.fromEntries(Object.entries(pack.children).map(([k, v]) => {
+    if (`rules` in v) {
+      if (Object.keys(v.constraints).length > 0) {
+        return [k, undefined];
+      }
+      return [
+        k,
+        Object.fromEntries(Object.entries(v.rules).map(([ruleName, rule]) => [
+          ruleName,
+          onlyOneTarget(rule.into)
+            ? intoToFunc(
+              rule.into,
+              {match: `all`, value: [rule.for, pack.specs]},
+              pack.source
+            )
+            : undefined,
+        ])) as any,
+      ];
+    } else {
+      return [k, extractDefaults(v as any)];
+    }
+  })) as any;
 }
