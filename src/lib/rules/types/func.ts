@@ -4,12 +4,12 @@ import {Alphabet, MembersWithContext} from "/lib/alphabet";
 import {MatchAsType, MatchInstance, MatchSchema, SafeMatchSchemaOf} from "/lib/utils/match";
 import {NestedRecord} from "/lib/utils/typetools";
 
-export type PackRulesets<in out Spec> = <const R extends Record<
+export type PackRulesets<in out Spec, Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = <const R extends Record<
     string,
     | RulesetWrapper<Record<string, Ruleset>, Record<string, ((...args: never) => unknown)>>
-    | Packed<Record<string, unknown>, Spec>
+    | Packed<Record<string, unknown>, Spec, Source, Target, Dependencies>
   >
->(r: R) => Packed<R, Spec>;
+>(r: R) => Packed<R, Spec, Source, Target, Dependencies>;
 
 type MatchOrFunction<ABC extends Alphabet, Keys extends `spec` | `env`> = (
   | SafeMatchSchemaOf<Exclude<SpecsNoMatch<ABC>[Keys], (...args: never) => unknown>>
@@ -21,18 +21,18 @@ type MatchOrFunction<ABC extends Alphabet, Keys extends `spec` | `env`> = (
 // box on the full and horrifying extent of just how unsound this entire design's type hackery is)
 export type SpecOperations<in out Source extends Alphabet, in out Target extends Alphabet, ABCHistory extends ReadonlyArray<Alphabet>> = {
   /** @returns ``{operation: `mock`, arguments: specs}`` */
-  mock: ((...specs: ReadonlyArray<MatchOrFunction<Source, `spec`>>) => never) & {
+  mock: ((...specs: ReadonlyArray<SpecsNoMatch<Source>[`spec`]>) => never) & {
     was: {
       [ABC in ABCHistory[number] as ABC[`name`]]:
         /** @returns ``{operation: `mock`, arguments: {was: {[the alphabet's name]: specs}}}`` */
-        (...specs: ReadonlyArray<MatchOrFunction<ABC, `spec`>>) => never
+        (...specs: ReadonlyArray<SpecsNoMatch<ABC>[`spec`]>) => never
     }
   }
   /** @returns ``{operation: `preject`, arguments: specs}`` */
   preject(...spec: ReadonlyArray<SpecsNoMatch<Target>[`spec`]>): never
   /** @returns ``{operation: `postject`, arguments: specs}`` */
   postject(...spec: ReadonlyArray<SpecsNoMatch<Target>[`spec`]>): never
-  /** Coalesces environment members that match `env` into the currently captured segment.
+  /** Coalesces environment members matching `env` into the currently captured segment.
    * On the current layer, they will no longer undergo any rule transformations.
    * On the next layer, they will point to the output of the current capture.
    * @returns ``{operation: `coalesce`, arguments: env}``

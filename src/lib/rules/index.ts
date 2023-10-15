@@ -18,6 +18,7 @@ const defaultTest = test2({
 operations => ({
   woah: [
     operations.mock(({consonant}) => consonant(features => features.articulator.lips)),
+    operations.mock({type: `consonant`, features: {articulator: `lips`}}),
     operations.mock.was.underlying(({consonant}) => consonant(features => features.articulator.lips)),
   ],
 }),
@@ -41,7 +42,7 @@ const what = test2({
   env: (where, segment) => ({match: `any`, value: [where.before(segment({affected: false})), where.after(segment.consonant({articulator: `lips`}))]}),
 },
 {
-  woah: {etc: [{} as any]},
+  woah: {etc: [{type: null as any, features: null as any, context: null as any}]},
   test: (c, e) => [{} as any],
 },
 {
@@ -49,13 +50,13 @@ const what = test2({
     // {env: {next: [{type: `consonant`}, {type: `consonant`, features: {match: `custom`, value: test => test.articulator === `lips`}}, {type: `vowel`, features: {round: true}}]}}
     before(
       consonant(),
-      consonant({match: `custom`, value: test => test.articulator === `lips`}),
+      // consonant({match: `custom`, value: test => test.articulator === `lips`}),
       vowel(features => features.round()),
       vowel({round: true}),
     )
   ),
   man: (env, segment) => {
-    const tedst = segment.vowel(features => features.round());
+    const tedst = segment.vowel(features => features.round(), context => ({match: `any`, value: [context.affected(), context.affected(false)]}));
     return null as never;
   },
 },
@@ -110,12 +111,12 @@ const bruh = test.pack({what2, bruv});
 
 const final = finalize(bruv);
 
-const yiss = final.what((is, when) => [
+const yiss = final.what((is, when) => {const test = is.woah.etc().into;return[
   when.beforeA(
     is.woah.etc(),
   ),
   is.woah.etc(),
-]);
+];});
 
 const tesdt = final.defaults.defaultTest.woah();
 

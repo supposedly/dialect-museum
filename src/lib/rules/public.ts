@@ -1,9 +1,9 @@
 import {Alphabet} from "../alphabet";
-import {operations, unfuncSpec} from "./funcs";
+import {operations, processPack, unfuncSpec} from "./funcs";
 import {Specs} from "./types/environment";
 import {ProcessPack, ExtractDefaults} from "./types/finalize";
 import {PackRulesets, CreateRuleset, SpecOperations} from "./types/func";
-import {Packed, UnfuncSpec} from "./types/helpers";
+import {Packed, Ruleset, RulesetWrapper, UnfuncSpec, UnfuncTargets} from "./types/helpers";
 
 export function rulePack<
   const Source extends Alphabet,
@@ -15,7 +15,12 @@ export function rulePack<
   target: Target,
   dependencies: Dependencies,
   spec: Spec
-): {pack: PackRulesets<Spec>} & CreateRuleset<Source, Target, Dependencies, Spec>
+): {
+  pack: PackRulesets<Spec, Source, Target, Dependencies>,
+  source: Source,
+  target: Target,
+  dependencies: Dependencies
+} & CreateRuleset<Source, Target, Dependencies, Spec>
 {
   const evaluatedSpecs = unfuncSpec(spec, source) as UnfuncSpec<Spec>;
   return Object.assign(
@@ -46,12 +51,25 @@ export function rulePack<
         children: rulesets,
         specs: evaluatedSpecs,
       }),
-    } as {pack: PackRulesets<Spec>}
+      source,
+      target,
+      dependencies,
+    } as {pack: PackRulesets<Spec, Source, Target, Dependencies>, source: Source, target: Target, dependencies: Dependencies}
   );
 }
 
 export function finalize<
-  const RulePack extends Packed<Record<string, unknown>, unknown>
+  const RulePack extends Packed<
+    | Record<string, Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+    | RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: never) => unknown>>>,
+    unknown,
+    Alphabet,
+    Alphabet,
+    ReadonlyArray<Alphabet>
+  >,
 >(pack: RulePack): ProcessPack<RulePack> & {defaults: ExtractDefaults<RulePack>} {
-  return null as any;
+  return {
+    ...processPack(pack),
+    defaults: null as any,
+  };
 }

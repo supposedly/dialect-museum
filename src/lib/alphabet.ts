@@ -33,9 +33,11 @@ export type QualifiedPathsOf<O, Path extends ReadonlyArray<string> = readonly []
    )
     ? QualifiedPathsOf<{[J in U]: J}, [...Path, K]>
   : O[K] extends Match
-    ? <const M extends Partial<MatchAsType<O[K]>> extends infer Deferred ? Deferred : never>(
-      ...args: (boolean extends M ? ([] | [M]) : [M])  // hacky: `extends M` is evaluated before inference I think
-    ) => ObjectFromPath<[...Path, K], boolean extends M ? true : M>  // but this `extends M` is after inference
+    ? MatchAsType<O[K]> extends boolean
+      ? <const M extends boolean>(value?: M) => ObjectFromPath<[...Path, K], boolean extends M ? true : M>
+      : <const M extends Partial<MatchAsType<O[K]>>>(
+        value: M
+      ) => ObjectFromPath<[...Path, K], M>
   : ObjectFromPath<Path, O[K]>
 };
 

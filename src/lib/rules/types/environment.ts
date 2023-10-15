@@ -32,7 +32,7 @@ export type Specs<
   OmitKeys extends `spec` | `env` | `was` = never,
 > = MatchSchemaOf<SpecsNoMatch<ABC, ABCHistory, OmitKeys>>;// extends infer T extends MatchSchema ? T : never;
 
-type _TypesFuncDefault<T, D extends MatchSchema> = MatchAsType<SafeMatchSchemaOf<D> extends T ? D : T>;
+type _TypesFuncDefault<T, D extends MatchSchema> = SafeMatchSchemaOf<D> extends T ? never : T;
 type _TypesFuncVF<in out Source extends Alphabet, in out T extends keyof Source[`types`]> = (
   (
     features: QualifiedPathsOf<Source[`types`][T]>,
@@ -52,10 +52,10 @@ type _FeaturesCond<Source extends Alphabet, T extends keyof Source[`types`], V, 
   ? IsUnion<keyof Source[`types`][T]> extends true
     ? _TypesFuncDefault<V, Source[`types`][T]>
     : {[K in keyof Source[`types`][T]]: _TypesFuncDefault<V, ValuesOf<Source[`types`][T]>>}
-  : MatchAsType<ReturnType<VF>>;
+  : ReturnType<VF>;
 type _ContextCond<Source extends Alphabet, Context, ContextF extends (...args: never) => unknown> = _TypesFuncContextF<Source> extends ContextF
   ? _TypesFuncDefault<Context, Source[`context`]>
-  : MatchAsType<ReturnType<ContextF>>;
+  : ReturnType<ContextF>;
 // these two `in out` annotations are the O-rings that would've saved the challenger
 // literally went from almost 13k lines of analyze-trace output to nil
 export type TypesFunc<in out Source extends Alphabet, in out T extends keyof Source[`types`]> =
@@ -85,9 +85,7 @@ export type TypesFunc<in out Source extends Alphabet, in out T extends keyof Sou
   }
 ;
 
-export type TypesFuncs<Source extends Alphabet> = {
-  [T in keyof Source[`types`] & string]: TypesFunc<Source, T>
-} & (
+export type ContextFunc<Source extends Alphabet> = (
   <
     const Context extends SafeMatchSchemaOf<Source[`context`]>,
     const ContextF extends _TypesFuncContextF<Source>
@@ -95,6 +93,10 @@ export type TypesFuncs<Source extends Alphabet> = {
     context: _ContextCond<Source, Context, ContextF>
   })
 );
+
+export type TypesFuncs<Source extends Alphabet> = {
+  [T in keyof Source[`types`] & string]: TypesFunc<Source, T>
+} & ContextFunc<Source>;
 
 type _ArrType<Source extends Alphabet> = ReadonlyArray<SafeMatchSchemaOf<NestedArrayOr<PartialMembersWithContext<Source>>>>;
 export type EnvironmentHelpers<ABC extends Alphabet> = {

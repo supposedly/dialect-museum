@@ -1,9 +1,10 @@
 import {Alphabet, qualifiedPathsOf} from "../alphabet";
-import {MatchAsType, MatchSchema, SafeMatchSchemaOf} from "../utils/match";
-import {ValuesOf} from "../utils/typetools";
-import {EnvironmentFunc, EnvironmentHelpers, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
+import {MatchAsType, MatchInstance, MatchSchema, SafeMatchSchemaOf} from "../utils/match";
+import {NestedRecordOr, ValuesOf} from "../utils/typetools";
+import {ContextFunc, EnvironmentFunc, EnvironmentHelpers, Spec, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
+import {ProcessPack, RuleFunc} from "./types/finalize";
 import {IntoSpec, SpecOperations} from "./types/func";
-import {Unfunc, UnfuncSpec, UnfuncTargets} from "./types/helpers";
+import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec, UnfuncTargets} from "./types/helpers";
 
 function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
   return {
@@ -109,4 +110,81 @@ export function operations<
     postject: (...specs) => <never>{operation: `postject`, argument: specs},
     coalesce: (...specs) => <never>{operation: `coalesce`, argument: specs},
   };
+}
+
+function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
+  return Object.assign(
+    (segment => ({
+      context: segment instanceof Function,
+    })) as ContextFunc<ABC>,
+    {}
+  );
+}
+
+function specsFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
+  return {
+    env: {
+      before: (...args) => ({env: {prev: args}}),
+      after: (...args) => ({env: {next: args}}),
+    },
+    types: typesFuncs(alphabet),
+  };
+}
+
+function intoToFunc<
+  Into extends NestedRecordOr<ReadonlyArray<unknown>>,
+  Spec,
+  Source extends Alphabet,
+>(into: Into, spec: Spec, source: Source): IntoToFunc<Into, Spec> {
+  if (Array.isArray(into)) {
+    // XXX: what to do with odds :(
+    return ((odds = 100) => ({for: unfuncSpec(spec, source), into})) as never;
+  }
+  return Object.fromEntries(Object.entries(into).map(([k, v]) => [k, intoToFunc(v, spec, source)])) as never;
+}
+
+export function processPack<
+  RulePack extends Packed<
+    Record<string,
+      | RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: ReadonlyArray<never>) => unknown>>
+      | Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+    >,
+    unknown,
+    Alphabet,
+    Alphabet,
+    ReadonlyArray<Alphabet>
+  >
+>(pack: RulePack): ProcessPack<RulePack> {
+  return Object.fromEntries(Object.entries(pack.children).map(([k, v]) => {
+    if (`rules` in v) {
+      return [k,
+        (fn: (...args: ReadonlyArray<unknown>) => unknown) => (
+          fn(
+            // is:
+            Object.fromEntries(Object.entries(v.rules).map(([ruleName, rule]) => [
+              ruleName,
+              intoToFunc(
+                rule.into,
+                {match: `all`, value: [rule.for, pack.specs]},
+                pack.source
+              ),
+            ])),
+            // when:
+            Object.fromEntries(Object.entries(v.constraints).map(([constraintName, constraint]) => [
+              constraintName,
+              (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(arg => ({
+                for: {match: `all`, value: [
+                  arg.for,
+                  constraint(),
+                ]},
+                into: arg.into,
+              })),
+            ]))
+          )
+        ) as any,
+      ];
+    } else {
+      return [k, processPack(v as any)];
+    }
+  }));
 }
