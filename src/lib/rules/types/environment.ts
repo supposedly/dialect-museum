@@ -30,7 +30,7 @@ export type Specs<
   ABC extends Alphabet,
   ABCHistory extends ReadonlyArray<Alphabet> = readonly [],
   OmitKeys extends `spec` | `env` | `was` = never,
-> = MatchSchemaOf<SpecsNoMatch<ABC, ABCHistory, OmitKeys>> extends infer T extends MatchSchema ? T : never;
+> = MatchSchemaOf<SpecsNoMatch<ABC, ABCHistory, OmitKeys>>;// extends infer T extends MatchSchema ? T : never;
 
 type _TypesFuncDefault<T, D extends MatchSchema> = MatchAsType<SafeMatchSchemaOf<D> extends T ? D : T>;
 type _TypesFuncVF<in out Source extends Alphabet, in out T extends keyof Source[`types`]> = (

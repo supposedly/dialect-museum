@@ -1,10 +1,8 @@
 import {Alphabet} from "../alphabet";
-import {MatchSchema} from "../utils/match";
-import {Merge} from "../utils/typetools";
-import {unfuncSpec} from "./funcs";
+import {operations, unfuncSpec} from "./funcs";
 import {Specs} from "./types/environment";
 import {ProcessPack, ExtractDefaults} from "./types/finalize";
-import {PackRulesets, CreateRuleset} from "./types/func";
+import {PackRulesets, CreateRuleset, SpecOperations} from "./types/func";
 import {Packed, UnfuncSpec} from "./types/helpers";
 
 export function rulePack<
@@ -27,13 +25,13 @@ export function rulePack<
         match: `all`,
         value: [evaluatedSpecs, evaluatedExtraSpecs],
       } as const;
-      if (targets instanceof Function) {
-        targets = 1;
-      }
+      const evaluatedTargets = targets instanceof Function
+        ? targets(operations(source, target, dependencies))
+        : targets as Exclude<typeof targets, (...args: never) => unknown>;
       return {
         rules: Object.fromEntries(
-          Object.entries(targets).map(([k, v]) => [
-            k,
+          Object.entries(evaluatedTargets).map(([name, v]) => [
+            name,
             {
               for: combinedSpecs,
               into: v,

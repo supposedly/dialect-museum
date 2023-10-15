@@ -19,23 +19,23 @@ type MatchOrFunction<ABC extends Alphabet, Keys extends `spec` | `env`> = (
 // i hate this so much lmfao
 // (they return never bc trying to incorporate their actual return types into Ruleset ended up opening pandora's
 // box on the full and horrifying extent of just how unsound this entire design's type hackery is)
-type SpecOperations<in out Source extends Alphabet, in out Target extends Alphabet, ABCHistory extends ReadonlyArray<Alphabet>> = {
-  /** @returns `{mock: typeof specs}` */
+export type SpecOperations<in out Source extends Alphabet, in out Target extends Alphabet, ABCHistory extends ReadonlyArray<Alphabet>> = {
+  /** @returns ``{operation: `mock`, arguments: specs}`` */
   mock: ((...specs: ReadonlyArray<MatchOrFunction<Source, `spec`>>) => never) & {
     was: {
       [ABC in ABCHistory[number] as ABC[`name`]]:
-        /** @returns `{mock: {was: {[the alphabet's name]: typeof specs}}}` */
-        (...specs: ReadonlyArray<MatchOrFunction<Source, `spec`>>) => never
+        /** @returns ``{operation: `mock`, arguments: {was: {[the alphabet's name]: specs}}}`` */
+        (...specs: ReadonlyArray<MatchOrFunction<ABC, `spec`>>) => never
     }
   }
-  /** @returns `{preject: typeof specs}` */
-  preject(spec: SpecsNoMatch<Target>[`spec`]): never
-  /** @returns `{postject: typeof specs}` */
-  postject(spec: SpecsNoMatch<Target>[`spec`]): never
+  /** @returns ``{operation: `preject`, arguments: specs}`` */
+  preject(...spec: ReadonlyArray<SpecsNoMatch<Target>[`spec`]>): never
+  /** @returns ``{operation: `postject`, arguments: specs}`` */
+  postject(...spec: ReadonlyArray<SpecsNoMatch<Target>[`spec`]>): never
   /** Coalesces environment members that match `env` into the currently captured segment.
    * On the current layer, they will no longer undergo any rule transformations.
    * On the next layer, they will point to the output of the current capture.
-   * @returns `{coalesce: typeof env}`
+   * @returns ``{operation: `coalesce`, arguments: env}``
    */
   coalesce(env: MatchOrFunction<Source, `env`>): never
 };
@@ -46,8 +46,8 @@ type _IntoSpec<in out Target extends Alphabet, in out Spec> = NestedRecord<
     // | ReturnType<ValuesOf<SpecOperations<Target, ABCHistory>>>
   >
   | ((
-    captured: MatchAsType<Spec> extends {spec: unknown} ? MatchAsType<Spec>[`spec`] : never,
-    environment: MatchAsType<Spec> extends {env: unknown} ? MatchAsType<Spec>[`env`] : never,
+    captured: MatchAsType<Spec> extends infer Deferred extends {spec: unknown} ? Deferred[`spec`] : never,
+    environment: MatchAsType<Spec> extends infer Deferred extends {env: unknown} ? Deferred[`env`] : never,
     // {preject, postject, mock, etc}
   ) => ReadonlyArray<
     | MembersWithContext<Target>
@@ -93,7 +93,7 @@ export type CreateRuleset<
   in Source extends Alphabet,
   in out Target extends Alphabet,
   in out Dependencies extends ReadonlyArray<Alphabet>,
-  in out Spec extends MatchSchema
+  in out Spec
 > = <
   const ExtraSpec extends Specs<Source, Dependencies>,
   const Targets extends IntoSpec<Source, Target, JoinSpecs<[Spec, ExtraSpec]>, Dependencies>,

@@ -1,7 +1,8 @@
 import {Alphabet, qualifiedPathsOf} from "../alphabet";
 import {MatchAsType, MatchSchema, SafeMatchSchemaOf} from "../utils/match";
+import {ValuesOf} from "../utils/typetools";
 import {EnvironmentFunc, EnvironmentHelpers, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
-import {IntoSpec} from "./types/func";
+import {IntoSpec, SpecOperations} from "./types/func";
 import {Unfunc, UnfuncSpec, UnfuncTargets} from "./types/helpers";
 
 function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
@@ -83,29 +84,29 @@ export function unfuncSpec<Specs, ABC extends Alphabet>(specs: Specs, alphabet: 
   return _unfuncSpec(specs, generateSpecFuncs(alphabet) as never);
 }
 
-// export type TypesFunc<in out Source extends Alphabet, in out T extends keyof Source[`types`]> =
-//   <
-//     // typing V and Context as unions of (obj | func) was really hard on the compiler for some reason
-//     // it would sporadically decide that only the object half of that union was valid and reject
-//     // functions for not matching (maybe it had to do w/ the function's return type matching the expected
-//     // obj type = common bug heuristic for "did you mean to call this expression"? not sure)
-//     // anyway we can hijack inference to get around all that:
-//     // (update after 1 profiling session: predictably this is slow as shit LOL)
-//     const V extends (
-//       // if this type has only one feature (like how some alphabets only have {value: (some symbol)}) then
-//       // we can just allow that feature's value to be passed without the feature name as a key
-//       _VCond<Source, T>
-//       ),
-//     const VF extends _TypesFuncVF<Source, T>,
-//     const Context extends SafeMatchSchemaOf<Source[`context`]>,
-//     const ContextF extends _TypesFuncContextF<Source>
-//   >(features?: V | VF, context?: Context | ContextF) => {
-//     type: T
-//     // now we have to check which of V/VF, Context/ContextF was actually passed in
-//     // since the funcs are invariant on Source and T it won't matter what order we
-//     // do the `extends` check in, but since this order is used for covariant types
-//     // we can stick with it here too
-//     features: _FeaturesCond<Source, T, V, VF>
-//     context: _ContextCond<Source, Context, ContextF>
-//   }
-// ;
+export function operations<
+  Source extends Alphabet,
+  Target extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet>
+>(
+  source: Source,
+  target: Target,
+  dependencies: Dependencies
+): SpecOperations<Source, Target, Dependencies> {
+  return {
+    mock: Object.assign(
+      ((...specs) => ({operation: `mock`, argument: specs})) as SpecOperations<Source, Target, Dependencies>[`mock`],
+      {
+        was: Object.fromEntries(
+          dependencies.map(abc => [
+            abc.name,
+            ((...specs: ReadonlyArray<unknown>) => specs),
+          ])
+        ),
+      }
+    ),
+    preject: (...specs) => <never>{operation: `preject`, argument: specs},
+    postject: (...specs) => <never>{operation: `postject`, argument: specs},
+    coalesce: (...specs) => <never>{operation: `coalesce`, argument: specs},
+  };
+}
