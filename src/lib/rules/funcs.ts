@@ -172,7 +172,7 @@ export function processPack<
     ReadonlyArray<Alphabet>
   >
 >(pack: RulePack): ProcessPack<RulePack> {
-  const specsFns = specsFuncs(pack.source);
+  const {env, types} = specsFuncs(pack.source);
   return Object.fromEntries(Object.entries(pack.children).map(([k, v]) => {
     if (`rules` in v) {
       return [k,
@@ -194,7 +194,7 @@ export function processPack<
                 arg => ({
                   for: {match: `all`, value: [
                     arg.for,
-                    constraint(specsFns.env as never, specsFns.types as never),
+                    constraint(env as never, types as never),
                   ]},
                   into: arg.into,
                 })
@@ -208,12 +208,6 @@ export function processPack<
     }
   }));
 }
-
-// type OnlyOneTarget<Into> = Into extends NestedArray<unknown>
-//   ? true
-//   : Into extends Record<string, unknown>
-//   ? IsUnion<keyof Into> extends false ? OnlyOneTarget<Into[keyof Into]> : false
-//   : false;
 
 function onlyOneTarget(into: object): boolean {
   if (Array.isArray(into)) {
@@ -239,26 +233,27 @@ export function extractDefaults<
 >(
   pack: RulePack
 ): ExtractDefaults<RulePack> {
-  return Object.fromEntries(Object.entries(pack.children).map(([k, v]) => {
-    if (`rules` in v) {
-      if (Object.keys(v.constraints).length > 0) {
-        return [k, undefined];
-      }
-      return [
-        k,
-        Object.fromEntries(Object.entries(v.rules).map(([ruleName, rule]) => [
-          ruleName,
-          onlyOneTarget(rule.into)
-            ? intoToFunc(
-              rule.into,
-              {match: `all`, value: [rule.for, pack.specs]},
-              pack.source
-            )
-            : undefined,
-        ])) as any,
-      ];
-    } else {
-      return [k, extractDefaults(v as any)];
-    }
-  })) as any;
+  return Object.fromEntries(
+    Object.entries(pack.children)
+      .filter(([_, v]) => `children` in v || Object.keys(v.constraints).length > 0)
+      .map(([k, v]) => {
+        if (`rules` in v) {
+          return [
+            k,
+            Object.fromEntries(
+              Object.entries(v.rules)
+                .filter(([_, rule]) => onlyOneTarget(rule.into))
+                .map(([ruleName, rule]) => [
+                  ruleName,
+                  intoToFunc(
+                    rule.into,
+                    {match: `all`, value: [rule.for, pack.specs]},
+                    pack.source
+                  ),
+                ])) as any,
+          ];
+        } else {
+          return [k, extractDefaults(v as never)];
+        }
+      })) as any;
 }
