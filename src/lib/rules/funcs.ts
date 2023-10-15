@@ -115,9 +115,26 @@ export function operations<
 function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
   return Object.assign(
     (segment => ({
-      context: segment instanceof Function,
+      context: segment instanceof Function
+        ? segment(qualifiedPathsOf(alphabet.context))
+        : segment,
     })) as ContextFunc<ABC>,
-    {}
+    Object.fromEntries(Object.entries(alphabet.types).map(([k, v]) => {
+      return [k, ((features, context) => ({
+        type: k,
+        features: features instanceof Function
+          ? features(
+            qualifiedPathsOf(v) as never,
+            alphabet.traits[k] as never
+          )
+          : Object.keys(v).length === 1
+            ? {[Object.keys(v)[0]]: features}
+            : features,
+        context: context instanceof Function
+          ? context(qualifiedPathsOf(alphabet.context))
+          : context,
+      })) as TypesFunc<ABC, keyof ABC[`types`]>];
+    })) as unknown as {[T in keyof ABC[`types`]]: TypesFunc<ABC, T>}
   );
 }
 

@@ -36,7 +36,7 @@ type _TypesFuncDefault<T, D extends MatchSchema> = SafeMatchSchemaOf<D> extends 
 type _TypesFuncVF<in out Source extends Alphabet, in out T extends keyof Source[`types`]> = (
   (
     features: QualifiedPathsOf<Source[`types`][T]>,
-    traits: T extends keyof Source[`traits`] ? Source[`traits`][T] : never
+    traits: T extends keyof Source[`traits`] ? Source[`traits`][T] : undefined
   ) => SafeMatchSchemaOf<Source[`types`][T]>
 );
 type _TypesFuncContextF<in out Source extends Alphabet> = (
