@@ -38,7 +38,7 @@ export const underlying = alphabet({
       long: {match: `type`, value: `boolean`},
     },
     suffix: {
-      value: [
+      symbol: [
         `f`,
         `fplural`,
         `dual`,
@@ -51,7 +51,7 @@ export const underlying = alphabet({
       ],
     },
     delimiter: {
-      value: [
+      symbol: [
         `genitive`,
         `object`,
         `pseudosubject`,
@@ -67,7 +67,7 @@ export const underlying = alphabet({
 }, {
   suffix: {
     plural: {
-      value: {
+      symbol: {
         match: `any`,
         value: [`plural`, `fplural`, `aynplural`],
       },

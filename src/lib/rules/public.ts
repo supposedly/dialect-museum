@@ -45,16 +45,19 @@ export function rulePack<
         ),
         constraints,
       };
-    }) as CreateRuleset<Source, Target, Dependencies, Spec>,
+    }) as CreateRuleset<Source, Target, Dependencies, UnfuncSpec<Spec>>,
     {
       pack: rulesets => ({
         children: rulesets,
         specs: evaluatedSpecs,
+        source,
+        target,
+        dependencies,
       }),
       source,
       target,
       dependencies,
-    } as {pack: PackRulesets<Spec, Source, Target, Dependencies>, source: Source, target: Target, dependencies: Dependencies}
+    } as {pack: PackRulesets<UnfuncSpec<Spec>, Source, Target, Dependencies>, source: Source, target: Target, dependencies: Dependencies}
   );
 }
 

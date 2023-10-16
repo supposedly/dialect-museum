@@ -9,8 +9,34 @@ import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec, UnfuncT
 function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
   return {
     env: {
-      before(...prev) { return {env: {prev}}; },
-      after(...next) {return {env: {next}}; },
+      before(...arr) {
+        return {
+          prev: arr.map(
+            item => typeof item === `object` && item !== null && `spec` in item
+              ? item
+              : {spec: item}
+          ) as {
+            [Index in keyof typeof arr]:
+              typeof arr[Index] extends {spec: unknown;}
+                ? typeof arr[Index]
+                : {spec: typeof arr[Index];};
+            },
+        };
+      },
+      after(...arr) {
+        return {
+          next: arr.map(
+            item => typeof item === `object` && item !== null && `spec` in item
+              ? item
+              : {spec: item}
+          ) as {
+            [Index in keyof typeof arr]:
+              typeof arr[Index] extends {spec: unknown;}
+                ? typeof arr[Index]
+                : {spec: typeof arr[Index];};
+            },
+        };
+      },
     },
     types: Object.assign(
       (context: object | ((...args: unknown[]) => unknown)) => ({
@@ -32,7 +58,7 @@ function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC>
             context: context instanceof Function
               ? context(qualifiedPathsOf(alphabet.context))
               : context,
-          }),
+          } as any),  // `any` for NeverSayNever<etc>
         ]
       )) as {[K in keyof ABC[`types`]]: TypesFunc<ABC, K>},
     ) as TypesFuncs<ABC>,

@@ -39,7 +39,7 @@ type Brr = typeof defaultTest.rules;
 
 const what = test2({
   spec: {type: `consonant`, context: {affected: true}},
-  env: (where, segment) => ({match: `any`, value: [where.before(segment({affected: false})), where.after(segment.consonant({articulator: `lips`}))]}),
+  // env: (where, segment) => ({match: `any`, value: [where.before(segment({affected: false})), where.after(segment.consonant({articulator: `lips`}))]}),
 },
 {
   woah: {etc: [{type: null as any, features: null as any, context: null as any}]},
@@ -64,7 +64,7 @@ const what = test2({
 
 const what2 = test({
   spec: {context: {affected: true}},
-  env: {next: [{type: `consonant`, features: {emphatic: true}}]},
+  env: {next: [{spec: {type: `consonant`, features: {emphatic: true}}}]},
 },
 {
   woah: {test: [{type: `consonant`, features: {} as any, context: {} as any}]},
@@ -82,7 +82,7 @@ const what2 = test({
 
 const what3 = test({
   spec: segment => segment(context => context.affected()),
-  env: {next: [{type: `consonant`, features: {emphatic: true}}]},
+  env: {next: [{spec: {type: `consonant`, features: {emphatic: true}}}]},
 },
 {
   base: {

@@ -16,7 +16,12 @@ export type Env<ABC extends Alphabet, ABCHistory extends ReadonlyArray<Alphabet>
         }
       }
     }>
-  }
+  } & {was?: {
+    [A in ABCHistory[number] as A[`name`]]: {
+      spec?: Spec<A>,
+      env?: Env<A, ABCHistory>
+    }
+  }}
   | EnvironmentFunc<ABC>
 );
 
@@ -139,7 +144,7 @@ export type EnvironmentFunc<
   types: TypesFuncs<Source>,
 // if i change the def of MatchSchema's function variant to => MatchSchema instead of => unknown this errors lol
 // bc recursive reference that apparently isn't an issue with => unknown??
-) => {[Dir in `next` | `prev`]?: NestedArray<{
+) => SafeMatchSchemaOf<{[Dir in `next` | `prev`]?: NestedArray<{
   spec?: PartialMembersWithContext<Source>,
   was?: {
     [A in Dependencies[number] as A[`name`]]: {
@@ -148,7 +153,12 @@ export type EnvironmentFunc<
     }
   }
 }>
-};
+} & {was?: {
+  [A in Dependencies[number] as A[`name`]]: {
+    spec?: Spec<A>,
+    env?: Env<A, Dependencies>
+  }
+}}>;
 
 
 // !!! here lurketh something sinister !!!
