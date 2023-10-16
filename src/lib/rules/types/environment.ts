@@ -6,8 +6,17 @@ export type Spec<ABC extends Alphabet> = (
   | PartialMembersWithContext<ABC> | (keyof ABC[`types`] & string)
   | ((types: TypesFuncs<ABC>) => PartialMembersWithContext<ABC>)
 );
-export type Env<ABC extends Alphabet> = (
-  | {[Dir in `next` | `prev`]?: NestedArray<PartialMembersWithContext<ABC>>}
+export type Env<ABC extends Alphabet, ABCHistory extends ReadonlyArray<Alphabet>> = (
+  | {[Dir in `next` | `prev`]?: NestedArray<{
+      spec?: PartialMembersWithContext<ABC>,
+      was?: {
+        [A in ABCHistory[number] as A[`name`]]: {
+          spec?: Spec<A>,
+          env?: Env<A, ABCHistory>
+        }
+      }
+    }>
+  }
   | EnvironmentFunc<ABC>
 );
 
@@ -16,12 +25,12 @@ export type SpecsNoMatch<
   ABCHistory extends ReadonlyArray<Alphabet> = readonly [],
   OmitKeys extends `spec` | `env` | `was` = never,
 > = Omit<{
-  spec: Spec<ABC>
-  env: Env<ABC>
-  was: {
+  spec: `spec` extends OmitKeys ? never : Spec<ABC>
+  env: `env` extends OmitKeys ? never : Env<ABC, ABCHistory>
+  was: `was` extends OmitKeys ? never : {
     [A in ABCHistory[number] as A[`name`]]: {
       spec?: Spec<A>,
-      env?: Env<A>
+      env?: Env<A, ABCHistory>
     }
   }
 }, OmitKeys>;
@@ -103,23 +112,16 @@ export type TypesFuncs<Source extends Alphabet> = {
 type _ArrType<Source extends Alphabet> = ReadonlyArray<SafeMatchSchemaOf<NestedArrayOr<PartialMembersWithContext<Source>>>>;
 export type EnvironmentHelpers<ABC extends Alphabet> = {
   before: {
-    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {prev: Arr}}
-    // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {env: {prev: Arr}}
+    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {
+      prev: {[Index in keyof Arr]: Arr[Index] extends {spec: unknown} ? Arr[Index] : {spec: Arr[Index]}}
+    }
+    // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {prev: Arr}
   },
   after: {
-    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {next: Arr}}
-    // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {env: {next: Arr}}
-  }
-};
-
-export type EnvironmentHelpersNextLast<ABC extends Alphabet> = {
-  next: {
-    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {next: Arr}}
-    slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {env: {next: Arr}}
-  },
-  last: {
-    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {env: {prev: Arr}}
-    slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {env: {prev: Arr}}
+    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {
+      next: {[Index in keyof Arr]: Arr[Index] extends {spec: unknown} ? Arr[Index] : {spec: Arr[Index]}}
+    }
+    // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {next: Arr}
   }
 };
 
@@ -137,7 +139,16 @@ export type EnvironmentFunc<
   types: TypesFuncs<Source>,
 // if i change the def of MatchSchema's function variant to => MatchSchema instead of => unknown this errors lol
 // bc recursive reference that apparently isn't an issue with => unknown??
-) => Specs<Source, Dependencies>;
+) => {[Dir in `next` | `prev`]?: NestedArray<{
+  spec?: PartialMembersWithContext<Source>,
+  was?: {
+    [A in Dependencies[number] as A[`name`]]: {
+      spec?: Spec<A>,
+      env?: Env<A, Dependencies>
+    }
+  }
+}>
+};
 
 
 // !!! here lurketh something sinister !!!

@@ -24,7 +24,7 @@ export type Unfunc<
   T extends object | ((...args: never) => unknown),
   Key extends string
 > = T extends {[K in Key]: (...args: never) => unknown}
-  ? ReturnType<T[Key]>
+  ? {[K in Key]: ReturnType<T[Key]>}
   : T extends {[K in Key]: {match: unknown, value: ReadonlyArray<object | ((...args: never) => unknown)>}}
   ? {match: T[Key][`match`], value: {
     [Index in keyof T[Key][`value`]]:
@@ -43,8 +43,10 @@ export type Unfunc<
   }}
   : T;
 
-export type UnfuncSpec<Spec> = Spec extends ({spec: unknown, env?: unknown} | {spec: unknown})
-  ? Merge<Unfunc<Spec, `spec`>, Unfunc<Spec, `env`>>
+type Get<T, K> = K extends keyof T ? T[K] : never;
+
+export type UnfuncSpec<Spec> = Spec extends ({spec: unknown, env?: unknown} | {env: unknown})
+  ? Merge<Get<Unfunc<Spec, `spec`>, `spec`>, Get<Unfunc<Spec, `env`>, `env`>>
   : Spec extends {match: unknown, value: readonly unknown[]}
   ? {match: Spec[`match`], value: {[Index in keyof Spec[`value`]]: UnfuncSpec<Spec[`value`][Index]>}}
   : Spec;
@@ -54,7 +56,7 @@ export type Packed<R extends Record<
   unknown
 >, Spec, Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = {
   children: R
-  specs: UnfuncSpec<Spec>
+  specs: Spec
   source: Source
   target: Target
   dependencies: Dependencies
