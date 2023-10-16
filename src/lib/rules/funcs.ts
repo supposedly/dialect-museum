@@ -1,10 +1,9 @@
 import {Alphabet, qualifiedPathsOf} from "../alphabet";
-import {MatchAsType, MatchInstance, MatchSchema, SafeMatchSchemaOf} from "../utils/match";
-import {NestedRecordOr, ValuesOf} from "../utils/typetools";
-import {ContextFunc, EnvironmentFunc, EnvironmentHelpers, Spec, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
-import {ExtractDefaults, ProcessPack, RuleFunc} from "./types/finalize";
-import {IntoSpec, SpecOperations} from "./types/func";
-import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec, UnfuncTargets} from "./types/helpers";
+import {NestedRecordOr} from "../utils/typetools";
+import {ContextFunc, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
+import {ExtractDefaults, ProcessPack} from "./types/finalize";
+import {SpecOperations} from "./types/func";
+import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec} from "./types/helpers";
 
 function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
   return {

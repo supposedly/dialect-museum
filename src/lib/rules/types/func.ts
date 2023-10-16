@@ -1,7 +1,7 @@
 import {RulesetWrapper, Ruleset, Packed, UnfuncSpec, UnfuncTargets} from "./helpers";
 import {Specs, SpecsNoMatch, EnvironmentFunc} from "./environment";
 import {Alphabet, MembersWithContext} from "/lib/alphabet";
-import {MatchAsType, MatchInstance, MatchSchema, SafeMatchSchemaOf} from "/lib/utils/match";
+import {MatchAsType, MatchInstance, SafeMatchSchemaOf} from "/lib/utils/match";
 import {NestedRecord} from "/lib/utils/typetools";
 
 export type PackRulesets<in out Spec, Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = <const R extends Record<

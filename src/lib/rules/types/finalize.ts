@@ -1,7 +1,7 @@
 import {Packed, RulesetWrapper, Ruleset, RulesetToFunc, ConstraintsToFuncs} from "./helpers";
 import {Alphabet} from "/lib/alphabet";
 import {MatchInstance} from "/lib/utils/match";
-import {NestedArray, IsUnion, Merge} from "/lib/utils/typetools";
+import {NestedArray, IsUnion} from "/lib/utils/typetools";
 
 export type RuleFunc<
   Wrapper extends RulesetWrapper<

@@ -1,4 +1,4 @@
-import {MatchAsType, MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from "/lib/utils/match";
+import {MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from "/lib/utils/match";
 import {IsUnion, NestedArray, NestedArrayOr, ValuesOf} from "/lib/utils/typetools";
 import {Alphabet, PartialMembersWithContext, QualifiedPathsOf} from "/lib/alphabet";
 
