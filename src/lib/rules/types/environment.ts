@@ -74,7 +74,7 @@ export type TypesFunc<in out Source extends Alphabet, in out T extends keyof Sou
     const VF extends _TypesFuncVF<Source, T>,
     const Context extends SafeMatchSchemaOf<Source[`context`]>,
     const ContextF extends _TypesFuncContextF<Source>
-  >(features?: V | VF, context?: Context | ContextF) => {
+  >(features?: V | VF, context?: Context | ContextF) => NeverSayNever<{
     type: T
     // now we have to check which of V/VF, Context/ContextF was actually passed in
     // since the funcs are invariant on Source and T it won't matter what order we
@@ -82,8 +82,10 @@ export type TypesFunc<in out Source extends Alphabet, in out T extends keyof Sou
     // we can stick with it here too
     features: _FeaturesCond<Source, T, V, VF>
     context: _ContextCond<Source, Context, ContextF>
-  }
+  }>
 ;
+
+type NeverSayNever<T> = Pick<T, ValuesOf<{[K in keyof T]: T[K] extends never ? never : K}>>;
 
 export type ContextFunc<Source extends Alphabet> = (
   <

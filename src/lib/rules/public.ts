@@ -16,11 +16,11 @@ export function rulePack<
   dependencies: Dependencies,
   spec: Spec
 ): {
-  pack: PackRulesets<Spec, Source, Target, Dependencies>,
+  pack: PackRulesets<UnfuncSpec<Spec>, Source, Target, Dependencies>,
   source: Source,
   target: Target,
   dependencies: Dependencies
-} & CreateRuleset<Source, Target, Dependencies, Spec>
+} & CreateRuleset<Source, Target, Dependencies, UnfuncSpec<Spec>>
 {
   const evaluatedSpecs = unfuncSpec(spec, source) as UnfuncSpec<Spec>;
   return Object.assign(
