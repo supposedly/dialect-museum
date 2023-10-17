@@ -1,10 +1,10 @@
 import {MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from "/lib/utils/match";
-import {IsUnion, NestedArray, NestedArrayOr, ValuesOf} from "/lib/utils/typetools";
+import {IsUnion, NestedArray, NestedArrayOr, NeverSayNever, ValuesOf} from "/lib/utils/typetools";
 import {Alphabet, PartialMembersWithContext, QualifiedPathsOf} from "/lib/alphabet";
 
 export type Spec<ABC extends Alphabet> = (
-  | PartialMembersWithContext<ABC> | (keyof ABC[`types`] & string)
-  | ((types: TypesFuncs<ABC>) => PartialMembersWithContext<ABC>)
+  | PartialMembersWithContext<ABC>// | (keyof ABC[`types`] & string)
+  | ((types: TypesFuncs<ABC>) => SafeMatchSchemaOf<PartialMembersWithContext<ABC>>)
 );
 export type Env<ABC extends Alphabet, ABCHistory extends ReadonlyArray<Alphabet>> = (
   | {[Dir in `next` | `prev`]?: NestedArray<{
@@ -98,8 +98,6 @@ export type TypesFunc<in out Source extends Alphabet, in out T extends keyof Sou
     context: _ContextCond<Source, Context, ContextF>
   }>
 ;
-
-type NeverSayNever<T> = Pick<T, ValuesOf<{[K in keyof T]: T[K] extends never ? never : K}>>;
 
 export type ContextFunc<Source extends Alphabet> = (
   <
