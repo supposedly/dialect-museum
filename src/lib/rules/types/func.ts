@@ -50,7 +50,7 @@ type _IntoSpec<Source extends Alphabet, in out Target extends Alphabet, in out S
       ? Deferred[`spec`] extends {type: infer T extends keyof Source[`types`], features: unknown}
         ? NeverSayNever<{
           type: T,
-          features: MergeIntersection<MatchAsType<Source[`types`][T]> & Deferred[`spec`][`features`]>,
+          features: MatchAsType<Source[`types`][T]> & Deferred[`spec`][`features`],
           context: Get<Deferred[`spec`], `context`>
         }>
         : Deferred[`spec`]
@@ -107,7 +107,7 @@ export type CreateRuleset<
 > = <
   const ExtraSpec extends Specs<Source, Target, Dependencies>,
   const Targets extends IntoSpec<Source, Target, JoinSpecs<[Spec, ExtraSpec]>, Dependencies>,
-  const Constraints extends Record<string, EnvironmentFunc<Source, Dependencies>>
+  const Constraints extends Record<string, EnvironmentFunc<Source, Target, Dependencies>>
 >(
   extraSpec: ExtraSpec,
   targets: Targets,

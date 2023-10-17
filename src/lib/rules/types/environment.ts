@@ -6,23 +6,28 @@ export type Spec<ABC extends Alphabet> = (
   | PartialMembersWithContext<ABC>// | (keyof ABC[`types`] & string)
   | ((types: TypesFuncs<ABC>) => SafeMatchSchemaOf<PartialMembersWithContext<ABC>>)
 );
-export type Env<ABC extends Alphabet, ABCHistory extends ReadonlyArray<Alphabet>> = (
+export type Env<Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = (
   | {[Dir in `next` | `prev`]?: NestedArray<{
-      spec?: PartialMembersWithContext<ABC>,
+      spec?: PartialMembersWithContext<Source>,
       was?: {
-        [A in ABCHistory[number] as A[`name`]]: {
+        [A in Dependencies[number] as A[`name`]]: {
           spec?: Spec<A>,
-          env?: Env<A, ABCHistory>
+          env?: Env<A, Target, Dependencies>
         }
       }
     }>
   } & {was?: {
-    [A in ABCHistory[number] as A[`name`]]: {
+    [A in Dependencies[number] as A[`name`]]: {
       spec?: Spec<A>,
-      env?: Env<A, ABCHistory>
+      env?: Env<A, Target, Dependencies>
     }
-  }}
-  | EnvironmentFunc<ABC>
+  }} & ([Target] extends [never] ? unknown : {
+    target: {
+      spec?: Spec<Target>
+      env?: Env<Target, never, Dependencies>
+    }
+  })
+  | EnvironmentFunc<Source, Target>
 );
 
 export type SpecsNoMatch<
@@ -32,16 +37,16 @@ export type SpecsNoMatch<
   OmitKeys extends `spec` | `env` | `was` | `target` = never,
 > = Omit<{
   spec: `spec` extends OmitKeys ? never : Spec<Source>
-  env: `env` extends OmitKeys ? never : Env<Source, Dependencies>
+  env: `env` extends OmitKeys ? never : Env<Source, Target, Dependencies>
   was: `was` extends OmitKeys ? never : {
     [A in Dependencies[number] as A[`name`]]: {
       spec?: Spec<A>
-      env?: Env<A, Dependencies>
+      env?: Env<A, never, Dependencies>
     }
   }
   target: `target` extends OmitKeys ? never : {
     spec?: Spec<Target>
-    env?: Env<Target, Dependencies>
+    env?: Env<Target, never, Dependencies>
   }
 }, OmitKeys>;
 
@@ -142,6 +147,7 @@ export type SpecsFuncs<Source extends Alphabet> = {
 // type _ArrType<Source extends Alphabet> = ReadonlyArray<unknown>;
 export type EnvironmentFunc<
   Source extends Alphabet,
+  Target extends Alphabet,
   Dependencies extends ReadonlyArray<Alphabet> = readonly []
 > = (
   env: EnvironmentHelpers<Source>,
@@ -153,16 +159,27 @@ export type EnvironmentFunc<
   was?: {
     [A in Dependencies[number] as A[`name`]]: {
       spec?: Spec<A>,
-      env?: Env<A, Dependencies>
+      env?: Env<A, never, Dependencies>
     }
   }
-}>
-} & {was?: {
-  [A in Dependencies[number] as A[`name`]]: {
-    spec?: Spec<A>,
-    env?: Env<A, Dependencies>
+} & {
+  target?: {
+    spec?: Spec<Target>
+    env?: Env<Target, never, Dependencies>
   }
-}}>;
+}>
+} & {
+  was?: {
+    [A in Dependencies[number] as A[`name`]]: {
+      spec?: Spec<A>,
+      env?: Env<A, never, Dependencies>
+    }
+  }
+  target?: {
+    spec?: Spec<Target>
+    env?: Env<Target, never, Dependencies>
+  }
+}>;
 
 
 // !!! here lurketh something sinister !!!
