@@ -8,34 +8,30 @@ import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec} from ".
 function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
   return {
     env: {
-      before(...arr) {
-        return {
-          prev: arr.map(
-            item => typeof item === `object` && item !== null && `spec` in item
-              ? item
-              : {spec: item}
-          ) as {
-            [Index in keyof typeof arr]:
-              typeof arr[Index] extends {spec: unknown;}
-                ? typeof arr[Index]
-                : {spec: typeof arr[Index];};
-            },
-        };
-      },
-      after(...arr) {
-        return {
-          next: arr.map(
-            item => typeof item === `object` && item !== null && `spec` in item
-              ? item
-              : {spec: item}
-          ) as {
-            [Index in keyof typeof arr]:
-              typeof arr[Index] extends {spec: unknown;}
-                ? typeof arr[Index]
-                : {spec: typeof arr[Index];};
-            },
-        };
-      },
+      before: (...arr) => ({
+        prev: arr.map(
+          item => typeof item === `object` && item !== null && `spec` in item
+            ? item
+            : {spec: item}
+        ) as {
+          [Index in keyof typeof arr]:
+            typeof arr[Index] extends {spec: unknown;}
+              ? typeof arr[Index]
+              : {spec: typeof arr[Index];};
+          },
+      }),
+      after: (...arr) => ({
+        next: arr.map(
+          item => typeof item === `object` && item !== null && `spec` in item
+            ? item
+            : {spec: item}
+        ) as {
+          [Index in keyof typeof arr]:
+            typeof arr[Index] extends {spec: unknown;}
+              ? typeof arr[Index]
+              : {spec: typeof arr[Index];};
+          },
+      }),
     },
     types: Object.assign(
       (context: object | ((...args: unknown[]) => unknown)) => ({
@@ -163,16 +159,6 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
   );
 }
 
-function specsFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
-  return {
-    env: {
-      before: (...args) => ({env: {prev: args}}),
-      after: (...args) => ({env: {next: args}}),
-    },
-    types: typesFuncs(alphabet),
-  };
-}
-
 function intoToFunc<
   Into extends NestedRecordOr<ReadonlyArray<unknown>>,
   Spec,
@@ -197,7 +183,7 @@ export function processPack<
     ReadonlyArray<Alphabet>
   >
 >(pack: RulePack): ProcessPack<RulePack> {
-  const {env, types} = specsFuncs(pack.source);
+  const {env, types} = generateSpecFuncs(pack.source);
   return Object.fromEntries(Object.entries(pack.children).map(([k, v]) => {
     if (`rules` in v) {
       return [k,

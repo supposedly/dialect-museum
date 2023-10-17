@@ -9,7 +9,7 @@ export function rulePack<
   const Source extends Alphabet,
   const Target extends Alphabet,
   const Dependencies extends ReadonlyArray<Alphabet>,
-  const Spec extends Specs<Source, Dependencies>,
+  const Spec extends Specs<Source, Target, Dependencies>,
 >(
   source: Source,
   target: Target,

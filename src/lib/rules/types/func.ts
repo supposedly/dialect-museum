@@ -12,8 +12,8 @@ export type PackRulesets<in out Spec, Source extends Alphabet, Target extends Al
 >(r: R) => Packed<R, Spec, Source, Target, Dependencies>;
 
 type MatchOrFunction<ABC extends Alphabet, Keys extends `spec` | `env`> = (
-  | SafeMatchSchemaOf<Exclude<SpecsNoMatch<ABC>[Keys], (...args: never) => unknown>>
-  | Extract<SpecsNoMatch<ABC>[Keys], (...args: never) => unknown>
+  | SafeMatchSchemaOf<Exclude<SpecsNoMatch<ABC, never, [], `target`>[Keys], (...args: never) => unknown>>
+  | Extract<SpecsNoMatch<ABC, never, [], `target`>[Keys], (...args: never) => unknown>
 );
 
 // i hate this so much lmfao
@@ -21,17 +21,17 @@ type MatchOrFunction<ABC extends Alphabet, Keys extends `spec` | `env`> = (
 // box on the full and horrifying extent of just how unsound this entire design's type hackery is)
 export type SpecOperations<in out Source extends Alphabet, in out Target extends Alphabet, ABCHistory extends ReadonlyArray<Alphabet>> = {
   /** @returns ``{operation: `mock`, arguments: specs}`` */
-  mock: ((...specs: ReadonlyArray<SpecsNoMatch<Source>[`spec`]>) => never) & {
+  mock: ((...specs: ReadonlyArray<SpecsNoMatch<Source, Target>[`spec`]>) => never) & {
     was: {
       [ABC in ABCHistory[number] as ABC[`name`]]:
         /** @returns ``{operation: `mock`, arguments: {was: {[the alphabet's name]: specs}}}`` */
-        (...specs: ReadonlyArray<SpecsNoMatch<ABC>[`spec`]>) => never
+        (...specs: ReadonlyArray<SpecsNoMatch<ABC, never, [], `target`>[`spec`]>) => never
     }
   }
   /** @returns ``{operation: `preject`, arguments: specs}`` */
-  preject(...spec: ReadonlyArray<SpecsNoMatch<Target>[`spec`]>): never
+  preject(...spec: ReadonlyArray<SpecsNoMatch<Target, never, [], `target`>[`spec`]>): never
   /** @returns ``{operation: `postject`, arguments: specs}`` */
-  postject(...spec: ReadonlyArray<SpecsNoMatch<Target>[`spec`]>): never
+  postject(...spec: ReadonlyArray<SpecsNoMatch<Target, never, [], `target`>[`spec`]>): never
   /** Coalesces environment members matching `env` into the currently captured segment.
    * On the current layer, they will no longer undergo any rule transformations.
    * On the next layer, they will point to the output of the current capture.
@@ -105,7 +105,7 @@ export type CreateRuleset<
   in out Dependencies extends ReadonlyArray<Alphabet>,
   in out Spec
 > = <
-  const ExtraSpec extends Specs<Source, Dependencies>,
+  const ExtraSpec extends Specs<Source, Target, Dependencies>,
   const Targets extends IntoSpec<Source, Target, JoinSpecs<[Spec, ExtraSpec]>, Dependencies>,
   const Constraints extends Record<string, EnvironmentFunc<Source, Dependencies>>
 >(

@@ -26,25 +26,31 @@ export type Env<ABC extends Alphabet, ABCHistory extends ReadonlyArray<Alphabet>
 );
 
 export type SpecsNoMatch<
-  ABC extends Alphabet,
-  ABCHistory extends ReadonlyArray<Alphabet> = readonly [],
-  OmitKeys extends `spec` | `env` | `was` = never,
+  Source extends Alphabet,
+  Target extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet> = readonly [],
+  OmitKeys extends `spec` | `env` | `was` | `target` = never,
 > = Omit<{
-  spec: `spec` extends OmitKeys ? never : Spec<ABC>
-  env: `env` extends OmitKeys ? never : Env<ABC, ABCHistory>
+  spec: `spec` extends OmitKeys ? never : Spec<Source>
+  env: `env` extends OmitKeys ? never : Env<Source, Dependencies>
   was: `was` extends OmitKeys ? never : {
-    [A in ABCHistory[number] as A[`name`]]: {
-      spec?: Spec<A>,
-      env?: Env<A, ABCHistory>
+    [A in Dependencies[number] as A[`name`]]: {
+      spec?: Spec<A>
+      env?: Env<A, Dependencies>
     }
+  }
+  target: `target` extends OmitKeys ? never : {
+    spec?: Spec<Target>
+    env?: Env<Target, Dependencies>
   }
 }, OmitKeys>;
 
 export type Specs<
-  ABC extends Alphabet,
-  ABCHistory extends ReadonlyArray<Alphabet> = readonly [],
+  Source extends Alphabet,
+  Target extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet> = readonly [],
   OmitKeys extends `spec` | `env` | `was` = never,
-> = MatchSchemaOf<SpecsNoMatch<ABC, ABCHistory, OmitKeys>>;// extends infer T extends MatchSchema ? T : never;
+> = MatchSchemaOf<SpecsNoMatch<Source, Target, Dependencies, OmitKeys>>;// extends infer T extends MatchSchema ? T : never;
 
 type _TypesFuncDefault<T, D extends MatchSchema> = SafeMatchSchemaOf<D> extends T ? never : T;
 type _TypesFuncVF<in out Source extends Alphabet, in out T extends keyof Source[`types`]> = (
