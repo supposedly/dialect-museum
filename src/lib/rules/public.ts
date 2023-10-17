@@ -76,3 +76,25 @@ export function finalize<
     defaults: extractDefaults(pack),
   };
 }
+
+export function separateContext<
+  const Item extends Record<string, unknown>,
+  const ContextKeys extends ReadonlyArray<keyof Item>
+>(item: Item, ...contextKeys: ContextKeys): {
+  features: Omit<Item, ContextKeys[number]>,
+  context: Pick<Item, ContextKeys[number]>
+} {
+  return {
+    // so efficient
+    features: Object.fromEntries(
+      Object.entries(item).filter(
+        ([k]) => !contextKeys.includes(k)
+      )
+    ) as Omit<Item, ContextKeys[number]>,
+    context: Object.fromEntries(
+      Object.entries(item).filter(
+        ([k]) => contextKeys.includes(k)
+      )
+    ) as Pick<Item, ContextKeys[number]>,
+  };
+}

@@ -1,1 +1,1 @@
-export {rulePack, finalize} from "./public";
+export {rulePack, finalize, separateContext} from "./public";
