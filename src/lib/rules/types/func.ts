@@ -54,7 +54,7 @@ type _IntoSpec<Source extends Alphabet, in out Target extends Alphabet, in out S
           context: Get<Deferred[`spec`], `context`>
         }>
         : Deferred[`spec`]
-      : never,
+      : Spec,
     environment: MatchAsType<Spec> extends infer Deferred extends {env: unknown}
       ? Deferred[`env`]
       : never,
@@ -96,7 +96,7 @@ export type Rules<
 
 export type JoinSpecs<in out Specs extends ReadonlyArray<unknown>> = MatchInstance<
   `all`,
-  {[Index in keyof Specs]: UnfuncSpec<Specs[Index]>}
+  {[Index in keyof Specs]: Record<string, never> extends Specs[Index] ? never : UnfuncSpec<Specs[Index]>}
 >;
 
 export type CreateRuleset<
