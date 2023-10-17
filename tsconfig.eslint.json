@@ -3,13 +3,23 @@
         "src/**/*.ts",
         "src/**/*.d.ts",
         "src/**/*.tsx",
-        "src/**/*.vue"
+        "src/**/*.vue",
     ],
     "exclude": [
         "node_modules/*",
         "public/*"
     ],
+    "references": [
+        {
+            "path": "./tsconfig.app.json"
+        },
+        {
+            "path": "./tsconfig.node.json"
+        }
+    ],
     "compilerOptions": {
+        "jsx": "preserve",
+        "jsxImportSource": "solid-js",
         "target": "es2020",
         "strict": true,
         "noImplicitAny": true,
@@ -22,11 +32,5 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "baseUrl": "src",
-        "paths": {
-            "/*": [
-                "./*"
-            ]
-        }
     }
 }
