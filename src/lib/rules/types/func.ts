@@ -1,8 +1,8 @@
 import {RulesetWrapper, Ruleset, Packed, UnfuncSpec, UnfuncTargets} from "./helpers";
 import {Specs, SpecsNoMatch, EnvironmentFunc} from "./environment";
-import {Alphabet, MembersWithContext} from "/lib/alphabet";
+import {Alphabet, MembersWithContext, PartialMembersWithContext} from "/lib/alphabet";
 import {MatchAsType, MatchInstance, SafeMatchSchemaOf} from "/lib/utils/match";
-import {NestedRecord} from "/lib/utils/typetools";
+import {Get, MergeIntersection, NestedRecord, NeverSayNever} from "/lib/utils/typetools";
 
 export type PackRulesets<in out Spec, Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = <const R extends Record<
     string,
@@ -40,25 +40,35 @@ export type SpecOperations<in out Source extends Alphabet, in out Target extends
   coalesce(env: MatchOrFunction<Source, `env`>): never
 };
 
-type _IntoSpec<in out Target extends Alphabet, in out Spec> = NestedRecord<
+type _IntoSpec<Source extends Alphabet, in out Target extends Alphabet, in out Spec> = NestedRecord<
   | ReadonlyArray<
     | MembersWithContext<Target>
     // | ReturnType<ValuesOf<SpecOperations<Target, ABCHistory>>>
   >
   | ((
-    captured: MatchAsType<Spec> extends infer Deferred extends {spec: unknown} ? Deferred[`spec`] : never,
-    environment: MatchAsType<Spec> extends infer Deferred extends {env: unknown} ? Deferred[`env`] : never,
+    captured: MatchAsType<Spec> extends infer Deferred extends {spec: unknown}
+      ? Deferred[`spec`] extends {type: infer T extends keyof Source[`types`], features: unknown}
+        ? NeverSayNever<{
+          type: T,
+          features: MergeIntersection<MatchAsType<Source[`types`][T]> & Deferred[`spec`][`features`]>,
+          context: Get<Deferred[`spec`], `context`>
+        }>
+        : Deferred[`spec`]
+      : never,
+    environment: MatchAsType<Spec> extends infer Deferred extends {env: unknown}
+      ? Deferred[`env`]
+      : never,
     // {preject, postject, mock, etc}
   ) => ReadonlyArray<
-    | MembersWithContext<Target>
-    | typeof captured
+    | PartialMembersWithContext<Target>
+    // | typeof captured
     // | ReturnType<ValuesOf<SpecOperations<Target, ABCHistory, MembersWithContext<Target> | typeof captured>>>
   >)
 >;
 
 export type IntoSpec<Source extends Alphabet, Target extends Alphabet, Spec, ABCHistory extends ReadonlyArray<Alphabet>> = (
-  | _IntoSpec<Target, Spec>
-  | ((operations: SpecOperations<Source, Target, ABCHistory>) => _IntoSpec<Target, Spec>)
+  | _IntoSpec<Source, Target, Spec>
+  | ((operations: SpecOperations<Source, Target, ABCHistory>) => _IntoSpec<Source, Target, Spec>)
 );
 
 type _Rules<
@@ -80,7 +90,7 @@ export type Rules<
   Target extends Alphabet,
   Spec,
   ABCHistory extends ReadonlyArray<Alphabet>
-> = Targets extends (operations: never) => _IntoSpec<Target, Spec>
+> = Targets extends (operations: never) => _IntoSpec<Source, Target, Spec>
   ? _Rules<ReturnType<Targets>, Source, Target, Spec, ABCHistory>
   : _Rules<Targets, Source, Target, Spec, ABCHistory>
 

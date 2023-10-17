@@ -1,10 +1,21 @@
 // https://stackoverflow.com/questions/63542526/merge-discriminated-union-of-object-types-in-typescript
 // I can't use ts-toolbelt's MergeUnion<> because for some reason it randomly produces `unknowns` under
 // some compilers and not others...
-export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
-export type MergeUnion<U> = UnionToIntersection<U> extends infer O ? {[K in keyof O]: O[K]} : never;
+export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends ((k: infer I) => void)
+  ? I
+  : never;
+/** This doesn't preserve methods of only one intersection member, unlike Merge<A, B>. */
+export type MergeIntersection<I> = I extends infer O
+  ? {
+    [K in keyof O]:
+      O[K] extends (...args: never) => unknown ? O[K]
+      : O[K] extends object ? MergeIntersection<O[K]>
+      : O[K]
+  }
+  : never;
+export type MergeUnion<U> = MergeIntersection<UnionToIntersection<U>>;
 export type Merge<A, B> = [B] extends [never] ? A : [A] extends [never] ? B : A extends object ? B extends object ? {
-  [K in keyof A | keyof B]: 
+  [K in keyof A | keyof B]:
     K extends keyof A & keyof B
     ? Merge<A[K], B[K]>
     : K extends keyof B
@@ -30,3 +41,7 @@ export type NestedArrayOr<T> = T | ReadonlyArray<NestedArrayOr<T>>;
 
 export type NestedRecord<T> = {[key: string]: T | NestedRecord<T>, [noArraysBruh: number]: never};
 export type NestedRecordOr<T> = T | {[key: string]: NestedRecordOr<T>, [noArraysBruh: number]: never};
+
+export type NeverSayNever<T> = Pick<T, ValuesOf<{[K in keyof T]: T[K] extends never ? never : K}>>;
+
+export type Get<T, K> = K extends keyof T ? T[K] : never;
