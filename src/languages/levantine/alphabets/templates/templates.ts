@@ -18,11 +18,9 @@ const root = {match: `array`, value: {
   fill: withFlags(underlying.types.consonant, `weak`, `affected`),
 }} as const;
 
-/*
-  idafe
-*/
+// missing idafe
 export const templates = alphabet({
-  name: `category`,
+  name: `templates`,
   context: {
     affected: {match: `type`, value: `boolean`},
   },
@@ -58,8 +56,13 @@ export const templates = alphabet({
       root,
       subject: {match: `single`, value: underlying.types.pronoun},
       tam: [`past`, `subjunctive`, `indicative`, `imperative`],
+      // i feel like this stuff could be cleaner if i had an actual feature tree model :(
+      // but on the other hand my instinct of eg restricting f3vl to npst would make
+      // cypriot and potentially similarly divergent mainland dialects unimplementable...
+      // idk
       theme: [`a`, `i`, `u`],
       shape: [
+        `fa3vl`,
         `f3vl`,
         `fa33al`,
         `tfa33al`,
@@ -145,6 +148,21 @@ export const templates = alphabet({
 {
   has: {root},
   traits: {
+    // sound: {
+    //   root: {match: `array`, value: {length: {match: `any`, value: [3, 4]}, fill: {weak: false}}},
+    // },
+    sound: {
+      root: {
+        match: `array`,
+        value: {
+          length: {match: `any`, value: [3, 4]},
+          // ????????????
+          // this or `any` makes an error that i don't understand go away
+          // hopefully if i ever fix trait defs it'll just fix itself though
+          fill: {match: `all`, value: [{weak: false, affected: {match: `type`, value: `boolean`}}]},
+        },
+      },
+    },
     geminate: {
       root: {match: `any`, value: [
         {match: `all`, value: [
@@ -167,8 +185,11 @@ export const templates = alphabet({
     quadriliteral: {
       root: {length: 4},
     },
-    assimilated: {
-      root: {0: {weak: true}},
+    wawated: {
+      root: {0: {weak: true, articulator: `lips`, location: `lips`, manner: `approximant`}},
+    },
+    hamzated: {
+      root: {0: {weak: true, articulator: `throat`, location: `glottis`, manner: `plosive`}},
     },
     hollow: {
       root: {1: {weak: true}},
