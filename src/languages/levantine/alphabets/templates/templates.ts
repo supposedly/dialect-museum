@@ -56,13 +56,17 @@ export const templates = alphabet({
       root,
       subject: {match: `single`, value: underlying.types.pronoun},
       tam: [`past`, `subjunctive`, `indicative`, `imperative`],
-      // i feel like this stuff could be cleaner if i had an actual feature tree model :(
-      // but on the other hand my instinct of eg restricting f3vl to npst would make
-      // cypriot and potentially similarly divergent mainland dialects unimplementable...
-      // idk
+      // alternative or addendum to below comment: this should be a computed trait...
+      // (aka "i should implement computed traits...")
       theme: [`a`, `i`, `u`],
-      shape: [
+      // this would be better if i had an actual feature tree model :(
+      // could restrict theme.u to wazn.f3vl and wazn.fa3vl to traits.nonpast, wazn.f3vl to tam.past
+      // (cypriot /rma/ would be handled as a transformation from wazn.fa3vl + root:[r, m, ~y],
+      // not by defining those kinds of cypriot verbs as wazn.f3vl from the outset)
+      door: [
+        // past, fa3al fi3il
         `fa3vl`,
+        // nonpast, f3al f3il f3ul
         `f3vl`,
         `fa33al`,
         `tfa33al`,
@@ -71,7 +75,9 @@ export const templates = alphabet({
         `tfaa3al`,
         `stfaa3al`,
         `af3al`,
+        // nonpast (mayyyybe past but most probably just nonpast), nfa3al nfa3il
         `nfa3vl`,
+        // nonpast (ditto), fta3al fta3il
         `fta3vl`,
         `staf3al`,
         `f3all`,
@@ -184,6 +190,9 @@ export const templates = alphabet({
     },
     quadriliteral: {
       root: {length: 4},
+    },
+    assimilated: {
+      root: {0: {weak: true}},
     },
     wawated: {
       root: {0: {weak: true, articulator: `lips`, location: `lips`, manner: `approximant`}},
