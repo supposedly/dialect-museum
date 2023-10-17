@@ -149,6 +149,7 @@ export type MatchAsType<T> =
     readonly length: MatchAsType<T[`value`][`length`]>
     readonly [index: number]: MatchAsType<T[`value`][`fill`]>
     [Symbol.iterator](): Iterator<MatchAsType<T[`value`][`fill`]>>
+    map: ReadonlyArray<MatchAsType<T[`value`][`fill`]>>[`map`]
   }
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
@@ -168,6 +169,7 @@ export type PartialMatchAsType<T> =
     readonly length?: PartialMatchAsType<T[`value`][`length`]>
     readonly [index: number]: PartialMatchAsType<T[`value`][`fill`]>
     [Symbol.iterator]?(): Iterator<PartialMatchAsType<T[`value`][`fill`]>>
+    map?: Partial<ReadonlyArray<MatchAsType<T[`value`][`fill`]>>>[`map`]
   }
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
