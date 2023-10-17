@@ -258,3 +258,46 @@ export const alphabet = <
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ) as any,
   });
+  
+export function letters<
+  const ABC extends Alphabet,
+  const Context extends Record<string, ApplyMatchAsType<ABC[`context`]>>,
+  const Symbols extends {
+    [T in keyof ABC[`types`]]: Record<string, ApplyMatchAsType<ABC[`types`][T]>>
+  }
+>(
+  alphabet: ABC,
+  contextMap: Context,
+  symbols: Symbols
+): {
+  [C in keyof Context]: {
+    [T in keyof ABC[`types`]]: {
+      [S in keyof Symbols[T]]: {
+        type: T,
+        features: Symbols[T][S],
+        context: Context[C]
+      }
+    }
+  }
+} {
+  return Object.fromEntries(
+    Object.entries(contextMap).map(([c, context]) => [
+      c,
+      Object.fromEntries(
+        Object.keys(alphabet.types).map(type => [
+          type,
+          Object.fromEntries(
+            Object.entries(symbols[type]).map(([s, features]) => [
+              s,
+              {
+                type,
+                features,
+                context,
+              },
+            ])
+          ),
+        ])
+      ),
+    ])
+  ) as never;
+}
