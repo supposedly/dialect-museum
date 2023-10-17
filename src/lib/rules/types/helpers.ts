@@ -1,6 +1,6 @@
 import {Alphabet} from "/lib/alphabet";
 import {MatchInstance} from "/lib/utils/match";
-import {Merge, NestedRecord, NestedRecordOr} from "/lib/utils/typetools";
+import {Get, Merge, NestedRecord, NestedRecordOr} from "/lib/utils/typetools";
 
 export type UnfuncTargets<Targets> = Targets extends (...args: never) => unknown
   ? ReturnType<Targets>
@@ -26,12 +26,12 @@ export type Unfunc<
 > = T extends {[K in Key]: (...args: never) => unknown}
   ? {[K in Key]: ReturnType<T[Key]>}
   : T extends {[K in Key]: {match: unknown, value: ReadonlyArray<object | ((...args: never) => unknown)>}}
-  ? {match: T[Key][`match`], value: {
+  ? {[K in Key]: {match: T[Key][`match`], value: {
     [Index in keyof T[Key][`value`]]:
       Index extends number
         ? Unfunc<T[Key][`value`][Index], Key>
         : T[Key][`value`][Index]
-  }}
+  }}}
   : T extends {[K in Key]: unknown}
   ? {[K in Key]: T[Key]}
   : T extends {match: unknown, value: ReadonlyArray<object | ((...args: never) => unknown)>}
@@ -43,10 +43,8 @@ export type Unfunc<
   }}
   : T;
 
-type Get<T, K> = K extends keyof T ? T[K] : never;
-
 export type UnfuncSpec<Spec> = Spec extends ({spec: unknown, env?: unknown} | {env: unknown})
-  ? Merge<Get<Unfunc<Spec, `spec`>, `spec`>, Get<Unfunc<Spec, `env`>, `env`>>
+  ? {spec: Get<Unfunc<Spec, `spec`>, `spec`>, env: Get<Unfunc<Spec, `env`>, `env`>}
   : Spec extends {match: unknown, value: readonly unknown[]}
   ? {match: Spec[`match`], value: {[Index in keyof Spec[`value`]]: UnfuncSpec<Spec[`value`][Index]>}}
   : Spec;
