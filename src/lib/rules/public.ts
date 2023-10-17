@@ -2,7 +2,7 @@ import {Alphabet} from "../alphabet";
 import {extractDefaults, operations, processPack, unfuncSpec} from "./funcs";
 import {Specs} from "./types/environment";
 import {ProcessPack, ExtractDefaults} from "./types/finalize";
-import {PackRulesets, CreateRuleset} from "./types/func";
+import {PackRulesets, CreateRuleset, Rules, JoinSpecs} from "./types/func";
 import {Packed, Ruleset, RulesetWrapper, UnfuncSpec} from "./types/helpers";
 
 export function rulePack<
@@ -38,11 +38,13 @@ export function rulePack<
           Object.entries(evaluatedTargets).map(([name, v]) => [
             name,
             {
-              for: combinedSpecs,
+              // I think it doesn't want it to be double-unfuncked in the type system
+              // just messy
+              for: combinedSpecs as unknown as JoinSpecs<[UnfuncSpec<Spec>, typeof extraSpec]>,
               into: v,
             },
           ])
-        ),
+        ) as Rules<typeof targets, Source, Target, JoinSpecs<[UnfuncSpec<Spec>, typeof extraSpec]>, Dependencies>,
         constraints,
       };
     }) as CreateRuleset<Source, Target, Dependencies, UnfuncSpec<Spec>>,
@@ -57,7 +59,12 @@ export function rulePack<
       source,
       target,
       dependencies,
-    } as {pack: PackRulesets<UnfuncSpec<Spec>, Source, Target, Dependencies>, source: Source, target: Target, dependencies: Dependencies}
+    } as {
+      pack: PackRulesets<UnfuncSpec<Spec>, Source, Target, Dependencies>,
+      source: Source,
+      target: Target,
+      dependencies: Dependencies
+    }
   );
 }
 
