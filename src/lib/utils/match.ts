@@ -3,6 +3,7 @@
 // these are eminently fixable but right now it's not a priority
 // btw can maybe do better than MatchAsType<MatchSchemaOf<4>> resolving to number
 
+import {Union} from "ts-toolbelt";
 import {Merge, MergeUnion, ValuesOf} from "./typetools";
 
 export type Guards = {
@@ -100,46 +101,48 @@ export type MatchesExtending<T> =
   | {[K in keyof Guards]: T extends Guards[K] ? MatchInstance<`type`, K> : never}[keyof Guards]
   | {[K in keyof Danger]: T extends Danger[K] ? MatchInstance<`danger`, K> : never}[keyof Danger];
 
-type InferArrayType<
-  Arr extends ReadonlyArray<unknown>
-> = Arr extends ReadonlyArray<(infer U) | (MatchInstance<Match[`match`], infer U>)>
-  ? MatchAsType<
-    | Exclude<U,
-      | keyof Guards
-      | Match
-      | ReadonlyArray<unknown>
-      | ((...args: never) => boolean)
-    >
-    | (U extends unknown ? string extends U ? string : never : never)
-  > : never;
+type ArrayMatchAsType<Arr extends ReadonlyArray<unknown>> = {
+  [Index in keyof Arr]: MatchAsType<Arr[Index]>
+};
 
-type PartialInferArrayType<
+type PartialArrayMatchAsType<Arr extends ReadonlyArray<unknown>> = {
+  [Index in keyof Arr]?: PartialMatchAsType<Arr[Index]>
+};
+
+type FixLengthlessArray<
   Arr extends ReadonlyArray<unknown>
-> = Arr extends ReadonlyArray<(infer U) | (MatchInstance<Match[`match`], infer U>)>
-  ? PartialMatchAsType<
-    | Exclude<U,
-      | string
-      | Match
-      | ReadonlyArray<unknown>
-      | ((...args: never) => boolean)
-    >
-    | (U extends unknown ? string extends U ? string : never : never)
-  > : never;
+> = Arr extends ReadonlyArray<infer U>
+  ? ArrayMatchAsType<Union.ListOf<
+    MatchesExtending<Exclude<U, Match>> extends U
+      ? Exclude<U, Match>
+      : U
+  >>
+  : never;
+
+type PartialFixLengthlessArray<
+  Arr extends ReadonlyArray<unknown>
+> = Arr extends ReadonlyArray<infer U>
+? PartialArrayMatchAsType<Union.ListOf<
+  MatchesExtending<Exclude<U, Match>> extends U
+    ? Exclude<U, Match>
+    : U
+>>
+: never;
 
 type MergeArray<Arr extends ReadonlyArray<unknown>> =
   Arr extends readonly [infer Head] ? MatchAsType<Head>
   : Arr extends readonly [infer Head, ...infer Tail]
-    ? Merge<MatchAsType<Head>, MergeArray<Tail>> /*: never  // copout */
+    ? MatchAsType<Head> & MergeArray<Tail> /*: never  // copout */
     : number extends Arr[`length`]
-      ? MergeUnion<InferArrayType<Arr>>
+      ? MergeArray<FixLengthlessArray<Arr>>
       : never;
 
 type PartialMergeArray<Arr extends ReadonlyArray<unknown>> =
 Arr extends readonly [infer Head] ? PartialMatchAsType<Head>
 : Arr extends readonly [infer Head, ...infer Tail]
-  ? Merge<PartialMatchAsType<Head>, MergeArray<Tail>> /*: never  // copout */
+  ? PartialMatchAsType<Head> & MergeArray<Tail> /*: never  // copout */
   : number extends Arr[`length`]
-    ? MergeUnion<InferArrayType<Arr>>
+    ? PartialMergeArray<PartialFixLengthlessArray<Arr>>
     : never;
 
 export type MatchAsType<T> =
@@ -155,7 +158,7 @@ export type MatchAsType<T> =
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
     ? number extends T[`value`][`length`] /*? never  // copout */
-      ? InferArrayType<T[`value`]>
+      ? FixLengthlessArray<T[`value`]>[number]
       : MatchAsType<T[`value`][number]>
   : T extends PickMatch<`all`> ? MatchAsType<MergeArray<T[`value`]>>
   : T extends PickMatch<`single`> ? MatchAsType<T[`value`]>
@@ -175,7 +178,7 @@ export type PartialMatchAsType<T> =
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
     ? number extends T[`value`][`length`] /*? never  // copout */
-      ? PartialInferArrayType<T[`value`]>
+      ? PartialFixLengthlessArray<T[`value`]>
       : PartialMatchAsType<T[`value`][number]>
   : T extends PickMatch<`all`> ? PartialMatchAsType<PartialMergeArray<T[`value`]>>
   : T extends PickMatch<`single`> ? PartialMatchAsType<T[`value`]>
