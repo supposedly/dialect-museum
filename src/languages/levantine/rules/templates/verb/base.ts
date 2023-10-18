@@ -1,13 +1,12 @@
 import {templates, underlying} from "/languages/levantine/alphabets";
 import {rulePack} from "/lib/rules";
 
-import fa3al from "./fa3al";
-
-const verb = rulePack(
+export default rulePack(
   templates,
   underlying,
   [],
-  {spec: {type: `verb`}}
+  {
+    spec: {type: `verb`},
+    env: {},
+  }
 );
-
-export default verb.pack({fa3al});

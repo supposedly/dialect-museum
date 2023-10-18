@@ -4,15 +4,14 @@ import {separateContext} from '/lib/rules';
 
 export default ruleset(
   {
-    spec: {},
+    spec: ({verb}) => verb(features => features.tam.imperative),
     env: {},
   },
   {
-    default: ({features: {root: [$F, $3, $L], theme}}) => [
+    default: ({features: {root: [$F, $3]}}) => [
       separateContext($F, `affected`),
       separateContext($3, `affected`),
-      letters.plain.vowel[theme],
-      separateContext($L, `affected`),
+      letters.plain.vowel.ii,
     ],
   }
 );

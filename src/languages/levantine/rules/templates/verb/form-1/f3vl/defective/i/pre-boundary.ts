@@ -6,14 +6,18 @@ type Doubles<T extends string> = T extends unknown ? `${T}${T}` : never;
 
 export default ruleset(
   {
-    spec: ({verb}) => verb((features, traits) => traits.hollow),
-    env: {},
+    spec: {},
+    env: {
+      target: {
+        env: ({before}, {delimiter, boundary}) => before({match: `any`, value: [delimiter(), boundary()]}),
+      },
+    },
   },
   {
-    default: ({features: {root: [$F, _, $L], theme}}) => [
+    default: ({features: {root: [$F, $3], theme}}) => [
       separateContext($F, `affected`),
+      separateContext($3, `affected`),
       letters.plain.vowel[(theme + theme) as Doubles<typeof theme>],
-      separateContext($L, `affected`),
     ],
   }
 );

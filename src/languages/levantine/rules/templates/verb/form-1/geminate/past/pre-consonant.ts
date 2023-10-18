@@ -5,14 +5,20 @@ import {separateContext} from '/lib/rules';
 export default ruleset(
   {
     spec: {},
-    env: {},
+    env: {
+      target: {
+        env: ({before}, {consonant}) => before(consonant()),
+      },
+    },
   },
   {
-    default: ({features: {root: [$F, $3, $L], theme}}) => [
+    default: ({features: {root: [$F, $3, $L]}}) => [
       separateContext($F, `affected`),
+      letters.plain.vowel.a,
       separateContext($3, `affected`),
-      letters.plain.vowel[theme],
       separateContext($L, `affected`),
+      letters.plain.vowel.a,
+      letters.plain.consonant.y,
     ],
   }
 );

@@ -4,16 +4,19 @@ import {separateContext} from '/lib/rules';
 
 export default ruleset(
   {
-    spec: ({verb}) => verb((features, traits) => traits.hollow),
+    spec: {},
+    env: {},
   },
   {
     default: ({features: {root}}) => {
-      const [$F, _, $L] = root.map(r => separateContext(r, `affected`));
+      const [$F, $3, $L] = root.map(r => separateContext(r, `affected`));
       return [
         $F,
-        letters.plain.vowel.aa,
+        letters.plain.vowel.a,
+        $3,
+        letters.plain.vowel.a,
         $L,
       ];
     },
-  }
+  },
 );
