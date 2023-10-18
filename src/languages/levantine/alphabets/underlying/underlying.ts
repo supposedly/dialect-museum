@@ -6,6 +6,18 @@ export const underlying = alphabet({
     affected: {match: `type`, value: `boolean`},
   },
   types: {
+    boundary: {
+      value: {match: `type`, value: `string`},
+      spacing: [
+        `before`,
+        `after`,
+        `around`,
+      ],
+      pausal: {match: `type`, value: `boolean`},
+    },
+    literal: {
+      value: {match: `type`, value: `string`},
+    },
     consonant: {
       voiced: {match: `type`, value: `boolean`},
       emphatic: {match: `type`, value: `boolean`},
@@ -36,6 +48,7 @@ export const underlying = alphabet({
       /* tense: {match: `type`, value: `boolean`}, */
       round: {match: `type`, value: `boolean`},
       long: {match: `type`, value: `boolean`},
+      diphthong: {match: `type`, value: `boolean`},
     },
     suffix: {
       symbol: [
