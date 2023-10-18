@@ -2,7 +2,7 @@ import {RulesetWrapper, Ruleset, Packed, UnfuncSpec, UnfuncTargets} from "./help
 import {Specs, SpecsNoMatch, EnvironmentFunc} from "./environment";
 import {Alphabet, MembersWithContext, PartialMembersWithContext} from "/lib/alphabet";
 import {MatchAsType, MatchInstance, SafeMatchSchemaOf} from "/lib/utils/match";
-import {Get, NestedRecord, NeverSayNever} from "/lib/utils/typetools";
+import {Get, NestedArray, NestedRecord, NeverSayNever} from "/lib/utils/typetools";
 
 export type PackRulesets<
   in out Spec,
@@ -47,7 +47,7 @@ export type SpecOperations<in out Source extends Alphabet, in out Target extends
 };
 
 type _IntoSpec<Source extends Alphabet, in out Target extends Alphabet, in out Spec> = NestedRecord<
-  | ReadonlyArray<
+  | NestedArray<
     | MembersWithContext<Target>
     // | ReturnType<ValuesOf<SpecOperations<Target, ABCHistory>>>
   >
@@ -65,7 +65,7 @@ type _IntoSpec<Source extends Alphabet, in out Target extends Alphabet, in out S
       ? Deferred[`env`]
       : never,
     // {preject, postject, mock, etc}
-  ) => ReadonlyArray<
+  ) => NestedArray<
     | PartialMembersWithContext<Target>
     // | typeof captured
     // | ReturnType<ValuesOf<SpecOperations<Target, ABCHistory, MembersWithContext<Target> | typeof captured>>>
