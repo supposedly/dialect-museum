@@ -175,8 +175,9 @@ export function processPack<
   RulePack extends Packed<
     Record<string,
       | RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: ReadonlyArray<never>) => unknown>>
-      | Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+      | Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
     >,
+    unknown,
     unknown,
     Alphabet,
     Alphabet,
@@ -234,8 +235,9 @@ export function extractDefaults<
   RulePack extends Packed<
     Record<string,
       | RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: ReadonlyArray<never>) => unknown>>
-      | Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+      | Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
     >,
+    unknown,
     unknown,
     Alphabet,
     Alphabet,

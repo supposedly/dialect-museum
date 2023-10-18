@@ -1,4 +1,5 @@
 import {Alphabet} from "../alphabet";
+import {MatchAsType} from "../utils/match";
 import {extractDefaults, operations, processPack, unfuncSpec} from "./funcs";
 import {Specs} from "./types/environment";
 import {ProcessPack, ExtractDefaults} from "./types/finalize";
@@ -55,6 +56,9 @@ export function rulePack<
         source,
         target,
         dependencies,
+        /* Excessive stack depth comparing types 'MatchInstance<"any", readonly (SpecsNoMatch<Source, Target, Dependencies, never> | MatchSchemaOf<SpecsNoMatch<Source, Target, Dependencies, never>>)[]>' and '{ readonly match: "any"; readonly value: readonly MatchSchema[]; }'.ts(2321) */
+        // __SPECS_FOR_TYPE_CHECK: null as MatchAsType<Spec>,
+        __SPECS_FOR_TYPE_CHECK: null as any,
       }),
       source,
       target,
@@ -70,8 +74,9 @@ export function rulePack<
 
 export function finalize<
   const RulePack extends Packed<
-    | Record<string, Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+    | Record<string, Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
     | RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: never) => unknown>>>,
+    unknown,
     unknown,
     Alphabet,
     Alphabet,

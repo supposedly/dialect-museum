@@ -1,5 +1,5 @@
 import {Alphabet} from "/lib/alphabet";
-import {MatchInstance} from "/lib/utils/match";
+import {MatchAsType, MatchInstance} from "/lib/utils/match";
 import {Get, Merge, NestedRecord, NestedRecordOr} from "/lib/utils/typetools";
 
 export type UnfuncTargets<Targets> = Targets extends (...args: never) => unknown
@@ -49,15 +49,20 @@ export type UnfuncSpec<Spec> = Spec extends ({spec: unknown, env?: unknown} | {e
   ? {match: Spec[`match`], value: {[Index in keyof Spec[`value`]]: UnfuncSpec<Spec[`value`][Index]>}}
   : Spec;
 
-export type Packed<R extends Record<
-  string,
-  unknown
->, Spec, Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = {
+export type Packed<
+  R extends Record<string, unknown>,
+  SpecsForTypeCheck,
+  Specs,
+  Source extends Alphabet,
+  Target extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet>
+> = {
   children: R
-  specs: Spec
+  specs: Specs
   source: Source
   target: Target
   dependencies: Dependencies
+  __SPECS_FOR_TYPE_CHECK: SpecsForTypeCheck
 };
 
 export type IntoToFunc<

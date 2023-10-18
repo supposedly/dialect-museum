@@ -2,14 +2,20 @@ import {RulesetWrapper, Ruleset, Packed, UnfuncSpec, UnfuncTargets} from "./help
 import {Specs, SpecsNoMatch, EnvironmentFunc} from "./environment";
 import {Alphabet, MembersWithContext, PartialMembersWithContext} from "/lib/alphabet";
 import {MatchAsType, MatchInstance, SafeMatchSchemaOf} from "/lib/utils/match";
-import {Get, MergeIntersection, NestedRecord, NeverSayNever} from "/lib/utils/typetools";
+import {Get, NestedRecord, NeverSayNever} from "/lib/utils/typetools";
 
-export type PackRulesets<in out Spec, Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = <const R extends Record<
+export type PackRulesets<
+  in out Spec,
+  Source extends Alphabet,
+  Target extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet>
+> = <
+  const R extends Record<
     string,
     | RulesetWrapper<Record<string, Ruleset>, Record<string, ((...args: never) => unknown)>>
-    | Packed<Record<string, unknown>, Spec, Source, Target, Dependencies>
+    | Packed<Record<string, unknown>, MatchAsType<Spec>, unknown, Source, Target, Dependencies>
   >
->(r: R) => Packed<R, Spec, Source, Target, Dependencies>;
+>(r: R) => Packed<R, MatchAsType<Spec>, Spec, Source, Target, Dependencies>;
 
 type MatchOrFunction<ABC extends Alphabet, Keys extends `spec` | `env`> = (
   | SafeMatchSchemaOf<Exclude<SpecsNoMatch<ABC, never, [], `target`>[Keys], (...args: never) => unknown>>

@@ -14,7 +14,7 @@ export type RuleFunc<
   when: ConstraintsToFuncs<Wrapper[`constraints`]>
 ) => R;
 
-export type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
+export type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
   [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends RulesetWrapper<infer Targets, infer Constraints>
     ? <const R extends NestedArray<Ruleset>>(fn: RuleFunc<RulesetWrapper<
       {
@@ -29,7 +29,7 @@ export type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown
       },
       Constraints
     >, R>) => R
-    : RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+    : RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
       ? ProcessPack<RulePack[`children`][K]>
     : never
 };
@@ -40,12 +40,12 @@ type OnlyOneTarget<Into> = Into extends NestedArray<unknown>
   ? IsUnion<keyof Into> extends false ? (true extends OnlyOneTarget<Into[keyof Into]> ? true : false) : false
   : false;
 
-type _NonDefaults<out RulePack extends Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
-  [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+type _NonDefaults<out RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
+  [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
       ? ProcessPack<RulePack[`children`][K]>
       : never
 };
-type _Defaults<out RulePack extends Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
+type _Defaults<out RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
   [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends RulesetWrapper<infer Targets, infer Constraints>
   ? keyof Constraints extends never ? {
     [T in keyof Targets]: 
@@ -58,7 +58,7 @@ type _Defaults<out RulePack extends Packed<Record<string, unknown>, unknown, Alp
     } : never : never
 }
 
-export type ExtractDefaults<RulePack extends Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
+export type ExtractDefaults<RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
   [K in keyof RulePack[`children`]]:
     RulePack[`children`][K] extends RulesetWrapper<infer Targets, infer Constraints>
       ? keyof Constraints extends never
@@ -72,7 +72,7 @@ export type ExtractDefaults<RulePack extends Packed<Record<string, unknown>, unk
               : never
           }
         : never
-    : RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+    : RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
       ? ExtractDefaults<RulePack[`children`][K]>
     : never
 };
