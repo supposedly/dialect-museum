@@ -14,7 +14,7 @@ export type Ruleset = {
 
 export type RulesetWrapper<
   Rules extends Record<string, Ruleset>,
-  Constraints extends Record<string, (...args: never) => unknown>
+  Constraints extends Record<string, Record<string, unknown>>
 > = {
   rules: Rules,
   constraints: Constraints
@@ -47,7 +47,9 @@ export type UnfuncSpec<Spec> = Spec extends ({spec: unknown, env?: unknown} | {e
   ? {spec: Get<Unfunc<Spec, `spec`>, `spec`>, env: Get<Unfunc<Spec, `env`>, `env`>}
   : Spec extends {match: unknown, value: readonly unknown[]}
   ? {match: Spec[`match`], value: {[Index in keyof Spec[`value`]]: UnfuncSpec<Spec[`value`][Index]>}}
-  : Spec;
+  : Spec extends object
+  ? {[K in keyof Spec]: UnfuncSpec<Spec[K]>}
+  : never;
 
 export type Packed<
   R extends Record<string, unknown>,

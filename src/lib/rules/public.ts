@@ -1,5 +1,4 @@
 import {Alphabet} from "../alphabet";
-import {MatchAsType} from "../utils/match";
 import {extractDefaults, operations, processPack, unfuncSpec} from "./funcs";
 import {Specs} from "./types/environment";
 import {ProcessPack, ExtractDefaults} from "./types/finalize";
@@ -36,15 +35,17 @@ export function rulePack<
         : targets as Exclude<typeof targets, (...args: never) => unknown>;
       return {
         rules: Object.fromEntries(
-          Object.entries(evaluatedTargets).map(([name, v]) => [
+          // avoiding an excessively deep etc error
+          Object.entries(evaluatedTargets as any).map(([name, v]) => [
             name,
             {
               // I think it doesn't want it to be double-unfuncked in the type system
               // just messy
-              for: combinedSpecs as unknown as JoinSpecs<[UnfuncSpec<Spec>, typeof extraSpec]>,
+              // but if i'm wrong i'll find out at runtime lol
+              for: combinedSpecs,  // unknown as JoinSpecs<[UnfuncSpec<Spec>, typeof extraSpec]>
               into: v,
             },
-          ])
+          ]) as any  // idk why
         ) as Rules<typeof targets, Source, Target, JoinSpecs<[UnfuncSpec<Spec>, typeof extraSpec]>, Dependencies>,
         constraints,
       };
@@ -75,7 +76,7 @@ export function rulePack<
 export function finalize<
   const RulePack extends Packed<
     | Record<string, Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
-    | RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: never) => unknown>>>,
+    | RulesetWrapper<Record<string, Ruleset>, Record<string, Record<string, unknown>>>>,
     unknown,
     unknown,
     Alphabet,

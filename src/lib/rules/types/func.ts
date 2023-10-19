@@ -12,7 +12,7 @@ export type PackRulesets<
 > = <
   const R extends Record<
     string,
-    | RulesetWrapper<Record<string, Ruleset>, Record<string, ((...args: never) => unknown)>>
+    | RulesetWrapper<Record<string, Ruleset>, Record<string, Record<string, unknown>>>
     | Packed<Record<string, unknown>, MatchAsType<Spec>, unknown, Source, Target, Dependencies>
   >
 >(r: R) => Packed<R, MatchAsType<Spec>, Spec, Source, Target, Dependencies>;
@@ -113,7 +113,7 @@ export type CreateRuleset<
 > = <
   const ExtraSpec extends Specs<Source, Target, Dependencies>,
   const Targets extends IntoSpec<Source, Target, JoinSpecs<[Spec, ExtraSpec]>, Dependencies>,
-  const Constraints extends Record<string, EnvironmentFunc<Source, Target, Dependencies>>
+  const Constraints extends Record<string, Specs<Source, Target, Dependencies>>
 >(
   extraSpec: ExtraSpec,
   targets: Targets,

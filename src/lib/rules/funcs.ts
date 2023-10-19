@@ -93,13 +93,22 @@ function _unfuncSpec<Specs>(specs: Specs, funcs: SpecsFuncs<Alphabet>): UnfuncSp
   if (`match` in specs && `value` in specs && Array.isArray(specs[`value`])) {
     return {
       match: specs[`match`],
-      value: specs[`value`].map(v => _unfuncSpec(v, funcs)),
+      value: specs[`value`].map(v => _unfuncSpec(v, funcs)) as {
+        [Index in keyof typeof specs[`value`]]: UnfuncSpec<typeof specs[`value`][Index]>
+      },
     } as UnfuncSpec<Specs>;
   }
-  return {
-    ...(`spec` in specs ? callSpecFunc(specs.spec as object, funcs) : {}),
-    ...(`env` in specs ? callEnvFunc(specs.env as object, funcs) : {}),
-  } as UnfuncSpec<Specs>;
+  if (`spec` in specs || `env` in specs) {
+    return {
+      ...(`spec` in specs ? callSpecFunc(specs.spec as object, funcs) : {}),
+      ...(`env` in specs ? callEnvFunc(specs.env as object, funcs) : {}),
+    } as UnfuncSpec<Specs>;
+  }
+  return Object.fromEntries(
+    Object.entries(specs).map(
+      ([k, v]) => [k, _unfuncSpec(v, funcs)]
+    )
+  ) as UnfuncSpec<Specs>;
 }
 
 export function unfuncSpec<Specs, ABC extends Alphabet>(specs: Specs, alphabet: ABC): UnfuncSpec<Specs> {
@@ -174,7 +183,7 @@ function intoToFunc<
 export function processPack<
   RulePack extends Packed<
     Record<string,
-      | RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: ReadonlyArray<never>) => unknown>>
+      | RulesetWrapper<Record<string, Ruleset>, Record<string, Record<string, unknown>>>
       | Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
     >,
     unknown,
@@ -206,7 +215,7 @@ export function processPack<
                 arg => ({
                   for: {match: `all`, value: [
                     arg.for,
-                    constraint(env as never, types as never),
+                    unfuncSpec(constraint, pack.source),
                   ]},
                   into: arg.into,
                 })
@@ -234,7 +243,7 @@ function onlyOneTarget(into: object): boolean {
 export function extractDefaults<
   RulePack extends Packed<
     Record<string,
-      | RulesetWrapper<Record<string, Ruleset>, Record<string, (...args: ReadonlyArray<never>) => unknown>>
+      | RulesetWrapper<Record<string, Ruleset>, Record<string, Record<string, unknown>>>
       | Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
     >,
     unknown,

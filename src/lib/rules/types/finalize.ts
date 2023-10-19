@@ -1,4 +1,4 @@
-import {Packed, RulesetWrapper, Ruleset, RulesetToFunc, ConstraintsToFuncs} from "./helpers";
+import {Packed, RulesetWrapper, Ruleset, RulesetToFunc, ConstraintsToFuncs, UnfuncSpec} from "./helpers";
 import {Alphabet} from "/lib/alphabet";
 import {MatchInstance} from "/lib/utils/match";
 import {NestedArray, IsUnion} from "/lib/utils/typetools";
@@ -6,12 +6,12 @@ import {NestedArray, IsUnion} from "/lib/utils/typetools";
 export type RuleFunc<
   Wrapper extends RulesetWrapper<
     Record<string, Ruleset>,
-    Record<string, ((...args: never) => unknown)>
+    Record<string, Record<string, unknown>>
   >,
   R extends NestedArray<Ruleset>
 > = (
   item: RulesetToFunc<Wrapper[`rules`]>,
-  when: ConstraintsToFuncs<Wrapper[`constraints`]>
+  when: UnfuncSpec<Wrapper[`constraints`]>
 ) => R;
 
 export type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
