@@ -11,7 +11,7 @@ export type RuleFunc<
   R extends NestedArray<Ruleset>
 > = (
   item: RulesetToFunc<Wrapper[`rules`]>,
-  when: UnfuncSpec<Wrapper[`constraints`]>
+  when: ConstraintsToFuncs<Wrapper[`constraints`]>
 ) => R;
 
 export type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {

@@ -47,8 +47,8 @@ export type UnfuncSpec<Spec> = Spec extends ({spec: unknown, env?: unknown} | {e
   ? {spec: Get<Unfunc<Spec, `spec`>, `spec`>, env: Get<Unfunc<Spec, `env`>, `env`>}
   : Spec extends {match: unknown, value: readonly unknown[]}
   ? {match: Spec[`match`], value: {[Index in keyof Spec[`value`]]: UnfuncSpec<Spec[`value`][Index]>}}
-  : Spec extends object
-  ? {[K in keyof Spec]: UnfuncSpec<Spec[K]>}
+  // : Spec extends object
+  // ? {[K in keyof Spec]: UnfuncSpec<Spec[K]>}
   : never;
 
 export type Packed<
@@ -79,12 +79,21 @@ export type RulesetToFunc<Rules extends Record<string, Ruleset>> = {
   [K in keyof Rules]: IntoToFunc<Rules[K][`into`], Rules[K][`for`]>
 };
 
-export type ConstraintsToFuncs<Constraints extends Record<string, ((...args: never) => unknown)>> = {
+export type ConstraintsToFuncs<Constraints extends Record<
+  string,
+  Record<string, unknown>//((...args: never) => unknown) | Record<string, unknown>>
+>> = {
   [K in keyof Constraints]: <
     const Arr extends ReadonlyArray<({for: unknown, into: unknown})>
   >(...args: Arr) => {
     [Index in keyof Arr]: {
-      for: MatchInstance<`all`, readonly [Arr[Index][`for`], ReturnType<Constraints[K]>]>,
-      into: Arr[Index][`into`]}
+      for: MatchInstance<`all`, readonly [
+        Arr[Index][`for`],
+        Constraints[K] extends (...args: never) => unknown
+          ? ReturnType<Constraints[K]>
+          : Constraints[K]
+      ]>,
+      into: Arr[Index][`into`]
     }
+  }
 };
