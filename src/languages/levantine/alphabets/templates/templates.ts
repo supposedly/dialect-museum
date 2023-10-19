@@ -64,8 +64,12 @@ export const templates = alphabet({
       // (cypriot /rma/ would be handled as a transformation from wazn.fa3vl + root:[r, m, ~y],
       // not by defining those kinds of cypriot verbs as wazn.f3vl from the outset)
       door: [
-        // past, fa3al fi3il
-        `fa3vl`,
+        // i was originally doing `fa3vl` and using the theme vowel to select one
+        // but i actually need to use the theme vowel to know hwo to render hollow
+        // verbs when they have a consonant-initial conj suffix lol
+        // oh well
+        `fa3al`,
+        `fa3il`,
         // nonpast, f3al f3il f3ul
         `f3vl`,
         `fa33al`,

@@ -11,13 +11,13 @@ export default rulePack(
         match: `all`,
         value: [
           features.tam.past,
+          traits.hollow,
+          {root: {length: 3}},
           {match: `any`, value: [
             features.door.fa3al,
             features.door.fa3il,
             features.door.f3vl,
           ]},
-          {root: {length: 3}},
-          traits.geminate,
         ],
       })
     ),

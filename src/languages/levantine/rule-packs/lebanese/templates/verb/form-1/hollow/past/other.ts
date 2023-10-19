@@ -4,7 +4,8 @@ import {separateContext} from '/lib/rules';
 
 export default ruleset(
   {
-    spec: ({verb}) => verb((features, traits) => traits.hollow),
+    spec: {},
+    env: {},
   },
   {
     default: ({features: {root}}) => {

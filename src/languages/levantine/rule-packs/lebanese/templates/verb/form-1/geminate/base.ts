@@ -10,12 +10,13 @@ export default rulePack(
       (features, traits) => ({
         match: `all`,
         value: [
-          {match: `any`, value: [
-            features.door.fa3vl,
-            features.door.f3vl,
-          ]},
           traits.geminate,
           {root: {length: 3}},
+          {match: `any`, value: [
+            features.door.fa3al,
+            features.door.fa3il,
+            features.door.f3vl,
+          ]},
         ],
       })
     ),

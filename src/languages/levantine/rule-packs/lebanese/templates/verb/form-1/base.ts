@@ -6,7 +6,10 @@ export default rulePack(
   underlying,
   [],
   {
-    spec: {type: `verb`, features: {root: {length: 3}}},
+    spec: ({verb}) => verb({
+      root: {length: 3},
+      door: {match: `any`, value: [`fa3al`, `fa3il`, `f3vl`]},
+    }),
     env: {},
   }
 );

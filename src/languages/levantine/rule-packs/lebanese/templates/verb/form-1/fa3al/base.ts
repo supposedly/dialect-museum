@@ -7,10 +7,10 @@ export default rulePack(
   [],
   {
     spec: ({verb}) => verb({
-      door: `fa3vl`,
-      theme: `i`,
+      door: `fa3al`,
       tam: `past`,
       root: {length :3},  // i accidentally typed this and i think i like it better than what i meant
     }),
+    env: {},
   }
 );

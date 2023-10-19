@@ -6,10 +6,13 @@ export default rulePack(
   underlying,
   [],
   {
-    spec: ({verb}) => verb({
-      door: `fa3il`,
-      tam: `past`,
-      root: {length: 3},
-    }),
+    spec: ({verb}) => verb((features, traits) => ({
+      match: `all`,
+      value: [
+        features.door.af3al,
+        traits.nonpast,
+      ],
+    })),
+    env: {},
   }
 );

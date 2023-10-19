@@ -1,9 +1,9 @@
-import geminate from './base';
+import hollow from './base';
 
 import nonpast from './nonpast';
 import past from './past';
 
-export default geminate.pack({
+export default hollow.pack({
   nonpast,
   past,
 });

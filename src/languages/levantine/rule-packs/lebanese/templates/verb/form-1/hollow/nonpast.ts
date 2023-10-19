@@ -4,9 +4,10 @@ import {separateContext} from '/lib/rules';
 
 type Doubles<T extends string> = T extends unknown ? `${T}${T}` : never;
 
+
 export default ruleset(
   {
-    spec: ({verb}) => verb((features, traits) => traits.hollow),
+    spec: ({verb}) => verb((features, traits) => traits.nonpast),
     env: {},
   },
   {
