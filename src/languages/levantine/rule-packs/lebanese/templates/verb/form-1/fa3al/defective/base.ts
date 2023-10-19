@@ -10,15 +10,13 @@ export default rulePack(
       match: `all`,
       value: [
         traits.defective,
-        {match: `any`, value: [
-          features.tam.imperative,
-          features.tam.indicative,
-          features.tam.subjunctive,
-        ]},
-        features.door.f3vl,
-        {root: {length: 3}},
+        {
+          door: `fa3vl`,
+          theme: `i`,
+          tam: `past`,
+          root: {length :3},  // i accidentally typed this and i think i like it better than what i meant
+        },
       ],
     })),
-    env: {},
   }
 );

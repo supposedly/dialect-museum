@@ -50,13 +50,14 @@ export const underlying = alphabet({
       long: {match: `type`, value: `boolean`},
       diphthong: {match: `type`, value: `boolean`},
     },
-    suffix: {
+    affix: {
       symbol: [
+        `indicative`,
         `f`,
         `fplural`,
         `dual`,
         `plural`,
-        `aynplural`,
+        `aynplural`,  // some dialects have a diff reflex than for dual -ayn
         `an`,
         `iyy`,
         `jiyy`,
@@ -78,7 +79,7 @@ export const underlying = alphabet({
     },
   },
 }, {
-  suffix: {
+  affix: {
     plural: {
       symbol: {
         match: `any`,

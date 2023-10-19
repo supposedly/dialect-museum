@@ -10,6 +10,6 @@ export default ruleset(
     env: {},
   },
   operations => ({
-    default: [operations.preject(letters.plain.consonant.b)],
+    default: [operations.preject({type: `affix`, features: {symbol: `indicative`}, context: {affected: false}})],
   })
 );

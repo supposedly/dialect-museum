@@ -137,7 +137,7 @@ export const templates = alphabet({
     number: {
       value: {match: `type`, value: `number`},
     },
-    suffix: underlying.types.suffix,
+    suffix: underlying.types.affix,
     delimiter: underlying.types.delimiter,
     pronoun: underlying.types.pronoun,
   },

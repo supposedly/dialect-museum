@@ -6,12 +6,8 @@ type Doubles<T extends string> = T extends unknown ? `${T}${T}` : never;
 
 export default ruleset(
   {
-    spec: {},
-    env: {
-      target: {
-        env: ({before}, {delimiter, boundary}) => before({match: `any`, value: [delimiter(), boundary()]}),
-      },
-    },
+    spec: ({verb}) => verb((features, traits) => traits.defective),
+    env: {},
   },
   {
     default: ({features: {root: [$F, $3], theme}}) => [

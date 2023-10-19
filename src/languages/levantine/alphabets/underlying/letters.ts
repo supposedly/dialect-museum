@@ -1,4 +1,4 @@
-import {letters} from "/lib/alphabet";
+import {defaultLetters, letters} from "/lib/alphabet";
 import {underlying} from "./underlying";
 
 export default letters(
@@ -105,7 +105,7 @@ export default letters(
       l: {
         location: `ridge`,
         articulator: `tongue`,
-        manner: `approximant`,  // lateral don't real
+        manner: `approximant`,
         voiced: true,
         emphatic: false,
       },
@@ -116,7 +116,7 @@ export default letters(
         voiced: false,
         emphatic: false,
       },
-      Z: {  // to be used for z <- S (i guess :/)
+      Z: {
         location: `ridge`,
         articulator: `tongue`,
         manner: `fricative`,
@@ -223,8 +223,16 @@ export default letters(
       ay: {long: true, backness: `front`, height: `high`, round: false, diphthong: true},
       aw: {long: true, backness: `back`, height: `high`, round: true, diphthong: true},
     },
-    delimiter: {},
-    pronoun: {},
-    suffix: {},
+    pronoun: defaultLetters(
+      underlying.types.pronoun,
+      [`gender`, `number`, `person`],
+      {
+        gender: {masculine: `m`, feminine: `f`, common: `c`},
+        number: {singular: `s`, plural: `p`, dual: `d`},
+        person: {first: `1`, second: `2`, third: `3`},
+      }
+    ),
+    affix: defaultLetters(underlying.types.affix, [`symbol`]),
+    delimiter: defaultLetters(underlying.types.delimiter, [`symbol`]),
   }
 );
