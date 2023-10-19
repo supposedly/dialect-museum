@@ -1,4 +1,4 @@
-import {defaultLetters, letters} from "/lib/alphabet";
+import {generateLetters, letters} from "/lib/alphabet";
 import {underlying} from "./underlying";
 
 export default letters(
@@ -223,7 +223,7 @@ export default letters(
       ay: {long: true, backness: `front`, height: `high`, round: false, diphthong: true},
       aw: {long: true, backness: `back`, height: `high`, round: true, diphthong: true},
     },
-    pronoun: defaultLetters(
+    pronoun: generateLetters(
       underlying.types.pronoun,
       [`gender`, `number`, `person`],
       {
@@ -232,7 +232,7 @@ export default letters(
         person: {first: `1`, second: `2`, third: `3`},
       }
     ),
-    affix: defaultLetters(underlying.types.affix, [`symbol`]),
-    delimiter: defaultLetters(underlying.types.delimiter, [`symbol`]),
+    affix: generateLetters(underlying.types.affix, [`symbol`]),
+    delimiter: generateLetters(underlying.types.delimiter, [`symbol`]),
   }
 );

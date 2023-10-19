@@ -10,6 +10,6 @@ export default ruleset(
     env: {},
   },
   operations => ({
-    default: [operations.preject({type: `affix`, features: {symbol: `indicative`}, context: {affected: false}})],
+    default: [operations.preject(letters.plain.affix.indicative)],
   })
 );
