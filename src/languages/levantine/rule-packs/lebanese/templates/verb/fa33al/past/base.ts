@@ -10,5 +10,6 @@ export default rulePack(
       door: `fa33al`,
       tam: `past`,
     }),
+    env: {},
   }
 );

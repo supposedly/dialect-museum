@@ -6,7 +6,13 @@ export default rulePack(
   underlying,
   [],
   {
-    spec: ({verb}) => verb(features => features.door.fa33al),
+    spec: ({verb}) => verb((features, traits) => ({
+      match: `all`,
+      value: [
+        features.door.faa3al,
+        traits.nonpast,
+      ],
+    })),
     env: {},
   }
 );

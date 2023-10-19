@@ -6,7 +6,10 @@ export default rulePack(
   underlying,
   [],
   {
-    spec: ({verb}) => verb(features => features.door.fa33al),
+    spec: ({verb}) => verb({
+      door: `faa3al`,
+      tam: `past`,
+    }),
     env: {},
   }
 );

@@ -6,7 +6,7 @@ export default rulePack(
   underlying,
   [],
   {
-    spec: ({verb}) => verb(features => features.door.fa33al),
+    spec: ({verb}) => verb(features => features.door.faa3al),
     env: {},
   }
 );
