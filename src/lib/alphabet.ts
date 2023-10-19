@@ -1,5 +1,6 @@
+import {Any} from "ts-toolbelt";
 import {type Match, type MatchSchemaOf, type MatchSchema, type MatchAsType, type MatchInstance} from "./utils/match";
-import {Merge, MergeUnion, type ValuesOf} from "./utils/typetools";
+import {Merge, MergeUnion, UnionToIntersection, type ValuesOf} from "./utils/typetools";
 
 export type AlphabetInput = {
   name: string
@@ -300,4 +301,87 @@ export function letters<
       ),
     ])
   ) as never;
+}
+
+type Fill<
+  Original extends string,
+  Replacements extends Partial<Record<string, string>>
+> = {[S in Original]: S extends keyof Replacements ? Replacements[S] : S};
+
+type NormalizeAbbreviations<
+  Type extends Record<string, MatchInstance<`any`, ReadonlyArray<string>>>,
+  Order extends ReadonlyArray<keyof Type>,
+  Abbreviations extends Partial<{
+    [Key in Order[number]]: Partial<Record<Type[Key][`value`][number], string>>
+  }>
+> = {
+  [Key in Order[number]]:
+    Key extends keyof Abbreviations
+      ? Fill<Type[Key][`value`][number], Exclude<Abbreviations[Key], undefined>>
+      : {[K in Type[Key][`value`][number]]: K}
+}
+
+type Stage2<
+  Type extends Record<string, MatchInstance<`any`, ReadonlyArray<string>>>,
+  Order extends ReadonlyArray<keyof Type>,
+  Abbreviations extends Record<Order[number], Partial<Record<Type[keyof Type][`value`][number], string>>>
+> = {
+  [Index in keyof Order]: ValuesOf<{
+    [K in keyof Abbreviations[Order[Index]]]: {
+      [J in Abbreviations[Order[Index]][K] & string]: {
+        [I in Order[Index]]: K
+      }
+    }
+  }>
+};
+
+type Stage3<Arr, Key extends string = ``, Obj extends Record<string, string> = {}> =
+  Arr extends readonly [infer Head]
+  ? Head extends Record<string, Record<string, string>>
+    ? {[K in `${Key}${string & keyof Head}`]: Head[keyof Head] & Obj}
+    : never
+  : Arr extends readonly [infer Head, ...infer Tail]
+    ? Head extends Record<string, Record<string, string>>
+      ? Stage3<Tail, `${Key}${string & keyof Head}`, Obj & Head[keyof Head]>
+      : never
+  : {};
+
+type Man<
+  Type extends Record<string, MatchInstance<`any`, ReadonlyArray<string>>>,
+  Order extends ReadonlyArray<keyof Type>,
+  Abbreviations extends Partial<{
+    [Key in Order[number]]: Partial<Record<Type[Key][`value`][number], string>>
+  }>
+> = UnionToIntersection<Stage3<Stage2<Type, Order, NormalizeAbbreviations<Type, Order, Abbreviations>>>>;
+
+export function defaultLetters<
+  const Type extends Record<string, MatchInstance<`any`, ReadonlyArray<string>>>,
+  const Order extends ReadonlyArray<keyof Type>,
+  const Abbreviations extends Partial<{
+    [Key in Order[number]]: Partial<Record<Type[Key][`value`][number], string>>
+  }> = object
+>(type: Type, order: Order, abbreviations?: Abbreviations): Man<Type, Order, Abbreviations> {
+  const [key, ...rest] = order;
+
+  // TODO this should be a do-while loop ofc
+  let acc = {} as Record<string, Record<string, string>>;
+  const symbols = type[key].value;
+  const replacements = (key in (abbreviations ?? {}) ? abbreviations![key] ?? {} : {}) as Record<(typeof symbols)[number], string>;
+  symbols.forEach(symbol => {
+    acc[symbol in replacements ? replacements[symbol] : symbol] = {[key]: symbol};
+  });
+
+  rest.forEach(key => {
+    const newAcc = {} as Record<string, Record<string, string>>;
+    const symbols = type[key].value;
+    const replacements = (key in (abbreviations ?? {}) ? abbreviations![key] ?? {} : {}) as Record<(typeof symbols)[number], string>;
+    symbols.forEach(symbol => {
+      Object.entries(acc).forEach(([oldKey, oldValue]) => {
+        newAcc[`${oldKey}${symbol in replacements ? replacements[symbol] : symbol}`] = Object.assign(oldValue, {[key]: symbol});
+      });
+    });
+    acc = newAcc;
+  });
+
+  return acc as never;
 }
