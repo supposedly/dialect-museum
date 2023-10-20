@@ -1,9 +1,9 @@
 import staf3al from './base';
 
-import hollowOrGeminate from './hollow-geminate';
-import other from './other';
+import prefix from './prefix';
+import body from './body';
 
 export default staf3al.pack({
-  hollowOrGeminate,
-  other,
+  prefix,
+  body,
 });

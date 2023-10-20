@@ -1,5 +1,4 @@
 import ruleset from './base';
-import {letters} from '/languages/levantine/alphabets/underlying';
 
 export default ruleset(
   {
@@ -8,11 +7,6 @@ export default ruleset(
   },
   operations => ({
     default: ({features: {tam}}) => [
-      operations.preject(
-        letters.plain.consonant.s,
-        letters.plain.consonant.t,
-        letters.plain.vowel.a,
-      ),
       operations.mock({
         features: {
           door: `f3vl`,
