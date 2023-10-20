@@ -4,7 +4,7 @@
 // btw can maybe do better than MatchAsType<MatchSchemaOf<4>> resolving to number
 
 import {Union} from "ts-toolbelt";
-import {Merge, MergeUnion, NeverSayNever, ValuesOf} from "./typetools";
+import {Merge, MergeUnion, NeverSayNever, UnionToIntersection, ValuesOf} from "./typetools";
 
 export type Guards = {
   string: string
@@ -101,32 +101,27 @@ export type MatchesExtending<T> =
   | {[K in keyof Guards]: T extends Guards[K] ? MatchInstance<`type`, K> : never}[keyof Guards]
   | {[K in keyof Danger]: T extends Danger[K] ? MatchInstance<`danger`, K> : never}[keyof Danger];
 
-type ArrayMatchAsType<Arr extends ReadonlyArray<unknown>> = {
-  [Index in keyof Arr]: MatchAsType<Arr[Index]>
-};
-
-type PartialArrayMatchAsType<Arr extends ReadonlyArray<unknown>> = {
-  [Index in keyof Arr]?: PartialMatchAsType<Arr[Index]>
-};
-
-type FixLengthlessArray<
+// a note: this will fail on something weird like MatchInstance<`all`, [{a: 1}, {b: 2} | {c: 3}]>
+// but that hopefully isn't well-formed input, you shouldn't mix match stuff with type-system stuff
+// always expect MatchInstance<`all`, [{a: 1}, MatchInstance<`any`, [{b: 2}, {c: 3}]>]> instead
+type LengthlessArrayMatchAsType<
   Arr extends ReadonlyArray<unknown>
 > = Arr extends ReadonlyArray<infer U>
-  ? ArrayMatchAsType<Union.ListOf<
-    MatchesExtending<Exclude<U, Match>> extends U
-      ? Exclude<U, Match>
-      : U
-  >>
+  ? (MatchesExtending<Exclude<U, Match>> extends U ? Exclude<U, Match> : U) extends infer Distribute
+    ? Distribute extends unknown
+      ? MatchAsType<Distribute>
+      : never
+    : never
   : never;
 
-type PartialFixLengthlessArray<
+type PartialLengthlessArrayMatchAsType<
   Arr extends ReadonlyArray<unknown>
 > = Arr extends ReadonlyArray<infer U>
-? PartialArrayMatchAsType<Union.ListOf<
-  MatchesExtending<Exclude<U, Match>> extends U
-    ? Exclude<U, Match>
-    : U
->>
+? (MatchesExtending<Exclude<U, Match>> extends U ? Exclude<U, Match> : U) extends infer Distribute
+  ? Distribute extends unknown
+    ? PartialMatchAsType<Distribute>
+    : never
+  : never
 : never;
 
 type MergeArray<Arr extends ReadonlyArray<unknown>> =
@@ -134,20 +129,20 @@ type MergeArray<Arr extends ReadonlyArray<unknown>> =
   : Arr extends readonly [infer Head, ...infer Tail]
     ? MatchAsType<Head> & MergeArray<Tail> /*: never  // copout */
     : number extends Arr[`length`]
-      ? MergeArray<FixLengthlessArray<Arr>>
+      ? UnionToIntersection<LengthlessArrayMatchAsType<Arr>>
       : never;
 
 type PartialMergeArray<Arr extends ReadonlyArray<unknown>> =
 Arr extends readonly [infer Head] ? PartialMatchAsType<Head>
 : Arr extends readonly [infer Head, ...infer Tail]
-  ? PartialMatchAsType<Head> & MergeArray<Tail> /*: never  // copout */
+  ? PartialMatchAsType<Head> & PartialMergeArray<Tail> /*: never  // copout */
   : number extends Arr[`length`]
-    ? PartialMergeArray<PartialFixLengthlessArray<Arr>>
+    ? UnionToIntersection<PartialLengthlessArrayMatchAsType<Arr>>
     : never;
 
-type ArrayBandaid<T extends ReadonlyArray<unknown>> = T[Extract<keyof T, string>] extends never ?
-  NeverSayNever<T> & ReadonlyArray<T[number]>
-  : T;
+// type ArrayBandaid<T extends ReadonlyArray<unknown>> = T[Extract<keyof T, string>] extends never ?
+//   NeverSayNever<T> & ReadonlyArray<T[number]>
+//   : T;
 
 /*
 weird bug:
@@ -182,9 +177,9 @@ export type MatchAsType<T> =
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
     ? number extends T[`value`][`length`] /*? never  // copout */
-      ? FixLengthlessArray<T[`value`]>[number]
+      ? LengthlessArrayMatchAsType<T[`value`]>
       : MatchAsType<T[`value`][number]>
-  : T extends PickMatch<`all`> ? MatchAsType<MergeArray<ReadonlyArray<T[`value`][number]>>>
+  : T extends PickMatch<`all`> ? MergeArray<ReadonlyArray<T[`value`][number]>>
   : T extends PickMatch<`single`> ? MatchAsType<T[`value`]>
   : T extends Record<string, unknown> ? {[K in keyof T]: MatchAsType<T[K]>}
   : T;
@@ -202,9 +197,9 @@ export type PartialMatchAsType<T> =
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
     ? number extends T[`value`][`length`] /*? never  // copout */
-      ? PartialFixLengthlessArray<T[`value`]>
+      ? PartialLengthlessArrayMatchAsType<T[`value`]>
       : PartialMatchAsType<T[`value`][number]>
-  : T extends PickMatch<`all`> ? PartialMatchAsType<PartialMergeArray<ReadonlyArray<T[`value`][number]>>>
+  : T extends PickMatch<`all`> ? PartialMergeArray<ReadonlyArray<T[`value`][number]>>
   : T extends PickMatch<`single`> ? PartialMatchAsType<T[`value`]>
   : T extends Record<string, unknown> ? {[K in keyof T]?: PartialMatchAsType<T[K]>}
   : T extends ((...args: never) => unknown) ? T  // Partial<some function type> is never (??)
