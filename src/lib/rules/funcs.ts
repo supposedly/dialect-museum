@@ -1,6 +1,6 @@
 import {Alphabet, qualifiedPathsOf} from "../alphabet";
 import {NestedRecordOr} from "../utils/typetools";
-import {ContextFunc, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
+import {ContextFunc, Specs, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
 import {ExtractDefaults, ProcessPack} from "./types/finalize";
 import {SpecOperations} from "./types/func";
 import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec} from "./types/helpers";
@@ -209,18 +209,32 @@ export function processPack<
               ),
             ])),
             // when:
-            Object.fromEntries(Object.entries(v.constraints).map(([constraintName, constraint]) => [
-              constraintName,
-              (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
-                arg => ({
+            Object.assign(
+              Object.fromEntries(Object.entries(v.constraints).map(([constraintName, constraint]) => [
+                constraintName,
+                (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
+                  arg => ({
+                    for: {match: `all`, value: [
+                      arg.for,
+                      unfuncSpec(constraint, pack.source),
+                    ]},
+                    into: arg.into,
+                  })
+                ),
+              ])),
+              {
+                custom: (
+                  spec: Specs<RulePack[`source`], RulePack[`target`], RulePack[`dependencies`]>,
+                  ...args: ReadonlyArray<{for: unknown, into: unknown}>
+                ) => args.map(arg => ({
                   for: {match: `all`, value: [
                     arg.for,
-                    unfuncSpec(constraint, pack.source),
+                    unfuncSpec(spec, pack.source),
                   ]},
                   into: arg.into,
-                })
-              ),
-            ]))
+                })),
+              }
+            )
           )
         ) as any,
       ];
