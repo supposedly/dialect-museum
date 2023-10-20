@@ -8,14 +8,13 @@ export default ruleset(
     env: {},
   },
   {
-    default: ({features: {root}}) => {
-      const [$F, $3, $L] = root.map(r => separateContext(r, `affected`));
+    default: ({features: {root: $}}) => {
       return [
-        $F,
+        separateContext($[0], `affected`),
         letters.plain.vowel.i,
-        $3,
+        separateContext($[1], `affected`),
         letters.plain.vowel.i,
-        $L,
+        separateContext($[2], `affected`),
       ];
     },
   }

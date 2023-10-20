@@ -45,3 +45,14 @@ export type NestedRecordOr<T> = T | {[key: string]: NestedRecordOr<T>, [noArrays
 export type NeverSayNever<T> = Pick<T, ValuesOf<{[K in keyof T]: T[K] extends never ? never : K}>>;
 
 export type Get<T, K> = K extends keyof T ? T[K] : never;
+
+// thanks jcalz
+export type KeysMatching<T extends object, V> = {
+  [K in keyof T]-?: T[K] extends V ? K : never
+}[keyof T];
+export type KeysNotMatching<T extends object, V> = {
+  [K in keyof T]-?: T[K] extends V ? never : K
+}[keyof T];
+
+export type PickKeysMatching<T extends object, V> = Pick<T, KeysMatching<T, V>>;
+export type OmitKeysMatching<T extends object, V> = Omit<T, KeysMatching<T, V>>;

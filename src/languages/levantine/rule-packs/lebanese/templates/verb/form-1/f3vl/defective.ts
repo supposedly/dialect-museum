@@ -10,10 +10,11 @@ export default ruleset(
     env: {},
   },
   {
-    default: ({features: {root: [$F, $3], theme}}) => [
-      separateContext($F, `affected`),
-      separateContext($3, `affected`),
-      letters.plain.vowel[(theme + theme) as Doubles<typeof theme>],
-    ],
+    default: ({features: {root, theme}}) => {
+      return [
+        separateContext(root[0], `affected`),
+        separateContext(root[1], `affected`),
+        letters.plain.vowel[(theme + theme) as Doubles<typeof theme>],
+      ];},
   }
 );

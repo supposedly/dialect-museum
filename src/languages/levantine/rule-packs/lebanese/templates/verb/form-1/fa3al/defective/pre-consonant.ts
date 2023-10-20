@@ -13,12 +13,11 @@ export default ruleset(
   },
   {
     ending: {
-      ay: ({features: {root}}) => {
-        const [$F, $3] = root.map(r => separateContext(r, `affected`));
+      ay: ({features: {root: $}}) => {
         return [
-          $F,
+          separateContext($[0], `affected`),
           letters.plain.vowel.a,
-          $3,
+          separateContext($[1], `affected`),
           letters.plain.vowel.a,
           letters.plain.consonant.y,
         ];

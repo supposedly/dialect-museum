@@ -12,12 +12,11 @@ export default ruleset(
     },
   },
   {
-    default: ({features: {root, theme}}) => {
-      const [$F, _, $L] = root.map(r => separateContext(r, `affected`));
+    default: ({features: {root: $, theme}}) => {
       return [
-        $F,
+        separateContext($[0], `affected`),
         letters.plain.vowel[theme],
-        $L,
+        separateContext($[2], `affected`),
       ];
     },
   }

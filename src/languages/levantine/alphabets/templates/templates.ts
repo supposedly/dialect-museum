@@ -169,7 +169,7 @@ export const templates = alphabet({
           // ????????????
           // this or `any` makes an error that i don't understand go away
           // hopefully if i ever fix trait defs it'll just fix itself though
-          fill: {match: `all`, value: [{weak: false, affected: {match: `type`, value: `boolean`}}]},
+          fill: {match: `all`, value: [{weak: false}]},
         },
       },
     },

@@ -8,32 +8,29 @@ export default ruleset(
   },
   {
     ending: {
-      y: ({features: {root}}) => {
-        const [$F, $3] = root.map(r => separateContext(r, `affected`));
+      y: ({features: {root: $}}) => {
         return [
-          $F,
+          separateContext($[0], `affected`),
           letters.plain.vowel.i,
-          $3,
+          separateContext($[1], `affected`),
           letters.plain.vowel.i,
           letters.plain.consonant.y,
         ];
       },
-      none: ({features: {root}}) => {
-        const [$F, $3] = root.map(r => separateContext(r, `affected`));
+      none: ({features: {root: $}}) => {
         return [
-          $F,
+          separateContext($[0], `affected`),
           letters.plain.vowel.i,
-          $3,
+          separateContext($[1], `affected`),
         ];
       },
     },
   },
   {
-    beforeVowel: () => ({
+    beforeVowel: {
       target: {
         env: ({before}, {vowel}) => before(vowel()),
       },
-    }),
+    },
   },
-
 );

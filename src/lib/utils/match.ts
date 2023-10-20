@@ -3,7 +3,7 @@
 // these are eminently fixable but right now it's not a priority
 // btw can maybe do better than MatchAsType<MatchSchemaOf<4>> resolving to number
 
-import {UnionToIntersection, ValuesOf} from "./typetools";
+import {OmitKeysMatching, PickKeysMatching, UnionToIntersection, ValuesOf} from "./typetools";
 
 export type Guards = {
   string: string
@@ -100,7 +100,6 @@ export type MatchesExtending<T> =
   | {[K in keyof Guards]: T extends Guards[K] ? MatchInstance<`type`, K> : never}[keyof Guards]
   | {[K in keyof Danger]: T extends Danger[K] ? MatchInstance<`danger`, K> : never}[keyof Danger];
 
-  
 type PleaFromMyWitsEnd<T> = {[`pls stop merging my unions :(`]: T}
 type ThanksForListeningLoveYou<T> = `pls stop merging my unions :(` extends keyof T ? T[`pls stop merging my unions :(`] : T;
 
@@ -170,13 +169,13 @@ export type MatchAsType<T> =
   {} extends T ? {}
   : Match extends T ? Exclude<Match[`value`], Match>
   : T extends PickMatch<`danger`> ? never
-  // : T extends PickMatch<`array`> ? {
-  //   readonly length: MatchAsType<T[`value`][`length`]>
-  //   readonly [index: number]: MatchAsType<T[`value`][`fill`]>
-  //   [Symbol.iterator](): Iterator<MatchAsType<T[`value`][`fill`]>>
-  //   map: ReadonlyArray<MatchAsType<T[`value`][`fill`]>>[`map`]
-  // }
-  : T extends PickMatch<`array`> ? {readonly length: MatchAsType<T[`value`][`length`]>} & ReadonlyArray<MatchAsType<T[`value`][`fill`]>>
+  : T extends PickMatch<`array`> ? {
+    readonly length: MatchAsType<T[`value`][`length`]>
+    readonly [index: number]: MatchAsType<T[`value`][`fill`]>
+    // [Symbol.iterator]: ReadonlyArray<MatchAsType<T[`value`][`fill`]>>[typeof Symbol.iterator]
+    // map: ReadonlyArray<MatchAsType<T[`value`][`fill`]>>[`map`]
+  }
+  // : T extends PickMatch<`array`> ? {readonly length: MatchAsType<T[`value`][`length`]>} & ReadonlyArray<MatchAsType<T[`value`][`fill`]>>
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
@@ -191,13 +190,15 @@ export type MatchAsType<T> =
 export type PartialMatchAsType<T> =
   Match extends T ? {match: Match[`match`], value: Partial<Match[`value`]>}
   : T extends PickMatch<`danger`> ? never
-  // : T extends PickMatch<`array`> ? {
-  //   readonly length?: PartialMatchAsType<T[`value`][`length`]>
-  //   readonly [index: number]: PartialMatchAsType<T[`value`][`fill`]>
-  //   [Symbol.iterator]?(): Iterator<PartialMatchAsType<T[`value`][`fill`]>>
-  //   map?: Partial<ReadonlyArray<MatchAsType<T[`value`][`fill`]>>>[`map`]
-  // }
-  : T extends PickMatch<`array`> ? Partial<{readonly length: MatchAsType<T[`value`][`length`]>} & ReadonlyArray<MatchAsType<T[`value`][`fill`]>>>
+  : T extends PickMatch<`array`> ? {
+    readonly length?: PartialMatchAsType<T[`value`][`length`]>
+    readonly [index: number]: PartialMatchAsType<T[`value`][`fill`]>
+    // [Symbol.iterator]?(): Iterator<PartialMatchAsType<T[`value`][`fill`]>>
+    // map?: Partial<ReadonlyArray<MatchAsType<T[`value`][`fill`]>>>[`map`]
+  }
+  // : T extends PickMatch<`array`> ?
+  //   {readonly length?: PartialMatchAsType<T[`value`][`length`]>}
+  //   & Partial<ReadonlyArray<PartialMatchAsType<T[`value`][`fill`]>>>
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>

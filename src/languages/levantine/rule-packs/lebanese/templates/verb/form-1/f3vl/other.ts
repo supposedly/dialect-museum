@@ -8,11 +8,11 @@ export default ruleset(
     env: {},
   },
   {
-    default: ({features: {root: [$F, $3, $L], theme}}) => [
-      separateContext($F, `affected`),
-      separateContext($3, `affected`),
+    default: ({features: {root: $, theme}}) => [
+      separateContext($[0], `affected`),
+      separateContext($[1], `affected`),
       letters.plain.vowel[theme],
-      separateContext($L, `affected`),
+      separateContext($[2], `affected`),
     ],
   }
 );

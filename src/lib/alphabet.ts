@@ -1,6 +1,6 @@
 import {Any} from "ts-toolbelt";
 import {type Match, type MatchSchemaOf, type MatchSchema, type MatchAsType, type MatchInstance} from "./utils/match";
-import {Merge, MergeUnion, UnionToIntersection, type ValuesOf} from "./utils/typetools";
+import {KeysMatching, Merge, MergeUnion, UnionToIntersection, type ValuesOf} from "./utils/typetools";
 
 export type AlphabetInput = {
   name: string
@@ -87,12 +87,6 @@ type TraitsOf<ABC extends AlphabetInput> = {
 };
 
 type NormalizeTypes<Types extends AlphabetInput[`types`]> = {[K in keyof Types]: NormalizeToMatch<Types[K]>};
-
-// thanks jcalz
-type KeysMatching<T extends object, V> = {
-  [K in keyof T]-?: T[K] extends V ? K : never
-}[keyof T];
-
 
 type MergedTraits<
   ABC extends AlphabetInput,
