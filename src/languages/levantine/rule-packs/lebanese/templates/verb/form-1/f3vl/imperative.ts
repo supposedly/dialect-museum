@@ -18,7 +18,8 @@ export default ruleset(
   },
   operations => ({
     prefix: {
-      $i: [operations.preject(letters.plain.consonant.$, letters.plain.vowel.i)],  // preject doesn't invalidate a tracker node from being touched again
+      // preject doesn't invalidate a tracker node from being touched again
+      $i: [operations.preject(letters.plain.consonant.$, letters.plain.vowel.i)],
       none: [],
     },
     body: {
@@ -27,6 +28,11 @@ export default ruleset(
         separateContext($[1], `affected`),
         letters.plain.vowel[themeMap[theme]],
         separateContext($[2 as number], `affected`),
+        // `as number` to stop it from making $[2]'s only value the `{weak: false}` thing
+        // from this ruleset's spec...
+        // maybe i could do some special processing on array values to merge those with the
+        // `[x: number]` index signature
+        // if so that same processing could also fix the iterator bug :/
       ],
     },
   }),

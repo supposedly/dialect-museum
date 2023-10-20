@@ -1,8 +1,8 @@
-import fa33al from './base';
+import ruleset from './base';
 import {letters} from '/languages/levantine/alphabets/underlying';
 import {separateContext} from '/lib/rules';
 
-export default fa33al(
+export default ruleset(
   {
     spec: ({verb}) => verb((features, traits) => traits.defective),
     env: {},
