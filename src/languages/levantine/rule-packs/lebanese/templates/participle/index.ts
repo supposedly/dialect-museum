@@ -1,8 +1,8 @@
 import participle from './base';
 
 import prefix from './prefix';
-import stPrefix from './forms/st-prefix';
-import tPrefix from './forms/t-prefix';
+import stPrefix from './st-prefix';
+import tPrefix from './t-prefix';
 import higherForms from './forms/higher-forms';
 import fa3laan from './forms/fa3laan';
 import faa3il from './forms/faa3il';

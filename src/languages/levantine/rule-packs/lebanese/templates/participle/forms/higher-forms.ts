@@ -23,12 +23,21 @@ export default ruleset(
     spec: ({participle}) => participle((features, traits) => traits.bareMaziid),
   },
   operations => ({
-    default: ({features: {shape, voice}}) => [
+    distinctVoices: ({features: {shape, voice}}) => [
       operations.mock({
         type: `verb`,
         features: {
           door: stripPrefix(shape),
           theme: voice === `active` ? `i` : `a`,
+        },
+      }),
+    ],
+    mergedVoices: ({features: {shape}}) => [
+      operations.mock({
+        type: `verb`,
+        features: {
+          door: stripPrefix(shape),
+          theme: `a`,
         },
       }),
     ],
