@@ -1,3 +1,4 @@
+import {Specs} from "./environment";
 import {Alphabet} from "/lib/alphabet";
 import {MatchAsType, MatchInstance} from "/lib/utils/match";
 import {Get, Merge, NestedRecord, NestedRecordOr} from "/lib/utils/typetools";
@@ -82,18 +83,32 @@ export type RulesetToFunc<Rules extends Record<string, Ruleset>> = {
 export type ConstraintsToFuncs<Constraints extends Record<
   string,
   Record<string, unknown>//((...args: never) => unknown) | Record<string, unknown>>
->> = {
+>, Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = {
   [K in keyof Constraints]: <
     const Arr extends ReadonlyArray<({for: unknown, into: unknown})>
   >(...args: Arr) => {
     [Index in keyof Arr]: {
       for: MatchInstance<`all`, readonly [
         Arr[Index][`for`],
-        Constraints[K] extends (...args: never) => unknown
-          ? ReturnType<Constraints[K]>
-          : Constraints[K]
+        UnfuncSpec<Constraints[K]>
       ]>,
       into: Arr[Index][`into`]
+    }
+  } & {
+    custom: <
+      const Spec extends Specs<Source, Target, Dependencies>,
+      const Arr extends ReadonlyArray<{for: unknown, into: unknown}>
+    >(
+      spec: Spec,
+      ...args: Arr
+    ) => {
+      [Index in keyof Arr]: {
+        for: MatchInstance<`all`, readonly [
+          Arr[Index][`for`],
+          UnfuncSpec<Spec>
+        ]>,
+        into: Arr[Index][`into`]
+      }
     }
   }
 };

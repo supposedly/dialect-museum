@@ -4,6 +4,7 @@ import {MatchInstance} from "/lib/utils/match";
 import {NestedArray, IsUnion} from "/lib/utils/typetools";
 
 export type RuleFunc<
+  RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>,
   Wrapper extends RulesetWrapper<
     Record<string, Ruleset>,
     Record<string, Record<string, unknown>>
@@ -11,12 +12,19 @@ export type RuleFunc<
   R extends NestedArray<Ruleset>
 > = (
   item: RulesetToFunc<Wrapper[`rules`]>,
-  when: ConstraintsToFuncs<Wrapper[`constraints`]>
+  when: ConstraintsToFuncs<
+    Wrapper[`constraints`],
+    RulePack[`source`],
+    RulePack[`target`],
+    RulePack[`dependencies`]
+  >
 ) => R;
 
-export type ProcessPack<RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
+export type ProcessPack<
+  RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+> = {
   [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends RulesetWrapper<infer Targets, infer Constraints>
-    ? <const R extends NestedArray<Ruleset>>(fn: RuleFunc<RulesetWrapper<
+    ? <const R extends NestedArray<Ruleset>>(fn: RuleFunc<RulePack, RulesetWrapper<
       {
         [T in keyof Targets & string]: {
           // name: Targets[T][`name`]
@@ -40,7 +48,7 @@ type OnlyOneTarget<Into> = Into extends NestedArray<unknown>
   ? IsUnion<keyof Into> extends false ? (true extends OnlyOneTarget<Into[keyof Into]> ? true : false) : false
   : false;
 
-type _NonDefaults<out RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
+type _NonDefaults<in out RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>> = {
   [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
       ? ProcessPack<RulePack[`children`][K]>
       : never

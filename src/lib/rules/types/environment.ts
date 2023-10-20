@@ -39,7 +39,7 @@ export type SpecsNoMatch<
   spec: `spec` extends OmitKeys ? never : Spec<Source>
   env: `env` extends OmitKeys ? never : Env<Source, Target, Dependencies>
   was: `was` extends OmitKeys ? never : {
-    [A in Dependencies[number] as A[`name`]]: {
+    [A in Dependencies[number] | Source as A[`name`]]: {
       spec?: Spec<A>
       env?: Env<A, never, Dependencies>
     }
