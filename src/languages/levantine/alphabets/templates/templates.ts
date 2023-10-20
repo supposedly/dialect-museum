@@ -205,7 +205,7 @@ export const templates = alphabet({
       root: {0: {weak: true, articulator: `throat`, location: `glottis`, manner: `plosive`}},
     },
     hollow: {
-      root: {1: {weak: true}},
+      root: {1: {weak: true}, length: 3},
     },
     defective: {
       root: {match: `any`, value: [
