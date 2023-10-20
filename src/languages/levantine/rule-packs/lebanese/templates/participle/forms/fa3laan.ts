@@ -4,16 +4,16 @@ import {separateContext} from '/lib/rules';
 
 export default ruleset(
   {
-    spec: ({verb}) => verb({door: `f3all`}),
-    env: {},
+    spec: ({participle}) => participle({shape: `fa3laan`, voice: `active`}),
   },
   {
     default: ({features: {root: $}}) => [
       separateContext($[0], `affected`),
-      separateContext($[1], `affected`),
       letters.plain.vowel.a,
+      separateContext($[1], `affected`),
       separateContext($[2], `affected`),
-      separateContext($[2], `affected`),
+      letters.plain.vowel.aa,
+      letters.plain.consonant.n,
     ],
   }
 );

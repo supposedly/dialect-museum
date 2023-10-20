@@ -4,6 +4,7 @@ export default ruleset(
   {
     spec: {features: {}, context: {affected: {match: `type`, value: `boolean`}}},
     env: {},
+    was: {templates: {spec: {type: `verb`}}},   // filter out participles mocking verb shapes
   },
   operations => ({
     default: ({features: {subject: features}, context}) => [

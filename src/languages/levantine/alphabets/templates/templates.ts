@@ -95,6 +95,9 @@ export const templates = alphabet({
       subject: {match: `single`, value: underlying.types.pronoun},
       voice: [`active`, `passive`],
       shape: [
+        // again feature tree would be great so i could specify form-1
+        // which would be a cleaner way to target form-1 passive pp than
+        // specifying it for both faa3il and fa3laan (meaningless)
         `faa3il`,
         `fa3laan`,
         `fa33al`,
@@ -104,10 +107,8 @@ export const templates = alphabet({
         `tfaa3al`,
         `stfaa3al`,
         `af3al`,
-        `nfa3al`,
-        `nfa3il`,
-        `fta3al`,
-        `fta3il`,
+        `nfa3vl`,
+        `fta3vl`,
         `staf3al`,
         `f3all`,
         `fa3la2`,
@@ -154,6 +155,43 @@ export const templates = alphabet({
       },
     },
   },
+  participle: {
+    mujarrad: {
+      shape: {match: `any`, value: [`faa3il`, `fa3laan`]},
+    },
+    bareMaziid: {
+      shape: {match: `any`, value: [
+        `fa33al`,
+        `faa3al`,
+        `af3al`,
+        `nfa3vl`,
+        `fta3vl`,
+        `staf3al`,
+        `f3all`,
+        `fa3la2`,
+      ]},
+    },
+    maziidT: {
+      shape: {
+        match: `any`,
+        value: [
+          `tfa33al`,
+          `tfaa3al`,
+          `tfa3la2`,
+        ],
+      },
+    },
+    maziidST: {
+      shape: {
+        match: `any`,
+        value: [
+          `stfa33al`,
+          `stfaa3al`,
+          `stfa3la2`,
+        ],
+      },
+    },
+  },
 },
 {
   has: {root},
@@ -185,6 +223,22 @@ export const templates = alphabet({
           {length: 4},
           {match: `custom`, value: root => Object.entries(root[2]).every(
             ([k, v]) => v === root[3][k as keyof typeof root[2]]
+          )},
+        ]},
+      ]},
+    },
+    ingeminate: {
+      root: {match: `any`, value: [
+        {match: `all`, value: [
+          {length: 3},
+          {match: `custom`, value: root => Object.entries(root[1]).some(
+            ([k, v]) => v !== root[2][k as keyof typeof root[1]]
+          )},
+        ]},
+        {match: `all`, value: [
+          {length: 4},
+          {match: `custom`, value: root => Object.entries(root[2]).some(
+            ([k, v]) => v !== root[3][k as keyof typeof root[2]]
           )},
         ]},
       ]},
