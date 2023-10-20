@@ -170,12 +170,13 @@ export type MatchAsType<T> =
   {} extends T ? {}
   : Match extends T ? Exclude<Match[`value`], Match>
   : T extends PickMatch<`danger`> ? never
-  : T extends PickMatch<`array`> ? {
-    readonly length: MatchAsType<T[`value`][`length`]>
-    readonly [index: number]: MatchAsType<T[`value`][`fill`]>
-    [Symbol.iterator](): Iterator<MatchAsType<T[`value`][`fill`]>>
-    map: ReadonlyArray<MatchAsType<T[`value`][`fill`]>>[`map`]
-  }
+  // : T extends PickMatch<`array`> ? {
+  //   readonly length: MatchAsType<T[`value`][`length`]>
+  //   readonly [index: number]: MatchAsType<T[`value`][`fill`]>
+  //   [Symbol.iterator](): Iterator<MatchAsType<T[`value`][`fill`]>>
+  //   map: ReadonlyArray<MatchAsType<T[`value`][`fill`]>>[`map`]
+  // }
+  : T extends PickMatch<`array`> ? {readonly length: MatchAsType<T[`value`][`length`]>} & ReadonlyArray<MatchAsType<T[`value`][`fill`]>>
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
@@ -190,12 +191,13 @@ export type MatchAsType<T> =
 export type PartialMatchAsType<T> =
   Match extends T ? {match: Match[`match`], value: Partial<Match[`value`]>}
   : T extends PickMatch<`danger`> ? never
-  : T extends PickMatch<`array`> ? {
-    readonly length?: PartialMatchAsType<T[`value`][`length`]>
-    readonly [index: number]: PartialMatchAsType<T[`value`][`fill`]>
-    [Symbol.iterator]?(): Iterator<PartialMatchAsType<T[`value`][`fill`]>>
-    map?: Partial<ReadonlyArray<MatchAsType<T[`value`][`fill`]>>>[`map`]
-  }
+  // : T extends PickMatch<`array`> ? {
+  //   readonly length?: PartialMatchAsType<T[`value`][`length`]>
+  //   readonly [index: number]: PartialMatchAsType<T[`value`][`fill`]>
+  //   [Symbol.iterator]?(): Iterator<PartialMatchAsType<T[`value`][`fill`]>>
+  //   map?: Partial<ReadonlyArray<MatchAsType<T[`value`][`fill`]>>>[`map`]
+  // }
+  : T extends PickMatch<`array`> ? Partial<{readonly length: MatchAsType<T[`value`][`length`]>} & ReadonlyArray<MatchAsType<T[`value`][`fill`]>>>
   : T extends PickMatch<`type`> ? Guards[T[`value`]]
   : T extends PickMatch<`custom`> ? Parameters<T[`value`]>[number]
   : T extends PickMatch<`any`>
