@@ -12,6 +12,9 @@ import fta3vl from './fta3vl';
 import nfa3vl from './nfa3vl';
 import f3all from './f3all';
 import staf3al from './staf3al';
+import fa3laq from './fa3laq';
+import tfa3laq from './tfa3laq';
+import stfa3laq from './stfa3laq';
 
 export default verb.pack({
   form1,
@@ -26,4 +29,7 @@ export default verb.pack({
   nfa3vl,
   f3all,
   staf3al,
+  fa3laq,
+  tfa3laq,
+  stfa3laq,
 });
