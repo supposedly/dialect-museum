@@ -1,8 +1,8 @@
 import {RulesetWrapper, Ruleset, Packed, UnfuncSpec, UnfuncTargets} from "./helpers";
-import {Specs, SpecsNoMatch, EnvironmentFunc} from "./environment";
+import {Specs, SpecsNoMatch} from "./environment";
 import {Alphabet, MembersWithContext, PartialMembersWithContext} from "/lib/alphabet";
 import {MatchAsType, MatchInstance, SafeMatchSchemaOf} from "/lib/utils/match";
-import {Get, NestedArray, NestedRecord, NeverSayNever} from "/lib/utils/typetools";
+import {ArrayOr, Get, NestedArray, NestedRecord, NeverSayNever} from "/lib/utils/typetools";
 
 export type PackRulesets<
   in out Spec,
@@ -38,12 +38,16 @@ export type SpecOperations<in out Source extends Alphabet, in out Target extends
   preject(...spec: ReadonlyArray<SpecsNoMatch<Target, never, [], `target`>[`spec`]>): never
   /** @returns ``{operation: `postject`, arguments: specs}`` */
   postject(...spec: ReadonlyArray<SpecsNoMatch<Target, never, [], `target`>[`spec`]>): never
-  /** Coalesces environment members matching `env` into the currently captured segment.
+  /** Coalesces environment members matching `env` into the currently captured segment
+   * to result in `spec`.
    * On the current layer, they will no longer undergo any rule transformations.
    * On the next layer, they will point to the output of the current capture.
    * @returns ``{operation: `coalesce`, arguments: env}``
    */
-  coalesce(env: MatchOrFunction<Source, `env`>): never
+  coalesce(
+    spec: ArrayOr<SpecsNoMatch<Target, never, [], `target`>[`spec`]>,
+    env?: MatchOrFunction<Source, `env`>
+  ): never
 };
 
 type _IntoSpec<Source extends Alphabet, in out Target extends Alphabet, in out Spec> = NestedRecord<
@@ -62,7 +66,7 @@ type _IntoSpec<Source extends Alphabet, in out Target extends Alphabet, in out S
         : Deferred[`spec`]
       : Spec,
     environment: MatchAsType<Spec> extends infer Deferred extends {env: unknown}
-      ? Deferred[`env`]
+      ? MatchAsType<Deferred[`env`]>
       : never,
     // {preject, postject, mock, etc}
   ) => NestedArray<

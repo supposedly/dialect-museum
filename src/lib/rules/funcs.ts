@@ -131,14 +131,14 @@ export function operations<
         was: Object.fromEntries(
           dependencies.map(abc => [
             abc.name,
-            ((...specs: ReadonlyArray<unknown>) => specs),
+            ((...specs: ReadonlyArray<unknown>) => ({operation: `mock`, argument: specs})),
           ])
         ),
       }
     ),
     preject: (...specs) => <never>{operation: `preject`, argument: specs},
     postject: (...specs) => <never>{operation: `postject`, argument: specs},
-    coalesce: (...specs) => <never>{operation: `coalesce`, argument: specs},
+    coalesce: (specs, env) => <never>{operation: `coalesce`, argument: {specs, env}},
   };
 }
 
