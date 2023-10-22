@@ -10,7 +10,7 @@ export default rulePack(
       match: `all`,
       value: [
         traits.defective,
-        features.door.faa3al,
+        features.door.fa33al,
         features.tam.past,
       ]})),
     env: {},
