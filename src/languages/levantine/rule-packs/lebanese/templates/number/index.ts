@@ -8,11 +8,12 @@ import cardinal from './cardinal';
 import ordinal from './ordinal';
 
 // linking -> teenSuffix -> cardinal ordering is crucial
+// as are cardinal -> bases, ordinal -> bases
 export default number.pack({
   linking,
   teenSuffix,
   fem,
-  bases,
   cardinal,
   ordinal,
+  bases,
 });

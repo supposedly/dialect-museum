@@ -141,6 +141,16 @@ export const templates = alphabet({
     },
     number: {
       value: {match: `type`, value: `number`},
+      type: [
+        `cardinal`,
+        `ordinal`,
+        `construct`,
+        `linking`,
+      ],
+      gender: [
+        `masculine`,
+        `feminine`,
+      ],
     },
     suffix: underlying.types.affix,
     delimiter: underlying.types.delimiter,
