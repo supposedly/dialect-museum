@@ -5,18 +5,6 @@ import {ExtractDefaults, ProcessPack} from './types/finalize';
 import {SpecOperations} from './types/func';
 import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec} from './types/helpers';
 
-type Blah<Arr> = {
-  [Index in keyof Arr]: Arr[Index] extends ReadonlyArray<unknown>
-    ? AddSpec<Arr[Index]>
-    : Arr[Index] extends {spec: unknown}
-    ? Arr[Index]
-    : Arr[Index] extends {match: `array`, value: {fill: infer Fill, length: infer Length}}
-    ? {match: `array`, value: {fill: AddSpec<[Fill]>[number], length: Length}}
-    : Arr[Index] extends {match: infer M extends `any` | `all`, value: infer Value extends ReadonlyArray<unknown>}
-    ? {match: M, value: AddSpec<Value>}
-    : {spec: Arr[Index]}
-}
-
 function addSpec<Arr extends ReadonlyArray<unknown>>(arr: Arr): AddSpec<Arr> {
   return arr.map(item => {
     if (Array.isArray(item)) {

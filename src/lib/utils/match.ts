@@ -3,7 +3,7 @@
 // these are eminently fixable but right now it's not a priority
 // btw can maybe do better than MatchAsType<MatchSchemaOf<4>> resolving to number
 
-import {OmitKeysMatching, PickKeysMatching, UnionToIntersection, ValuesOf} from './typetools';
+import {UnionToIntersection, ValuesOf} from './typetools';
 
 export type Guards = {
   string: string
