@@ -123,17 +123,29 @@ export type TypesFuncs<Source extends Alphabet> = {
   [T in keyof Source[`types`] & string]: TypesFunc<Source, T>
 } & ContextFunc<Source>;
 
+export type AddSpec<Arr extends ReadonlyArray<unknown>> = {
+  [Index in keyof Arr]: Arr[Index] extends ReadonlyArray<unknown>
+    ? AddSpec<Arr[Index]>
+    : Arr[Index] extends {spec: unknown}
+    ? Arr[Index]
+    : Arr[Index] extends {match: `array`, value: {fill: infer Fill, length: infer Length}}
+    ? {match: `array`, value: {fill: AddSpec<[Fill]>[number], length: Length}}
+    : Arr[Index] extends {match: infer M extends `any` | `all`, value: infer Value extends ReadonlyArray<unknown>}
+    ? {match: M, value: AddSpec<Value>}
+    : {spec: Arr[Index]}
+}
+
 type _ArrType<Source extends Alphabet> = ReadonlyArray<SafeMatchSchemaOf<NestedArrayOr<PartialMembersWithContext<Source>>>>;
 export type EnvironmentHelpers<ABC extends Alphabet> = {
   before: {
     <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {
-      prev: {[Index in keyof Arr]: Arr[Index] extends {spec: unknown} ? Arr[Index] : {spec: Arr[Index]}}
+      prev: AddSpec<Arr>
     }
     // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {prev: Arr}
   },
   after: {
     <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {
-      next: {[Index in keyof Arr]: Arr[Index] extends {spec: unknown} ? Arr[Index] : {spec: Arr[Index]}}
+      next: AddSpec<Arr>
     }
     // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {next: Arr}
   }

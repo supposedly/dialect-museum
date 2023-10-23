@@ -1,37 +1,52 @@
 import {Alphabet, qualifiedPathsOf} from "../alphabet";
 import {NestedRecordOr} from "../utils/typetools";
-import {ContextFunc, Specs, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
+import {AddSpec, ContextFunc, Specs, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
 import {ExtractDefaults, ProcessPack} from "./types/finalize";
 import {SpecOperations} from "./types/func";
 import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec} from "./types/helpers";
 
+type Blah<Arr> = {
+  [Index in keyof Arr]: Arr[Index] extends ReadonlyArray<unknown>
+    ? AddSpec<Arr[Index]>
+    : Arr[Index] extends {spec: unknown}
+    ? Arr[Index]
+    : Arr[Index] extends {match: `array`, value: {fill: infer Fill, length: infer Length}}
+    ? {match: `array`, value: {fill: AddSpec<[Fill]>[number], length: Length}}
+    : Arr[Index] extends {match: infer M extends `any` | `all`, value: infer Value extends ReadonlyArray<unknown>}
+    ? {match: M, value: AddSpec<Value>}
+    : {spec: Arr[Index]}
+}
+
+function addSpec<Arr extends ReadonlyArray<unknown>>(arr: Arr): AddSpec<Arr> {
+  return arr.map(item => {
+    if (Array.isArray(item)) {
+      return addSpec(item as ReadonlyArray<unknown>);
+    }
+    if (typeof item !== `object` || item === null) {
+      return {spec: item};
+    }
+    if (`spec` in item) {
+      return item;
+    }
+    if (
+      `match` in item && item.match === `array`
+      && `value` in item && item.value !== null && typeof item.value === `object`
+      && `length` in item.value && `fill` in item.value
+    ) {
+      return {match: `array`, value: {length: item.value.length, fill: addSpec([item.value.fill])[0]}};
+    }
+    if (`match` in item && (item.match === `any` || item.match === `all`) && `value` in item && Array.isArray(item.value)) {
+      return {match: item.match, value: addSpec(item.value as ReadonlyArray<unknown>)};
+    }
+    return {spec: item};
+  }) as AddSpec<Arr>;
+}
+
 function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
   return {
     env: {
-      before: (...arr) => ({
-        prev: arr.map(
-          item => typeof item === `object` && item !== null && `spec` in item
-            ? item
-            : {spec: item}
-        ) as {
-          [Index in keyof typeof arr]:
-            typeof arr[Index] extends {spec: unknown;}
-              ? typeof arr[Index]
-              : {spec: typeof arr[Index];};
-          },
-      }),
-      after: (...arr) => ({
-        next: arr.map(
-          item => typeof item === `object` && item !== null && `spec` in item
-            ? item
-            : {spec: item}
-        ) as {
-          [Index in keyof typeof arr]:
-            typeof arr[Index] extends {spec: unknown;}
-              ? typeof arr[Index]
-              : {spec: typeof arr[Index];};
-          },
-      }),
+      before: (...arr) => ({prev: addSpec(arr)}),
+      after: (...arr) => ({next: addSpec(arr)}),
     },
     types: Object.assign(
       (context: object | ((...args: unknown[]) => unknown)) => ({
