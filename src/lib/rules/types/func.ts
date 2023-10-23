@@ -13,7 +13,7 @@ export type PackRulesets<
   const R extends Record<
     string,
     | RulesetWrapper<Record<string, Ruleset>, Record<string, Record<string, unknown>>>
-    | Packed<Record<string, unknown>, MatchAsType<Spec>, unknown, Source, Target, Dependencies>
+    | Packed<Record<string, unknown>, MatchAsType<Spec>, unknown, Source, Target, ReadonlyArray<Dependencies[number]>>
   >
 >(r: R) => Packed<R, MatchAsType<Spec>, Spec, Source, Target, Dependencies>;
 
