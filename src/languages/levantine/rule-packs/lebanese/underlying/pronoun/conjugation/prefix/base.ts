@@ -8,13 +8,15 @@ export default rulePack(
   [templates],
   {
     spec: {type: `pronoun`},
-    env: ({after}, {boundary, affix}) => after({
-      match: `any`,
-      value: [
-        boundary(),
-        affix(features => features.symbol.indicative),
-      ],
-    }),
+    env: ({after}, {boundary, affix}) => (
+      after({
+        match: `any`,
+        value: [
+          boundary(),
+          affix(features => features.symbol.indicative),
+        ],
+      })
+    ),
     was: {templates: {spec: {type: `verb`}}},
   }
 );

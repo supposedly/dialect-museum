@@ -1,12 +1,13 @@
-import {templates, underlying} from "/languages/levantine/alphabets";
 import {rulePack} from "/lib/rules";
+
+import {underlying} from '/languages/levantine/alphabets';
 
 export default rulePack(
   underlying,
   underlying,
-  [templates],
+  [],
   {
-    spec: {},
+    spec: {type: `pronoun`},
     env: {},
   }
 );
