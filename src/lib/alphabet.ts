@@ -326,6 +326,7 @@ type OrderAbbreviations<
   }>
 };
 
+// eslint-disable-next-line @typescript-eslint/ban-types -- The {} is for the `& {}` pattern
 type CombineAbbreviations<Arr, Key extends string = ``, Obj extends Record<string, string> = {}> =
   Arr extends readonly [infer Head, ...infer Tail]
     ? Head extends Record<string, Record<string, string>>

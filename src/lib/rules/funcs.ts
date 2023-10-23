@@ -56,7 +56,9 @@ function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC>
             context: context instanceof Function
               ? context(qualifiedPathsOf(alphabet.context))
               : context,
-          } as any),  // `any` for NeverSayNever<etc>
+          // NeverSayNever<...> was giving the excessively-deep error hence any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any),
         ]
       )) as {[K in keyof ABC[`types`]]: TypesFunc<ABC, K>},
     ) as TypesFuncs<ABC>,
@@ -196,7 +198,6 @@ export function processPack<
     ReadonlyArray<Alphabet>
   >
 >(pack: RulePack): ProcessPack<RulePack> {
-  const {env, types} = generateSpecFuncs(pack.source);
   return Object.fromEntries(Object.entries(pack.children).map(([k, v]) => {
     if (`rules` in v) {
       return [k,
@@ -239,9 +240,13 @@ export function processPack<
               }
             )
           )
+        // Lazy
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ) as any,
       ];
     } else {
+      // `v as never` was erroring on return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return [k, processPack(v as any)];
     }
   }));
@@ -289,10 +294,10 @@ export function extractDefaults<
                     {match: `all`, value: [rule.for, pack.specs]},
                     pack.source
                   ),
-                ])) as any,
+                ])),
           ];
         } else {
           return [k, extractDefaults(v as never)];
         }
-      })) as any;
+      })) as never;
 }

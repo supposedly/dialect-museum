@@ -166,6 +166,7 @@ this is why MergeArray<ReadonlyArray<...>> below
 */
 
 export type MatchAsType<T> =
+  // eslint-disable-next-line @typescript-eslint/ban-types -- I think inference is borked if you do NonNullable<unknown>
   {} extends T ? {}
   : Match extends T ? Exclude<Match[`value`], Match>
   : T extends PickMatch<`danger`> ? never
