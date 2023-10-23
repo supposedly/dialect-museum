@@ -1,7 +1,7 @@
-import {Specs} from "./environment";
-import {Alphabet} from "/lib/alphabet";
-import {MatchAsType, MatchInstance} from "/lib/utils/match";
-import {Get, Merge, NestedRecord, NestedRecordOr} from "/lib/utils/typetools";
+import {Specs} from './environment';
+import {Alphabet} from '/lib/alphabet';
+import {MatchAsType, MatchInstance} from '/lib/utils/match';
+import {Get, Merge, NestedRecord, NestedRecordOr} from '/lib/utils/typetools';
 
 export type UnfuncTargets<Targets> = Targets extends (...args: never) => unknown
   ? ReturnType<Targets>

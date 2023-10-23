@@ -1,5 +1,5 @@
-import {generateLetters, letters} from "/lib/alphabet";
-import {underlying} from "./underlying";
+import {generateLetters, letters} from '/lib/alphabet';
+import {underlying} from './underlying';
 
 export default letters(
   underlying,

@@ -1,9 +1,9 @@
-import {Alphabet, qualifiedPathsOf} from "../alphabet";
-import {NestedRecordOr} from "../utils/typetools";
-import {AddSpec, ContextFunc, Specs, SpecsFuncs, TypesFunc, TypesFuncs} from "./types/environment";
-import {ExtractDefaults, ProcessPack} from "./types/finalize";
-import {SpecOperations} from "./types/func";
-import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec} from "./types/helpers";
+import {Alphabet, qualifiedPathsOf} from '../alphabet';
+import {NestedRecordOr} from '../utils/typetools';
+import {AddSpec, ContextFunc, Specs, SpecsFuncs, TypesFunc, TypesFuncs} from './types/environment';
+import {ExtractDefaults, ProcessPack} from './types/finalize';
+import {SpecOperations} from './types/func';
+import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec} from './types/helpers';
 
 type Blah<Arr> = {
   [Index in keyof Arr]: Arr[Index] extends ReadonlyArray<unknown>

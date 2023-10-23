@@ -1,4 +1,4 @@
-import {rulePack} from "/lib/rules";
+import {rulePack} from '/lib/rules';
 
 import {underlying} from '/languages/levantine/alphabets';
 

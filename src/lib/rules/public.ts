@@ -1,9 +1,9 @@
-import {Alphabet} from "../alphabet";
-import {extractDefaults, operations, processPack, unfuncSpec} from "./funcs";
-import {Specs} from "./types/environment";
-import {ProcessPack, ExtractDefaults} from "./types/finalize";
-import {PackRulesets, CreateRuleset, Rules, JoinSpecs} from "./types/func";
-import {Packed, Ruleset, RulesetWrapper, UnfuncSpec} from "./types/helpers";
+import {Alphabet} from '../alphabet';
+import {extractDefaults, operations, processPack, unfuncSpec} from './funcs';
+import {Specs} from './types/environment';
+import {ProcessPack, ExtractDefaults} from './types/finalize';
+import {PackRulesets, CreateRuleset, Rules, JoinSpecs} from './types/func';
+import {Packed, Ruleset, RulesetWrapper, UnfuncSpec} from './types/helpers';
 
 export function rulePack<
   const Source extends Alphabet,

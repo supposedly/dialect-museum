@@ -1,6 +1,6 @@
-import {MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from "/lib/utils/match";
-import {IsUnion, NestedArray, NestedArrayOr, NeverSayNever, ValuesOf} from "/lib/utils/typetools";
-import {Alphabet, PartialMembersWithContext, QualifiedPathsOf} from "/lib/alphabet";
+import {MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from '/lib/utils/match';
+import {IsUnion, NestedArray, NestedArrayOr, NeverSayNever, ValuesOf} from '/lib/utils/typetools';
+import {Alphabet, PartialMembersWithContext, QualifiedPathsOf} from '/lib/alphabet';
 
 export type Spec<ABC extends Alphabet> = (
   | PartialMembersWithContext<ABC>// | (keyof ABC[`types`] & string)

@@ -1,7 +1,7 @@
-import {alphabet} from "/lib/alphabet";
-import {underlying} from "../underlying/underlying";
-import {Merge} from "/lib/utils/typetools";
-import {MatchInstance} from "/lib/utils/match";
+import {alphabet} from '/lib/alphabet';
+import {underlying} from '../underlying';
+import {Merge} from '/lib/utils/typetools';
+import {MatchInstance} from '/lib/utils/match';
 
 function withFlags<
   const Original extends object,

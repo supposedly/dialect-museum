@@ -1,4 +1,4 @@
-import {alphabet} from "/lib/alphabet";
+import {alphabet} from '/lib/alphabet';
 
 export const underlying = alphabet({
   name: `underlying`,

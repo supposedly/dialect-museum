@@ -96,7 +96,7 @@ module.exports = {
     ],
     'no-param-reassign': `off`,
     'object-curly-spacing': `off`,
-    "@typescript-eslint/object-curly-spacing": [
+    '@typescript-eslint/object-curly-spacing': [
       `error`,
       `never`,
     ],
