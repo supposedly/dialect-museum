@@ -36,6 +36,7 @@ export function rulePack<
       return {
         rules: Object.fromEntries(
           // avoiding an excessively deep etc error
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           Object.entries(evaluatedTargets as any).map(([name, v]) => [
             name,
             {
@@ -45,6 +46,7 @@ export function rulePack<
               for: combinedSpecs,  // unknown as JoinSpecs<[UnfuncSpec<Spec>, typeof extraSpec]>
               into: v,
             },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ]) as any  // idk why
         ) as Rules<typeof targets, Source, Target, JoinSpecs<[UnfuncSpec<Spec>, typeof extraSpec]>, Dependencies>,
         constraints,
@@ -59,6 +61,7 @@ export function rulePack<
         dependencies,
         /* Excessive stack depth comparing types 'MatchInstance<"any", readonly (SpecsNoMatch<Source, Target, Dependencies, never> | MatchSchemaOf<SpecsNoMatch<Source, Target, Dependencies, never>>)[]>' and '{ readonly match: "any"; readonly value: readonly MatchSchema[]; }'.ts(2321) */
         // __SPECS_FOR_TYPE_CHECK: null as MatchAsType<Spec>,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         __SPECS_FOR_TYPE_CHECK: null as any,
       }),
       source,
