@@ -3,7 +3,7 @@ import {letters} from '/languages/levantine/alphabets/underlying';
 
 export default ruleset(
   {
-    spec: ({pronoun}) => pronoun({gender: `feminine`, number: `singular`}),
+    spec: ({pronoun}) => pronoun(features => features.number.plural),
     env: {},
   },
   {
@@ -11,12 +11,4 @@ export default ruleset(
       letters.plain.vowel.uu,
     ],
   },
-  {
-    wordFinal: {
-      env: ({before}, {boundary}) => before(boundary()),
-    },
-    beforeSuffix: {
-      env: ({before}, {delimiter}) => before(delimiter()),
-    },
-  }
 );
