@@ -59,27 +59,31 @@ export type NormalizeToMatch<O> = {
     : O[K]
 };
 
-export type PartialMembersWithContext<ABC extends AlphabetInput> = ValuesOf<{
-  [T in keyof ABC[`types`] & string]: {
-    type?: T,
-    features?: Partial<ApplyMatchAsType<ABC[`types`][T]>>,
-    context?: Partial<ApplyMatchAsType<ABC[`context`]>>
-  }
-}>;
+export type PartialMembersWithContext<ABC extends AlphabetInput> =
+  | null
+  | ValuesOf<{
+    [T in keyof ABC[`types`] & string]: {
+      type?: T,
+      features?: Partial<ApplyMatchAsType<ABC[`types`][T]>>,
+      context?: Partial<ApplyMatchAsType<ABC[`context`]>>
+    }
+  }>;
 
-export type MembersWithContext<ABC extends AlphabetInput> = ValuesOf<{
-  // without this `& string` the following fails:
-  //   type Foo<T extends MembersWithContext<Alphabet>> = ...;
-  //   type Bar<T extends Alphabet> = Foo<MembersWithContext<T>>;
-  // with a message indicating that the values of `type:` are incompatible
-  // this ends up being v annoying to trace if the error is hidden within
-  // more than one layer of parameterized types!
-  [T in keyof ABC[`types`] & string]: {
-    type: T,
-    features: ApplyMatchAsType<ABC[`types`][T]>,
-    context: ApplyMatchAsType<ABC[`context`]>
-  }
-}>;
+export type MembersWithContext<ABC extends AlphabetInput> =
+  | null
+  | ValuesOf<{
+    // without this `& string` the following fails:
+    //   type Foo<T extends MembersWithContext<Alphabet>> = ...;
+    //   type Bar<T extends Alphabet> = Foo<MembersWithContext<T>>;
+    // with a message indicating that the values of `type:` are incompatible
+    // this ends up being v annoying to trace if the error is hidden within
+    // more than one layer of parameterized types!
+    [T in keyof ABC[`types`] & string]: {
+      type: T,
+      features: ApplyMatchAsType<ABC[`types`][T]>,
+      context: ApplyMatchAsType<ABC[`context`]>
+    }
+  }>;
 
 type TraitsOf<ABC extends AlphabetInput> = {
   [K in keyof ABC[`types`]]?: Record<string, ApplyMatchSchemaOf<ABC[`types`][K]>>
