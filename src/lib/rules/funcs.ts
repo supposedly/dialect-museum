@@ -1,6 +1,6 @@
 import {Alphabet, qualifiedPathsOf} from '../alphabet';
 import {NestedRecordOr} from '../utils/typetools';
-import {AddSpec, ContextFunc, Specs, SpecsFuncs, TypesFunc, TypesFuncs} from './types/environment';
+import {AddSpec, ContextFuncSeek, ContextFuncWithoutSeek, Specs, SpecsFuncs, TypesFunc, TypesFuncSeek, TypesFuncWithoutSeek, TypesFuncs} from './types/environment';
 import {ExtractDefaults, ProcessPack} from './types/finalize';
 import {SpecOperations} from './types/func';
 import {IntoToFunc, Packed, Ruleset, RulesetWrapper, Unfunc, UnfuncSpec} from './types/helpers';
@@ -30,38 +30,88 @@ function addSpec<Arr extends ReadonlyArray<unknown>>(arr: Arr): AddSpec<Arr> {
   }) as AddSpec<Arr>;
 }
 
+
+function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
+  return Object.assign(
+    Object.assign(
+      (segment => ({
+        context: segment instanceof Function
+          ? segment(qualifiedPathsOf(alphabet.context))
+          : segment,
+      })) as ContextFuncWithoutSeek<ABC>,
+      {
+        seek: (segment, filter?) => [
+          {
+            match: `array`,
+            value: {
+              length: {match: `type`, value: `number`},
+              fill: filter ?? {},
+            },
+          },
+          {
+            context: segment instanceof Function
+              ? segment(qualifiedPathsOf(alphabet.context))
+              : segment,
+          },
+        ],
+      } as ContextFuncSeek<ABC>
+    ),
+    Object.fromEntries(Object.entries(alphabet.types).map(([type, v]) => {
+      return [
+        type,
+        Object.assign(
+          ((features, context) => ({
+            type,
+            features: features instanceof Function
+              ? features(
+              qualifiedPathsOf(v) as never,
+              alphabet.traits[type] as never
+              )
+              : Object.keys(v).length === 1
+                ? {[Object.keys(v)[0]]: features}
+                : features,
+            context: context instanceof Function
+              ? context(qualifiedPathsOf(alphabet.context))
+              : context,
+          })) as TypesFuncWithoutSeek<ABC, keyof ABC[`types`]>,
+          {
+            seek: (features, context, filter?) => [
+              {
+                match: `array`,
+                value: {
+                  length: {match: `type`, value: `number`},
+                  fill: filter ?? {},
+                },
+              },
+              {
+                type,
+                features: features instanceof Function
+                  ? features(
+                  qualifiedPathsOf(v) as never,
+                  alphabet.traits[type] as never
+                  )
+                  : Object.keys(v).length === 1
+                    ? {[Object.keys(v)[0]]: features}
+                    : features,
+                context: context instanceof Function
+                  ? context(qualifiedPathsOf(alphabet.context))
+                  : context,
+              },
+            ],
+          } as TypesFuncSeek<ABC, keyof ABC[`types`]>
+        ),
+      ];
+    })) as unknown as {[T in keyof ABC[`types`]]: TypesFunc<ABC, T>}
+  );
+}
+
 function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
   return {
     env: {
       before: (...arr) => ({prev: addSpec(arr)}),
       after: (...arr) => ({next: addSpec(arr)}),
     },
-    types: Object.assign(
-      (context: object | ((...args: unknown[]) => unknown)) => ({
-        context: context instanceof Function
-          ? context(qualifiedPathsOf(alphabet.context))
-          : context,
-      }),
-      Object.fromEntries(Object.keys(alphabet.types).map(
-        key => [
-          key,
-          (features, context) => ({
-            type: key,
-            features: features instanceof Function
-              ? features(
-                qualifiedPathsOf(alphabet.types[key] as ABC[`types`][typeof key]),
-                alphabet.traits[key] as never
-              )
-              : features,
-            context: context instanceof Function
-              ? context(qualifiedPathsOf(alphabet.context))
-              : context,
-          // NeverSayNever<...> was giving the excessively-deep error hence any
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any),
-        ]
-      )) as {[K in keyof ABC[`types`]]: TypesFunc<ABC, K>},
-    ) as TypesFuncs<ABC>,
+    types: typesFuncs(alphabet),
   };
 }
 
@@ -145,32 +195,6 @@ export function operations<
     postject: (...specs) => <never>{operation: `postject`, argument: specs},
     coalesce: (specs, env) => <never>{operation: `coalesce`, argument: {specs, env}},
   };
-}
-
-function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
-  return Object.assign(
-    (segment => ({
-      context: segment instanceof Function
-        ? segment(qualifiedPathsOf(alphabet.context))
-        : segment,
-    })) as ContextFunc<ABC>,
-    Object.fromEntries(Object.entries(alphabet.types).map(([k, v]) => {
-      return [k, ((features, context) => ({
-        type: k,
-        features: features instanceof Function
-          ? features(
-            qualifiedPathsOf(v) as never,
-            alphabet.traits[k] as never
-          )
-          : Object.keys(v).length === 1
-            ? {[Object.keys(v)[0]]: features}
-            : features,
-        context: context instanceof Function
-          ? context(qualifiedPathsOf(alphabet.context))
-          : context,
-      })) as TypesFunc<ABC, keyof ABC[`types`]>];
-    })) as unknown as {[T in keyof ABC[`types`]]: TypesFunc<ABC, T>}
-  );
 }
 
 function intoToFunc<

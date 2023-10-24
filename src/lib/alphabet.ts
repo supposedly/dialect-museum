@@ -111,7 +111,7 @@ type MergedTraits<
   }>>
 }>>>;
 
-function normalizeToMatch<const O extends Record<string, Match | ReadonlyArray<string>>>(
+export function normalizeToMatch<const O extends Record<string, Match | ReadonlyArray<string>>>(
   o: O,
 ): NormalizeToMatch<O> {
   const ret = {} as Record<string, Match>;

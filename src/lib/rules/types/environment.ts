@@ -1,4 +1,4 @@
-import {MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from '/lib/utils/match';
+import {MatchInstance, MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from '/lib/utils/match';
 import {IsUnion, NestedArray, NestedArrayOr, NeverSayNever, ValuesOf} from '/lib/utils/typetools';
 import {Alphabet, PartialMembersWithContext, QualifiedPathsOf} from '/lib/alphabet';
 
@@ -83,7 +83,7 @@ type _ContextCond<Source extends Alphabet, Context, ContextF extends (...args: n
   : ReturnType<ContextF>;
 // these two `in out` annotations are the O-rings that would've saved the challenger
 // literally went from almost 13k lines of analyze-trace output to nil
-export type TypesFunc<in out Source extends Alphabet, in out T extends keyof Source[`types`]> =
+export type TypesFuncWithoutSeek<in out Source extends Alphabet, in out T extends keyof Source[`types`]> =(
   <
     // typing V and Context as unions of (obj | func) was really hard on the compiler for some reason
     // it would sporadically decide that only the object half of that union was valid and reject
@@ -108,15 +108,65 @@ export type TypesFunc<in out Source extends Alphabet, in out T extends keyof Sou
     features: _FeaturesCond<Source, T, V, VF>
     context: _ContextCond<Source, Context, ContextF>
   }>
-;
+);
 
-export type ContextFunc<Source extends Alphabet> = (
+export type TypesFuncSeek<in out Source extends Alphabet, in out T extends keyof Source[`types`]> = {
+  seek: <
+    const V extends _VCond<Source, T>,
+    const VF extends _TypesFuncVF<Source, T>,
+    const Context extends SafeMatchSchemaOf<Source[`context`]>,
+    const ContextF extends _TypesFuncContextF<Source>,
+    const Filter extends SafeMatchSchemaOf<Spec<Source>> = never
+  >(features?: V | VF, context?: Context | ContextF, filter?: Filter) => [
+    MatchInstance<
+      `array`,
+      {
+        fill: [Filter] extends [never] ? Record<string, never> : Filter,
+        length: MatchInstance<`type`, `number`>
+      }
+    >,
+    NeverSayNever<{
+      type: T
+      features: _FeaturesCond<Source, T, V, VF>
+      context: _ContextCond<Source, Context, ContextF>
+    }>
+  ],
+};
+
+export type TypesFunc<Source extends Alphabet, T extends keyof Source[`types`]> = (
+  & TypesFuncWithoutSeek<Source, T>
+  & TypesFuncSeek<Source, T>
+);
+
+export type ContextFuncWithoutSeek<Source extends Alphabet> = (
   <
     const Context extends SafeMatchSchemaOf<Source[`context`]>,
     const ContextF extends _TypesFuncContextF<Source>
   >(segment: Context | ContextF) => ({
     context: _ContextCond<Source, Context, ContextF>
   })
+);
+
+export type ContextFuncSeek<Source extends Alphabet> = {
+  seek: <
+    const Context extends SafeMatchSchemaOf<Source[`context`]>,
+    const ContextF extends _TypesFuncContextF<Source>,
+    const Filter extends SafeMatchSchemaOf<Spec<Source>> = never
+  >(segment: Context | ContextF, filter?: Filter) => [
+    MatchInstance<
+      `array`,
+      {
+        fill: [Filter] extends [never] ? Record<string, never> : Filter,
+        length: MatchInstance<`type`, `number`>
+      }
+    >,
+    {context: _ContextCond<Source, Context, ContextF>},
+  ]
+};
+
+export type ContextFunc<Source extends Alphabet> = (
+  & ContextFuncWithoutSeek<Source>
+  & ContextFuncSeek<Source>
 );
 
 export type TypesFuncs<Source extends Alphabet> = {
