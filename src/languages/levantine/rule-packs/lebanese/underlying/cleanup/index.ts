@@ -1,4 +1,4 @@
-import cleanup from './base';
+import cleanup from './ruleset';
 
 import aac from './aac';
 import aaii from './aaii';

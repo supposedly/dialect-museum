@@ -1,4 +1,4 @@
-import prefix from './base';
+import prefix from './ruleset';
 
 import hollowOrGeminate from './hollow-geminate';
 import soundOrDefective from './sound-defective';

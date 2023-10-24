@@ -1,4 +1,4 @@
-import teens from './base';
+import teens from './ruleset';
 
 import eleven from './eleven';
 import twelve from './twelve';

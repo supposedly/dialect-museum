@@ -1,4 +1,4 @@
-import defective from './base';
+import defective from './ruleset';
 
 import affected from './affected';
 import plain from './plain';

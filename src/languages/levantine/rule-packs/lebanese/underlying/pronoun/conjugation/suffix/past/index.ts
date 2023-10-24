@@ -1,4 +1,4 @@
-import past from './base';
+import past from './ruleset';
 
 import firstPerson from './first-person';
 import secondPerson from './second-person';

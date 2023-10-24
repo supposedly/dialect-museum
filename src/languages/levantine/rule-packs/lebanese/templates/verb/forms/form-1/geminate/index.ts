@@ -1,4 +1,4 @@
-import geminate from './base';
+import geminate from './ruleset';
 
 import nonpast from './nonpast';
 import past from './past';

@@ -1,4 +1,4 @@
-import staf3al from './base';
+import staf3al from './ruleset';
 
 import prefix from './prefix';
 import body from './body';

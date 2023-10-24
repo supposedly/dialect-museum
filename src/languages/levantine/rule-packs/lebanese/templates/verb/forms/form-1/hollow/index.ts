@@ -1,4 +1,4 @@
-import hollow from './base';
+import hollow from './ruleset';
 
 import nonpast from './nonpast';
 import past from './past';

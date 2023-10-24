@@ -1,4 +1,4 @@
-import faa3al from './base';
+import faa3al from './ruleset';
 
 import nonpast from './nonpast';
 import past from './past';

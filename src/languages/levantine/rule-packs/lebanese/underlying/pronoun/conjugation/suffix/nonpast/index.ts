@@ -1,4 +1,4 @@
-import nonpast from './base';
+import nonpast from './ruleset';
 
 import fs2 from './fs2';
 import plural from './plural';

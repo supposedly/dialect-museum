@@ -1,4 +1,4 @@
-import prefix from './base';
+import prefix from './ruleset';
 
 import firstPerson from './first-person';
 import secondPerson from './second-person';

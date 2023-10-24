@@ -1,4 +1,4 @@
-import singular from './base';
+import singular from './ruleset';
 
 import feminine from './feminine';
 import masculine from './masculine';

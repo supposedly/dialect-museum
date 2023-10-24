@@ -1,4 +1,4 @@
-import prefix from './base';
+import prefix from './ruleset';
 
 import affected from './affected';
 import plain from './plain';

@@ -1,4 +1,4 @@
-import fta3vl from './base';
+import fta3vl from './ruleset';
 
 import hollow from './hollow';
 import fta3al from './fta3al';

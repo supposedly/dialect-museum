@@ -1,4 +1,4 @@
-import standalone from './base';
+import standalone from './ruleset';
 
 import firstPerson from './first-person';
 import secondPerson from './second-person';

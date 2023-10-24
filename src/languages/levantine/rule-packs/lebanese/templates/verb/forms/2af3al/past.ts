@@ -1,4 +1,4 @@
-import ruleset from './base';
+import ruleset from './ruleset';
 import {letters} from '/languages/levantine/alphabets/underlying';
 
 export default ruleset(
@@ -16,7 +16,7 @@ export default ruleset(
 
 // decided against this because i think it'd misrepresent hollow roots?
 /*
-import ruleset from './base';
+import ruleset from './ruleset';
 import {letters} from '/languages/levantine/alphabets/underlying';
 
 export default ruleset(

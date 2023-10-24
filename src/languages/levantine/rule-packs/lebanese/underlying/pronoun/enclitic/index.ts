@@ -1,4 +1,4 @@
-import enclitic from './base';
+import enclitic from './ruleset';
 
 import sg1Object from './sg1-object';
 import firstPerson from './first-person';

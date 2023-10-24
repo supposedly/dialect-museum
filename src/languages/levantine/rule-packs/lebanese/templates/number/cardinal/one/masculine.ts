@@ -1,5 +1,5 @@
 import {fixRoot} from '../../ordinal/base';
-import ruleset from './base';
+import ruleset from './ruleset';
 import {letters} from '/languages/levantine/alphabets/underlying';
 import {Merge} from '/lib/utils/typetools';
 

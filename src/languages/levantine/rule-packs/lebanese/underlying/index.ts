@@ -1,4 +1,4 @@
-import underlying from './base';
+import underlying from './ruleset';
 
 import pronoun from './pronoun';
 import cleanup from './cleanup';

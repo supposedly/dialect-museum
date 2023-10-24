@@ -1,4 +1,4 @@
-import hollow from './base';
+import hollow from './ruleset';
 
 import preConsonant from './pre-consonant';
 import other from './other';

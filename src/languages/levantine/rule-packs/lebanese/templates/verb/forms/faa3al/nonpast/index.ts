@@ -1,4 +1,4 @@
-import nonpast from './base';
+import nonpast from './ruleset';
 
 import defective from './defective';
 import other from './other';

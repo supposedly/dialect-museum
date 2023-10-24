@@ -1,4 +1,4 @@
-import ruleset, {fixRoot} from './base';
+import ruleset, {fixRoot} from './ruleset';
 import {letters} from '/languages/levantine/alphabets/underlying';
 
 export default ruleset(

@@ -1,4 +1,4 @@
-import verb from './base';
+import verb from './ruleset';
 
 import form1 from './forms/form-1';
 import fa33al from './forms/fa33al';

@@ -1,4 +1,4 @@
-import cardinal from './base';
+import cardinal from './ruleset';
 
 import one from './one';
 import teens from './teens';

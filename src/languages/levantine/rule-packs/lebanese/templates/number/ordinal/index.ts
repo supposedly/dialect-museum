@@ -1,4 +1,4 @@
-import ordinal from './base';
+import ordinal from './ruleset';
 
 import first from './first';
 import second from './second';

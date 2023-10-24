@@ -1,4 +1,4 @@
-import suffix from './base';
+import suffix from './ruleset';
 
 import nonpast from './nonpast';
 import past from './past';

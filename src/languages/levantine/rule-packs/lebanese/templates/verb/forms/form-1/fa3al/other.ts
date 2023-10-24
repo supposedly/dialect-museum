@@ -1,4 +1,4 @@
-import ruleset from './base';
+import ruleset from './ruleset';
 import {letters} from '/languages/levantine/alphabets/underlying';
 import {separateContext} from '/lib/rules';
 

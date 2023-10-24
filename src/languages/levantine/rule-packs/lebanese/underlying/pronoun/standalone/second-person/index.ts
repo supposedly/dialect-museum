@@ -1,4 +1,4 @@
-import secondPerson from './base';
+import secondPerson from './ruleset';
 
 import singular from './singular';
 import plural from './plural';

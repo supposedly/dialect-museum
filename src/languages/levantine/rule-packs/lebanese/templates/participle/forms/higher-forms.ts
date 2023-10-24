@@ -1,4 +1,4 @@
-import ruleset from '../base';
+import ruleset from '../ruleset';
 
 function stripPrefix<
   const Shape extends string

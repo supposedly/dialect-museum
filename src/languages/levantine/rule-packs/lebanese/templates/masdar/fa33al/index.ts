@@ -1,4 +1,4 @@
-import fa33al from './base';
+import fa33al from './ruleset';
 
 import defective from './defective';
 import other from './other';

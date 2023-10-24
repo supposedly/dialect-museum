@@ -1,4 +1,4 @@
-import pronoun from './base';
+import pronoun from './ruleset';
 
 import prefix from './conjugation/prefix';
 import suffix from './conjugation/suffix';

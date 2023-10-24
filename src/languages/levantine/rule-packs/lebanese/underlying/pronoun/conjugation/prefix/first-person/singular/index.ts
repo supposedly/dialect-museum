@@ -1,4 +1,4 @@
-import singular from './base';
+import singular from './ruleset';
 
 import hamze from './hamze';
 import vowel from './vowel';

@@ -1,4 +1,4 @@
-import participle from './base';
+import participle from './ruleset';
 
 import prefix from './prefix';
 import stPrefix from './st-prefix';

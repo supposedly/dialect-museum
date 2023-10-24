@@ -1,4 +1,4 @@
-import templates from './base';
+import templates from './ruleset';
 
 import masdar from './masdar';
 import af3al from './2af3al';

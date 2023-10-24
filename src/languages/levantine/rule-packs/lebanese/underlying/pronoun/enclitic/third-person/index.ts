@@ -1,4 +1,4 @@
-import thirdPerson from './base';
+import thirdPerson from './ruleset';
 
 import fsg from './fsg';
 import msg from './msg';

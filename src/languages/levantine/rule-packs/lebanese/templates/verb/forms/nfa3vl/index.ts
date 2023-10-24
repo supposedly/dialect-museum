@@ -1,4 +1,4 @@
-import nfa3vl from './base';
+import nfa3vl from './ruleset';
 
 import hollow from './hollow';
 import nfa3al from './nfa3al';

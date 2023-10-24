@@ -1,4 +1,4 @@
-import defective from './base';
+import defective from './ruleset';
 
 import preConsonant from './pre-consonant';
 import other from './other';

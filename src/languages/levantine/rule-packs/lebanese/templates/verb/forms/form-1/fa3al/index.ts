@@ -1,4 +1,4 @@
-import fa3al from './base';
+import fa3al from './ruleset';
 
 import defective from './defective';
 import other from './other';

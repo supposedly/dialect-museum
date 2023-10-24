@@ -1,4 +1,4 @@
-import af3al from './base';
+import af3al from './ruleset';
 
 import nonpast from './nonpast';
 import past from './past';

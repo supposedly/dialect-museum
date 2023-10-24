@@ -1,4 +1,4 @@
-import f3vl from './base';
+import f3vl from './ruleset';
 
 import defective from './defective';
 import imperative from './imperative';

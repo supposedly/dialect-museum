@@ -1,9 +1,9 @@
-import number from './base';
+import number from './ruleset';
 
 import linking from './linking';
 import teenSuffix from './teen-suffix';
 import fem from './fem';
-import bases from './bases';
+import bases from './rulesets';
 import cardinal from './cardinal';
 import ordinal from './ordinal';
 
