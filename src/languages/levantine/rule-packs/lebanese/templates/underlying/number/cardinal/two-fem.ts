@@ -12,7 +12,8 @@ export default ruleset(
       letters.plain.vowel.i,
       letters.plain.consonant.n,
       letters.plain.consonant.t,
-      letters.plain.vowel.ay,
+      letters.plain.vowel.a,
+      letters.plain.consonant.y,
       letters.plain.consonant.n,
     ],
   }

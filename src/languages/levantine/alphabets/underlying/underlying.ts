@@ -45,10 +45,9 @@ export const underlying = alphabet({
     vowel: {
       height: [`high`, `mid`, `low`],
       backness: [`front`, `mid`, `back`],
-      /* tense: {match: `type`, value: `boolean`}, */
       round: {match: `type`, value: `boolean`},
       long: {match: `type`, value: `boolean`},
-      diphthong: {match: `type`, value: `boolean`},
+      /* tense: {match: `type`, value: `boolean`}, */
     },
     affix: {
       symbol: [
