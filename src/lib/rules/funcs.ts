@@ -108,8 +108,8 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
 function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
   return {
     env: {
-      before: (...arr) => ({prev: addSpec(arr)}),
-      after: (...arr) => ({next: addSpec(arr)}),
+      before: (...arr) => ({next: addSpec(arr)}),
+      after: (...arr) => ({prev: addSpec(arr)}),
     },
     types: typesFuncs(alphabet),
   };

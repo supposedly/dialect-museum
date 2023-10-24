@@ -189,15 +189,15 @@ type _ArrType<Source extends Alphabet> = ReadonlyArray<SafeMatchSchemaOf<NestedA
 export type EnvironmentHelpers<ABC extends Alphabet> = {
   before: {
     <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {
-      prev: AddSpec<Arr>
-    }
-    // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {prev: Arr}
-  },
-  after: {
-    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {
       next: AddSpec<Arr>
     }
     // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {next: Arr}
+  },
+  after: {
+    <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {
+      prev: AddSpec<Arr>
+    }
+    // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {prev: Arr}
   }
 };
 
