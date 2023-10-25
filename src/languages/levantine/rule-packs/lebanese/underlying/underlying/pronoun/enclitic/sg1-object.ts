@@ -4,7 +4,7 @@ import {letters} from '/languages/levantine/alphabets/underlying';
 export default ruleset(
   {
     spec: ({pronoun}) => pronoun({number: `singular`, person: `first`}),
-    env: ({after}, {delimiter}) => after(delimiter(features => features.symbol.object)),
+    env: ({after}, {delimiter}) => after(delimiter({match: `any`, value: [`object`, `pseudosubject`]})),
   },
   {
     default: [

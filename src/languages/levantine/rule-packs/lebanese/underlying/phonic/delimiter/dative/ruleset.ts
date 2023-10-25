@@ -1,0 +1,12 @@
+import {phonic, templates, underlying} from '/languages/levantine/alphabets';
+import {rulePack} from '/lib/rules';
+
+export default rulePack(
+  underlying,
+  phonic,
+  [templates],
+  {
+    spec: ({delimiter}) => delimiter(`dative`),
+    env: {},
+  }
+);

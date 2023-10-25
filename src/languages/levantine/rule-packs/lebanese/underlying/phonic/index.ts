@@ -1,7 +1,14 @@
 import phonic from './ruleset';
 
-import diphthong from './diphthong';
+import delimiter from './delimiter';
+import affix from './affix';
+import vowel from './vowel';
+import consonant from './consonant';
 
+// consonant & vowel coming last is crucial
 export default phonic.pack({
-  diphthong,
+  delimiter,
+  affix,
+  vowel,
+  consonant,
 });
