@@ -71,4 +71,21 @@ export default alphabet({
       type: {match: `any`, value: [`word`, `pause`, `sentence`]},
     },
   },
+  // i hate traits so much LMAO
+  // can't do {match: `any`, value: [{articulator: `throat`}, {articulator: `tongue`, value: [etc]}]}
+  // because i can't MatchSchemaOf the entire thing apparently for type-complexity reasons
+  // neeeeeeeeeeeeeeds overhaul
+  // (but in this case i think we're safe since these locations cover articulator:throat)
+  consonant: {
+    back: {
+      location: {
+        match: `any`,
+        value: [
+          `glottis`,
+          `pharynx`,
+          `uvula`,
+        ],
+      },
+    },
+  },
 });
