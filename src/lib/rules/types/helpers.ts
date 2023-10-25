@@ -44,12 +44,14 @@ export type Unfunc<
   }}
   : T;
 
-export type UnfuncSpec<Spec> = Spec extends ({spec: unknown, env?: unknown} | {env: unknown})
+export type UnfuncSpec<Spec> = Spec extends {match: `custom`, value: unknown}
+  ? Spec
+  : Spec extends ({spec: unknown, env?: unknown} | {env: unknown})
   ? {spec: Get<Unfunc<Spec, `spec`>, `spec`>, env: Get<Unfunc<Spec, `env`>, `env`>}
   : Spec extends {match: unknown, value: readonly unknown[]}
   ? {match: Spec[`match`], value: {[Index in keyof Spec[`value`]]: UnfuncSpec<Spec[`value`][Index]>}}
-  // : Spec extends object
-  // ? {[K in keyof Spec]: UnfuncSpec<Spec[K]>}
+  : Spec extends object
+  ? {[K in keyof Spec]: UnfuncSpec<Spec[K]>}
   : never;
 
 export type Packed<

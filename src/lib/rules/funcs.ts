@@ -105,17 +105,10 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
   );
 }
 
-function generateSpecFuncs<ABC extends Alphabet>(alphabet: ABC): SpecsFuncs<ABC> {
-  return {
-    env: {
-      before: (...arr) => ({next: addSpec(arr)}),
-      after: (...arr) => ({prev: addSpec(arr)}),
-    },
-    types: typesFuncs(alphabet),
-  };
-}
-
-function callSpecFunc<Spec extends object>(spec: Spec, funcs: SpecsFuncs<Alphabet>): Unfunc<Spec, `spec`> {
+function callSpecFunc<Spec extends object>(
+  spec: Spec,
+  funcs: SpecsFuncs<Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+): Unfunc<Spec, `spec`> {
   if (`match` in spec && `value` in spec && Array.isArray(spec[`value`])) {
     return {
       match: spec[`match`],
@@ -128,7 +121,10 @@ function callSpecFunc<Spec extends object>(spec: Spec, funcs: SpecsFuncs<Alphabe
   return {} as Unfunc<Spec, `spec`>;
 }
 
-function callEnvFunc<Env extends object>(env: Env, funcs: SpecsFuncs<Alphabet>): Unfunc<Env, `env`> {
+function callEnvFunc<Env extends object>(
+  env: Env,
+  funcs: SpecsFuncs<Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+): Unfunc<Env, `env`> {
   if (`match` in env && `value` in env && Array.isArray(env[`value`])) {
     return {
       match: env[`match`],
@@ -141,7 +137,10 @@ function callEnvFunc<Env extends object>(env: Env, funcs: SpecsFuncs<Alphabet>):
   return {} as Unfunc<Env, `env`>;
 }
 
-function _unfuncSpec<Specs>(specs: Specs, funcs: SpecsFuncs<Alphabet>): UnfuncSpec<Specs> {
+function _unfuncSpec<Specs>(
+  specs: Specs,
+  funcs: SpecsFuncs<Alphabet, Alphabet, ReadonlyArray<Alphabet>>
+): UnfuncSpec<Specs> {
   if (specs === undefined || specs === null || typeof specs !== `object`) {
     return specs as UnfuncSpec<Specs>;
   }
@@ -166,8 +165,40 @@ function _unfuncSpec<Specs>(specs: Specs, funcs: SpecsFuncs<Alphabet>): UnfuncSp
   ) as UnfuncSpec<Specs>;
 }
 
-export function unfuncSpec<Specs, ABC extends Alphabet>(specs: Specs, alphabet: ABC): UnfuncSpec<Specs> {
-  return _unfuncSpec(specs, generateSpecFuncs(alphabet) as never);
+export function unfuncSpec<
+  Specs,
+  Source extends Alphabet,
+  Target extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet>
+>(
+  specs: Specs,
+  source: Source,
+  target: Target,
+  dependencies: Dependencies,
+): UnfuncSpec<Specs> {
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define
+  return _unfuncSpec(specs, generateSpecFuncs(source, target, dependencies) as never);
+}
+
+function generateSpecFuncs<
+  Source extends Alphabet,
+  Target extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet>
+>(source: Source, target: Target, dependencies: Dependencies): SpecsFuncs<Source, Target, Dependencies> {
+  return {
+    env: {
+      before: (...arr) => ({next: addSpec(arr)}),
+      after: (...arr) => ({prev: addSpec(arr)}),
+      custom: (match, func) => ({
+        match: `all`,
+        value: [
+          match,
+          {match: `custom`, value: func},
+        ],
+      }),
+    },
+    types: typesFuncs(source),
+  };
 }
 
 export function operations<
@@ -201,12 +232,25 @@ function intoToFunc<
   Into extends NestedRecordOr<ReadonlyArray<unknown>>,
   Spec,
   Source extends Alphabet,
->(into: Into, spec: Spec, source: Source): IntoToFunc<Into, Spec> {
+  Target extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet>
+>(
+  into: Into,
+  spec: Spec,
+  source: Source,
+  target: Target,
+  dependencies: Dependencies
+): IntoToFunc<Into, Spec> {
   if (Array.isArray(into)) {
     // XXX: what to do with odds :(
-    return ((odds = 100) => ({for: unfuncSpec(spec, source), into})) as never;
+    return ((odds = 100) => ({for: unfuncSpec(spec, source, target, dependencies), into})) as never;
   }
-  return Object.fromEntries(Object.entries(into).map(([k, v]) => [k, intoToFunc(v, spec, source)])) as never;
+  return Object.fromEntries(
+    Object.entries(into).map(([k, v]) => [
+      k,
+      intoToFunc(v, spec, source, target, dependencies),
+    ])
+  ) as never;
 }
 
 export function processPack<
@@ -233,7 +277,9 @@ export function processPack<
               intoToFunc(
                 rule.into,
                 {match: `all`, value: [rule.for, pack.specs]},
-                pack.source
+                pack.source,
+                pack.target,
+                pack.dependencies,
               ),
             ])),
             // when:
@@ -244,7 +290,7 @@ export function processPack<
                   arg => ({
                     for: {match: `all`, value: [
                       arg.for,
-                      unfuncSpec(constraint, pack.source),
+                      unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
                     ]},
                     into: arg.into,
                   })
@@ -257,7 +303,7 @@ export function processPack<
                 ) => args.map(arg => ({
                   for: {match: `all`, value: [
                     arg.for,
-                    unfuncSpec(spec, pack.source),
+                    unfuncSpec(spec, pack.source, pack.target, pack.dependencies),
                   ]},
                   into: arg.into,
                 })),
@@ -316,7 +362,9 @@ export function extractDefaults<
                   intoToFunc(
                     rule.into,
                     {match: `all`, value: [rule.for, pack.specs]},
-                    pack.source
+                    pack.source,
+                    pack.target,
+                    pack.dependencies,
                   ),
                 ])),
           ];

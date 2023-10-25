@@ -1,4 +1,4 @@
-import {MatchInstance, MatchSchema, MatchSchemaOf, SafeMatchSchemaOf} from '/lib/utils/match';
+import {MatchInstance, MatchSchema, MatchAsType, MatchSchemaOf, SafeMatchSchemaOf} from '/lib/utils/match';
 import {IsUnion, NestedArray, NestedArrayOr, NeverSayNever, ValuesOf} from '/lib/utils/typetools';
 import {Alphabet, PartialMembersWithContext, QualifiedPathsOf} from '/lib/alphabet';
 
@@ -8,7 +8,7 @@ export type Spec<ABC extends Alphabet> = (
 );
 export type Env<Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = (
   | {[Dir in `next` | `prev`]?: NestedArray<{
-      spec?: PartialMembersWithContext<Source>,
+      spec?: Exclude<Spec<Source>, (...args: never) => unknown>,
       was?: {
         [A in Dependencies[number] | Source as A[`name`]]: {
           spec?: Spec<A>,
@@ -27,8 +27,18 @@ export type Env<Source extends Alphabet, Target extends Alphabet, Dependencies e
       env?: Env<Target, never, Dependencies>
     }
   })
-  | EnvironmentFunc<Source, Target>
+  | EnvironmentFunc<Source, Target, Dependencies>
 );
+export type EnvironmentFunc<
+  Source extends Alphabet,
+  Target extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet> = readonly []
+> = (
+  env: EnvironmentHelpers<Source, Target, Dependencies>,
+  types: TypesFuncs<Source>,
+// if i change the def of MatchSchema's function variant to => MatchSchema instead of => unknown this errors lol
+// bc recursive reference that apparently isn't an issue with => unknown??
+) => SafeMatchSchemaOf<Exclude<Env<Source, Target, Dependencies>, (...args: never) => unknown>>;
 
 export type SpecsNoMatch<
   Source extends Alphabet,
@@ -55,7 +65,7 @@ export type Specs<
   Target extends Alphabet,
   Dependencies extends ReadonlyArray<Alphabet> = readonly [],
   OmitKeys extends `spec` | `env` | `was` = never,
-> = MatchSchemaOf<SpecsNoMatch<Source, Target, Dependencies, OmitKeys>>;// extends infer T extends MatchSchema ? T : never;
+> = MatchSchemaOf<SpecsNoMatch<Source, Target, Dependencies, OmitKeys>>;
 
 type _TypesFuncDefault<T, D extends MatchSchema> = SafeMatchSchemaOf<D> extends T ? never : T;
 type _TypesFuncVF<in out Source extends Alphabet, in out T extends keyof Source[`types`]> = (
@@ -188,62 +198,34 @@ export type AddSpec<Arr extends ReadonlyArray<unknown>> = {
 }
 
 type _ArrType<Source extends Alphabet> = ReadonlyArray<SafeMatchSchemaOf<NestedArrayOr<PartialMembersWithContext<Source>>>>;
-export type EnvironmentHelpers<ABC extends Alphabet> = {
+export type EnvironmentHelpers<Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = {
   before: {
     <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {
       next: AddSpec<Arr>
     }
     // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {next: Arr}
-  },
+  }
   after: {
     <const Arr extends ReadonlyArray<unknown>>(...arr: Arr): {
       prev: AddSpec<Arr>
     }
     // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {prev: Arr}
   }
+  custom<
+    const M extends SafeMatchSchemaOf<
+      Pick<
+        Exclude<Env<Source, Target, Dependencies>, (...args: never) => unknown>,
+        `next` | `prev`
+      >
+    >,
+    const C extends (arg: MatchAsType<M>) => boolean,
+  >(match: M, func: C): MatchInstance<`all`, [M, MatchInstance<`custom`, C>]>
 };
 
-export type SpecsFuncs<Source extends Alphabet> = {
-  env: EnvironmentHelpers<Source>,
+export type SpecsFuncs<Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = {
+  env: EnvironmentHelpers<Source, Target, Dependencies>,
   types: TypesFuncs<Source>,
 };
-
-// type _ArrType<Source extends Alphabet> = ReadonlyArray<unknown>;
-export type EnvironmentFunc<
-  Source extends Alphabet,
-  Target extends Alphabet,
-  Dependencies extends ReadonlyArray<Alphabet> = readonly []
-> = (
-  env: EnvironmentHelpers<Source>,
-  types: TypesFuncs<Source>,
-// if i change the def of MatchSchema's function variant to => MatchSchema instead of => unknown this errors lol
-// bc recursive reference that apparently isn't an issue with => unknown??
-) => SafeMatchSchemaOf<{[Dir in `next` | `prev`]?: NestedArray<{
-  spec?: PartialMembersWithContext<Source>,
-  was?: {
-    [A in Dependencies[number] as A[`name`]]: {
-      spec?: Spec<A>,
-      env?: Env<A, never, Dependencies>
-    }
-  }
-} & {
-  target?: {
-    spec?: Spec<Target>
-    env?: Env<Target, never, Dependencies>
-  }
-}>
-} & {
-  was?: {
-    [A in Dependencies[number] as A[`name`]]: {
-      spec?: Spec<A>,
-      env?: Env<A, never, Dependencies>
-    }
-  }
-  target?: {
-    spec?: Spec<Target>
-    env?: Env<Target, never, Dependencies>
-  }
-}>;
 
 
 // !!! here lurketh something sinister !!!
