@@ -10,14 +10,14 @@ export type Env<Source extends Alphabet, Target extends Alphabet, Dependencies e
   | {[Dir in `next` | `prev`]?: NestedArray<{
       spec?: PartialMembersWithContext<Source>,
       was?: {
-        [A in Dependencies[number] as A[`name`]]: {
+        [A in Dependencies[number] | Source as A[`name`]]: {
           spec?: Spec<A>,
           env?: Env<A, Target, Dependencies>
         }
       }
     }>
   } & {was?: {
-    [A in Dependencies[number] as A[`name`]]: {
+    [A in Dependencies[number] | Source as A[`name`]]: {
       spec?: Spec<A>,
       env?: Env<A, Target, Dependencies>
     }
