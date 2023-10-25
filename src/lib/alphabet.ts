@@ -1,5 +1,5 @@
 import {type Match, type MatchSchemaOf, type MatchSchema, type MatchAsType, type MatchInstance} from './utils/match';
-import {KeysMatching, Merge, MergeUnion, UnionToIntersection, type ValuesOf} from './utils/typetools';
+import {KeysMatching, Merge, UnionToIntersection, type ValuesOf} from './utils/typetools';
 
 export type AlphabetInput = {
   name: string
@@ -95,9 +95,9 @@ type MergedTraits<
   ABC extends AlphabetInput,
   TypeTraits extends TraitsOf<ABC>,
   FeatureTraits extends ReadonlyArray<{has: Record<string, MatchSchema>, traits: Record<string, MatchSchema>}>
-> = Merge<TypeTraits, MergeUnion<ValuesOf<{
+> = Merge<TypeTraits, UnionToIntersection<ValuesOf<{
   // start by visiting each feature trait defined in this array
-  [Idx in keyof FeatureTraits]: MergeUnion<ValuesOf<{
+  [Idx in keyof FeatureTraits]: UnionToIntersection<ValuesOf<{
     // then look at the features specified in each one of those traits
     [K in keyof FeatureTraits[Idx][`has`]]: {
       // grab the names of the types of ABC that have those same features defined
@@ -105,7 +105,8 @@ type MergedTraits<
       // equality-checking, compile-time code can ofc only do equality-checking, oh well)
       [T in KeysMatching<NormalizeTypes<ABC[`types`]>, FeatureTraits[Idx][`has`]>]:
         // finally associate each one of those type names with the traits defined for said features
-        // the MergeUnion<>s will take care of slapping this together with the previously defined type-based traits
+        // the UnionToIntersection<>s will take care of slapping this together with the previously
+        // defined type-based traits
         FeatureTraits[Idx][`traits`]
     }
   }>>
