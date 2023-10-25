@@ -165,9 +165,12 @@ this is why MergeArray<ReadonlyArray<...>> below
 (previously MergeArray<ArrayBandaid<...>> was another attempt to fix it but no dice)
 */
 
+// eslint-disable-next-line @typescript-eslint/ban-types -- I think inference is borked if you do NonNullable<unknown>
+type IsEmpty<T> = {} extends T ? (keyof T) extends never ? true : false : false;
+
 export type MatchAsType<T> =
   // eslint-disable-next-line @typescript-eslint/ban-types -- I think inference is borked if you do NonNullable<unknown>
-  {} extends T ? {}
+  true extends IsEmpty<T> ? {}
   : Match extends T ? Exclude<Match[`value`], Match>
   : T extends PickMatch<`danger`> ? never
   : T extends PickMatch<`array`> ? {
@@ -187,7 +190,7 @@ export type MatchAsType<T> =
   : T extends PickMatch<`single`> ? MatchAsType<T[`value`]>
   : T extends Record<string, unknown> ? {
     [K in keyof T]: T[K] extends readonly [unknown, ...ReadonlyArray<unknown>]
-      ? {[Index in keyof T[K]]: MatchAsType<T[K][Index]>}
+      ? {[Index in keyof T[K]]: Index extends number ? MatchAsType<T[K][Index]> : T[K][Index]}
       : MatchAsType<T[K]>
     }
   : T;

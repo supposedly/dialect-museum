@@ -22,7 +22,7 @@ export type Env<Source extends Alphabet, Target extends Alphabet, Dependencies e
       env?: Env<A, Target, Dependencies>
     }
   }} & ([Target] extends [never] ? unknown : {
-    target: {
+    target?: {
       spec?: Spec<Target>
       env?: Env<Target, never, Dependencies>
     }
@@ -197,6 +197,15 @@ export type AddSpec<Arr extends ReadonlyArray<unknown>> = {
     : {spec: Arr[Index]}
 }
 
+type CustomArgType<
+  Source extends Alphabet,
+  Target extends Alphabet,
+  Dependencies extends ReadonlyArray<Alphabet>
+> = Pick<
+  Exclude<Env<Source, Target, Dependencies>, (...args: never) => unknown>,
+  `next` | `prev`
+>;
+
 type _ArrType<Source extends Alphabet> = ReadonlyArray<SafeMatchSchemaOf<NestedArrayOr<PartialMembersWithContext<Source>>>>;
 export type EnvironmentHelpers<Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = {
   before: {
@@ -212,14 +221,16 @@ export type EnvironmentHelpers<Source extends Alphabet, Target extends Alphabet,
     // slow<const Arr extends _ArrType<ABC>>(...arr: Arr): {prev: Arr}
   }
   custom<
-    const M extends SafeMatchSchemaOf<
-      Pick<
-        Exclude<Env<Source, Target, Dependencies>, (...args: never) => unknown>,
-        `next` | `prev`
-      >
-    >,
+    const M extends SafeMatchSchemaOf<CustomArgType<Source, Target, Dependencies>>,
     const C extends (arg: MatchAsType<M>) => boolean,
-  >(match: M, func: C): MatchInstance<`all`, [M, MatchInstance<`custom`, C>]>
+  >(match: M, func: C): MatchInstance<
+    `all`,
+    [
+      M,
+      // can't just use MatchInstance<`custom`, C> bc contravariance
+      MatchInstance<`custom`, (arg: CustomArgType<Source, Target, Dependencies>) => boolean>
+    ]
+  >
 };
 
 export type SpecsFuncs<Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = {
