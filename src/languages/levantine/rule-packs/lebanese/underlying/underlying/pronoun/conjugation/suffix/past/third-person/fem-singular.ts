@@ -18,7 +18,7 @@ export default ruleset(
   },
   {
     wordFinal: {
-      env: ({before}, {boundary}) => before(boundary()),
+      env: ({before}, {boundary}) => before(boundary((features, traits) => traits.wordLevel)),
     },
     beforeSuffix: {
       env: ({before}, {delimiter}) => before(delimiter()),

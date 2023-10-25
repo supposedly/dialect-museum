@@ -6,7 +6,7 @@ import {letters} from '/languages/levantine/alphabets/underlying';
 export default ruleset(
   {
     spec: {},
-    env: ({after}, {boundary}) => after(boundary()),
+    env: ({after}, {boundary}) => after(boundary((features, traits) => traits.wordLevel)),
   },
   operations => ({
     default: [

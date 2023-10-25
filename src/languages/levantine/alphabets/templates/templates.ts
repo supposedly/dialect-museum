@@ -26,13 +26,13 @@ export const templates = alphabet({
   },
   types: {
     boundary: {
-      value: {match: `type`, value: `string`},
-      spacing: [
-        `before`,
-        `after`,
-        `around`,
+      type: [
+        `syllable`,
+        // `morpheme`,  // with a feature-tree model i could do this instead of delimiter
+        `word`,
+        `pause`,  // 'petite pause'
+        `sentence`,  // 'grande pause'
       ],
-      pausal: {match: `type`, value: `boolean`},
     },
     literal: {
       value: {match: `type`, value: `string`},
@@ -157,6 +157,14 @@ export const templates = alphabet({
     pronoun: underlying.types.pronoun,
   },
 }, {
+  boundary: {
+    pausal: {
+      type: {match: `any`, value: [`pause`, `sentence`]},
+    },
+    wordLevel: {
+      type: {match: `any`, value: [`word`, `pause`, `sentence`]},
+    },
+  },
   verb: {
     nonpast: {
       tam: {

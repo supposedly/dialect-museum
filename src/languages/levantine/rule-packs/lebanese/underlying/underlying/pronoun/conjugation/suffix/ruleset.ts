@@ -12,7 +12,7 @@ export default rulePack(
       before({
         match: `any`,
         value: [
-          boundary(),
+          boundary((features, traits) => traits.wordLevel),
           delimiter(),
         ],
       })
