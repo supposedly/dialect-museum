@@ -116,13 +116,14 @@ export type TypesFuncSeek<in out Source extends Alphabet, in out T extends keyof
     const VF extends _TypesFuncVF<Source, T>,
     const Context extends SafeMatchSchemaOf<Source[`context`]>,
     const ContextF extends _TypesFuncContextF<Source>,
-    const Filter extends SafeMatchSchemaOf<Spec<Source>> = never
-  >(features?: V | VF, context?: Context | ContextF, filter?: Filter) => [
+    const Filter extends SafeMatchSchemaOf<Spec<Source>> = never,
+    const FilterLength extends ReadonlyArray<number> = never,
+  >(features?: V | VF, context?: Context | ContextF, filter?: Filter, filterLength?: FilterLength) => [
     MatchInstance<
       `array`,
       {
         fill: [Filter] extends [never] ? Record<string, never> : Filter,
-        length: MatchInstance<`type`, `number`>
+        length: [FilterLength] extends [never] ? MatchInstance<`type`, `number`> : MatchInstance<`any`, FilterLength>
       }
     >,
     NeverSayNever<{
@@ -151,13 +152,14 @@ export type ContextFuncSeek<Source extends Alphabet> = {
   seek: <
     const Context extends SafeMatchSchemaOf<Source[`context`]>,
     const ContextF extends _TypesFuncContextF<Source>,
-    const Filter extends SafeMatchSchemaOf<Spec<Source>> = never
-  >(segment: Context | ContextF, filter?: Filter) => [
+    const Filter extends SafeMatchSchemaOf<Spec<Source>> = never,
+    const FilterLength extends ReadonlyArray<number> = never,
+  >(segment: Context | ContextF, filter?: Filter, filterLength?: FilterLength) => [
     MatchInstance<
       `array`,
       {
         fill: [Filter] extends [never] ? Record<string, never> : Filter,
-        length: MatchInstance<`type`, `number`>
+        length: [FilterLength] extends [never] ? MatchInstance<`type`, `number`> : MatchInstance<`any`, FilterLength>
       }
     >,
     {context: _ContextCond<Source, Context, ContextF>},

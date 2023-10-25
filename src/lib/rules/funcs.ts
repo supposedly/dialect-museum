@@ -40,11 +40,11 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
           : segment,
       })) as ContextFuncWithoutSeek<ABC>,
       {
-        seek: (segment, filter?) => [
+        seek: (segment, filter?, length?) => [
           {
             match: `array`,
             value: {
-              length: {match: `type`, value: `number`},
+              length: length ? {match: `any`, value: length} : {match: `type`, value: `number`},
               fill: filter ?? {},
             },
           },
@@ -75,11 +75,11 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
               : context,
           })) as TypesFuncWithoutSeek<ABC, keyof ABC[`types`]>,
           {
-            seek: (features, context, filter?) => [
+            seek: (features, context, filter?, length?) => [
               {
                 match: `array`,
                 value: {
-                  length: {match: `type`, value: `number`},
+                  length: length ? {match: `any`, value: length} : {match: `type`, value: `number`},
                   fill: filter ?? {},
                 },
               },
