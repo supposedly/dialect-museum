@@ -189,8 +189,8 @@ export type MatchAsType<T> =
   : T extends PickMatch<`all`> ? ThanksForListeningLoveYou<MergeArray<ReadonlyArray<T[`value`][number]>>>
   : T extends PickMatch<`single`> ? MatchAsType<T[`value`]>
   : T extends Record<string, unknown> ? {
-    [K in keyof T]: T[K] extends readonly [unknown, ...ReadonlyArray<unknown>]
-      ? {[Index in keyof T[K]]: Index extends number ? MatchAsType<T[K][Index]> : T[K][Index]}
+    [K in keyof T]: T[K] extends (readonly [unknown, ...ReadonlyArray<unknown>] | [unknown, ...Array<unknown>])
+      ? {[Index in keyof T[K]]: Index extends number | `${number}` ? MatchAsType<T[K][Index]> : T[K][Index]}
       : MatchAsType<T[K]>
     }
   : T;
