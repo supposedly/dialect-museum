@@ -3,7 +3,7 @@ import {underlying} from '../underlying';
 import {Merge} from '/lib/utils/typetools';
 import {MatchInstance} from '/lib/utils/match';
 
-function withFlags<
+export function withFlags<
   const Original extends object,
   const Names extends ReadonlyArray<string>
 >(original: Original, ...names: Names): Merge<Original, {[Name in Names[number]]: MatchInstance<`type`, `boolean`>}> {
@@ -38,15 +38,23 @@ export const templates = alphabet({
       value: {match: `type`, value: `string`},
     },
     word: {
-      value: {
+      string: {
         match: `array`,
         value: {
           length: {match: `type`, value: `number`},
           fill: {
             match: `any`,
             value: [
-              withFlags(underlying.types.consonant, `affected`),
-              withFlags(underlying.types.vowel, `affected`),
+              {
+                type: `consonant`,
+                features: underlying.types.consonant,
+                context: {affected: {match: `type`, value: `boolean`}},
+              },
+              {
+                type: `vowel`,
+                features: underlying.types.vowel,
+                context: {affected: {match: `type`, value: `boolean`}},
+              },
             ],
           },
         },
@@ -152,7 +160,11 @@ export const templates = alphabet({
         `feminine`,
       ],
     },
-    suffix: underlying.types.affix,
+    fa3ale: {root},
+    maf3ale: {root},
+    fa3aaliq: {root},
+    fa3aaliiq: {root},
+    affix: underlying.types.affix,
     delimiter: underlying.types.delimiter,
     pronoun: underlying.types.pronoun,
   },
