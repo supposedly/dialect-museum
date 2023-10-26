@@ -86,31 +86,42 @@ export type ConstraintsToFuncs<Constraints extends Record<
   string,
   Record<string, unknown>//((...args: never) => unknown) | Record<string, unknown>>
 >, Source extends Alphabet, Target extends Alphabet, Dependencies extends ReadonlyArray<Alphabet>> = {
-  [K in keyof Constraints]: <
-    const Arr extends ReadonlyArray<({for: unknown, into: unknown})>
-  >(...args: Arr) => {
-    [Index in keyof Arr]: {
-      for: MatchInstance<`all`, readonly [
-        Arr[Index][`for`],
-        UnfuncSpec<Constraints[K]>
-      ]>,
-      into: Arr[Index][`into`]
+  [K in keyof Constraints]: {
+    // rip
+    negated<
+      const Arr extends ReadonlyArray<({for: unknown, into: unknown})>
+    >(...args: Arr): {
+      [Index in keyof Arr]: {
+        for: MatchInstance<`custom`, (...args: ReadonlyArray<unknown>) => boolean>,
+        into: Arr[Index][`into`]
+      }
     }
-  } & {
-    custom: <
-      const Spec extends Specs<Source, Target, Dependencies>,
-      const Arr extends ReadonlyArray<{for: unknown, into: unknown}>
-    >(
-      spec: Spec,
-      ...args: Arr
-    ) => {
+    <
+      const Arr extends ReadonlyArray<({for: unknown, into: unknown})>
+    >(...args: Arr): {
       [Index in keyof Arr]: {
         for: MatchInstance<`all`, readonly [
           Arr[Index][`for`],
-          UnfuncSpec<Spec>
+          UnfuncSpec<Constraints[K]>
         ]>,
         into: Arr[Index][`into`]
       }
+    }
+  }
+} & {
+  custom: <
+    const Spec extends Specs<Source, Target, Dependencies>,
+    const Arr extends ReadonlyArray<{for: unknown, into: unknown}>
+  >(
+    spec: Spec,
+    ...args: Arr
+  ) => {
+    [Index in keyof Arr]: {
+      for: MatchInstance<`all`, readonly [
+        Arr[Index][`for`],
+        UnfuncSpec<Spec>
+      ]>,
+      into: Arr[Index][`into`]
     }
   }
 };

@@ -1,4 +1,5 @@
 import {Alphabet, qualifiedPathsOf} from '../alphabet';
+import {MatchSchema, matchers} from '../utils/match';
 import {NestedRecordOr} from '../utils/typetools';
 import {AddSpec, ContextFuncSeek, ContextFuncWithoutSeek, Specs, SpecsFuncs, TypesFunc, TypesFuncSeek, TypesFuncWithoutSeek, TypesFuncs} from './types/environment';
 import {ExtractDefaults, ProcessPack} from './types/finalize';
@@ -193,7 +194,7 @@ function generateSpecFuncs<
         match: `all`,
         value: [
           match,
-          {match: `custom`, value: func},
+          {match: `custom`, value: func as never},
         ],
       }),
     },
@@ -286,14 +287,29 @@ export function processPack<
             Object.assign(
               Object.fromEntries(Object.entries(v.constraints).map(([constraintName, constraint]) => [
                 constraintName,
-                (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
-                  arg => ({
-                    for: {match: `all`, value: [
-                      arg.for,
-                      unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
-                    ]},
-                    into: arg.into,
-                  })
+                Object.assign(
+                  (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
+                    arg => ({
+                      for: {match: `all`, value: [
+                        arg.for,
+                        unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
+                      ]},
+                      into: arg.into,
+                    })
+                  ),
+                  {
+                    negated: (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
+                      arg => ({
+                        for: {match: `custom`, value: (obj: unknown) => !matchers.all(
+                          [
+                            arg.for as MatchSchema,
+                            unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
+                          ],
+                          obj
+                        )},
+                      })
+                    ),
+                  }
                 ),
               ])),
               {
@@ -310,9 +326,7 @@ export function processPack<
               }
             )
           )
-        // Lazy
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ) as any,
+        ),
       ];
     } else {
       // `v as never` was erroring on return
