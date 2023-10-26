@@ -1,5 +1,6 @@
 import ruleset from '../../ruleset';
 import {letters} from '/languages/levantine/alphabets/phonic';
+import {letters as underlying} from '/languages/levantine/alphabets/underlying';
 
 export default ruleset(
   {
@@ -107,6 +108,13 @@ export default ruleset(
       was: {
         templates: {
           spec: ({special}) => special({shape: `fa3aaliiq`}),
+        },
+      },
+    },
+    inFemPlural: {
+      was: {
+        underlying: {
+          spec: underlying.plain.affix.fplural,
         },
       },
     },
