@@ -128,6 +128,9 @@ export const templates = alphabet({
     masdar: {
       root,
       shape: [
+        `fa3l`,
+        `fi3l`,
+        `fu3l`,
         `fa33al`,
         // `tfa33al`,
         // `stfa33al`,
@@ -225,6 +228,14 @@ export const templates = alphabet({
           `stfaa3al`,
           `stfa3la2`,
         ],
+      },
+    },
+  },
+  masdar: {
+    form1: {
+      shape: {
+        match: `any`,
+        value: [`fa3l`, `fi3l`, `fu3l`],
       },
     },
   },
