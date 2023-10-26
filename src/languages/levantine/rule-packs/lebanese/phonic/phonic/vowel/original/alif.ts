@@ -16,6 +16,7 @@ export default ruleset(
     lowOO: [letters.plain.vowel.ɒɒ],
     AA: [letters.plain.vowel.ɑɑ],
     highAA: [letters.plain.vowel.ʌʌ],
+    ae: [letters.plain.vowel.ææ],
   },
   {
     nextToEmphatic: {
