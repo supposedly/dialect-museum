@@ -96,5 +96,19 @@ export default ruleset(
         },
       },
     },
+    inFa3aaliq: {
+      was: {
+        templates: {
+          spec: ({special}) => special({shape: `fa3aaliq`}),
+        },
+      },
+    },
+    inFa3aaliiq: {
+      was: {
+        templates: {
+          spec: ({special}) => special({shape: `fa3aaliiq`}),
+        },
+      },
+    },
   }
 );
