@@ -25,28 +25,32 @@ type MatchOrFunction<ABC extends Alphabet, Keys extends `spec` | `env`> = (
 // i hate this so much lmfao
 // (they return never bc trying to incorporate their actual return types into Ruleset ended up opening pandora's
 // box on the full and horrifying extent of just how unsound this entire design's type hackery is)
+// btw they have to have const generics in order to be inferred const (eg for array length like in root)
 export type SpecOperations<in out Source extends Alphabet, in out Target extends Alphabet, ABCHistory extends ReadonlyArray<Alphabet>> = {
   /** @returns ``{operation: `mock`, arguments: specs}`` */
-  mock: ((...specs: ReadonlyArray<SpecsNoMatch<Source, Target>[`spec`]>) => never) & {
+  mock: (<const M extends ReadonlyArray<SpecsNoMatch<Source, Target>[`spec`]>>(...specs: M) => never) & {
     was: {
-      [ABC in ABCHistory[number] as ABC[`name`]]:
+      [ABC in ABCHistory[number] | Source as ABC[`name`]]:
         /** @returns ``{operation: `mock`, arguments: {was: {[the alphabet's name]: specs}}}`` */
-        (...specs: ReadonlyArray<SpecsNoMatch<ABC, never, [], `target`>[`spec`]>) => never
+        <const M extends ReadonlyArray<SpecsNoMatch<Source, Target>[`spec`]>>(...specs: M) => never
     }
   }
   /** @returns ``{operation: `preject`, arguments: specs}`` */
-  preject(...spec: ReadonlyArray<SpecsNoMatch<Target, never, [], `target`>[`spec`]>): never
+  preject<const M extends ReadonlyArray<SpecsNoMatch<Target, never, [], `target`>[`spec`]>>(...spec: M): never
   /** @returns ``{operation: `postject`, arguments: specs}`` */
-  postject(...spec: ReadonlyArray<SpecsNoMatch<Target, never, [], `target`>[`spec`]>): never
+  postject<const M extends ReadonlyArray<SpecsNoMatch<Target, never, [], `target`>[`spec`]>>(...spec: M): never
   /** Coalesces environment members matching `env` into the currently captured segment
    * to result in `spec`.
    * On the current layer, they will no longer undergo any rule transformations.
    * On the next layer, they will point to the output of the current capture.
    * @returns ``{operation: `coalesce`, arguments: env}``
    */
-  coalesce(
-    spec: ArrayOr<SpecsNoMatch<Target, never, [], `target`>[`spec`]>,
-    env?: MatchOrFunction<Source, `env`>
+  coalesce<
+    const Spec extends ArrayOr<SpecsNoMatch<Target, never, [], `target`>[`spec`]>,
+    const Env extends MatchOrFunction<Source, `env`>,
+  >(
+    spec: Spec,
+    env?: Env,
   ): never
 };
 
