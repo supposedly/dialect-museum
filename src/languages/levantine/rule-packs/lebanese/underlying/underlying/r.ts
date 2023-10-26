@@ -20,6 +20,14 @@ export default ruleset(
     afterShortI: {
       env: ({after}, {vowel}) => after(vowel.seek(letters.plain.vowel.ii.features, {}, {type: `consonant`})),
     },
+    inUmlautSituation: {
+      env: ({before}, {consonant, vowel}) => before(
+        letters.plain.vowel.aa,
+        consonant({emphatic: false}),
+        // either i or ii
+        vowel({height: `high`, backness: `front`, round: false}),
+      ),
+    },
     wasPlain: {
       was: {
         underlying: {
