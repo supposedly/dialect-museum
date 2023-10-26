@@ -8,7 +8,7 @@ export default ruleset(
   },
   operations => ({
     // second is not used but FIXME why is consonant() making it y | {}
-    default: ({features: first}, {next: {0: {spec: {features: second}}}}) => [
+    vocalic: ({features: first}, {next: {0: {spec: {features: second}}}}) => [
       operations.coalesce(
         {
           type: `diphthong`,
@@ -19,5 +19,7 @@ export default ruleset(
         }
       ),
     ],
+    // this probably won't actually be used but as it stands it thwarts default
+    consonantal: capture => [operations.mock(capture)],
   })
 );
