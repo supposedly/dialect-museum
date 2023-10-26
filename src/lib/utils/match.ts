@@ -190,7 +190,13 @@ export type MatchAsType<T> =
   : T extends PickMatch<`single`> ? MatchAsType<T[`value`]>
   : T extends Record<string, unknown> ? {
     [K in keyof T]: T[K] extends (readonly [unknown, ...ReadonlyArray<unknown>] | [unknown, ...Array<unknown>])
-      ? {[Index in keyof T[K]]: Index extends number | `${number}` ? MatchAsType<T[K][Index]> : T[K][Index]}
+      ? {
+        [Index in keyof T[K]]:
+          Index extends number | `${number}`
+            // the first time i tried implementing MatchAsType<ReadonlyArray> it gave me the excessively deep error lol
+            ? MatchAsType<{dummyBcImScaredOfTheError: T[K][Index]}>[`dummyBcImScaredOfTheError`]
+            : T[K][Index]
+      }
       : MatchAsType<T[K]>
     }
   : T;
