@@ -3,22 +3,15 @@ import {letters} from '/languages/levantine/alphabets/phonic';
 
 export default ruleset(
   {
-    spec: letters.plain.vowel.i,
+    spec: letters.plain.vowel.e,
     env: {},
   },
   {
-    i: [letters.plain.vowel.i],
-    I: [letters.plain.vowel.ɪ],
-    e: [letters.plain.vowel.e],
-    delete: [],
+    schwa: [letters.plain.vowel.ə],
   },
   {
     inFinalSyllable: {
       env: ({before}, {boundary, consonant}) => before(boundary.seek(`word`, {}, consonant())),
-    },
-    // TODO: stress
-    unstressedOpen: {
-      env: ({before}, {boundary}) => before(boundary(`syllable`)),
     },
   }
 );

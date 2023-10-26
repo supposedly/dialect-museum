@@ -7,10 +7,7 @@ export default ruleset(
     env: {},
   },
   {
-    i: [letters.plain.vowel.i],
-    u: [letters.plain.vowel.u],
-    U: [letters.plain.vowel.ʊ],
-    o: [letters.plain.vowel.o],
+    e: [letters.plain.vowel.i],
   },
   {
     inFinalSyllable: {

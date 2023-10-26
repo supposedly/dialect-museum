@@ -1,0 +1,3 @@
+This folder is one of the clearest cases for adding a way to target classes of sounds. The idea is that the ruleset would specify some target that all its implementors must have -- here, that means that there'd be a ruleset dominating tense i/u that would specify `lax` (I/U) and `lower` (e/o) for both the i and u rulesets to be required to implement, with i additionally specifying `delete` and u additionally specifying `unround`.
+
+I expect this to be the worst/most demoralizing part of working with this first version of the rule system. Hopefully it's manageable (especially with the fact that Arabic doesn't have very large natural classes, at least as far as my own interests go) until I have the time to think about redesigning.

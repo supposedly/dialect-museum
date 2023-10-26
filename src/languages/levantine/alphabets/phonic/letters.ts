@@ -320,6 +320,7 @@ export default letters(
       aa: {color: null, tense: false, round: false, height: `low`, backness: `mid`, long: true},
       ɑɑ: {color: null, tense: false, round: false, height: `low`, backness: `back`, long: true},
       ɒɒ: {color: null, tense: false, round: true, height: `low`, backness: `back`, long: true},
+      ə: {color: null, tense: false, round: false, height: `mid`, backness: `mid`, long: false},
     },
     boundary: generateLetters(phonic.types.boundary, [`type`]),
     diphthong: {},

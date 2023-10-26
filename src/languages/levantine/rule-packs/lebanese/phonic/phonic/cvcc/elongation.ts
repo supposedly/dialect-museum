@@ -8,8 +8,7 @@ export default ruleset(
     ),
   },
   operations => ({
-    elongate: [operations.mock({features: {long: true}})],
-    none: [],
+    elongated: [operations.mock({features: {long: true}})],
   }),
   {
     atWordBoundary: {

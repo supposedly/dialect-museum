@@ -58,7 +58,6 @@ export default ruleset(
   {
     e: [letters.plain.vowel.e],
     o: [letters.plain.vowel.o],
-    none: [],
   },
   {
     afterRoundVowel: {
