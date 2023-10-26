@@ -125,9 +125,6 @@ export const templates = alphabet({
       ],
     },
     l: {},
-    af3al: {
-      root,
-    },
     masdar: {
       root,
       shape: [
@@ -160,10 +157,16 @@ export const templates = alphabet({
         `feminine`,
       ],
     },
-    fa3ale: {root},
-    maf3ale: {root},
-    fa3aaliq: {root},
-    fa3aaliiq: {root},
+    special: {
+      root,
+      shape: [
+        `af3al`,
+        `fa3ale`,
+        `maf3ale`,
+        `fa3aaliq`,
+        `fa3aaliiq`,
+      ],
+    },
     affix: underlying.types.affix,
     delimiter: underlying.types.delimiter,
     pronoun: underlying.types.pronoun,
