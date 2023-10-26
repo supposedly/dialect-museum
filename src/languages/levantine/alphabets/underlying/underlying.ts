@@ -20,6 +20,8 @@ export const underlying = alphabet({
     consonant: {
       voiced: {match: `type`, value: `boolean`},
       emphatic: {match: `type`, value: `boolean`},
+      nasal: {match: `type`, value: `boolean`},
+      lateral: {match: `type`, value: `boolean`},
       articulator: [`throat`, `tongue`, `lips`],
       location: [
         `glottis`,
@@ -37,8 +39,7 @@ export const underlying = alphabet({
         `flap`,
         `fricative`,
         `affricate`,
-        `nasal`,
-        `plosive`,
+        `stop`,
       ],
     },
     vowel: {

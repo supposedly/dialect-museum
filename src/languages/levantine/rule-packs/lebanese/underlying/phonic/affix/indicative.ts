@@ -16,7 +16,7 @@ export default ruleset(
       env: ({before}, {consonant}) => (
         before(
           {
-            spec: consonant({manner: `nasal`}),
+            spec: consonant({nasal: true}),
             // FIXME this should typecheck
             // (...maybe it's by design since i had to make before() not be slow rip)
             was: {underlying: {spec: {type: `pronoun`}}},
