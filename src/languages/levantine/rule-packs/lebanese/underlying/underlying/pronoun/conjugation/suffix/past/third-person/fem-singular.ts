@@ -23,5 +23,12 @@ export default ruleset(
     beforeSuffix: {
       env: ({before}, {delimiter}) => before(delimiter()),
     },
+    inFi3il: {
+      was: {
+        templates: {
+          spec: ({verb}) => verb(features => features.door.fa3il),
+        },
+      },
+    },
   }
 );
