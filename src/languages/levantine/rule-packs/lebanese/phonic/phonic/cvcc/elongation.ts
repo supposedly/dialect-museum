@@ -3,7 +3,7 @@ import ruleset from "../ruleset";
 export default ruleset(
   {
     spec: ({vowel}) => vowel({long: false}),
-    env: ({before}, {consonant, vowel, boundary}) => (
+    env: ({before}, {consonant, boundary}) => (
       before(consonant(), consonant(), boundary((features, traits) => traits.prosodic))
     ),
   },

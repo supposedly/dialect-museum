@@ -37,6 +37,7 @@ const vowel = normalizeToMatch({
   tense: {match: `type`, value: `boolean`},
   round: {match: `type`, value: `boolean`},
   long: {match: `type`, value: `boolean`},
+  stressed: {match: `type`, value: `boolean`},
   color: {match: `any`, value: [consonant, undefined, null]},
 });
 

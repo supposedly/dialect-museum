@@ -13,8 +13,8 @@ export default ruleset(
         {
           type: `diphthong`,
           features: {
-            first: {...first, tense: false, color: null},
-            second: {...letters.plain.vowel.i.features, tense: true, color: null},
+            first: {...first, tense: false, color: null, stressed: false},
+            second: {...letters.plain.vowel.i.features, tense: true, color: null, stressed: false},
           },
         }
       ),
