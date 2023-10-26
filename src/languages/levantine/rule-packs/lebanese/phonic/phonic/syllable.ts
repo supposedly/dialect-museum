@@ -4,11 +4,11 @@ import {letters} from '/languages/levantine/alphabets/phonic';
 export default ruleset(
   {
     spec: null,
-    env: ({before, after}, {consonant, vowel}) => ({
+    env: ({before, after}, {consonant, vowel, boundary}) => ({
       match: `all`,
       value: [
-        before(consonant(), vowel()),
         after(vowel.seek({}, {}, {type: `consonant`})),
+        before(consonant.seek({}, {}, boundary(`morpheme`)), vowel()),
       ],
     }),
   },

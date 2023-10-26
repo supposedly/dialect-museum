@@ -82,8 +82,11 @@ export const underlying = alphabet({
     pausal: {
       type: {match: `any`, value: [`pause`, `sentence`]},
     },
-    wordLevel: {
+    suprasyllabic: {
       type: {match: `any`, value: [`word`, `pause`, `sentence`]},
+    },
+    prosodic: {
+      type: {match: `any`, value: [`syllable`, `word`, `pause`, `sentence`]},
     },
   },
   affix: {

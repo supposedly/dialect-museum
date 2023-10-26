@@ -11,7 +11,7 @@ export default rulePack(
     env: ({after}, {boundary, affix}) => after({
       match: `any`,
       value: [
-        boundary((features, traits) => traits.wordLevel),
+        boundary((features, traits) => traits.suprasyllabic),
         affix(features => features.symbol.indicative),
       ],
     }),

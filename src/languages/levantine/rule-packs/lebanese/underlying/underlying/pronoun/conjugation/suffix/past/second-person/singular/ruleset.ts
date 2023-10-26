@@ -17,7 +17,7 @@ export default rulePack(
       before({
         match: `any`,
         value: [
-          boundary((features, traits) => traits.wordLevel),
+          boundary((features, traits) => traits.suprasyllabic),
           delimiter(),
         ],
       })
