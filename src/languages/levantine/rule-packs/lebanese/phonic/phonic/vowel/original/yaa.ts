@@ -10,6 +10,26 @@ export default ruleset(
     ii: [letters.plain.vowel.ii],
     ee: [letters.plain.vowel.ee],
     aa: [letters.plain.vowel.aa],
+    ay: [
+      {
+        type: `diphthong`,
+        features: {
+          first: letters.plain.vowel.a.features,
+          second: letters.plain.vowel.i.features,
+        },
+        context: {affected: false},
+      },
+    ],
+    ey: [
+      {
+        type: `diphthong`,
+        features: {
+          first: letters.plain.vowel.e.features,
+          second: letters.plain.vowel.i.features,
+        },
+        context: {affected: false},
+      },
+    ],
   },
   {
     inFinalSyllable: {
