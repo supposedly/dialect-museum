@@ -26,6 +26,9 @@ export default ruleset(
     inConstruct: {
       env: ({before}, {delimiter}) => before(delimiter(`genitive`)),
     },
+    afterY: {
+      env: ({after}) => after(letters.plain.consonant.y),
+    },
     willBeAfterA: {
       // target bc it needs to take into account i-elision... hope that doesn't ruin anything
       target: {

@@ -49,7 +49,7 @@ export type SpecOperations<in out Source extends Alphabet, in out Target extends
     const Spec extends ArrayOr<SpecsNoMatch<Target, never, [], `target`>[`spec`]>,
     const Env extends MatchOrFunction<Source, `env`>,
   >(
-    spec: Spec,
+    spec?: Spec,
     env?: Env,
   ): never
 };
