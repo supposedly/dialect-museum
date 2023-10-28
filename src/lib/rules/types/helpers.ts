@@ -71,11 +71,11 @@ export type Packed<
 };
 
 export type IntoToFunc<
-  Into extends NestedRecordOr<ReadonlyArray<unknown>>,
+  Into,
   Spec
 > = Into extends ReadonlyArray<unknown>
   ? (odds?: number) => ({for: UnfuncSpec<Spec>, into: Into})
-  : Into extends NestedRecord<ReadonlyArray<unknown>> ? {[K in keyof Into]: IntoToFunc<Into[K], Spec>}
+  : Into extends Record<string, unknown> ? {[K in keyof Into]: IntoToFunc<Into[K], Spec>}
   : never;
 
 export type RulesetToFunc<Rules extends Record<string, Ruleset>> = {

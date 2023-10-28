@@ -64,38 +64,48 @@ type MatchesExtendingTuple<T> =
   ? readonly [Head | MatchesExtending<Head>, ...MatchesExtendingTuple<Tail>]
   : readonly [];
 
+
+type MatchesExtendingAMatch<T extends Match> = (
+  | T
+  | PartialMatchAsType<T>
+  | (T extends PickMatch<`single`> ? never : MatchInstance<`single`, PartialMatchAsType<T>>)
+  | (T extends PickMatch<`array`> ? MatchInstance<`array`, {
+      length: T[`value`][`length`] | MatchesExtending<T[`value`][`length`]>,
+      fill: T[`value`][`fill`] | MatchesExtending<T[`value`][`fill`]>
+    }> : never)
+  | MatchInstance<`any`, ReadonlyArray<MatchSchemaOf<T>>>
+  | MatchInstance<`all`, ReadonlyArray<MatchSchemaOf<T>>>
+  | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
+);
+
+type MatchesExtendingOther<T extends MatchSchema> = (
+  | MatchInstance<`single`, Partial<T>>
+  | MatchInstance<`any`, ReadonlyArray<T | MatchSchemaOf<T>>>
+  | MatchInstance<`all`, ReadonlyArray<T | MatchSchemaOf<T>>>
+  | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
+  | (T extends Record<string, unknown> ? {[K in keyof T]: MatchesExtending<T[K]>} : never)
+);
+
+type MatchesExtendingBasic<T> = (
+  [T] extends [Match] ? MatchesExtendingAMatch<T>
+  : [T] extends [MatchSchema] ? MatchesExtendingOther<T>
+  : never
+);
+
+type MatchesExtendingArray<T> = (
+  T extends readonly [infer Head extends MatchSchema, ...infer Tail extends ReadonlyArray<MatchSchema>]
+  ? (
+    | MatchesExtendingTuple<T>
+    | (Tail[number] extends Head ? MatchInstance<`array`, {length: T[`length`], fill: MatchSchemaOf<Head>}> : never)
+  )
+  : T extends ReadonlyArray<infer U extends MatchSchema>
+  ? MatchInstance<`array`, {length: T[`length`] | MatchesExtending<T[`length`]>, fill: U | MatchesExtending<U>}>
+  : never
+);
+
 export type MatchesExtending<T> =
-  | (
-    [T] extends [Match] ? (
-      | T
-      | PartialMatchAsType<T>
-      | (T extends PickMatch<`single`> ? never : MatchInstance<`single`, PartialMatchAsType<T>>)
-      | (T extends PickMatch<`array`> ? MatchInstance<`array`, {
-          length: T[`value`][`length`] | MatchesExtending<T[`value`][`length`]>,
-          fill: T[`value`][`fill`] | MatchesExtending<T[`value`][`fill`]>
-        }> : never)
-      | MatchInstance<`any`, ReadonlyArray<MatchSchemaOf<T>>>
-      | MatchInstance<`all`, ReadonlyArray<MatchSchemaOf<T>>>
-      | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
-    )
-    : [T] extends [MatchSchema] ? (
-      | MatchInstance<`single`, Partial<T>>
-      | MatchInstance<`any`, ReadonlyArray<T | MatchSchemaOf<T>>>
-      | MatchInstance<`all`, ReadonlyArray<T | MatchSchemaOf<T>>>
-      | MatchInstance<`custom`, (arg: MatchAsType<T>) => boolean>
-      | (T extends Record<string, unknown> ? {[K in keyof T]: MatchesExtending<T[K]>} : never)
-    ) : never
-  )
-  | (
-    T extends readonly [infer Head extends MatchSchema, ...infer Tail extends ReadonlyArray<MatchSchema>]
-    ? (
-      | MatchesExtendingTuple<T>
-      | (Tail[number] extends Head ? MatchInstance<`array`, {length: T[`length`], fill: MatchSchemaOf<Head>}> : never)
-    )
-    : T extends ReadonlyArray<infer U extends MatchSchema>
-    ? MatchInstance<`array`, {length: T[`length`] | MatchesExtending<T[`length`]>, fill: U | MatchesExtending<U>}>
-    : never
-  )
+  | MatchesExtendingBasic<T>
+  | MatchesExtendingArray<T>
   | (boolean extends T ? MatchInstance<`type`, `boolean`> : never)
   | {[K in keyof Guards]: T extends Guards[K] ? MatchInstance<`type`, K> : never}[keyof Guards]
   | {[K in keyof Danger]: T extends Danger[K] ? MatchInstance<`danger`, K> : never}[keyof Danger];
@@ -226,28 +236,29 @@ export type PartialMatchAsType<T> =
   : Partial<T>;
 
 export type MatchSchema =
-  | undefined
-  | null
+  // | undefined
+  // | null
   | ((...args: never) => unknown)
   | Primitive
   | Match
   | ReadonlyArray<MatchSchema>
   | {[key: string]: MatchSchema};
 
-export type MatchSchemaOf<O extends MatchSchema> =
+type MatchSchemaOfConditional<O extends MatchSchema> = O extends readonly [] ? never
+: O extends readonly [MatchSchema, ...ReadonlyArray<MatchSchema>] ?
+  {readonly [K in Partial<O>[`length`] & number]?: MatchSchemaOf<O[K]>}
+  & {readonly length?: MatchSchemaOf<O[`length`]>}
+: O extends ReadonlyArray<infer U extends MatchSchema> ? ReadonlyArray<MatchSchemaOf<U>>
+: O extends Match ? never
+: O extends {[key: string]: MatchSchema} ? {readonly [K in keyof O]?: MatchSchemaOf<O[K]>}
+: never;
+
+export type MatchSchemaOf<O extends MatchSchema> = (
   // | O
   | MatchesExtending<O>
   | PartialMatchAsType<O>
-  | (
-    O extends readonly [] ? never
-    : O extends readonly [infer Head extends MatchSchema, ...infer Tail extends ReadonlyArray<MatchSchema>] ?
-      {readonly [K in Partial<O>[`length`] & number]?: MatchSchemaOf<O[K]>}
-      & {readonly length?: MatchSchemaOf<O[`length`]>}
-    : O extends ReadonlyArray<infer U extends MatchSchema> ? ReadonlyArray<MatchSchemaOf<U>>
-    : O extends Match ? never
-    : O extends {[key: string]: MatchSchema} ? {readonly [K in keyof O]?: MatchSchemaOf<O[K]>}
-    : never
-  );
+  | MatchSchemaOfConditional<O>
+);
 
 export type SafeMatchSchemaOf<O extends MatchSchema> = MatchSchemaOf<O> extends infer Deferred ? Deferred : never;
 

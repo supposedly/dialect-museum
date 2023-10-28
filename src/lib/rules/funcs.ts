@@ -230,7 +230,7 @@ export function operations<
 }
 
 function intoToFunc<
-  Into extends NestedRecordOr<ReadonlyArray<unknown>>,
+  Into extends object,
   Spec,
   Source extends Alphabet,
   Target extends Alphabet,

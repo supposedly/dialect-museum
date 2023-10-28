@@ -9,7 +9,7 @@ export type RuleFunc<
     Record<string, Ruleset>,
     Record<string, Record<string, unknown>>
   >,
-  R extends NestedArray<Ruleset>
+  R
 > = (
   item: RulesetToFunc<Wrapper[`rules`]>,
   when: ConstraintsToFuncs<
@@ -42,7 +42,7 @@ export type ProcessPack<
     : never
 };
 
-type OnlyOneTarget<Into> = Into extends NestedArray<unknown>
+type OnlyOneTarget<Into> = Into extends ReadonlyArray<unknown>
   ? true
   : Into extends Record<string, unknown>
   ? IsUnion<keyof Into> extends false ? (true extends OnlyOneTarget<Into[keyof Into]> ? true : false) : false
