@@ -29,6 +29,14 @@ export default ruleset(
         vowel({height: `high`, backness: `front`, round: false}),
       ),
     },
+    beforeEmphaticUmlaut: {
+      env: ({before}, {consonant, vowel}) => before(
+        letters.plain.vowel.aa,
+        consonant({emphatic: true}),
+        // either i or ii
+        vowel({height: `high`, backness: `front`, round: false}),
+      ),
+    },
     // like maariq
     inUmlaut: {
       env: ({after, before}, {vowel}) => ({
