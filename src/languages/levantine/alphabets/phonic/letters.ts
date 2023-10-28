@@ -323,6 +323,39 @@ export default letters(
       ə: {tense: false, round: false, height: `mid`, backness: `mid`, long: false, stressed: false, color: null},
     },
     boundary: generateLetters(phonic.types.boundary, [`type`]),
-    diphthong: {},
+    diphthong: {
+      aw: {
+        first: {tense: false, round: false, height: `low`, backness: `mid`, long: false, stressed: false, color: null},
+        second: {tense: true, round: true, height: `high`, backness: `back`, long: false, stressed: false, color: null},
+      },
+      ow: {
+        first: {tense: true, round: true, height: `mid`, backness: `back`, long: false, stressed: false, color: null},
+        second: {tense: true, round: true, height: `high`, backness: `back`, long: false, stressed: false, color: null},
+      },
+      ay: {
+        first: {tense: false, round: false, height: `low`, backness: `mid`, long: false, stressed: false, color: null},
+        second: {
+          tense: true,
+          round: false,
+          height: `high`,
+          backness: `front`,
+          long: false,
+          stressed: false,
+          color: null,
+        },
+      },
+      ey: {
+        first: {tense: true, round: false, height: `mid`, backness: `front`, long: false, stressed: false, color: null},
+        second: {
+          tense: true,
+          round: false,
+          height: `high`,
+          backness: `front`,
+          long: false,
+          stressed: false,
+          color: null,
+        },
+      },
+    },
   }
 );
