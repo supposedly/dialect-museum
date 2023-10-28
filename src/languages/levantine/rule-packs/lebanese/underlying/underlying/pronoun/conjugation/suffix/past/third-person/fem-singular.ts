@@ -11,6 +11,10 @@ export default ruleset(
       letters.plain.vowel.i,
       letters.plain.consonant.t,
     ],
+    iit: [
+      letters.plain.vowel.i,
+      letters.plain.consonant.t,
+    ],
     at: [
       letters.plain.vowel.a,
       letters.plain.consonant.t,
