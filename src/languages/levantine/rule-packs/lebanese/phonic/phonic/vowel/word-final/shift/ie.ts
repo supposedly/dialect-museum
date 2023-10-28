@@ -8,6 +8,7 @@ export default ruleset(
   {
     e: [letters.plain.vowel.e],
     i: [letters.plain.vowel.i],
+    a: [letters.plain.vowel.a],
     ai: [
       {
         type: `diphthong`,

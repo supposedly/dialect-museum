@@ -6,6 +6,7 @@ export default ruleset(
     was: {underlying: {spec: letters.plain.vowel.uu}},
   },
   {
+    u: [letters.plain.vowel.u],
     uu: [letters.plain.vowel.uu],
     oo: [letters.plain.vowel.oo],
     aw: [
@@ -30,6 +31,9 @@ export default ruleset(
     ],
   },
   {
+    inPause: {
+      env: ({before}, {boundary}) => before(boundary((features, traits) => traits.pausal)),
+    },
     inFinalSyllable: {
       env: ({before}, {boundary, consonant}) => before(boundary.seek(`word`, {}, consonant(), [1])),
     },

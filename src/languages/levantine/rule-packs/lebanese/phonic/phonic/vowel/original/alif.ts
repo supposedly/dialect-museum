@@ -7,6 +7,7 @@ export default ruleset(
     was: {underlying: {spec: letters.plain.vowel.aa}},
   },
   {
+    a: [letters.plain.vowel.a],
     ii: [letters.plain.vowel.ii],
     II: [letters.plain.vowel.ɪɪ],
     ee: [letters.plain.vowel.ee],
@@ -19,6 +20,9 @@ export default ruleset(
     ae: [letters.plain.vowel.ææ],
   },
   {
+    inPause: {
+      env: ({before}, {boundary}) => before(boundary((features, traits) => traits.pausal)),
+    },
     nextToEmphatic: {
       env: ({before, after}, {consonant}) => ({
         match: `any`,

@@ -14,8 +14,12 @@ export default ruleset(
       },
     ],
     oo: [letters.plain.vowel.oo],
+    a: ({features: {first}, context}) => [{type: `vowel`, features: first, context}],
   },
   {
+    inPause: {
+      env: ({before}, {boundary}) => before(boundary((features, traits) => traits.pausal)),
+    },
     inFinalSyllable: {
       env: ({before}, {boundary, consonant}) => before(boundary.seek(`word`, {}, consonant(), [1])),
     },
