@@ -13,7 +13,7 @@ export default ruleset(
   },
   {
     ending: {
-      ay: ({features: {root: $}}) => {
+      default: ({features: {root: $}}) => {
         return [
           separateContext($[0], `affected`),
           letters.plain.vowel.a,

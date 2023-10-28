@@ -32,5 +32,20 @@ export default ruleset(
         env: ({before}, {vowel}) => before(vowel()),
       },
     },
+    wasMaziid: {
+      was: {
+        templates: {
+          spec: ({verb}) => verb({
+            door: {
+              match: `any`,
+              value: [
+                `fta3vl`,
+                `nfa3vl`,
+              ],
+            },
+          }),
+        },
+      },
+    },
   },
 );
