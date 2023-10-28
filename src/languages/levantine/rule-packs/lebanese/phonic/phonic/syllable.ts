@@ -7,8 +7,11 @@ export default ruleset(
     env: ({before, after}, {consonant, vowel, boundary}) => ({
       match: `all`,
       value: [
-        after(vowel.seek({}, {}, {type: `consonant`})),
-        before(consonant.seek({}, {}, boundary(`morpheme`)), vowel()),
+        after(vowel.seek({}, {}, consonant())),
+        before(
+          consonant.seek({}, {}, boundary(`morpheme`)),
+          vowel()
+        ),
       ],
     }),
   },

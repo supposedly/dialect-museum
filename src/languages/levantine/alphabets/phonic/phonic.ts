@@ -66,6 +66,9 @@ export default alphabet({
   },
 }, {
   boundary: {
+    internal: {
+      type: {match: `any`, value: [`syllable`, `morpheme`]},
+    },
     pausal: {
       type: {match: `any`, value: [`pause`, `sentence`]},
     },
