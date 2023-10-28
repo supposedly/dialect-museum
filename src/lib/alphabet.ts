@@ -26,7 +26,7 @@ export type ObjectFromPath<
   ? {[K in Head]: ObjectFromPath<Tail, Leaf>}
   : Leaf;
 
-export type QualifiedPathsOf<O, Path extends ReadonlyArray<string> = readonly []> = {
+export type QualifiedPathsOf<in out O, in out Path extends ReadonlyArray<string> = readonly []> = {
   [K in keyof O & string]: O[K] extends (
     | MatchInstance<`any`, ReadonlyArray<infer U extends string>>
     | ReadonlyArray<infer U extends string>

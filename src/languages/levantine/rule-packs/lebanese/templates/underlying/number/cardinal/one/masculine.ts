@@ -1,4 +1,4 @@
-import {fixRoot} from '../../ordinal/base';
+import {fixRoot} from '../../ordinal/ruleset';
 import ruleset from './ruleset';
 import {letters} from '/languages/levantine/alphabets/underlying';
 import {Merge} from '/lib/utils/typetools';

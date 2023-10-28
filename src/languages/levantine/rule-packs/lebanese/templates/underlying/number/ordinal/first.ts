@@ -9,8 +9,9 @@ export default ruleset(
   operations => ({
     default: [
       operations.mock({
-        type: `af3al`,
+        type: `special`,
         features: {
+          shape: `af3al`,
           root: fixRoot([
             letters.plain.consonant.w,
             letters.plain.consonant.w,

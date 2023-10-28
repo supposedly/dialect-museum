@@ -41,10 +41,10 @@ export type EnvironmentFunc<
 ) => SafeMatchSchemaOf<Exclude<Env<Source, Target, Dependencies>, (...args: never) => unknown>>;
 
 export type SpecsNoMatch<
-  Source extends Alphabet,
-  Target extends Alphabet,
-  Dependencies extends ReadonlyArray<Alphabet> = readonly [],
-  OmitKeys extends `spec` | `env` | `was` | `target` = never,
+  in out Source extends Alphabet,
+  in out Target extends Alphabet,
+  in out Dependencies extends ReadonlyArray<Alphabet> = readonly [],
+  in out OmitKeys extends `spec` | `env` | `was` | `target` = never,
 > = Omit<{
   spec: `spec` extends OmitKeys ? never : Spec<Source>
   env: `env` extends OmitKeys ? never : Env<Source, Target, Dependencies>

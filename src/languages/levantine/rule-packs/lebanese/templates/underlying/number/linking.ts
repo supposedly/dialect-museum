@@ -1,8 +1,6 @@
 import ruleset from './ruleset';
 import {letters} from '/languages/levantine/alphabets/underlying';
 
-import {fixRoot} from './ordinal/base';
-
 export default ruleset(
   {
     spec: {
@@ -16,7 +14,7 @@ export default ruleset(
   operations => ({
     default: [
       operations.mock(({number}) => number({type: `cardinal`, gender: `feminine`})),
-      operations.postject(operations.mock({type: `word`, features: {value: fixRoot([letters.plain.consonant.w])}})),
+      operations.postject(operations.mock({type: `word`, features: {string: [letters.plain.consonant.w]}})),
     ],
   })
 );
