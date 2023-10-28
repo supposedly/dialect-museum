@@ -22,10 +22,10 @@ export function rulePack<
   dependencies: Dependencies
 } & CreateRuleset<Source, Target, Dependencies, UnfuncSpec<Spec>>
 {
-  const evaluatedSpecs = unfuncSpec(spec, source) as UnfuncSpec<Spec>;
+  const evaluatedSpecs = unfuncSpec(spec, source, target, dependencies) as UnfuncSpec<Spec>;
   return Object.assign(
     ((extraSpec, targets, constraints) => {
-      const evaluatedExtraSpecs = unfuncSpec(extraSpec, source);
+      const evaluatedExtraSpecs = unfuncSpec(extraSpec, source, target, dependencies);
       const combinedSpecs = {
         match: `all`,
         value: [evaluatedSpecs, evaluatedExtraSpecs],
