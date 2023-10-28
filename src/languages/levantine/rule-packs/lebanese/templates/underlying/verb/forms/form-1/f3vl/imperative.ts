@@ -38,10 +38,18 @@ export default ruleset(
     },
   }),
   {
-    beforePronoun: {
-      target: {
-        env: ({before}, {vowel}) => before(vowel()),
-      },
+    hasAffix: {
+      match: `any`,
+      value: [
+        {
+          target: {
+            env: ({before}, {vowel}) => before(vowel()),
+          },
+        },
+        {
+          env: ({before}, {delimiter}) => before(delimiter()),
+        },
+      ],
     },
     defective: {
       spec: ({verb}) => verb((features, traits) => traits.defective),

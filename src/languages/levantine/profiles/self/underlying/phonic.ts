@@ -18,7 +18,7 @@ const fem = underlying.affix.f(
 const indicative = underlying.affix.indicative(
   (is, when) => [
     when.beforeNasalPrefix(
-      is.m()
+      is.m(),
     ),
     is.b(),
   ]
