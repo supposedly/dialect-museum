@@ -4,7 +4,9 @@ import {letters} from '/languages/levantine/alphabets/underlying';
 export default ruleset(
   {
     spec: {},
-    env: ({after}, {consonant}) => after(consonant(), consonant()),
+    target: {
+      env: ({after}, {consonant}) => after(consonant(), consonant()),
+    },
   },
   operations => ({
     l: [
