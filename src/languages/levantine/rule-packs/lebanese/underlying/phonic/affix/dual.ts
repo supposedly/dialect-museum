@@ -18,7 +18,7 @@ export default ruleset(
     // bint jbeil by el-mekki apparently
     aan: [
       operations.mock(
-        letters.plain.vowel.aa,
+        letters.affected.vowel.aa,
         letters.plain.consonant.n
       ),
     ],
