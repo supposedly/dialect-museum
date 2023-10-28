@@ -34,6 +34,7 @@ export default ruleset(
         // `[x: number]` index signature
         // if so that same processing could also fix the iterator bug :/
       ],
+      f3vl: [operations.mock({features: {tam: `subjunctive`}})],
     },
   }),
   {
@@ -41,6 +42,9 @@ export default ruleset(
       target: {
         env: ({before}, {vowel}) => before(vowel()),
       },
+    },
+    defective: {
+      spec: ({verb}) => verb((features, traits) => traits.defective),
     },
   }
 );
