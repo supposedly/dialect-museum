@@ -2,8 +2,12 @@ import underlying from '/languages/levantine/rule-packs/lebanese/underlying/unde
 
 const pl1 = underlying.pronoun.standalone.firstPerson.plural(is => [is.ni7na()]);
 
-const sg2Stem = underlying.pronoun.standalone.secondPerson.stem(is => [is.int()]);
-const msg2 = underlying.pronoun.standalone.secondPerson.singular.masculine(is => [is.aa()]);
+const sg2Stem = underlying.pronoun.standalone.secondPerson.stem(
+  is => [is.int()]
+);
+const msg2 = underlying.pronoun.standalone.secondPerson.singular.masculine(
+  ending => [ending.aa()]
+);
 
 const msg3 = underlying.pronoun.standalone.thirdPerson.singular.masculine(
   is => [

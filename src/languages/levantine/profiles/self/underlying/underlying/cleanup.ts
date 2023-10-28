@@ -10,18 +10,42 @@ const aaii = underlying.cleanup.aaii(is => [
 
 const contraction = underlying.contractableLongVowel(
   (is, when) => [
-    when.beforeDative(is.contracted()),
-    when.beforeJiyy(is.contracted()),
+    when.beforeDative(
+      is.contracted(),
+    ),
+    when.beforeJiyy(
+      is.contracted(),
+    ),
   ]
 );
 
 const r = underlying.r(
   (is, when) => [
-    when.directlyAfterShortI(is.emphatic()),
-    when.afterShortI(is.plain()),
-    when.afterLongII(is.plain()),
-    when.inUmlaut(is.emphatic(50)),
-    when.beforeUmlaut(is.emphatic(25)),
+    when.directlyAfterShortI(
+      is.emphatic(),
+    ),
+    when.afterShortI(
+      is.plain(),
+    ),
+    when.afterLongII(
+      is.plain(),
+    ),
+    when.inUmlaut(
+      is.emphatic(50),
+    ),
+    when.beforeUmlaut(
+      ...when.custom(
+        {
+          was: {
+            templates: {
+              spec: ({number}) => number({value: 4, type: `ordinal`}),
+            },
+          },
+        },
+        is.emphatic(),
+      ),
+      is.emphatic(25),
+    ),
   ]
 );
 
