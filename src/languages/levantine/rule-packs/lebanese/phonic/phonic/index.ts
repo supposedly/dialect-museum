@@ -1,3 +1,5 @@
+import {finalize} from '/lib/rules';
+
 import phonic from './ruleset';
 
 import iyv from './iyv';
@@ -13,15 +15,17 @@ import cvcc from './cvcc';
 
 // cvcc (epenthetic) and consonant (h) going after stress & syllable is crucial
 // stress going after syllable is ofc crucial
-export default phonic.pack({
-  iyv,
-  iyyi,
-  yi,
-  iyy,
-  syllable,
-  stress,
-  vowel,
-  indicative,
-  consonant,
-  cvcc,
-});
+export default finalize(
+  phonic.pack({
+    iyv,
+    iyyi,
+    yi,
+    iyy,
+    syllable,
+    stress,
+    vowel,
+    indicative,
+    consonant,
+    cvcc,
+  }),
+);

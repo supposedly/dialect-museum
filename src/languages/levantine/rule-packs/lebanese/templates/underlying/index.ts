@@ -1,3 +1,5 @@
+import {finalize} from '/lib/rules';
+
 import templates from './ruleset';
 
 import specialShapes from './special-shapes';
@@ -7,11 +9,13 @@ import participle from './participle';
 import verb from './verb';
 import word from './word';
 
-export default templates.pack({
-  specialShapes,
-  masdar,
-  number,
-  participle,
-  verb,
-  word,
-});
+export default finalize(
+  templates.pack({
+    specialShapes,
+    masdar,
+    number,
+    participle,
+    verb,
+    word,
+  }),
+);
