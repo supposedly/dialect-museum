@@ -32,7 +32,7 @@ export type SpecOperations<in out Source extends Alphabet, in out Target extends
     was: {
       [ABC in ABCHistory[number] | Source as ABC[`name`]]:
         /** @returns ``{operation: `mock`, arguments: {was: {[the alphabet's name]: specs}}}`` */
-        <const M extends ReadonlyArray<SpecsNoMatch<Source, Target>[`spec`]>>(...specs: M) => never
+        <const M extends ReadonlyArray<SpecsNoMatch<ABC, Target>[`spec`]>>(...specs: M) => never
     }
   }
   /** @returns ``{operation: `preject`, arguments: specs}`` */
