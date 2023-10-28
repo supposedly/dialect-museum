@@ -37,6 +37,11 @@ export default ruleset(
     afterNonpast: {
       env: {prev: [{was: {templates: {spec: ({verb}) => verb((features, traits) => traits.nonpast)}}}]},
     },
+    afterForm1: {
+      env: {prev: [{
+        was: {templates: {spec: ({verb}) => verb({door: {match: `any`, value: [`f3vl`, `fa3al`, `fa3il`]}})}},
+      }]},
+    },
     afterA: {
       env: ({after}, {vowel}) => after(vowel(letters.plain.vowel.a.features)),
     },
