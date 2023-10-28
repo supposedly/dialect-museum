@@ -29,8 +29,9 @@ export default ruleset(
         vowel({height: `high`, backness: `front`, round: false}),
       ),
     },
+    // like maariq
     inUmlaut: {
-      env: ({after, before}, {consonant, vowel}) => ({
+      env: ({after, before}, {vowel}) => ({
         ...after(letters.plain.vowel.aa),
         // either i or ii
         ...before(vowel({height: `high`, backness: `front`, round: false})),

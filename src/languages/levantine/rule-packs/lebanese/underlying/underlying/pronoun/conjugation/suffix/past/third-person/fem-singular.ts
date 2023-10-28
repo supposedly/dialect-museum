@@ -12,7 +12,7 @@ export default ruleset(
       letters.plain.consonant.t,
     ],
     iit: [
-      letters.plain.vowel.i,
+      letters.plain.vowel.ii,
       letters.plain.consonant.t,
     ],
     at: [
