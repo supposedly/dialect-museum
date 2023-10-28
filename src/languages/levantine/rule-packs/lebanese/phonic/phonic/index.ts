@@ -2,6 +2,7 @@ import phonic from './ruleset';
 
 import syllable from './syllable';
 import stress from './stress';
+import vowel from './vowel';
 import consonant from './consonant';
 import cvcc from './cvcc';
 
@@ -10,6 +11,7 @@ import cvcc from './cvcc';
 export default phonic.pack({
   syllable,
   stress,
+  vowel,
   consonant,
   cvcc,
 });
