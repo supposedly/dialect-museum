@@ -110,6 +110,9 @@ function callSpecFunc<Spec extends object>(
   spec: Spec,
   funcs: SpecsFuncs<Alphabet, Alphabet, ReadonlyArray<Alphabet>>
 ): Unfunc<Spec, `spec`> {
+  if (spec === null) {
+    return spec;
+  }
   if (`match` in spec && `value` in spec && Array.isArray(spec[`value`])) {
     return {
       match: spec[`match`],
@@ -239,7 +242,9 @@ function intoToFunc<
   // target: Target,
   // dependencies: Dependencies
 ): IntoToFunc<Into, Spec> {
-  if (Array.isArray(into)) {
+  // I don't 100% get how the type system makes do w/o similarly checking for function
+  // (maybe it gets unfuncked at some point)
+  if (Array.isArray(into) || into instanceof Function) {
     // XXX: what to do with odds :(
     return ((odds = 100) => ({for: spec, into})) as never;
   }
@@ -284,7 +289,7 @@ export function processPack<
               ),
             ])),
             // when:
-            Object.assign(
+            v.constraints && Object.assign(
               Object.fromEntries(Object.entries(v.constraints).map(([constraintName, constraint]) => [
                 constraintName,
                 Object.assign(
@@ -363,7 +368,6 @@ export function extractDefaults<
 ): ExtractDefaults<RulePack> {
   return Object.fromEntries(
     Object.entries(pack.children)
-      .filter(([_, v]) => `children` in v || Object.keys(v.constraints).length > 0)
       .map(([k, v]) => {
         if (`rules` in v) {
           const defaultToFunc = Object.fromEntries(
