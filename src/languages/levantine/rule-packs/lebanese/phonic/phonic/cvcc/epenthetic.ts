@@ -59,6 +59,7 @@ export default ruleset(
     e: [letters.plain.vowel.e],
     o: [letters.plain.vowel.o],
     a: [letters.plain.vowel.a],
+    null: [],
   },
   {
     afterPharyngeal: {
