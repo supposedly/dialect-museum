@@ -17,10 +17,17 @@ const h = phonic.consonant.encliticH(
   ]
 );
 
+const q = phonic.consonant.q(
+  is => [
+    is.debuccalized(),
+  ]
+);
+
 export default {
   rules: [
     plainR,
     h,
+    q,
   ],
   orderings: [],
   children: [],
