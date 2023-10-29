@@ -8,8 +8,18 @@ export default ruleset(
   },
   {
     schwa: [letters.plain.vowel.ə],
+    o: [letters.plain.vowel.o],
   },
   {
+    nextToEmphatic: {
+      env: ({before, after}, {consonant}) => ({
+        match: `any`,
+        value: [
+          before(consonant({emphatic: true})),
+          after(consonant({emphatic: true})),
+        ],
+      }),
+    },
     inFinalSyllable: {
       env: ({before}, {boundary, consonant}) => before(boundary.seek(`word`, {}, consonant())),
     },

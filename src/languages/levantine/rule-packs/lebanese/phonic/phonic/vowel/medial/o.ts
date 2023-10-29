@@ -3,11 +3,11 @@ import {letters} from '/languages/levantine/alphabets/phonic';
 
 export default ruleset(
   {
-    spec: letters.plain.vowel.i,
+    spec: letters.plain.vowel.o,
     env: {},
   },
   {
-    e: [letters.plain.vowel.i],
+    e: [letters.plain.vowel.e],
   },
   {
     inFinalSyllable: {

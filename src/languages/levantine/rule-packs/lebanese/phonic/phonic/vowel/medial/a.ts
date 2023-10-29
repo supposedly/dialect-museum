@@ -15,19 +15,18 @@ export default ruleset(
     inFinalSyllable: {
       env: ({before}, {boundary, consonant}) => before(boundary.seek(`word`, {}, consonant())),
     },
-    // TODO: stress
     unstressedOpen: {
+      spec: ({vowel}) => vowel({stressed: false}),
       env: ({before}, {boundary}) => before(boundary(`syllable`)),
     },
-    // TODO: stress
     // this goes before aa -> ee i guess
     beforeStressedA: {
       env: ({before}, {vowel, boundary, consonant}) => before(
         vowel.seek(
           {
             match: `any`, value: [
-              letters.plain.vowel.a.features,
-              letters.plain.vowel.aa.features,
+              {...letters.plain.vowel.a.features, stressed: true},
+              {...letters.plain.vowel.aa.features, stressed: true},
             ],
           },
           {},

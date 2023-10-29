@@ -3,7 +3,7 @@ import {letters} from '/languages/levantine/alphabets/phonic';
 
 export default ruleset(
   {
-    spec: letters.plain.vowel.i,
+    spec: letters.plain.vowel.u,
     env: {},
   },
   {

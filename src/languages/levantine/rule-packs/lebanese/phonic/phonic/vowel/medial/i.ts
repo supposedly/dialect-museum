@@ -20,7 +20,7 @@ export default ruleset(
     i: [letters.plain.vowel.i],
     I: [letters.plain.vowel.ɪ],
     e: [letters.plain.vowel.e],
-    delete: [],
+    deleted: [],
   },
   {
     betweenSimilarConsonants: {
@@ -40,8 +40,11 @@ export default ruleset(
     inFinalSyllable: {
       env: ({before}, {boundary, consonant}) => before(boundary.seek(`word`, {}, consonant())),
     },
-    // TODO: stress
+    stressed: {
+      spec: ({vowel}) => vowel({stressed: true}),
+    },
     unstressedOpen: {
+      spec: ({vowel}) => vowel({stressed: false}),
       env: ({before}, {boundary}) => before(boundary(`syllable`)),
     },
   }

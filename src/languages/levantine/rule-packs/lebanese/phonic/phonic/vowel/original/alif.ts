@@ -4,10 +4,12 @@ import {letters as underlying} from '/languages/levantine/alphabets/underlying';
 
 export default ruleset(
   {
+    spec: letters.plain.vowel.aa,
     was: {underlying: {spec: letters.plain.vowel.aa}},
   },
   {
     a: [letters.plain.vowel.a],
+    aa: [letters.plain.vowel.aa],
     ii: [letters.plain.vowel.ii],
     II: [letters.plain.vowel.ɪɪ],
     ee: [letters.plain.vowel.ee],
@@ -85,8 +87,18 @@ export default ruleset(
         ],
       }),
     },
+    afterR: {
+      env: ({after}) => after(letters.plain.consonant.r),
+    },
     beforeR: {
       env: ({before}) => before(letters.plain.consonant.r),
+    },
+    beforeIyy: {
+      was: {
+        underlying: {
+          env: ({before}, {affix}) => before(affix(`iyy`)),
+        },
+      },
     },
     inFaa3il: {
       was: {

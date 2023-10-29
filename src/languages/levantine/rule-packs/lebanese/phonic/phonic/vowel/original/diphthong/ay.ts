@@ -23,9 +23,11 @@ export default ruleset(
     inFinalSyllable: {
       env: ({before}, {boundary, consonant}) => before(boundary.seek(`word`, {}, consonant(), [1])),
     },
+    // coastal beet vs riddayt
     inVerbSuffix: {
       was: {templates: {spec: {type: `verb`}}},
     },
+    // stuff like 2aybas 2ay2as maybe 2ayman lol
     in2af3al: {
       was: {templates: {spec: ({special}) => special({shape: `af3al`})}},
     },
