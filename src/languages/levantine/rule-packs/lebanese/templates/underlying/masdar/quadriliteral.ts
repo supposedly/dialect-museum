@@ -26,6 +26,16 @@ export default ruleset(
       letters.plain.vowel.u,
       separateContext($[3], `affected`),
     ],
+    tafa3lu2: ({features: {root: $}}) => [
+      letters.affected.consonant.t,
+      letters.affected.vowel.a,
+      separateContext($[0], `affected`),
+      letters.affected.vowel.a,
+      separateContext($[1], `affected`),
+      separateContext($[2], `affected`),
+      letters.affected.vowel.u,
+      separateContext($[3], `affected`),
+    ],
   },
   {
     tfa3la2: {
@@ -33,6 +43,9 @@ export default ruleset(
     },
     fa3la2: {
       spec: ({masdar}) => masdar(features => features.shape.fa3la2),
+    },
+    affected: {
+      spec: {context: {affected: true}},
     },
   }
 );

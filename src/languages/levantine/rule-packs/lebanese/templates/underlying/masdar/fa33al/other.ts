@@ -24,5 +24,10 @@ export default ruleset(
       letters.affected.vowel.ii,
       separateContext($[2], `affected`),
     ],
+  },
+  {
+    affected: {
+      spec: {context: {affected: true}},
+    },
   }
 );
