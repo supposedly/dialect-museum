@@ -18,5 +18,5 @@ export default ruleset(
       letters.affected.consonant.y,
       letters.plain.affix.f,
     ],
-  }
+  },
 );

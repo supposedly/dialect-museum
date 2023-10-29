@@ -366,23 +366,26 @@ export function extractDefaults<
       .filter(([_, v]) => `children` in v || Object.keys(v.constraints).length > 0)
       .map(([k, v]) => {
         if (`rules` in v) {
+          const defaultToFunc = Object.fromEntries(
+            Object.entries(v.rules)
+              .filter(([_, rule]) => onlyOneTarget(rule.into))
+              .map(([ruleName, rule]) => [
+                ruleName,
+                intoToFunc(
+                  rule.into,
+                  unfuncSpec(
+                    {match: `all`, value: [rule.for, pack.specs]},
+                    pack.source,
+                    pack.target,
+                    pack.dependencies,
+                  ),
+                ),
+              ])
+          );
+          const keys = Object.keys(defaultToFunc);
           return [
             k,
-            Object.fromEntries(
-              Object.entries(v.rules)
-                .filter(([_, rule]) => onlyOneTarget(rule.into))
-                .map(([ruleName, rule]) => [
-                  ruleName,
-                  intoToFunc(
-                    rule.into,
-                    unfuncSpec(
-                      {match: `all`, value: [rule.for, pack.specs]},
-                      pack.source,
-                      pack.target,
-                      pack.dependencies,
-                    ),
-                  ),
-                ])),
+            keys.length === 1 ? defaultToFunc[keys[0]] : defaultToFunc,
           ];
         } else {
           return [k, extractDefaults(v as never)];
