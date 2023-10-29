@@ -1,4 +1,4 @@
-import phonic from '/languages/levantine/rule-packs/lebanese/phonic/phonic';
+import phonic from '/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
 const preFinalI = phonic.vowel.medial.i(
   (is, when) => [

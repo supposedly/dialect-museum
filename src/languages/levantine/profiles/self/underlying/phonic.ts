@@ -1,4 +1,4 @@
-import underlying from '/languages/levantine/rule-packs/lebanese/underlying/phonic';
+import underlying from '/languages/levantine/rule-packs/north-levantine/underlying/phonic';
 
 const fem = underlying.affix.f(
   (is, when) => [

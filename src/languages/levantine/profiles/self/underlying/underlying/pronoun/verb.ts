@@ -1,4 +1,4 @@
-import underlying from '/languages/levantine/rule-packs/lebanese/underlying/underlying';
+import underlying from '/languages/levantine/rule-packs/north-levantine/underlying/underlying';
 
 const sg1Prefix = underlying.pronoun.prefix.firstPerson.singular.vowel(
   is => [is.i()],

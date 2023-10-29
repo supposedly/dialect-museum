@@ -1,4 +1,4 @@
-import templates from '/languages/levantine/rule-packs/lebanese/templates/underlying';
+import templates from '/languages/levantine/rule-packs/north-levantine/templates/underlying';
 
 const quadriliteral = templates.masdar.quadriliteral(
   (is, when) => [

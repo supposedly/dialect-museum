@@ -1,4 +1,4 @@
-import underlying from '/languages/levantine/rule-packs/lebanese/underlying/underlying';
+import underlying from '/languages/levantine/rule-packs/north-levantine/underlying/underlying';
 
 const pl1 = underlying.pronoun.standalone.firstPerson.plural(is => [is.ni7na()]);
 
