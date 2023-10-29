@@ -8,6 +8,6 @@ export default ruleset(
   },
   operations => ({
     deemphasized: [operations.mock({features: {emphatic: false}})],
-    retain: c => [c],
+    retained: c => [c],
   }),
 );

@@ -23,7 +23,7 @@ export default ruleset(
     },
   },
   {
-    delete: [],
+    deleted: [],
     w: [letters.plain.consonant.w],
     y: [letters.plain.consonant.y],
   },

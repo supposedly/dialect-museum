@@ -1,6 +1,5 @@
 import ruleset from './ruleset';
 import {letters} from '/languages/levantine/alphabets/phonic';
-import {Merge} from '/lib/utils/typetools';
 
 export default ruleset(
   {
