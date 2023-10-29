@@ -121,7 +121,7 @@ export type CreateRuleset<
 > = <
   const ExtraSpec extends Specs<Source, Target, Dependencies>,
   const Targets extends IntoSpec<Source, Target, JoinSpecs<[Spec, ExtraSpec]>, Dependencies>,
-  const Constraints extends Record<string, Specs<Source, Target, Dependencies>> = Record<never, never>
+  const Constraints extends Record<string, Specs<Source, Target, Dependencies>>
 >(
   extraSpec: ExtraSpec,
   targets: Targets,
@@ -134,5 +134,5 @@ export type CreateRuleset<
     JoinSpecs<[Spec, ExtraSpec]>,
     Dependencies
   >,
-  Constraints
+  Record<string, Specs<Source, Target, Dependencies>> extends Constraints ? Record<never, never> : Constraints
 >;
