@@ -10,12 +10,12 @@ export default ruleset(
     // (this is why i need a feature tree :( should mock `fa3vl` instead)
     medial: {
       ftalC: [
-        // {tam: `past`} forces CaaC voweling
+        // {tam: `past`} forces CaaC voweling with the mock trick i'm using in form-1/hollow/past/pre-consonant
         operations.preject(letters.plain.consonant.t),
         operations.mock({features: {door: `fa3al`, tam: `past`, theme: `a`}}),
       ],
       ftilC: [
-        // {tam: `past`} forces CaaC voweling
+        // {tam: `past`} forces CaaC voweling with the mock trick i'm using in form-1/hollow/past/pre-consonant
         operations.preject(letters.plain.consonant.t),
         operations.mock({features: {door: `fa3al`, tam: `past`, theme: `i`}}),
       ],

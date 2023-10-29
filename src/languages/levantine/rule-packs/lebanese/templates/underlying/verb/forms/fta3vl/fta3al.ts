@@ -8,7 +8,7 @@ export default ruleset(
   },
   operations => ({
     default: [
-      operations.preject(letters.plain.consonant.n),
+      operations.preject(letters.plain.consonant.t),
       operations.mock({features: {door: `fa3al`}}),
     ],
   })

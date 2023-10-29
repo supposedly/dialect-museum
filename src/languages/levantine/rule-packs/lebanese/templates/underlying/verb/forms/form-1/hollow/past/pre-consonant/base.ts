@@ -5,9 +5,11 @@ import {separateContext} from '/lib/rules';
 export default ruleset(
   {
     spec: {},
-    env: {
-      target: {
-        env: ({before}, {consonant}) => before(consonant()),
+    env: {},
+    target: {},
+    was: {
+      templates: {
+        spec: ({verb}) => verb({door: {match: `any`, value: [`fa3al`, `fa3il`, `f3vl`]}}),
       },
     },
   },
@@ -15,7 +17,7 @@ export default ruleset(
     default: ({features: {root: $, theme}}) => {
       return [
         separateContext($[0], `affected`),
-        letters.plain.vowel[theme],
+        letters.plain.vowel[theme === `a` ? `i` : theme],
         separateContext($[2], `affected`),
       ];
     },

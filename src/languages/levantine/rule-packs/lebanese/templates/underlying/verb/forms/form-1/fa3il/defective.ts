@@ -32,6 +32,9 @@ export default ruleset(
         env: ({before}, {vowel}) => before(vowel()),
       },
     },
+    velarFinal: {
+      spec: ({verb}) => verb({root: {2: {location: `velum`}}}),
+    },
     wasMaziid: {
       was: {
         templates: {

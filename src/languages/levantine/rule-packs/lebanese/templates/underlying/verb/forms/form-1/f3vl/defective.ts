@@ -15,6 +15,7 @@ export default ruleset(
         separateContext(root[0], `affected`),
         separateContext(root[1], `affected`),
         letters.plain.vowel[(theme + theme) as Doubles<typeof theme>],
-      ];},
+      ];
+    },
   }
 );

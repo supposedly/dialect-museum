@@ -7,14 +7,14 @@ export default ruleset(
     env: {},
   },
   operations => ({
-    nfa3il: [
+    fta3il: [
       // re use of context below: see ../form-1/fa3il/affected/NOTE.md
-      operations.preject(letters.plain.consonant.n),
+      operations.preject(letters.plain.consonant.t),
       operations.mock({features: {door: `fa3il`}, context: {affected: true}}),
     ],
-    nfi3il: [
+    fti3il: [
       // re use of context below: see ../form-1/fa3il/affected/NOTE.md
-      operations.preject(letters.plain.consonant.n),
+      operations.preject(letters.plain.consonant.t),
       operations.mock({features: {door: `fa3il`}, context: {affected: false}}),
     ],
   })
