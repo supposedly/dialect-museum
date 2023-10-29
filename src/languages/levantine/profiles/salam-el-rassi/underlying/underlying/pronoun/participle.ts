@@ -1,4 +1,4 @@
-import underlying from '/languages/levantine/rule-packs/north-levantine/underlying/underlying';
+import underlying from 'src/languages/levantine/rule-packs/north-levantine/underlying/underlying';
 
 const fsg2 = underlying.pronoun.participle.fem.attached.sg2(
   is => [

@@ -1,8 +1,8 @@
 import {RulesetWrapper, Ruleset, Packed, UnfuncSpec, UnfuncTargets} from './helpers';
 import {Specs, SpecsNoMatch} from './environment';
-import {Alphabet, MembersWithContext, PartialMembersWithContext} from '/lib/alphabet';
-import {MatchAsType, MatchInstance, SafeMatchSchemaOf} from '/lib/utils/match';
-import {ArrayOr, Get, NestedArray, NestedRecord, NeverSayNever} from '/lib/utils/typetools';
+import {Alphabet, MembersWithContext, PartialMembersWithContext} from 'src/lib/alphabet';
+import {MatchAsType, MatchInstance, SafeMatchSchemaOf} from 'src/lib/utils/match';
+import {ArrayOr, Get, NestedArray, NestedRecord, NeverSayNever} from 'src/lib/utils/typetools';
 
 export type PackRulesets<
   in out Spec,

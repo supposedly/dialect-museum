@@ -1,6 +1,6 @@
-import {phonic, templates, underlying} from '/languages/levantine/alphabets';
-import {letters} from '/languages/levantine/alphabets/underlying';
-import {rulePack} from '/lib/rules';
+import {phonic, templates, underlying} from 'src/languages/levantine/alphabets';
+import {letters} from 'src/languages/levantine/alphabets/underlying';
+import {rulePack} from 'src/lib/rules';
 
 export default rulePack(
   underlying,

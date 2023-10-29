@@ -1,4 +1,4 @@
-import phonic from '/languages/levantine/rule-packs/north-levantine/phonic/phonic';
+import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
 const e = phonic.vowel.wordFinal.shift.ie(
   is => [

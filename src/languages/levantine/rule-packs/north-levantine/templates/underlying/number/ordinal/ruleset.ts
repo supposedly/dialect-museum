@@ -1,8 +1,8 @@
-import {templates, underlying} from '/languages/levantine/alphabets';
-import {rulePack} from '/lib/rules';
-import {letters} from '/languages/levantine/alphabets/underlying';
-import {Merge, ValuesOf} from '/lib/utils/typetools';
-import {ApplyMatchAsType} from '/lib/alphabet';
+import {templates, underlying} from 'src/languages/levantine/alphabets';
+import {rulePack} from 'src/lib/rules';
+import {letters} from 'src/languages/levantine/alphabets/underlying';
+import {Merge, ValuesOf} from 'src/lib/utils/typetools';
+import {ApplyMatchAsType} from 'src/lib/alphabet';
 
 type Argument = {
   type: `consonant`,

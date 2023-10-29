@@ -1,6 +1,6 @@
-import {rulePack} from '/lib/rules';
+import {rulePack} from 'src/lib/rules';
 
-import {underlying} from '/languages/levantine/alphabets';
+import {underlying} from 'src/languages/levantine/alphabets';
 
 export default rulePack(
   underlying,

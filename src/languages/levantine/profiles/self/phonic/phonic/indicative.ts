@@ -1,4 +1,4 @@
-import phonic from '/languages/levantine/rule-packs/north-levantine/phonic/phonic';
+import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
 const indicative = phonic.indicative.thirdPerson(
   is => [

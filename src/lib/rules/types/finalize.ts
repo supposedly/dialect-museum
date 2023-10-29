@@ -1,7 +1,7 @@
 import {Packed, RulesetWrapper, Ruleset, RulesetToFunc, ConstraintsToFuncs} from './helpers';
-import {Alphabet} from '/lib/alphabet';
-import {MatchInstance} from '/lib/utils/match';
-import {NestedArray, IsUnion, NeverSayNever} from '/lib/utils/typetools';
+import {Alphabet} from 'src/lib/alphabet';
+import {MatchInstance} from 'src/lib/utils/match';
+import {NestedArray, IsUnion, NeverSayNever} from 'src/lib/utils/typetools';
 
 export type RuleFunc<
   RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>,

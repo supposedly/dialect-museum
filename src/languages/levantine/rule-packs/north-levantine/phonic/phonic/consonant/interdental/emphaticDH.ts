@@ -1,6 +1,6 @@
 import ruleset from './ruleset';
-import {letters} from '/languages/levantine/alphabets/phonic';
-import {Merge} from '/lib/utils/typetools';
+import {letters} from 'src/languages/levantine/alphabets/phonic';
+import {Merge} from 'src/lib/utils/typetools';
 
 function emphatic<
   const C extends {features: {emphatic: boolean}}

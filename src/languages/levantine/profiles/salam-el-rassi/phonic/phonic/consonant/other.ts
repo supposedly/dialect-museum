@@ -1,4 +1,4 @@
-import phonic from '/languages/levantine/rule-packs/north-levantine/phonic/phonic';
+import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
 // need some way to represent is mina, 3ana (if he has 3ana)
 const h = phonic.consonant.encliticH(

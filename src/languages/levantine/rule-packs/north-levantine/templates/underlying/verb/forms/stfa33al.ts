@@ -1,7 +1,7 @@
 // do i need to add an 'affected A' option to this?
 
 import ruleset from '../ruleset';
-import {letters} from '/languages/levantine/alphabets/underlying';
+import {letters} from 'src/languages/levantine/alphabets/underlying';
 
 export default ruleset(
   {

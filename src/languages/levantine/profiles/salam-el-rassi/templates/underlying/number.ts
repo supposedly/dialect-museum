@@ -1,4 +1,4 @@
-import templates from '/languages/levantine/rule-packs/north-levantine/templates/underlying';
+import templates from 'src/languages/levantine/rule-packs/north-levantine/templates/underlying';
 
 const oneM = templates.number.cardinal.one.masculine(
   is => [

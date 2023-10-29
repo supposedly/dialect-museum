@@ -1,7 +1,7 @@
 // no hamze if after indicative prefix
 // maybe this should be after({target: {spec: {type: `consonant`}}}) tbh but idk
 import ruleset from './ruleset';
-import {letters} from '/languages/levantine/alphabets/underlying';
+import {letters} from 'src/languages/levantine/alphabets/underlying';
 
 export default ruleset(
   {

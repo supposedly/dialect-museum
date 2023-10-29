@@ -1,4 +1,4 @@
-import templates from '/languages/levantine/rule-packs/north-levantine/templates/underlying';
+import templates from 'src/languages/levantine/rule-packs/north-levantine/templates/underlying';
 
 const form1Imperative = templates.verb.form1.f3vl.imperative(
   (is, when) => [

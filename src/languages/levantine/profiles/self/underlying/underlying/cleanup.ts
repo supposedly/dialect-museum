@@ -1,4 +1,4 @@
-import underlying from '/languages/levantine/rule-packs/north-levantine/underlying/underlying';
+import underlying from 'src/languages/levantine/rule-packs/north-levantine/underlying/underlying';
 
 const aauu = underlying.cleanup.aauu(is => [
   is.uu(),

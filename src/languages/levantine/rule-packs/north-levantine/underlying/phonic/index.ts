@@ -1,4 +1,4 @@
-import {finalize} from '/lib/rules';
+import {finalize} from 'src/lib/rules';
 
 import phonic from './ruleset';
 

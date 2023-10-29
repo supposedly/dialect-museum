@@ -1,5 +1,5 @@
 import ruleset from'./ruleset';
-import {underlying} from '/languages/levantine/alphabets';
+import {underlying} from 'src/languages/levantine/alphabets';
 
 export default ruleset(
   {

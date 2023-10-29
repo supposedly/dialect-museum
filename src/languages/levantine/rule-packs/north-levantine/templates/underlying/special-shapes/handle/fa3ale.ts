@@ -1,6 +1,6 @@
 import ruleset from '../../ruleset';
-import {letters} from '/languages/levantine/alphabets/underlying';
-import {separateContext} from '/lib/rules';
+import {letters} from 'src/languages/levantine/alphabets/underlying';
+import {separateContext} from 'src/lib/rules';
 
 export default ruleset(
   {

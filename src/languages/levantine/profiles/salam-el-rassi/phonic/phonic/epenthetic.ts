@@ -1,4 +1,4 @@
-import phonic from '/languages/levantine/rule-packs/north-levantine/phonic/phonic';
+import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
 const epenthetic = phonic.cvcc.epenthetic(
   (is, when) => [

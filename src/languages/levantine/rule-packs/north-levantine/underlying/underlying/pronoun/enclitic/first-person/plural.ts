@@ -1,5 +1,5 @@
 import ruleset from './ruleset';
-import letters from '/languages/levantine/alphabets/underlying/letters.js';
+import letters from 'src/languages/levantine/alphabets/underlying/letters.js';
 
 export default ruleset(
   {

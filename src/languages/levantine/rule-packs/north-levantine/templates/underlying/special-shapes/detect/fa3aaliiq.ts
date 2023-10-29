@@ -1,7 +1,7 @@
 // XXX: *7awaalayn behaves this way too tbh
 import ruleset from './ruleset';
-import {withFlags} from '/languages/levantine/alphabets/templates/templates';
-import {letters, underlying} from '/languages/levantine/alphabets/underlying';
+import {withFlags} from 'src/languages/levantine/alphabets/templates/templates';
+import {letters, underlying} from 'src/languages/levantine/alphabets/underlying';
 
 export default ruleset(
   {

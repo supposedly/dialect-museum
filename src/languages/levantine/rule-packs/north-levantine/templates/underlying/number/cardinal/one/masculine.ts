@@ -1,7 +1,7 @@
 import {fixRoot} from '../../ordinal/ruleset';
 import ruleset from './ruleset';
-import {letters} from '/languages/levantine/alphabets/underlying';
-import {Merge} from '/lib/utils/typetools';
+import {letters} from 'src/languages/levantine/alphabets/underlying';
+import {Merge} from 'src/lib/utils/typetools';
 
 function emphatic<const Arg extends {features: object}>(arg: Arg): Merge<Arg, {features: {emphatic: true}}> {
   return {...arg, features: {...arg.features, emphatic: true}} as never;

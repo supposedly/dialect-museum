@@ -1,38 +1,20 @@
 <script setup lang="ts">
-import {ref, computed} from 'vue';
 
-import {Parser, Grammar} from 'nearley';
-import grammar from "./backend/parsing/grammar";
+import templatesUnderlying from 'src/languages/levantine/rule-packs/north-levantine/templates/underlying';
+import underlyingUnderlying from 'src/languages/levantine/rule-packs/north-levantine/underlying/underlying';
+import underlyingPhonic from 'src/languages/levantine/rule-packs/north-levantine/underlying/phonic';
+import phonicPhonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
-const compiledGrammar = Grammar.fromCompiled(grammar);
+console.log(`hello`);
 
-const input = ref(``);
-const result = computed(() => {
-  try {
-    const result = new Parser(compiledGrammar).feed(input.value).results[0];
-    return {
-      success: true,
-      value: result,
-      display: JSON.stringify(result, null, 2),
-    };
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error(e);
-    return {
-      success: false,
-      value: e,
-      display: (e as Error).toString(),
-    };
-  }
-});
+(window as any).abc = {
+  templatesUnderlying,
+  underlyingUnderlying,
+  underlyingPhonic,
+  phonicPhonic,
+};
+
 </script>
-
-<template>
-  <input type="text" v-model.trim="input" />
-  <pre :class="{ err: !result.success }">{{
-    result.display
-  }}</pre>
-</template>
 
 <style scoped>
 .err {

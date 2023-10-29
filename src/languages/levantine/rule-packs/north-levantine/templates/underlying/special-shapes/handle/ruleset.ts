@@ -1,4 +1,4 @@
-import {templates, underlying} from '/languages/levantine/alphabets';
-import {rulePack} from '/lib/rules';
+import {templates, underlying} from 'src/languages/levantine/alphabets';
+import {rulePack} from 'src/lib/rules';
 
 export default rulePack(templates, underlying, [], {spec: {type: `special`}, env: {}});

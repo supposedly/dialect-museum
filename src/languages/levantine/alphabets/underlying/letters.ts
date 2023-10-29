@@ -1,4 +1,4 @@
-import {generateLetters, letters} from '/lib/alphabet';
+import {generateLetters, letters} from 'src/lib/alphabet';
 import {underlying} from './underlying';
 
 export default letters(

@@ -1,4 +1,4 @@
-import {alphabet} from '/lib/alphabet';
+import {alphabet} from 'src/lib/alphabet';
 
 export default alphabet({
   name: `display`,

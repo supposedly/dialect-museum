@@ -1,4 +1,4 @@
-import {alphabet, normalizeToMatch} from '/lib/alphabet';
+import {alphabet, normalizeToMatch} from 'src/lib/alphabet';
 
 const protoConsonant = normalizeToMatch({
   voiced: {match: `type`, value: `boolean`},

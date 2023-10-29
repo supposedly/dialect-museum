@@ -1,6 +1,6 @@
 import ruleset from './ruleset';
-import {letters, phonic} from '/languages/levantine/alphabets/phonic';
-import {MatchAsType} from '/lib/utils/match';
+import {letters, phonic} from 'src/languages/levantine/alphabets/phonic';
+import {MatchAsType} from 'src/lib/utils/match';
 
 type Consonant = MatchAsType<typeof phonic[`types`][`consonant`]>;
 

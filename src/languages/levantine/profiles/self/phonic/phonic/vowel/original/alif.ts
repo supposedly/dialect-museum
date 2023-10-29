@@ -1,4 +1,4 @@
-import phonic from '/languages/levantine/rule-packs/north-levantine/phonic/phonic';
+import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
 // idea: maybe runtime doesn't transform mock nodes that are the same as the fixture that's their parent
 // thinking about aa -> aa and stuff... maybe also epenthetic null -> null... not sure
