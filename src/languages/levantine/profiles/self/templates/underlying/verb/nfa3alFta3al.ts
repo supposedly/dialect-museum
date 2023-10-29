@@ -23,3 +23,14 @@ const nfilC = templates.verb.nfa3vl.hollow(
     is.medial.nfilC(),
   ]
 );
+
+export default {
+  rules: [
+    fti3il,
+    ftilC,
+    nfi3il,
+    nfilC,
+  ],
+  orderings: [],
+  children: [],
+};

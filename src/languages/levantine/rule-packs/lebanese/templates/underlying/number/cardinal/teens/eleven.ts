@@ -13,7 +13,7 @@ export default ruleset(
       letters.plain.vowel.a,
       letters.plain.consonant.sh,
     ],
-    iida3sh: [
+    $iida3sh: [
       letters.plain.consonant.$,
       letters.plain.vowel.ii,
       letters.plain.consonant.d,
