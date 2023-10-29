@@ -12,7 +12,7 @@ const h = phonic.consonant.encliticH(
       is.deleted(),
     ),
     when.afterVocalic.negated(
-      is.deleted()
+      is.deleted(75),
     ),
   ]
 );
