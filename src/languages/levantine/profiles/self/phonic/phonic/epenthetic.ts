@@ -1,6 +1,6 @@
 import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
-const epenthetic = phonic.cvcc.epenthetic(
+export const epenthetic = phonic.cvcc.epenthetic(
   (is, when) => [
     when.n_T(
       is.null(50),  // idk if this actually works as a guard
@@ -17,11 +17,3 @@ const epenthetic = phonic.cvcc.epenthetic(
     is.e(90),
   ]
 );
-
-export default {
-  rules: [
-    epenthetic,
-  ],
-  orderings: [],
-  children: [],
-};

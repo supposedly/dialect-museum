@@ -1,6 +1,6 @@
 import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
-const morphology = phonic.stress.morphology(
+export const morphology = phonic.stress.morphology(
   (is, when) => [
     when.inFemConj(
       is.stressed(),
@@ -14,11 +14,3 @@ const morphology = phonic.stress.morphology(
     ),
   ]
 );
-
-export default {
-  rules: [
-    morphology,
-  ],
-  orderings: [],
-  children: [],
-};

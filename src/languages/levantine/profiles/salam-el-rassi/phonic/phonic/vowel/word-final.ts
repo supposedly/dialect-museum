@@ -1,22 +1,15 @@
 import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
-const e = phonic.vowel.wordFinal.shift.ie(
+export const e = phonic.vowel.wordFinal.shift.ie(
   is => [
-    is.e(),
+    is.e(50),
+    is.i(50),
   ]
 );
 
-const o = phonic.vowel.wordFinal.shift.uo(
+export const o = phonic.vowel.wordFinal.shift.uo(
   is => [
-    is.o(),
+    is.o(50),
+    is.u(50),
   ]
 );
-
-export default {
-  rules: [
-    e,
-    o,
-  ],
-  orderings: [],
-  children: [],
-};

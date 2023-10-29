@@ -1,6 +1,6 @@
 import underlying from 'src/languages/levantine/rule-packs/north-levantine/underlying/phonic';
 
-const fem = underlying.affix.f(
+export const fem = underlying.affix.f(
   (is, when) => [
     when.inConstruct(
       is.it(),
@@ -15,7 +15,7 @@ const fem = underlying.affix.f(
   ]
 );
 
-const indicative = underlying.affix.indicative(
+export const indicative = underlying.affix.indicative(
   (is, when) => [
     when.beforeNasalPrefix(
       is.m(),
@@ -24,7 +24,7 @@ const indicative = underlying.affix.indicative(
   ]
 );
 
-const dative = underlying.delimiter.dative.afterSuperheavy(
+export const dative = underlying.delimiter.dative.afterSuperheavy(
   (is, when) => [
     when.afterA(
       ...when.afterForm1(
@@ -38,26 +38,14 @@ const dative = underlying.delimiter.dative.afterSuperheavy(
   ]
 );
 
-const ayCleanup = underlying.vowel.diphthong.ay(
+export const ayCleanup = underlying.vowel.diphthong.ay(
   is => [
     is.vocalic(),
   ]
 );
 
-const awCleanup = underlying.vowel.diphthong.aw(
+export const awCleanup = underlying.vowel.diphthong.aw(
   is => [
     is.vocalic(),
   ]
 );
-
-export default {
-  rules: [
-    fem,
-    indicative,
-    dative,
-    ayCleanup,
-    awCleanup,
-  ],
-  orderings: [],
-  children: [],
-};

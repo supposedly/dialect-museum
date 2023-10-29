@@ -1,6 +1,6 @@
 import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
-const dh = phonic.consonant.interdental.dh(
+export const dh = phonic.consonant.interdental.dh(
   (is, when) => [
     when.affected(
       is.assibilated(), 
@@ -9,7 +9,7 @@ const dh = phonic.consonant.interdental.dh(
   ]
 );
 
-const DH = phonic.consonant.interdental.DH(
+export const DH = phonic.consonant.interdental.DH(
   (is, when) => [
     when.affected(
       is.assibilated(), 
@@ -18,7 +18,7 @@ const DH = phonic.consonant.interdental.DH(
   ]
 );
 
-const th = phonic.consonant.interdental.th(
+export const th = phonic.consonant.interdental.th(
   (is, when) => [
     when.affected(
       is.assibilated(), 
@@ -26,13 +26,3 @@ const th = phonic.consonant.interdental.th(
     is.stopped(),
   ]
 );
-
-export default {
-  rules: [
-    dh,
-    DH,
-    th,
-  ],
-  orderings: [],
-  children: [],
-};

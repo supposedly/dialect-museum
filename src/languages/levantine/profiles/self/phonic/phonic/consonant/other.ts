@@ -1,12 +1,12 @@
 import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
-const plainR = phonic.consonant.r(
+export const plainR = phonic.consonant.r(
   is => [
     is.deemphasized(),
   ]
 );
 
-const h = phonic.consonant.encliticH(
+export const h = phonic.consonant.encliticH(
   (is, when) => [
     when.is3ms(
       is.deleted(),
@@ -17,18 +17,8 @@ const h = phonic.consonant.encliticH(
   ]
 );
 
-const q = phonic.consonant.q(
+export const q = phonic.consonant.q(
   is => [
     is.debuccalized(),
   ]
 );
-
-export default {
-  rules: [
-    plainR,
-    h,
-    q,
-  ],
-  orderings: [],
-  children: [],
-};

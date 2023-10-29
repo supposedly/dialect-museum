@@ -3,7 +3,7 @@ import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/ph
 // idea: maybe runtime doesn't transform mock nodes that are the same as the fixture that's their parent
 // thinking about aa -> aa and stuff... maybe also epenthetic null -> null... not sure
 
-const alif = phonic.vowel.original.alif(
+export const alif = phonic.vowel.original.alif(
   (is, when) => [
     when.inDisyllable(
       ...when.beforeBackConsonant(
@@ -42,11 +42,3 @@ const alif = phonic.vowel.original.alif(
     is.ee(),
   ]
 );
-
-export default {
-  rules: [
-    alif,
-  ],
-  orderings: [],
-  children: [],
-};

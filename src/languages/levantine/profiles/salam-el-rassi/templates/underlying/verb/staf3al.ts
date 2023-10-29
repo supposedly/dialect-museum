@@ -1,6 +1,6 @@
 import templates from 'src/languages/levantine/rule-packs/north-levantine/templates/underlying';
 
-const stafaxc = templates.verb.staf3al.prefix.hollowOrGeminate(
+export const stafaxc = templates.verb.staf3al.prefix.hollowOrGeminate(
   (is, when) => [
     when.affected(
       // no idea about his dialect here
@@ -11,18 +11,9 @@ const stafaxc = templates.verb.staf3al.prefix.hollowOrGeminate(
   ]
 );
 
-const stfilC = templates.verb.staf3al.hollow(
+export const stfilC = templates.verb.staf3al.hollow(
   is => [
     // don't know this about his dialect
     is.medial.stfilC(),
   ]
 );
-
-export default {
-  rules: [
-    stafaxc,
-    stfilC,
-  ],
-  orderings: [],
-  children: [],
-};

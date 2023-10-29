@@ -1,10 +1,12 @@
 import underlying from 'src/languages/levantine/rule-packs/north-levantine/underlying/underlying';
 
-const sg1Prefix = underlying.pronoun.prefix.firstPerson.singular.vowel(
-  is => [is.i()],
+export const sg1Prefix = underlying.pronoun.prefix.firstPerson.singular.vowel(
+  is => [
+    is.i(),
+  ],
 );
 
-const fsg3Suffix = underlying.pronoun.suffix.past.thirdPerson.femSingular(
+export const fsg3Suffix = underlying.pronoun.suffix.past.thirdPerson.femSingular(
   (is, when) => [
     when.inFi3il(
       is.it(),
@@ -16,7 +18,7 @@ const fsg3Suffix = underlying.pronoun.suffix.past.thirdPerson.femSingular(
   ],
 );
 
-const fsg2Enclitic = underlying.pronoun.enclitic.sg2.feminine(
+export const fsg2Enclitic = underlying.pronoun.enclitic.sg2.feminine(
   (is, when) => [
     when.afterVowel(
       is.ki(),
@@ -25,7 +27,7 @@ const fsg2Enclitic = underlying.pronoun.enclitic.sg2.feminine(
   ]
 );
 
-const msg2Enclitic = underlying.pronoun.enclitic.sg2.masculine(
+export const msg2Enclitic = underlying.pronoun.enclitic.sg2.masculine(
   (is, when) => [
     when.afterVowel(
       is.k(),
@@ -34,7 +36,7 @@ const msg2Enclitic = underlying.pronoun.enclitic.sg2.masculine(
   ]
 );
 
-const msg3Enclitic = underlying.pronoun.enclitic.thirdPerson.msg(
+export const msg3Enclitic = underlying.pronoun.enclitic.thirdPerson.msg(
   (is, when) => [
     when.afterVowel(
       is.h(),
@@ -43,7 +45,7 @@ const msg3Enclitic = underlying.pronoun.enclitic.thirdPerson.msg(
   ]
 );
 
-const pluralEnding = underlying.pronoun.enclitic.plural(
+export const pluralEnding = underlying.pronoun.enclitic.plural(
   is => [
     is.un(),
   ]

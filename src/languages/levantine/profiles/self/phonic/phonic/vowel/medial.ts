@@ -1,17 +1,18 @@
 import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
-const preFinalI = phonic.vowel.medial.i(
+export const preFinalI = phonic.vowel.medial.i(
   (is, when) => [
     when.unstressedOpen(
       is.deleted(),
     ),
+    // TODO: affected i should be e too
     when.stressed(
       is.e(),
     ),
   ]
 );
 
-const u = phonic.vowel.medial.u(
+export const u = phonic.vowel.medial.u(
   (is, when) => [
     when.unstressedOpen.negated(
       is.o(),
@@ -19,7 +20,7 @@ const u = phonic.vowel.medial.u(
   ]
 );
 
-const o = phonic.vowel.medial.o(
+export const o = phonic.vowel.medial.o(
   (is, when) => [
     when.inFinalSyllable.negated(
       is.e(),
@@ -27,32 +28,20 @@ const o = phonic.vowel.medial.o(
   ]
 );
 
-const e = phonic.vowel.medial.e(
+export const e = phonic.vowel.medial.e(
   (is, when) => [
     when.nextToEmphatic(
-      is.o()
+      is.o(),
     ),
   ]
 );
 
 // first time I'll need to use ordering for a rule I myself wrote!!
 // but it still doesn't need to go in `orderings` since they're all in the same file...
-const finalSyllableI = phonic.vowel.medial.i(
+export const finalSyllableI = phonic.vowel.medial.i(
   (is, when) => [
     when.inFinalSyllable(
-      is.e()
+      is.e(),
     ),
   ]
 );
-
-export default {
-  rules: [
-    preFinalI,
-    u,
-    o,
-    e,
-    finalSyllableI,
-  ],
-  orderings: [],
-  children: [],
-};

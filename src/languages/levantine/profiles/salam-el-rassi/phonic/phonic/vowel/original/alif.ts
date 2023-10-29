@@ -4,7 +4,7 @@ import phonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/ph
 // thinking about aa -> aa and stuff... maybe also epenthetic null -> null... not sure
 
 // not sure if this is all the same for him or not
-const alif = phonic.vowel.original.alif(
+export const alif = phonic.vowel.original.alif(
   (is, when) => [
     when.inDisyllable(
       ...when.beforeBackConsonant(
@@ -43,11 +43,3 @@ const alif = phonic.vowel.original.alif(
     is.ee(),
   ]
 );
-
-export default {
-  rules: [
-    alif,
-  ],
-  orderings: [],
-  children: [],
-};

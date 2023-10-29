@@ -1,14 +1,14 @@
 import underlying from 'src/languages/levantine/rule-packs/north-levantine/underlying/underlying';
 
-const aauu = underlying.cleanup.aauu(is => [
+export const aauu = underlying.cleanup.aauu(is => [
   is.uu(),
 ]);
 
-const aaii = underlying.cleanup.aaii(is => [
+export const aaii = underlying.cleanup.aaii(is => [
   is.ii(),
 ]);
 
-const contraction = underlying.contractableLongVowel(
+export const contraction = underlying.contractableLongVowel(
   (is, when) => [
     when.beforeDative(
       is.contracted(),
@@ -19,7 +19,7 @@ const contraction = underlying.contractableLongVowel(
   ]
 );
 
-const r = underlying.r(
+export const r = underlying.r(
   (is, when) => [
     when.directlyAfterShortI(
       is.emphatic(),

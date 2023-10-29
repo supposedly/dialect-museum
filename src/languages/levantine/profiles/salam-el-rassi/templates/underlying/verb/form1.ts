@@ -1,6 +1,6 @@
 import templates from 'src/languages/levantine/rule-packs/north-levantine/templates/underlying';
 
-const form1Imperative = templates.verb.form1.f3vl.imperative(
+export const form1Imperative = templates.verb.form1.f3vl.imperative(
   (is, when) => [
     when.defective(
       is.prefix.$i(),
@@ -15,7 +15,7 @@ const form1Imperative = templates.verb.form1.f3vl.imperative(
   ]
 );
 
-const fi3i = templates.verb.form1.fa3il.defective(
+export const fi3i = templates.verb.form1.fa3il.defective(
   (is, when) => [
     when.beforeVowel(
       ...when.wasMaziid(
@@ -26,12 +26,3 @@ const fi3i = templates.verb.form1.fa3il.defective(
     is.ending.y(),
   ]
 );
-
-export default {
-  rules: [
-    form1Imperative,
-    fi3i,
-  ],
-  orderings: [],
-  children: [],
-};

@@ -1,6 +1,6 @@
 import templates from 'src/languages/levantine/rule-packs/north-levantine/templates/underlying';
 
-const quadriliteral = templates.masdar.quadriliteral(
+export const quadriliteral = templates.masdar.quadriliteral(
   (is, when) => [
     when.tfa3la2(
       ...when.affected(
@@ -11,7 +11,7 @@ const quadriliteral = templates.masdar.quadriliteral(
   ]
 );
 
-const tif3iil = templates.masdar.fa33al.other(
+export const tif3iil = templates.masdar.fa33al.other(
   (is, when) => [
     when.affected(
       is.taf3iil(),
@@ -20,12 +20,3 @@ const tif3iil = templates.masdar.fa33al.other(
     is.tif3iil(),
   ]
 );
-
-export default {
-  rules: [
-    quadriliteral,
-    tif3iil,
-  ],
-  orderings: [],
-  children: [],
-};
