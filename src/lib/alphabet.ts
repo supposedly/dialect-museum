@@ -128,13 +128,11 @@ function objectFromPath<
   const Path extends ReadonlyArray<string>,
   const Leaf,
 >(path: Path, leaf: Leaf): ObjectFromPath<Path, Leaf> {
-  const ret = {} as ObjectFromPath<Path, Leaf>;
-  let current: unknown = ret;
-  for (const key of path) {
-    current = {[key]: leaf};
-    current = (current as Record<typeof key, unknown>)[key];
+  let current = leaf;
+  for (let i = path.length; i >= 0; i--) {
+    current = {[path[i]]: current} as never;
   }
-  return ret;
+  return current as never;
 }
 
 export function qualifiedPathsOf<

@@ -5,6 +5,10 @@ import underlyingUnderlying from 'src/languages/levantine/rule-packs/north-levan
 import underlyingPhonic from 'src/languages/levantine/rule-packs/north-levantine/underlying/phonic';
 import phonicPhonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
 
+import * as selfProfile from 'src/languages/levantine/profiles/self';
+import * as rassiProfile from 'src/languages/levantine/profiles/salam-el-rassi';
+
+
 console.log(`hello`);
 
 (window as any).abc = {
@@ -12,6 +16,11 @@ console.log(`hello`);
   underlyingUnderlying,
   underlyingPhonic,
   phonicPhonic,
+};
+
+(window as any).profile = {
+  self: selfProfile,
+  rassi: rassiProfile,
 };
 
 
