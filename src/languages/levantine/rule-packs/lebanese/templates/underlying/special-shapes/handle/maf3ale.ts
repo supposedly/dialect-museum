@@ -16,11 +16,12 @@ export default ruleset(
       letters.plain.vowel.a,
       separateContext($[2], `affected`),
     ],
-    maf3le: ({features: {root: $}}) => [
+    maf3ile: ({features: {root: $}}) => [
       letters.plain.consonant.m,
       letters.plain.vowel.a,
       separateContext($[0], `affected`),
       separateContext($[1], `affected`),
+      letters.plain.vowel.i,
       separateContext($[2], `affected`),
     ],
   },

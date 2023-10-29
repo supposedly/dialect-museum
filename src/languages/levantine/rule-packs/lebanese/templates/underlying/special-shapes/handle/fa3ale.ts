@@ -28,5 +28,10 @@ export default ruleset(
         context: {affected: true},
       },
     },
+    inConstruct: {
+      env: ({before}, {delimiter, pronoun}) => (
+        before(delimiter(), pronoun())
+      ),
+    },
   }
 );
