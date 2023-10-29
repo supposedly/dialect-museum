@@ -20,6 +20,7 @@ export default ruleset(
       ),
     ],
     // this probably won't actually be used but as it stands it thwarts default
+    // (it's for bqaa3i tnaaaayn dialects)
     consonantal: capture => [operations.mock(capture)],
   })
 );

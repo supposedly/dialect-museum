@@ -33,5 +33,8 @@ export default ruleset(
         before(delimiter(), pronoun())
       ),
     },
+    beforePronoun: {
+      env: ({before}, {pronoun, delimiter}) => before(pronoun.seek({}, {}, delimiter())),
+    },
   }
 );
