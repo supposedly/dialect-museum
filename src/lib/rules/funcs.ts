@@ -232,24 +232,22 @@ export function operations<
 function intoToFunc<
   Into extends object,
   Spec,
-  Source extends Alphabet,
-  Target extends Alphabet,
-  Dependencies extends ReadonlyArray<Alphabet>
 >(
   into: Into,
   spec: Spec,
-  source: Source,
-  target: Target,
-  dependencies: Dependencies
+  // source: Source,
+  // target: Target,
+  // dependencies: Dependencies
 ): IntoToFunc<Into, Spec> {
   if (Array.isArray(into)) {
     // XXX: what to do with odds :(
-    return ((odds = 100) => ({for: unfuncSpec(spec, source, target, dependencies), into})) as never;
+    return ((odds = 100) => ({for: spec, into})) as never;
   }
   return Object.fromEntries(
     Object.entries(into).map(([k, v]) => [
       k,
-      intoToFunc(v, spec, source, target, dependencies),
+      // shallow copy to make it a different object (= different reference)
+      intoToFunc(v, {...spec}),
     ])
   ) as never;
 }
@@ -277,10 +275,12 @@ export function processPack<
               ruleName,
               intoToFunc(
                 rule.into,
-                {match: `all`, value: [rule.for, pack.specs]},
-                pack.source,
-                pack.target,
-                pack.dependencies,
+                unfuncSpec(
+                  {match: `all`, value: [rule.for, pack.specs]},
+                  pack.source,
+                  pack.target,
+                  pack.dependencies,
+                ),
               ),
             ])),
             // when:
@@ -375,10 +375,12 @@ export function extractDefaults<
                   ruleName,
                   intoToFunc(
                     rule.into,
-                    {match: `all`, value: [rule.for, pack.specs]},
-                    pack.source,
-                    pack.target,
-                    pack.dependencies,
+                    unfuncSpec(
+                      {match: `all`, value: [rule.for, pack.specs]},
+                      pack.source,
+                      pack.target,
+                      pack.dependencies,
+                    ),
                   ),
                 ])),
           ];
