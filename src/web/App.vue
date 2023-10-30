@@ -1,22 +1,14 @@
 <script setup lang="ts">
 
-import templatesUnderlying from 'src/languages/levantine/rule-packs/north-levantine/templates/underlying';
-import underlyingUnderlying from 'src/languages/levantine/rule-packs/north-levantine/underlying/underlying';
-import underlyingPhonic from 'src/languages/levantine/rule-packs/north-levantine/underlying/phonic';
-import phonicPhonic from 'src/languages/levantine/rule-packs/north-levantine/phonic/phonic';
+import rulePacks from 'src/languages/levantine/rule-packs/north-levantine/';
 
 import * as selfProfile from 'src/languages/levantine/profiles/self';
 import * as rassiProfile from 'src/languages/levantine/profiles/salam-el-rassi';
 
+console.log(Object.values(rulePacks).forEach(v => Object.values(v.rulePacks).forEach(v => Object.keys(v))));
 
-console.log(`hello`);
 
-(window as any).abc = {
-  templatesUnderlying,
-  underlyingUnderlying,
-  underlyingPhonic,
-  phonicPhonic,
-};
+(window as any).abc = rulePacks;
 
 (window as any).profile = {
   self: selfProfile,

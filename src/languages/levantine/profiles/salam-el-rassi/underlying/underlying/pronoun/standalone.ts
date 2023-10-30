@@ -1,5 +1,4 @@
 import underlying from 'src/languages/levantine/rule-packs/north-levantine/underlying/underlying';
-import {MatchAsType} from 'src/lib/utils/match';
 
 export const pl1 = underlying.pronoun.standalone.firstPerson.plural(is => [is.ni7na()]);
 
