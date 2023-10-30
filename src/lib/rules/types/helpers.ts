@@ -2,6 +2,7 @@ import {Specs} from './environment';
 import {Alphabet} from 'src/lib/alphabet';
 import {MatchInstance} from 'src/lib/utils/match';
 import {Get, NestedRecord, NestedRecordOr} from 'src/lib/utils/typetools';
+import oddsWrapper from '../odds';
 
 export type UnfuncTargets<Targets> = Targets extends (...args: never) => unknown
   ? ReturnType<Targets>
@@ -74,7 +75,11 @@ export type IntoToFunc<
   Into,
   Spec
 > = Into extends ReadonlyArray<unknown>
-  ? (odds?: number) => ({for: UnfuncSpec<Spec>, into: Into})
+  ? (odds?: number | ReturnType<ReturnType<typeof oddsWrapper>>) => {
+    for: UnfuncSpec<Spec>
+    into: Into
+    odds: ReturnType<ReturnType<typeof oddsWrapper>>
+  }
   : Into extends Record<string, unknown> ? {[K in keyof Into]: IntoToFunc<Into[K], Spec>}
   : never;
 

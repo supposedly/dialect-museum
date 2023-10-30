@@ -1,6 +1,6 @@
 import {Alphabet, qualifiedPathsOf} from '../alphabet';
 import {MatchSchema, matchers} from '../utils/match';
-import {NestedRecordOr} from '../utils/typetools';
+import odds from './odds';
 import {AddSpec, ContextFuncSeek, ContextFuncWithoutSeek, Specs, SpecsFuncs, TypesFunc, TypesFuncSeek, TypesFuncWithoutSeek, TypesFuncs} from './types/environment';
 import {ExtractDefaults, ProcessPack} from './types/finalize';
 import {SpecOperations} from './types/func';
@@ -255,12 +255,13 @@ export function operations<
   };
 }
 
-function intoToFunc<
+function _intoToFunc<
   Into extends object,
   Spec,
 >(
   into: Into,
   spec: Spec,
+  oddsWrapper: ReturnType<typeof odds>
   // source: Source,
   // target: Target,
   // dependencies: Dependencies
@@ -269,15 +270,26 @@ function intoToFunc<
   // (maybe it gets unfuncked at some point)
   if (Array.isArray(into) || into instanceof Function) {
     // XXX: what to do with odds :(
-    return ((odds = 100) => ({for: spec, into})) as never;
+    return ((odds = 100) => ({
+      for: spec,
+      into,
+      odds: typeof odds === `number` ? oddsWrapper(odds) : odds,
+    })) as never;
   }
   return Object.fromEntries(
     Object.entries(into).map(([k, v]) => [
       k,
       // shallow copy to make it a different object (= different reference)
-      intoToFunc(v, {...spec}),
+      _intoToFunc(v, {...spec}, odds()),
     ])
   ) as never;
+}
+
+function intoToFunc<
+  Into extends object,
+  Spec,
+>(into: Into, spec: Spec): IntoToFunc<Into, Spec> {
+  return _intoToFunc(into, spec, odds());
 }
 
 export function processPack<
@@ -365,7 +377,8 @@ export function processPack<
 }
 
 function onlyOneTarget(into: object): boolean {
-  if (Array.isArray(into)) {
+  // ditto question from _intoToFunc
+  if (Array.isArray(into) || into instanceof Function) {
     return true;
   }
   if (Object.keys(into).length !== 1) {
@@ -391,8 +404,9 @@ export function extractDefaults<
 ): ExtractDefaults<RulePack> {
   return Object.fromEntries(
     Object.entries(pack.children)
+      .filter(([_, v]) => `children` in v || !v.constraints || Object.keys(v.constraints).length === 0)
       .map(([k, v]) => {
-        if (`rules` in v) {
+        if (`rules` in v){// && (!v.constraints || Object.keys(v.constraints).length === 0)) {
           const defaultToFunc = Object.fromEntries(
             Object.entries(v.rules)
               .filter(([_, rule]) => onlyOneTarget(rule.into))

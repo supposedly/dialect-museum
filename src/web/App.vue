@@ -5,8 +5,7 @@ import rulePacks from 'src/languages/levantine/rule-packs/north-levantine/';
 import * as selfProfile from 'src/languages/levantine/profiles/self';
 import * as rassiProfile from 'src/languages/levantine/profiles/salam-el-rassi';
 
-console.log(Object.values(rulePacks).forEach(v => Object.values(v.rulePacks).forEach(v => Object.keys(v))));
-
+Object.values(rulePacks).forEach(v => Object.values(v.rulePacks).forEach(v => console.log((v))));
 
 (window as any).abc = rulePacks;
 

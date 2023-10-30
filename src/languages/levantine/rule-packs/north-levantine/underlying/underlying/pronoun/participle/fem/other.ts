@@ -6,6 +6,6 @@ export default ruleset(
     env: {},
   },
   operations => ({
-    default: operations.mock(({affix}) => affix(`f`)),
+    default: [operations.mock(({affix}) => affix(`f`))],
   })
 );
