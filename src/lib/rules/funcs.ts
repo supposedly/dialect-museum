@@ -330,17 +330,19 @@ export function processPack<
             Object.fromEntries(Object.entries(v.constraints).map(([constraintName, constraint]) => [
               constraintName,
               Object.assign(
-                (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
+                (...args: ReadonlyArray<Record<`for` | `into` | `odds` | `source`, unknown>>) => args.map(
                   arg => ({
                     for: {match: `all`, value: [
                       arg.for,
                       unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
                     ]},
                     into: arg.into,
+                    odds: arg.odds,
+                    source: arg.source,
                   })
                 ),
                 {
-                  negated: (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
+                  negated: (...args: ReadonlyArray<Record<`for` | `into` | `odds` | `source`, unknown>>) => args.map(
                     arg => ({
                       for: {match: `custom`, value: (obj: unknown) => !matchers.all(
                         [
@@ -349,6 +351,9 @@ export function processPack<
                         ],
                         obj
                       )},
+                      into: arg.into,
+                      odds: arg.odds,
+                      source: arg.source,
                     })
                   ),
                 }
@@ -357,13 +362,15 @@ export function processPack<
             {
               custom: (
                 spec: Specs<RulePack[`source`], RulePack[`target`], RulePack[`dependencies`]>,
-                ...args: ReadonlyArray<{for: unknown, into: unknown}>
+                ...args: ReadonlyArray<Record<`for` | `into` | `odds` | `source`, unknown>>
               ) => args.map(arg => ({
                 for: {match: `all`, value: [
                   arg.for,
                   unfuncSpec(spec, pack.source, pack.target, pack.dependencies),
                 ]},
                 into: arg.into,
+                odds: arg.odds,
+                source: arg.source,
               })),
             }
           )
