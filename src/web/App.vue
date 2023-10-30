@@ -4,6 +4,7 @@ import rulePacks from 'src/languages/levantine/rule-packs/north-levantine/';
 
 import * as selfProfile from 'src/languages/levantine/profiles/self';
 import * as rassiProfile from 'src/languages/levantine/profiles/salam-el-rassi';
+import * as debug from 'src/languages/levantine/profiles/debug';
 
 Object.values(rulePacks).forEach(v => Object.values(v.rulePacks).forEach(v => console.log((v))));
 
@@ -29,27 +30,26 @@ function processDefaults(defaults: object, array: Array<object> = []): ReadonlyA
 
 function mapToSource(profile: object, defaults: object) {
   const map = new Map<object, Array<{rule: object, after: object | null}>>();
-  let lastRule: object | null = null;
+  let lastRule: {source: unknown} | null = null;
   flattenProfile(profile).forEach(rule => {
     if (!map.has(rule.source)) {
       map.set(rule.source, [{rule, after: null}]);
     } else {
       map.get(rule.source)!.push({
         rule,
-        after: lastRule,
+        after: lastRule?.source === rule.source ? null : lastRule,
       });
     }
     lastRule = rule;
   });
   lastRule = null;
-  console.log(defaults, processDefaults(defaults));
   processDefaults(defaults).forEach(rule => {
     if (!map.has(rule.source)) {
       map.set(rule.source, [{rule, after: null}]);
     } else {
       map.get(rule.source)!.push({
         rule,
-        after: lastRule,
+        after: lastRule?.source === rule.source ? null : lastRule,
       });
     }
     lastRule = rule;
@@ -66,7 +66,7 @@ function orderRules(
   if (sources instanceof Function && `source` in sources) {
     const rules = sourceMap.get(sources.source as object);
     if (rules === undefined) {
-      array.push({UHOH: sources.source});
+      array.push(undefined!);
     } else {
       rules.forEach(rule => {
         if (rule.after === null) {
@@ -80,11 +80,14 @@ function orderRules(
         }
         if (delayQueue.has(rule.rule)) {
           array.push(...delayQueue.get(rule.rule)!);
+          delayQueue.delete(rule.rule);
         }
       });
     }
   } else {
-    Object.entries(sources).filter(([k]) => k !== `defaults`).forEach(([_, r]) => orderRules(r, sourceMap, array));
+    Object.entries(sources)
+      .filter(([k]) => k !== `defaults`)
+      .forEach(([_, r]) => orderRules(r, sourceMap, array, delayQueue));
   }
   return array;
 }
@@ -93,7 +96,8 @@ function orderRules(
 
 // console.log(flattenProfile(selfProfile));
 
-console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults)));
+// console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults)));
+console.log(orderRules(rulePacks.phonic.rulePacks.phonic, mapToSource(debug, rulePacks.phonic.rulePacks.phonic.defaults)));
 
 (window as any).abc = rulePacks;
 
