@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "npm run g && npx vite build",
-    "dev": "npm run g && npx vite",
+    "build": "npx vite build",
+    "dev": "npx vite",
     "bundle": "browserify test.js -o test.bundle.js",
     "g": "node ./nearleyc src/backend/conversion/parsing/grammar.ne -s .ts",
-    "commit": "npm run g && git add src/backend/conversion/parsing/grammar.ts && git commit"
+    "commit": "git add src/backend/conversion/parsing/grammar.ts && git commit"
   },
   "dependencies": {
     "@popperjs/core": "^2.10.1",
