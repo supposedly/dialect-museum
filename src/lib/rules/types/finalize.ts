@@ -24,7 +24,7 @@ export type ProcessPack<
   RulePack extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
 > = {
   [K in keyof RulePack[`children`]]: RulePack[`children`][K] extends RulesetWrapper<infer Targets, infer Constraints>
-    ? <const R extends NestedArray<Ruleset>>(fn: RuleFunc<RulePack, RulesetWrapper<
+    ? {source: object} & (<const R extends NestedArray<Ruleset>>(fn: RuleFunc<RulePack, RulesetWrapper<
       {
         [T in keyof Targets & string]: {
           // name: Targets[T][`name`]
@@ -36,7 +36,7 @@ export type ProcessPack<
         }
       },
       Constraints
-    >, R>) => R
+    >, R>) => R)
     : RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>
       ? ProcessPack<RulePack[`children`][K]>
     : never

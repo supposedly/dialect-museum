@@ -261,6 +261,7 @@ function _intoToFunc<
 >(
   into: Into,
   spec: Spec,
+  source: object,
   oddsWrapper: ReturnType<typeof odds>
   // source: Source,
   // target: Target,
@@ -274,13 +275,14 @@ function _intoToFunc<
       for: spec,
       into,
       odds: typeof odds === `number` ? oddsWrapper(odds) : odds,
+      source,
     })) as never;
   }
   return Object.fromEntries(
     Object.entries(into).map(([k, v]) => [
       k,
       // shallow copy to make it a different object (= different reference)
-      _intoToFunc(v, {...spec}, odds()),
+      _intoToFunc(v, {...spec}, source, odds()),
     ])
   ) as never;
 }
@@ -288,8 +290,8 @@ function _intoToFunc<
 function intoToFunc<
   Into extends object,
   Spec,
->(into: Into, spec: Spec): IntoToFunc<Into, Spec> {
-  return _intoToFunc(into, spec, odds());
+>(into: Into, spec: Spec, source: object): IntoToFunc<Into, Spec> {
+  return _intoToFunc(into, spec, source, odds());
 }
 
 export function processPack<
@@ -307,67 +309,67 @@ export function processPack<
 >(pack: RulePack): ProcessPack<RulePack> {
   return Object.fromEntries(Object.entries(pack.children).map(([k, v]) => {
     if (`rules` in v) {
-      return [k,
-        (fn: (...args: ReadonlyArray<unknown>) => unknown) => (
-          fn(
-            // is:
-            Object.fromEntries(Object.entries(v.rules).map(([ruleName, rule]) => [
-              ruleName,
-              intoToFunc(
-                rule.into,
-                unfuncSpec(
-                  {match: `all`, value: [rule.for, pack.specs]},
-                  pack.source,
-                  pack.target,
-                  pack.dependencies,
-                ),
+      const ruleFunc = function ruleFunc(fn: (...args: ReadonlyArray<unknown>) => unknown) {
+        return fn(
+          // is:
+          Object.fromEntries(Object.entries(v.rules).map(([ruleName, rule]) => [
+            ruleName,
+            intoToFunc(
+              rule.into,
+              unfuncSpec(
+                {match: `all`, value: [rule.for, pack.specs]},
+                pack.source,
+                pack.target,
+                pack.dependencies,
               ),
-            ])),
-            // when:
-            v.constraints && Object.assign(
-              Object.fromEntries(Object.entries(v.constraints).map(([constraintName, constraint]) => [
-                constraintName,
-                Object.assign(
-                  (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
+              v
+            ),
+          ])),
+          // when:
+          v.constraints && Object.assign(
+            Object.fromEntries(Object.entries(v.constraints).map(([constraintName, constraint]) => [
+              constraintName,
+              Object.assign(
+                (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
+                  arg => ({
+                    for: {match: `all`, value: [
+                      arg.for,
+                      unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
+                    ]},
+                    into: arg.into,
+                  })
+                ),
+                {
+                  negated: (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
                     arg => ({
-                      for: {match: `all`, value: [
-                        arg.for,
-                        unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
-                      ]},
-                      into: arg.into,
+                      for: {match: `custom`, value: (obj: unknown) => !matchers.all(
+                        [
+                          arg.for as MatchSchema,
+                          unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
+                        ],
+                        obj
+                      )},
                     })
                   ),
-                  {
-                    negated: (...args: ReadonlyArray<{for: unknown, into: unknown}>) => args.map(
-                      arg => ({
-                        for: {match: `custom`, value: (obj: unknown) => !matchers.all(
-                          [
-                            arg.for as MatchSchema,
-                            unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
-                          ],
-                          obj
-                        )},
-                      })
-                    ),
-                  }
-                ),
-              ])),
-              {
-                custom: (
-                  spec: Specs<RulePack[`source`], RulePack[`target`], RulePack[`dependencies`]>,
-                  ...args: ReadonlyArray<{for: unknown, into: unknown}>
-                ) => args.map(arg => ({
-                  for: {match: `all`, value: [
-                    arg.for,
-                    unfuncSpec(spec, pack.source, pack.target, pack.dependencies),
-                  ]},
-                  into: arg.into,
-                })),
-              }
-            )
+                }
+              ),
+            ])),
+            {
+              custom: (
+                spec: Specs<RulePack[`source`], RulePack[`target`], RulePack[`dependencies`]>,
+                ...args: ReadonlyArray<{for: unknown, into: unknown}>
+              ) => args.map(arg => ({
+                for: {match: `all`, value: [
+                  arg.for,
+                  unfuncSpec(spec, pack.source, pack.target, pack.dependencies),
+                ]},
+                into: arg.into,
+              })),
+            }
           )
-        ),
-      ];
+        );
+      };
+      return [k, Object.assign(ruleFunc, {source: v})];
     } else {
       // `v as never` was erroring on return
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -420,6 +422,7 @@ export function extractDefaults<
                     pack.target,
                     pack.dependencies,
                   ),
+                  v
                 ),
               ])
           );
