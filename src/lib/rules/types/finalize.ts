@@ -84,7 +84,7 @@ export type ExtractDefaults<RulePack extends Packed<Record<string, unknown>, unk
       RulePack[`children`][K] extends RulesetWrapper<infer Targets, infer Constraints>
         ? keyof Constraints extends never
           ? IsUnion<keyof Targets> extends true
-            ? DefaultsToFunc<Targets, RulePack[`specs`]>
+            ? never //DefaultsToFunc<Targets, RulePack[`specs`]>
             : DefaultsToFunc<Targets, RulePack[`specs`]>[keyof Targets]
           : never
         : RulePack[`children`][K] extends Packed<Record<string, unknown>, unknown, unknown, Alphabet, Alphabet, ReadonlyArray<Alphabet>>

@@ -4,7 +4,7 @@ import rulePacks from 'src/languages/levantine/rule-packs/north-levantine/';
 
 import * as selfProfile from 'src/languages/levantine/profiles/self';
 import * as rassiProfile from 'src/languages/levantine/profiles/salam-el-rassi';
-import * as debug from 'src/languages/levantine/profiles/debug';
+import * as debug from 'src/languages/levantine/profiles/test.debugwhen';
 
 Object.values(rulePacks).forEach(v => Object.values(v.rulePacks).forEach(v => console.log((v))));
 
@@ -65,9 +65,7 @@ function orderRules(
 ) {
   if (sources instanceof Function && `source` in sources) {
     const rules = sourceMap.get(sources.source as object);
-    if (rules === undefined) {
-      array.push(undefined!);
-    } else {
+    if (rules !== undefined) {
       rules.forEach(rule => {
         if (rule.after === null) {
           array.push(rule.rule);
@@ -96,8 +94,10 @@ function orderRules(
 
 // console.log(flattenProfile(selfProfile));
 
-// console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults)));
-console.log(orderRules(rulePacks.phonic.rulePacks.phonic, mapToSource(debug, rulePacks.phonic.rulePacks.phonic.defaults)));
+console.log(flattenProfile(debug));
+// console.log(mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults));
+console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults)));
+// console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(debug, {})));
 
 (window as any).abc = rulePacks;
 

@@ -122,7 +122,10 @@ function callSpecFunc<Spec extends object>(
   if (spec instanceof Function) {
     return spec(funcs.types);
   }
-  return {} as Unfunc<Spec, `spec`>;
+  if (`spec` in spec) {
+    return {spec: callSpecFunc(spec.spec as object, funcs)} as never;
+  }
+  return spec as Unfunc<Spec, `spec`>;
 }
 
 function callEnvFunc<Env extends object>(
@@ -138,7 +141,10 @@ function callEnvFunc<Env extends object>(
   if (env instanceof Function) {
     return env(funcs.env, funcs.types);
   }
-  return {} as Unfunc<Env, `env`>;
+  if (`env` in env) {
+    return {env: callEnvFunc(env.env as object, funcs)} as never;
+  }
+  return env as Unfunc<Env, `env`>;
 }
 
 type AnySpecsFuncs = SpecsFuncs<Alphabet, Alphabet, ReadonlyArray<Alphabet>>;
@@ -413,7 +419,19 @@ export function extractDefaults<
 ): ExtractDefaults<RulePack> {
   return Object.fromEntries(
     Object.entries(pack.children)
-      .filter(([_, v]) => `children` in v || !v.constraints || Object.keys(v.constraints).length === 0)
+      .filter(([_, v]) => (
+        // either it's a rulepack
+        (`children` in v)
+        // or it's a ruleset where...
+        || (
+          // ...there are no constraints available
+          (!v.constraints || Object.keys(v.constraints).length === 0)
+          // ...and (idk if this should be some or every? seems to have no effect??) it won't leave the
+          // below map empty by not having any rules that only have a default target?
+          // FIXME this seems like the wrong place for this condition
+          && Object.values(v.rules).some(rule => onlyOneTarget(rule.into))
+        )
+      ))
       .map(([k, v]) => {
         if (`rules` in v){// && (!v.constraints || Object.keys(v.constraints).length === 0)) {
           const defaultToFunc = Object.fromEntries(
@@ -433,10 +451,9 @@ export function extractDefaults<
                 ),
               ])
           );
-          const keys = Object.keys(defaultToFunc);
           return [
             k,
-            keys.length === 1 ? defaultToFunc[keys[0]] : defaultToFunc,
+            defaultToFunc[Object.keys(defaultToFunc)[0]],
           ];
         } else {
           return [k, extractDefaults(v as never)];
