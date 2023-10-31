@@ -5,10 +5,8 @@ import {separateContext} from 'src/lib/rules';
 export default ruleset(
   {
     spec: {},
-    env: {
-      target: {
-        env: ({before}, {consonant}) => before(consonant()),
-      },
+    target: {
+      env: ({before}, {consonant}) => before(consonant()),
     },
   },
   {

@@ -16,17 +16,7 @@ export type Env<Source extends Alphabet, Target extends Alphabet, Dependencies e
         }
       }
     }>
-  } & {was?: {
-    [A in Dependencies[number] | Source as A[`name`]]: {
-      spec?: Spec<A>,
-      env?: Env<A, Target, Dependencies>
-    }
-  }} & ([Target] extends [never] ? unknown : {
-    target?: {
-      spec?: Spec<Target>
-      env?: Env<Target, never, Dependencies>
-    }
-  })
+  }
   | EnvironmentFunc<Source, Target, Dependencies>
 );
 export type EnvironmentFunc<

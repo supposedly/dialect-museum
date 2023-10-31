@@ -18,21 +18,17 @@ export default ruleset(
   }),
   {
     wasParticiple: {
-      env: {
-        was: {
-          templates: {
-            spec: {type: `participle`},
-          },
+      was: {
+        templates: {
+          spec: {type: `participle`},
         },
       },
     },
     // idk if some dialects only geminate faa3iyye and leave mxall<i>ye alone or something
     wasFaa3iy: {
-      env: {
-        was: {
-          templates: {
-            spec: {type: `participle`},
-          },
+      was: {
+        templates: {
+          spec: {type: `participle`},
         },
       },
     },
