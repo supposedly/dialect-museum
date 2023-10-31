@@ -245,12 +245,12 @@ export function operations<
 ): SpecOperations<Source, Target, Dependencies> {
   return {
     mock: Object.assign(
-      ((...specs) => ({operation: `mock`, argument: specs})) as SpecOperations<Source, Target, Dependencies>[`mock`],
+      ((...specs) => ({operation: `mock`, argument: {specs, layer: source}})) as SpecOperations<Source, Target, Dependencies>[`mock`],
       {
         was: Object.fromEntries(
           dependencies.map(abc => [
             abc.name,
-            ((...specs: ReadonlyArray<unknown>) => ({operation: `mock`, argument: specs})),
+            ((...specs: ReadonlyArray<unknown>) => ({operation: `mock`, argument: {specs, layer: abc}})),
           ])
         ),
       }
@@ -276,7 +276,6 @@ function _intoToFunc<
   // I don't 100% get how the type system makes do w/o similarly checking for function
   // (maybe it gets unfuncked at some point)
   if (Array.isArray(into) || into instanceof Function) {
-    // XXX: what to do with odds :(
     return ((odds = 100) => ({
       for: spec,
       into,

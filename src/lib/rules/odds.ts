@@ -1,4 +1,4 @@
 export default function sharedOdds() {
   const id = {};
-  return (odds: number) => ({odds, id});
+  return (value: number) => ({value, id});
 }
