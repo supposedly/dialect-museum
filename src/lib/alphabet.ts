@@ -129,7 +129,7 @@ function objectFromPath<
   const Leaf,
 >(path: Path, leaf: Leaf): ObjectFromPath<Path, Leaf> {
   let current = leaf;
-  for (let i = path.length; i >= 0; i--) {
+  for (let i = path.length - 1; i >= 0; i--) {
     current = {[path[i]]: current} as never;
   }
   return current as never;
