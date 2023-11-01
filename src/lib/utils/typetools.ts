@@ -34,7 +34,7 @@ export type IsUnion<T, U extends T = T> = T extends unknown ? [U] extends [T] ? 
 export type UnionOf<L extends readonly unknown[]> = L[number];
 
 export type ValuesOf<O> = O[keyof O];
-export type ArrayOr<T> = T | T[];
+export type ArrayOr<T> = T | ReadonlyArray<T>;
 
 export type NestedArray<T> = ReadonlyArray<T | NestedArray<T>>;
 export type NestedArrayOr<T> = T | ReadonlyArray<NestedArrayOr<T>>;

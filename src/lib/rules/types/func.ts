@@ -46,10 +46,10 @@ export type SpecOperations<in out Source extends Alphabet, in out Target extends
    * @returns ``{operation: `coalesce`, arguments: env}``
    */
   coalesce<
-    const Spec extends ArrayOr<SpecsNoMatch<Target, never, [], `target`>[`spec`]>,
+    const Spec extends ArrayOr<Exclude<SpecsNoMatch<Target, never, [], `target`>[`spec`], null>>,
     const Env extends MatchOrFunction<Source, `env`>,
   >(
-    spec?: Spec,
+    spec: Spec,
     env?: Env,
   ): never
 };
@@ -69,10 +69,14 @@ type _IntoSpec<Source extends Alphabet, in out Target extends Alphabet, in out S
         }>
         : Deferred[`spec`]
       : Spec,
+    /*
+    // not implementing this for now, needs to wait at least until checkEnv() gets reworked
+    // (also grabbing {next: {0: {spec: {features: second}}}} out of env in the diphthong rulesets was
+    // giving y | {} and w | {} instead of just y and w, have to diagnose)
     environment: MatchAsType<Spec> extends infer Deferred extends {env: unknown}
       ? MatchAsType<Deferred[`env`]>
       : never,
-    // {preject, postject, mock, etc}
+    */
   ) => NestedArray<
     | PartialMembersWithContext<Target>
     // | typeof captured

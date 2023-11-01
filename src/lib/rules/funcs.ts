@@ -234,6 +234,18 @@ function generateSpecFuncs<
   };
 }
 
+function isMock(specs: object): boolean {
+  const isArray = Array.isArray(specs);
+  if (isArray && specs.length !== 1) {
+    return false;
+  }
+  const test = isArray ? specs[0] : specs;
+  return `operation` in test
+    && test.operation === `mock`
+    && `argument` in test
+    && `specs` in (test.argument as object);
+}
+
 export function operations<
   Source extends Alphabet,
   Target extends Alphabet,
@@ -245,19 +257,44 @@ export function operations<
 ): SpecOperations<Source, Target, Dependencies> {
   return {
     mock: Object.assign(
-      ((...specs) => ({operation: `mock`, argument: {specs, layer: source}})) as SpecOperations<Source, Target, Dependencies>[`mock`],
+      ((...specs) => ({operation: `mock`, argument: {specs, layer: source}, mock: true})) as SpecOperations<Source, Target, Dependencies>[`mock`],
       {
         was: Object.fromEntries(
-          dependencies.map(abc => [
+          [source, ...dependencies].map(abc => [
             abc.name,
-            ((...specs: ReadonlyArray<unknown>) => ({operation: `mock`, argument: {specs, layer: abc}})),
+            ((...specs: ReadonlyArray<unknown>) => ({operation: `mock`, argument: {specs, layer: abc}, mock: false})),
           ])
         ),
       }
     ),
-    preject: (...specs) => <never>{operation: `preject`, argument: specs},
-    postject: (...specs) => <never>{operation: `postject`, argument: specs},
-    coalesce: (specs, env) => <never>{operation: `coalesce`, argument: {specs, env}},
+    preject: (...specs) => <never>{
+      operation: `preject`,
+      mock: isMock(specs),
+      // @ts-expect-error argument does exist, verified by mock
+      argument: isMock(specs) ? specs[0]!.argument.specs : specs,
+    },
+    postject: (...specs) => <never>{
+      operation: `postject`,
+      mock: isMock(specs),
+      // @ts-expect-error argument does exist, verified by mock
+      argument: isMock(specs) ? specs[0]!.argument.specs : specs,
+    },
+    coalesce: (spec, env) => {
+      const mock = isMock(spec);
+      let possibleMock = null;
+      if (!Array.isArray(spec) || spec.length === 1) {
+        possibleMock = Array.isArray(spec) ? spec[0] : spec;
+      }
+
+      return {
+        operation: `coalesce`,
+        mock,
+        argument: {
+          specs: mock ? possibleMock.argument.specs : spec,
+          env,
+        },
+      } as never;
+    },
   };
 }
 

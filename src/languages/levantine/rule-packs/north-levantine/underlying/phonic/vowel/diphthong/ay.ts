@@ -7,8 +7,7 @@ export default ruleset(
     env: ({before}, {consonant}) => before(consonant(letters.plain.consonant.y.features)),
   },
   operations => ({
-    // second is not used but FIXME why is consonant() making it y | {}
-    vocalic: ({features: first}, {next: {0: {spec: {features: second}}}}) => [
+    vocalic: ({features: first}) => [
       operations.coalesce(
         {
           type: `diphthong`,

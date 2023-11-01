@@ -11,7 +11,6 @@ import {type Alphabet} from 'src/lib/alphabet';
 import {matchers} from 'src/lib/utils/match';
 
 import {templates, underlying, phonic} from 'src/languages/levantine/alphabets';
-import {cp} from 'fs';
 import sharedOdds from 'src/lib/rules/odds';
 
 Object.values(rulePacks).forEach(v => Object.values(v.rulePacks).forEach(v => console.log((v))));
@@ -151,11 +150,33 @@ const input = [
 ];
 
 enum NodeType {
+  /** Uninitialized */
   blank,
+  /** Permanent node that shows up in 'was' searches */
   fixture,
+  /** Temporary transformation result */
   mock,
+}
+
+enum ChildType {
+  main,
+  /** Connection hub for coalesce operation */
+  coalesce,
+  /** Result of preject operation */
   prejectee,
+  /** Result of postject operation */
   postjectee,
+}
+
+function update(a: object, b: object): object {
+  return Object.fromEntries(Object.entries(a).map(([k, v]) => [
+    k,
+    !(k in b)
+      ? v
+      : typeof v === `object` && v !== null
+        ? update(v, b[k as keyof typeof b])
+        : b[k as keyof typeof b],
+  ]));
 }
 
 class Node {
@@ -164,6 +185,7 @@ class Node {
   public prev: Node | null = null;
   public next: Node | null = null;
 
+  /** node is waiting on target = can't be transformed */
   public frozen: boolean = false;
 
   public subscribers: Set<Node> = new Set();
@@ -173,6 +195,7 @@ class Node {
     public rules: Record<string, Record<string, ReadonlyArray<{for: object, into: object, odds: ReturnType<ReturnType<typeof sharedOdds>>}>>>,
     public layer: Alphabet,
     public type: NodeType,
+    public childType: ChildType | null,
     public value: {type: string, features: object, context: object} | undefined,
     environment?: {
       mainParent?: Node[`mainParent`],
@@ -187,23 +210,60 @@ class Node {
         this[k] = v;
       });
     }
-    if (this.mainParent !== null) {
-      if (!this.next) {
-        this.next = this.mainParent.nextCousinOf(this);
-      }
-      if (!this.prev) {
-        this.prev = this.mainParent.prevCousinOf(this);
-      }
+    // commenting out bc this should be handled after every generation by the engine instead of here
+    // if (this.mainParent !== null) {
+    //   if (!this.next) {
+    //     this.next = this.mainParent.nextCousinOf(this);
+    //   }
+    //   if (!this.prev) {
+    //     this.prev = this.mainParent.prevCousinOf(this);
+    //   }
+    // }
+    if (this.mainChild && this.mainChild.mainParent === null) {
+      this.mainChild.mainParent = this;
     }
+    if (this.mainParent && this.mainParent.mainChild === null) {
+      this.mainParent.mainChild = this;
+    }
+  }
+
+  copy(node: Node) {
+    this.mainParent = node.mainParent;
+    this.mainChild = node.mainChild;
+    this.prev = node.prev;
+    this.next = node.next;
+    this.frozen = node.frozen;
+    // this.subscribers = node.subscribers;
+    this.createdBy = node.createdBy;
+    this.rules = node.rules;
+    this.layer = node.layer;
+    this.type = node.type;
+    this.childType = node.childType;
+    this.value = node.value;
+  }
+
+  blank() {
+    this.mainParent = null;
+    this.mainChild = null;
+    this.prev = null;
+    this.next = null;
+    this.frozen = false;
+    // this.subscribers.clear();  // ?
+    this.createdBy = null;
+    // this.rules = 
+    // this.layer = 
+    this.type = NodeType.blank;
+    this.childType = ChildType.main;
+    this.value = undefined;
   }
 
   /* properties */
   firstSibling() {
-    return this.backseek(node => node.mainParent !== this.mainParent)?.next ?? null;
+    return this.backseek(node => node.mainParent !== this.mainParent)?.next ?? this;
   }
 
   lastSibling() {
-    return this.foreseek(node => node.mainParent !== this.mainParent)?.prev ?? null;
+    return this.foreseek(node => node.mainParent !== this.mainParent)?.prev ?? this;
   }
 
   firstChild() {
@@ -218,6 +278,18 @@ class Node {
       return null;
     }
     return this.mainChild.lastSibling();
+  }
+
+  prejectBoundary() {
+    return this.backseek(
+      node => (node.childType === ChildType.prejectee) != (node.mainParent !== this.mainParent)
+    )?.next ?? this.firstSibling();
+  }
+
+  postjectBoundary() {
+    return this.foreseek(
+      node => (node.childType === ChildType.postjectee) != (node.mainParent !== this.mainParent)
+    )?.prev ?? this.lastSibling();
   }
 
   children() {
@@ -273,9 +345,15 @@ class Node {
   }
 
   /* initialization */
-  populateList(rules: typeof this.rules, layer: typeof this.layer, type: typeof this.type, value: typeof this.value) {
+  populateList(
+    rules: typeof this.rules,
+    layer: typeof this.layer,
+    type: typeof this.type,
+    childType: typeof this.childType,
+    value: typeof this.value
+  ) {
     if (this.next === null) {
-      this.next = new Node(rules, layer, type, value, {prev: this});
+      this.next = new Node(rules, layer, type, childType, value, {prev: this});
     }
     return this.next;
   }
@@ -289,11 +367,12 @@ class Node {
         this.rules,
         target,
         NodeType.blank,
+        ChildType.main,
         (
         // propagates boundaries and other shared stuff
         // (this will also get consonants and vowels i think...
         // and because match lib doesn't care about missing properties it
-        // may just work out fine??)
+        // may just work out fine for ones that don't end up getting properly transformed??)
           this.value !== undefined
             && this.value.type in target.types
             && matchers.single(target.types[this.value.type], this.value.features)
@@ -307,10 +386,66 @@ class Node {
     return undefined;
   }
 
+  _connectLeaders() {
+    if (this.mainChild !== null && this.mainChild.layer === this.layer) {
+      this.mainChild.lastSibling()._connectLeaders();
+    }
+    if (this.mainParent === null) {
+      console.error(`no node is an island???`, this);
+      return;
+    }
+    if (this.mainParent.mainChild === null) {
+      console.error(`how did you get a child with no parent`, this);
+    }
+    const cousin = this.mainParent.nextCousinOf(this.mainParent.mainChild!);
+    this.next = cousin;
+    if (cousin === null) {
+      return;
+    }
+    cousin.prev = this;
+  }
+
+  connectLeaders() {
+    // staving off some recursion depth
+    // (i'll have to bite the bullet and replace all recursion with while loops eventually rip)
+    this._connectLeaders();
+    this.next?.connectLeaders();
+  }
+
+  seekLeader(): Node | null {
+    if (this.mainChild === null || this.mainChild.layer !== this.layer) {
+      return this.mainChild?.firstSibling() ?? null;
+    }
+    return this.mainChild.firstSibling().seekLeader();
+  }
+
+  leaders(): ReadonlyArray<Node> {
+    let leaders: ReadonlyArray<Node> = [this];
+    let allDone = true;
+    while (!allDone) {
+      leaders = leaders.map(node => {
+        if (node.mainChild === null || node.mainChild.layer !== node.layer) {
+          allDone = allDone && true;
+          return node;
+        }
+        allDone = false;
+        return node.children();
+      }).flat();
+      allDone = true;
+    }
+    return leaders;
+  }
+
   /** :( */
   orphanSiblings() {
     this.prev = this.firstSibling()?.prev ?? null;
     this.next = this.lastSibling()?.next ?? null;
+    if (this.prev) {
+      this.prev.next = this;
+    }
+    if (this.next) {
+      this.next.prev = this;
+    }
   }
 
   wipeChildren() {
@@ -355,8 +490,8 @@ class Node {
   /**
    * Bro! You just posted cringe!
    */
-  looseSubscriber(node: Node) {
-    this.subscribers.delete(node);
+  looseSubscriber() {
+    this.subscribers.clear();
   }
 
   /* specs stuff */
@@ -396,7 +531,41 @@ class Node {
     return matchers.single(spec as never, this.value);
   }
 
-  _checkEnvPrev(env: ReadonlyArray<object>, subscriber: Node, collectedEnv: Record<`next` | `prev`, Array<object | null>>): boolean {
+  // this is so ugly
+  collectEnv(
+    specs: object,
+    subscriber: Node = this,
+    collected: {next: Node[], prev: Node[]} = {next: [], prev: []}
+  ): typeof collected {
+    if (`match` in specs && `value` in specs) {
+      switch (specs.match) {
+        case `all`:
+        case `any`:
+          (specs.value as ReadonlyArray<object>).forEach(v => this.collectEnv(v, subscriber, collected));
+          return collected;
+        // does a custom match even make sense up at this level?
+        // don't think others do at any rate
+        default:
+          throw new Error(`Unimplemented match for collectEnv(): ${specs.match}`);
+      }
+    }
+    Object.entries(specs).forEach(([k, v]) => {
+      switch (k) {
+        case `env`:
+          this.checkEnv(v, subscriber, collected);
+          break;
+        default:
+          throw new Error(`Unimplemented for collectEnv(): ${k}`);
+      }
+    });
+    return collected;
+  }
+
+  _checkEnvPrev(
+    env: ReadonlyArray<object>,
+    subscriber: Node,
+    collectedEnv: Record<`next` | `prev`, Array<Node | null>>
+  ): boolean {
     let node = this.prev;
     let index = -1;
 
@@ -407,7 +576,7 @@ class Node {
     let stopCheckingArrayAt = Infinity;
 
     for (const specs of env) {
-      while (checkingArray && arrayLengthSoFar <= stopCheckingArrayAt) {
+      while (checkingArray) {
         if (!node?.checkSpecs(arrayCheckForValue!, subscriber)) {
           checkingArray = false;
           if (checkArrayEndAt !== -1 && !(arrayLengthSoFar in checkArrayEndAt)) {
@@ -418,6 +587,9 @@ class Node {
           collectedEnv.prev[index++] = node;
         }
         arrayLengthSoFar += 1;
+        if (arrayLengthSoFar >= stopCheckingArrayAt) {
+          checkingArray = false;
+        }
       }
 
       if (`match` in specs && specs.match === `array` && `value` in specs) {
@@ -445,7 +617,11 @@ class Node {
     return true;
   }
 
-  _checkEnvNext(env: ReadonlyArray<object>, subscriber: Node, collectedEnv: Record<`next` | `prev`, Array<object | null>>): boolean {
+  _checkEnvNext(
+    env: ReadonlyArray<object>,
+    subscriber: Node,
+    collectedEnv: Record<`next` | `prev`, Array<Node | null>>
+  ): boolean {
     let node = this.next;
     let index = -1;
 
@@ -456,7 +632,7 @@ class Node {
     let stopCheckingArrayAt = Infinity;
 
     for (const specs of env) {
-      while (checkingArray && arrayLengthSoFar <= stopCheckingArrayAt) {
+      while (checkingArray) {
         if (!node?.checkSpecs(arrayCheckForValue!, subscriber)) {
           checkingArray = false;
           if (checkArrayEndAt !== -1 && !(arrayLengthSoFar in checkArrayEndAt)) {
@@ -467,6 +643,9 @@ class Node {
           collectedEnv.next[index++] = node;
         }
         arrayLengthSoFar += 1;
+        if (arrayLengthSoFar >= stopCheckingArrayAt) {
+          checkingArray = false;
+        }
       }
 
       if (`match` in specs && specs.match === `array` && `value` in specs) {
@@ -494,7 +673,11 @@ class Node {
     return true;
   }
 
-  checkEnv(env: object, subscriber: Node, collectedEnv: Record<`next` | `prev`, Array<object | null>> = {next: [], prev: []}): boolean {
+  checkEnv(
+    env: object,
+    subscriber: Node,
+    collectedEnv: Record<`next` | `prev`, Array<Node | null>> = {next: [], prev: []}
+  ): boolean {
     if (`match` in env && `value` in env) {
       switch (env.match) {
         case `all`:
@@ -564,50 +747,152 @@ class Node {
     // this subscribes to mainChild and/or its neighbors in the process
     // i don't even think it needs a special case for mainChild.type === NodeType.blank vs otherwise,
     // this should just work lol
-    return this.mainChild.checkSpecs(specs);
+    return this.mainChild.checkSpecs(specs, subscriber);
   }
 
   /* transformation stuff */
-  applyOperation(operation: {operation: string, argument: object}, target: Alphabet) {
-    switch (operation.operation) {
-      case `mock`:
-        // split child
-        return;
-      case `preject`:
-        // preject a type:preject node right before the last !type:preject child
-        return;
-      case `postject`:
-        // postject a type:postject node right after the last !type:postject child
-        return;
-      case `coalesce`:
-        // call checkEnv with an object defined out here for collectEnv,
-        // make every 
-        return;
+  preject(start: Node, end: Node) {
+    const firstMainSibling = this.prejectBoundary();
+    if (firstMainSibling.prev) {
+      start.prev = firstMainSibling.prev;
+      firstMainSibling.prev.next = start;
+    }
+    firstMainSibling.prev = end;
+    end.next = firstMainSibling;
+  }
+
+  postject(start: Node, end: Node) {
+    const lastMainSibling = this.postjectBoundary();
+    if (lastMainSibling.next) {
+      start.next = lastMainSibling.next;
+      lastMainSibling.next.prev = start;
+    }
+    lastMainSibling.next = end;
+    end.prev = lastMainSibling;
+  }
+
+  split(start: Node, end: Node) {
+    end.next = this.next;
+    if (this.next) {
+      this.next.prev = end;
+    }
+    if (this.type === NodeType.blank) {
+      this.copy(start);
+    } else {
+      this.next = start;
+      start.prev = this;
     }
   }
 
-  applyRules(rules: Record<string, Record<string, ReadonlyArray<{for: object, into: object, odds: ReturnType<ReturnType<typeof sharedOdds>>}>>>) {
+  makeChildren(args: ReadonlyArray<object>, target: Alphabet, operation: string | null, mock: boolean) {
+    if (mock || operation === `mock`) {
+      args = args.map(arg => update(this.value ?? {}, arg));
+    }
+    const [head, ...tail] = args;
+    const firstNode = new Node(
+      this.rules,
+      target,
+      mock ? NodeType.mock : NodeType.fixture,
+      (operation ?? `main`) in ChildType ? ChildType[operation as keyof typeof ChildType] as never : ChildType.main,
+      head as never,
+      {mainParent: this}
+    );
+    const lastNode = tail.reduce(
+      (node: Node, arg) => new Node(
+        this.rules,
+        target,
+        mock ? NodeType.mock : NodeType.fixture,
+        (operation ?? `main`) in ChildType ? ChildType[operation as keyof typeof ChildType] as never : ChildType.main,
+        arg as never,
+        {mainParent: this, prev: node}
+      ),
+      firstNode,
+    );
+    if (this.mainChild === null || this.mainChild.layer !== target) {
+      this.mainChild = new Node(
+        this.rules,
+        target,
+        NodeType.blank,
+        ChildType.main,
+        undefined,
+        {mainParent: this}
+      );
+    }
+    switch (operation) {
+      case `preject`:
+        this.mainChild.preject(firstNode, lastNode);
+        break;
+      case `postject`:
+        this.mainChild.postject(firstNode, lastNode);
+        break;
+      case `coalesce`:
+        this.mainChild.childType = ChildType.coalesce;
+        this.mainChild.makeChildren(args, target, `main`, mock);
+        break;
+      default:
+        this.mainChild.split(firstNode, lastNode);
+    }
+    this.mainChild.split(firstNode, lastNode);
+  }
+
+  applyOperation(
+    operation: {operation: string, argument: {specs: never, env: never, layer: never}, mock: boolean},
+    source: Alphabet,
+    target: Alphabet,
+    collectedEnv: {next: Node[], prev: Node[]},
+  ) {
+    if (operation.operation === `coalesce`) {
+      this.mainChild = new Node(
+        this.rules,
+        target,
+        NodeType.mock,
+        ChildType.coalesce,
+        undefined,
+        {mainParent: this, mainChild: this.mainChild}
+      );
+      collectedEnv = operation.argument.env
+        ? this.collectEnv(operation.argument.env)
+        : collectedEnv;
+      // values of collectedEnv is collectedEnv.next, collectedEnv.prev
+      Object.values(collectedEnv).forEach(nodes => nodes.forEach(
+        node => {
+          node.mainChild?.orphanSiblings();
+          node.mainChild = this.mainChild;
+        }
+      ));
+    }
+    this.makeChildren(
+      operation.argument.specs,
+      target,
+      operation.operation,
+      operation.mock
+    );
+  }
+
+  applyRules(source: Alphabet, target: Alphabet, mock: boolean): boolean {
     const oddsMap = new Map<Record<string, never>, number>();
-    const specsCache = new Map<object, boolean>;
-    // first run rules from this layer to this layer
-    for (const rule of rules[this.layer.name]?.[this.layer.name] ?? []) {
+    const specsCache = new Map<object, boolean>();
+    const envCache = new Map<object, {next: Node[], prev: Node[]}>();
+
+    let changed = false;
+    // first: run rules from this layer to this layer
+    for (const rule of this.rules[source.name]?.[target.name] ?? []) {
       if (!specsCache.has(rule.for)) {
         specsCache.set(rule.for, this.checkSpecs(rule.for));
       }
       if (!specsCache.get(rule.for)!) {
         if (this.frozen) {
-          // means we're waiting on target so we can't do anything
-          // hopefully nonmatching specs will short-circuit before reaching target tho :/
-          // (hopefully if "insertion order is guaranteed" means it's also guaranteed for literals then
-          // i can get away with just a warning about always putting target last in specs)
+        // means we're waiting on target so we can't do anything
+        // hopefully nonmatching specs will short-circuit before reaching target tho :/
+        // (hopefully if "insertion order is guaranteed" means it's also guaranteed for literals then
+        // i can get away with just a warning about always putting target last in specs)
           break;
         }
         continue;
       }
 
-      // but if we're here it means specs match!
+      // if we're here it means specs match!
       // so... bam just do the transformation
-
       if (this.frozen) {
         this.frozen = false;
       }
@@ -621,30 +906,64 @@ class Node {
         const result = oddsMap.get(rule.odds.id)!;
         oddsMap.set(rule.odds.id, result - rule.odds.value);
         if (result >= rule.odds.value) {
-          // less than means we run the rule so geq means skip
-          // but oddsMap guarantees that as long as the diff values add up to 100 then one variant of this rule WILL run
+        // less than means we run the rule so geq means skip
+        // but oddsMap guarantees that as long as the diff values add up to 100 then one variant of this rule WILL run
           continue;
         }
       }
 
+      // finally if we're here it means we're really running this rule
+      changed = true;
+
       this.wipeChildren();
-      const into: ReadonlyArray<object> = (rule.into instanceof Function ? rule.into(this.value) : rule.into).flat(Infinity);
+
+      const into: ReadonlyArray<object> = (
+        rule.into instanceof Function
+          ? rule.into(this.value)
+          : rule.into
+      ).flat(Infinity);
+
+      if (!envCache.has(rule.for)) {
+        envCache.set(rule.for, this.collectEnv(rule.for));
+      }
+
       into.forEach(
         v => this.applyOperation(
-          `operation` in v
-            ? {
-              operation: v.operation as string,
-              argument: v.operation === `coalesce`
-                ? {specs: {operation: `mock`, argument: v.specs}, env: v.env}
-                : v,
-            } as never
-            : {operation: `mock`, argument: v},
-          this.layer
+          `operation` in v && `argument` in v
+            ? {...v, mock: true} as never
+            : {operation: `mock`, argument: v, mock} as never,
+          this.layer,
+          this.layer,
+          envCache.get(rule.for)!
         )
       );
     }
 
+    return changed;
+  }
 
+  applyTransformRules(unfreeze: boolean = false): boolean {
+    if (this.frozen && !unfreeze) {
+      return false;
+    }
+    return this.applyRules(this.layer, this.layer, true);
+  }
+
+  applyPromoteRules(unfreeze: boolean = false): boolean {
+    if (this.mainChild === null) {
+      return false;
+    }
+
+    if (this.mainChild.type !== NodeType.blank) {
+      console.error(`not blank bro`, this.mainChild);
+    }
+
+    if (this.frozen && !unfreeze) {
+      return false;
+    }
+    this.frozen = false;
+
+    return this.applyRules(this.layer, this.mainChild.layer, false);
   }
 }
 
@@ -664,10 +983,10 @@ function populate(
   */
   const [startAlphabet, ...downstreamers] = alphabets;
   const [initial, ...neighbors] = input;
-  const feeder = new Node(rules, startAlphabet, NodeType.fixture, initial);
+  const feeder = new Node(rules, startAlphabet, NodeType.fixture, null, initial);
   // populate first layer horizontally
   neighbors.reduce(
-    (node, value) => node.populateList(rules, startAlphabet, NodeType.fixture, value),
+    (node, value) => node.populateList(rules, startAlphabet, NodeType.fixture, null, value),
     feeder,
   );
   // extend all first-layer nodes vertically
@@ -691,7 +1010,64 @@ function populate(
   // return layers;
 }
 
-const list = populate(
+function run(grid: Node | null) {
+  //   1. run all transform rules on entire top row of grid
+  //     2. connect leading nodes to one another to form a new generation
+  //     3. for all nodes that were changed, notify their subscribers' leading descendants to rerun rules
+  //     4. repeat steps 2-3 until no nodes are marked changed
+  //   5. run all promote rules on entire row of current leaders
+  //   6. for all nodes on new layer, notify subscribers' leading descendants to rerun rules
+  // 7. repeat steps 1-6 with the new layer as the 'top row'
+
+  while (grid) {
+    const nodesToChange = new Set<Node>();
+    
+    while (grid) {
+      // populate nodesToChange for transform rules
+      nodesToChange.clear();
+      let node: Node | null = grid;
+      while (node) {
+        nodesToChange.add(node);
+        node = node.next;
+      }
+
+      // run transform rules
+      while (nodesToChange.size > 0) {
+        const nodesChanged = new Set<Node>();
+        nodesToChange.forEach(node => {
+        // XXX: figure out how to not always unfreeze
+          if (node.applyTransformRules(true)) {
+            nodesChanged.add(node);
+          }
+        });
+        nodesToChange.clear();
+
+        nodesChanged.forEach(n => {
+          n.subscribers.forEach(
+            subscriber => subscriber.leaders().forEach(leader => nodesToChange.add(leader))
+          );
+        });
+
+        grid.connectLeaders();
+      }
+
+      grid = grid.seekLeader()?.firstChild() ?? null;
+      // populate nodesToChange for promote rules
+      nodesToChange.clear();
+      node = grid;
+      while (node) {
+        nodesToChange.add(node);
+        node = node.next;
+      }
+
+      // have to run promote rules now...
+      // PROBLEM: promote rules can actually mock stuff on current layer too, how to run those types of 'promotes'?
+      // PROBLEM: actually probably not a problem but i should make sure postject/preject not invalidating a node is handled properly
+    }
+  }
+}
+
+const grid = populate(
   Object.fromEntries(Object.entries(rulePacks).map(([k, v]) => [
     k,
     Object.fromEntries(Object.entries(v.rulePacks).map(([kk, vv]) => [
@@ -703,6 +1079,8 @@ const list = populate(
   input,
   [templates, underlying, phonic]
 );
+
+run(grid);
 
 
 (window as any).abc = rulePacks;
