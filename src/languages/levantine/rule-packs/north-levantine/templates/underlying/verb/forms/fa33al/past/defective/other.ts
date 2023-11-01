@@ -5,9 +5,7 @@ import {separateContext} from 'src/lib/rules';
 export default ruleset(
   {
     spec: {},
-    target: {
-      env: ({before}, {consonant}) => before(consonant()),
-    },
+    target: {},
   },
   {
     default: ({features: {root: $}}) => [

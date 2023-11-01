@@ -163,19 +163,21 @@ enum ChildType {
   /** Connection hub for coalesce operation */
   coalesce,
   /** Result of preject operation */
-  prejectee,
+  preject,
   /** Result of postject operation */
-  postjectee,
+  postject,
 }
 
 function update(a: object, b: object): object {
-  return Object.fromEntries(Object.entries(a).map(([k, v]) => [
+  return Object.fromEntries([...Object.keys(a), ...Object.keys(b)].map(k => [
     k,
     !(k in b)
-      ? v
-      : typeof v === `object` && v !== null
-        ? update(v, b[k as keyof typeof b])
-        : b[k as keyof typeof b],
+      ? a[k as never]
+      : !(k in a)
+        ? b[k as never]
+        : typeof a[k as never] === `object` && a[k as never] !== null
+          ? update(a[k as never], b[k as never])
+          : b[k as never],
   ]));
 }
 
@@ -185,11 +187,10 @@ class Node {
   public prev: Node | null = null;
   public next: Node | null = null;
 
-  /** node is waiting on target = can't be transformed */
-  public frozen: boolean = false;
-
   public subscribers: Set<Node> = new Set();
   public createdBy: {for: unknown, into: unknown, odds: unknown} | null = null;
+
+  public waitingOnTarget: boolean = false;
 
   constructor(
     public rules: Record<string, Record<string, ReadonlyArray<{for: object, into: object, odds: ReturnType<ReturnType<typeof sharedOdds>>}>>>,
@@ -232,7 +233,6 @@ class Node {
     this.mainChild = node.mainChild;
     this.prev = node.prev;
     this.next = node.next;
-    this.frozen = node.frozen;
     // this.subscribers = node.subscribers;
     this.createdBy = node.createdBy;
     this.rules = node.rules;
@@ -240,6 +240,7 @@ class Node {
     this.type = node.type;
     this.childType = node.childType;
     this.value = node.value;
+    // this.waitingOnTarget = node.waitingOnTarget;  // should just be false tbh
   }
 
   blank() {
@@ -247,7 +248,6 @@ class Node {
     this.mainChild = null;
     this.prev = null;
     this.next = null;
-    this.frozen = false;
     // this.subscribers.clear();  // ?
     this.createdBy = null;
     // this.rules = 
@@ -282,13 +282,13 @@ class Node {
 
   prejectBoundary() {
     return this.backseek(
-      node => (node.childType === ChildType.prejectee) != (node.mainParent !== this.mainParent)
+      node => (node.childType === ChildType.preject) != (node.mainParent !== this.mainParent)
     )?.next ?? this.firstSibling();
   }
 
   postjectBoundary() {
     return this.foreseek(
-      node => (node.childType === ChildType.postjectee) != (node.mainParent !== this.mainParent)
+      node => (node.childType === ChildType.postject) != (node.mainParent !== this.mainParent)
     )?.prev ?? this.lastSibling();
   }
 
@@ -505,8 +505,11 @@ class Node {
         // does a custom match even make sense up at this level?
         // don't think others do at any rate
         default:
-          throw new Error(`Unimplemented match for checkSpecs(): ${specs.match}`);
+          throw new Error(`Unimplemented match for checkSpecs(): ${specs}`);
       }
+    }
+    if (this.type === NodeType.blank && subscriber !== this) {
+      return false;
     }
     return Object.entries(specs).every(([k, v]) => {
       switch (k) {
@@ -546,7 +549,7 @@ class Node {
         // does a custom match even make sense up at this level?
         // don't think others do at any rate
         default:
-          throw new Error(`Unimplemented match for collectEnv(): ${specs.match}`);
+          throw new Error(`Unimplemented match for collectEnv(): ${specs}`);
       }
     }
     Object.entries(specs).forEach(([k, v]) => {
@@ -689,7 +692,7 @@ class Node {
           // which means collectedEnv will be populated fingers crossed
           return (env.value as (arg: unknown) => boolean)(collectedEnv);
         default:
-          throw new Error(`Unimplemented match for checkEnv(): ${env.match}`);
+          throw new Error(`Unimplemented match for checkEnv(): ${env}`);
       }
     }
     return Object.entries(env).every(([k ,v]) => {
@@ -723,7 +726,7 @@ class Node {
         case `any`:
           return (specs.value as ReadonlyArray<object>).some(v => this.checkWas(v, subscriber));
         default:
-          throw new Error(`Unimplemented match for checkWas(): ${specs.match}`);
+          throw new Error(`Unimplemented match for checkWas(): ${specs}`);
       }
     }
     return Object.entries(specs).every(([k, v]) => this._checkWas(k, v, subscriber));
@@ -741,8 +744,13 @@ class Node {
       );
       return false;
     }
-    if (this.mainChild.type === NodeType.blank) {
-      this.frozen = true;
+    const env = this.mainChild.collectEnv(specs, subscriber);
+    subscriber.waitingOnTarget = (
+      env.next.every(node => node.type !== NodeType.blank)
+      && env.prev.every(node => node.type !== NodeType.blank)
+    );
+    if (subscriber.waitingOnTarget) {
+      return false;
     }
     // this subscribes to mainChild and/or its neighbors in the process
     // i don't even think it needs a special case for mainChild.type === NodeType.blank vs otherwise,
@@ -832,15 +840,24 @@ class Node {
       default:
         this.mainChild.split(firstNode, lastNode);
     }
-    this.mainChild.split(firstNode, lastNode);
+    // this.mainChild.split(firstNode, lastNode);
   }
 
   applyOperation(
     operation: {operation: string, argument: {specs: never, env: never, layer: never}, mock: boolean},
     source: Alphabet,
     target: Alphabet,
+    transforming: boolean,
     collectedEnv: {next: Node[], prev: Node[]},
   ) {
+    // only run same-layer rules when transforming
+    if (transforming && !(operation.operation === `mock` || operation.mock)) {
+      return;
+    }
+    // only run next-layer rules when promoting
+    if (!transforming && (operation.operation === `mock` || operation.mock)) {
+      return;
+    }
     if (operation.operation === `coalesce`) {
       this.mainChild = new Node(
         this.rules,
@@ -863,29 +880,43 @@ class Node {
     }
     this.makeChildren(
       operation.argument.specs,
-      target,
+      operation.operation === `mock` || operation.mock ? source : target,
       operation.operation,
       operation.mock
     );
   }
 
-  applyRules(source: Alphabet, target: Alphabet, mock: boolean): boolean {
+  applyTransformRules(): boolean {
+    if (this.mainChild === null) {
+      return false;
+    }
+
+    if (this.mainChild.type !== NodeType.blank) {
+      console.error(`not blank bro`, this.mainChild);
+    }
+
     const oddsMap = new Map<Record<string, never>, number>();
     const specsCache = new Map<object, boolean>();
     const envCache = new Map<object, {next: Node[], prev: Node[]}>();
 
     let changed = false;
-    // first: run rules from this layer to this layer
-    for (const rule of this.rules[source.name]?.[target.name] ?? []) {
+    let transforming = true;
+    const rules = [
+      ...(this.rules[this.layer.name]?.[this.layer.name] ?? []),
+      null,
+      ...(this.rules[this.layer.name]?.[this.mainChild.layer.name] ?? []),
+    ];
+    this.waitingOnTarget = false;
+    for (const rule of rules) {
+      if (rule === null) {
+        transforming = false;
+        continue;
+      }
       if (!specsCache.has(rule.for)) {
         specsCache.set(rule.for, this.checkSpecs(rule.for));
       }
       if (!specsCache.get(rule.for)!) {
-        if (this.frozen) {
-        // means we're waiting on target so we can't do anything
-        // hopefully nonmatching specs will short-circuit before reaching target tho :/
-        // (hopefully if "insertion order is guaranteed" means it's also guaranteed for literals then
-        // i can get away with just a warning about always putting target last in specs)
+        if (this.waitingOnTarget) {
           break;
         }
         continue;
@@ -893,10 +924,6 @@ class Node {
 
       // if we're here it means specs match!
       // so... bam just do the transformation
-      if (this.frozen) {
-        this.frozen = false;
-      }
-
       // first skip this rule if the stars aren't aligned
       // (but leave it open for rules that share its odds)
       if (rule.odds.value < 100) {
@@ -929,11 +956,12 @@ class Node {
 
       into.forEach(
         v => this.applyOperation(
-          `operation` in v && `argument` in v
-            ? {...v, mock: true} as never
-            : {operation: `mock`, argument: v, mock} as never,
+          `operation` in v && `argument` in v && `mock` in v
+            ? {...v, mock: !transforming || v.operation === `mock` ? v.mock : transforming} as never
+            : {operation: transforming ? `mock` : `promote`, argument: v, mock: transforming} as never,
           this.layer,
-          this.layer,
+          this.mainChild!.layer,
+          true,
           envCache.get(rule.for)!
         )
       );
@@ -942,14 +970,7 @@ class Node {
     return changed;
   }
 
-  applyTransformRules(unfreeze: boolean = false): boolean {
-    if (this.frozen && !unfreeze) {
-      return false;
-    }
-    return this.applyRules(this.layer, this.layer, true);
-  }
-
-  applyPromoteRules(unfreeze: boolean = false): boolean {
+  applyPromoteRules(): boolean {
     if (this.mainChild === null) {
       return false;
     }
@@ -958,12 +979,70 @@ class Node {
       console.error(`not blank bro`, this.mainChild);
     }
 
-    if (this.frozen && !unfreeze) {
-      return false;
-    }
-    this.frozen = false;
+    const oddsMap = new Map<Record<string, never>, number>();
+    const specsCache = new Map<object, boolean>();
+    const envCache = new Map<object, {next: Node[], prev: Node[]}>();
 
-    return this.applyRules(this.layer, this.mainChild.layer, false);
+    let changed = false;
+    const rules = this.rules[this.layer.name]?.[this.mainChild.layer.name] ?? [];
+    this.waitingOnTarget = false;
+    for (const rule of rules) {
+      if (!specsCache.has(rule.for)) {
+        specsCache.set(rule.for, this.checkSpecs(rule.for));
+      }
+      if (!specsCache.get(rule.for)!) {
+        if (this.waitingOnTarget) {
+          break;
+        }
+        continue;
+      }
+
+      // if we're here it means specs match!
+      // so... bam just do the transformation
+      // first skip this rule if the stars aren't aligned
+      // (but leave it open for rules that share its odds)
+      if (rule.odds.value < 100) {
+        if (!oddsMap.has(rule.odds.id)) {
+          oddsMap.set(rule.odds.id, Math.random() * 100);
+        }
+        const result = oddsMap.get(rule.odds.id)!;
+        oddsMap.set(rule.odds.id, result - rule.odds.value);
+        if (result >= rule.odds.value) {
+        // less than means we run the rule so geq means skip
+        // but oddsMap guarantees that as long as the diff values add up to 100 then one variant of this rule WILL run
+          continue;
+        }
+      }
+
+      // finally if we're here it means we're really running this rule
+      changed = true;
+
+      this.wipeChildren();
+
+      const into: ReadonlyArray<object> = (
+        rule.into instanceof Function
+          ? rule.into(this.value)
+          : rule.into
+      ).flat(Infinity);
+
+      if (!envCache.has(rule.for)) {
+        envCache.set(rule.for, this.collectEnv(rule.for));
+      }
+
+      into.forEach(
+        v => this.applyOperation(
+          `operation` in v && `argument` in v && `mock` in v
+            ? v as never
+            : {operation: `promote`, argument: v, mock: false} as never,
+          this.layer,
+          this.mainChild!.layer,
+          false,
+          envCache.get(rule.for)!
+        )
+      );
+    }
+
+    return changed;
   }
 }
 
@@ -1011,59 +1090,80 @@ function populate(
 }
 
 function run(grid: Node | null) {
-  //   1. run all transform rules on entire top row of grid
-  //     2. connect leading nodes to one another to form a new generation
-  //     3. for all nodes that were changed, notify their subscribers' leading descendants to rerun rules
-  //     4. repeat steps 2-3 until no nodes are marked changed
-  //   5. run all promote rules on entire row of current leaders
-  //   6. for all nodes on new layer, notify subscribers' leading descendants to rerun rules
-  // 7. repeat steps 1-6 with the new layer as the 'top row'
+  // 1. run all transform rules on entire top row of grid
+  // -
+  // 2. connect leading nodes to one another to form a new generation
+  // 3. for all nodes that were changed, notify their subscribers' leading descendants to rerun rules
+  // 4. repeat steps 2-3 until no nodes are marked changed
+  // -
+  // 5. run all promote rules on entire row of current leaders
+  // 6. for all blank nodes on new layer, notify ancestors that are waitingOnTarget to rerun rules
+  // 7. repeat steps 5-6 until no blank nodes on new layer
+  // -
+  // 8. repeat steps 1-7 with the new layer as the 'top row'
 
-  while (grid) {
-    const nodesToChange = new Set<Node>();
+  const nodesToChange = new Set<Node>();
     
-    while (grid) {
-      // populate nodesToChange for transform rules
-      nodesToChange.clear();
-      let node: Node | null = grid;
-      while (node) {
-        nodesToChange.add(node);
-        node = node.next;
-      }
-
-      // run transform rules
-      while (nodesToChange.size > 0) {
-        const nodesChanged = new Set<Node>();
-        nodesToChange.forEach(node => {
-        // XXX: figure out how to not always unfreeze
-          if (node.applyTransformRules(true)) {
-            nodesChanged.add(node);
-          }
-        });
-        nodesToChange.clear();
-
-        nodesChanged.forEach(n => {
-          n.subscribers.forEach(
-            subscriber => subscriber.leaders().forEach(leader => nodesToChange.add(leader))
-          );
-        });
-
-        grid.connectLeaders();
-      }
-
-      grid = grid.seekLeader()?.firstChild() ?? null;
-      // populate nodesToChange for promote rules
-      nodesToChange.clear();
-      node = grid;
-      while (node) {
-        nodesToChange.add(node);
-        node = node.next;
-      }
-
-      // have to run promote rules now...
-      // PROBLEM: promote rules can actually mock stuff on current layer too, how to run those types of 'promotes'?
-      // PROBLEM: actually probably not a problem but i should make sure postject/preject not invalidating a node is handled properly
+  while (grid) {
+    // populate nodesToChange for transform rules
+    nodesToChange.clear();
+    let node: Node | null = grid;
+    while (node) {
+      nodesToChange.add(node);
+      node = node.next;
     }
+
+    console.log(`step 1`);
+    while (nodesToChange.size > 0) {
+      const nodesChanged = new Set<Node>();
+      nodesToChange.forEach(node => {
+        if (node.applyTransformRules()) {
+          nodesChanged.add(node);
+        }
+      });
+      nodesToChange.clear();
+
+      console.log(`step 3`);
+      nodesChanged.forEach(n => {
+        n.subscribers.forEach(
+          subscriber => subscriber.leaders().forEach(leader => nodesToChange.add(leader))
+        );
+      });
+
+      console.log(`step 2`);
+      grid.connectLeaders();
+    }
+
+    grid = grid.seekLeader()?.firstChild() ?? null;
+    // populate nodesToChange for promote rules
+    nodesToChange.clear();
+    node = grid;
+    while (node) {
+      nodesToChange.add(node);
+      node = node.next;
+    }
+
+    console.log(`step 5`);
+    nodesToChange.forEach(node => {
+      if (node.applyPromoteRules()) {
+        nodesToChange.delete(node);
+      }
+    });
+
+    while (nodesToChange.size > 0) {
+      console.log(`step 6`);
+      nodesToChange.forEach(node => {
+        if (!node.waitingOnTarget) {
+          console.error(`not waiting on target!`, node);
+          nodesToChange.delete(node);
+          return;
+        }
+        if (node.applyPromoteRules()) {
+          nodesToChange.delete(node);
+        }
+      });
+    }
+    console.log(`step 8 i think`);
   }
 }
 
