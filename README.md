@@ -13,31 +13,31 @@ dialects of Lebanese Arabic, which is good for learners and for native speakers 
 Along the way, the project turned into a much more general tool that will allow any language at all to get that
 treatment.
 
-What do I mean by "unique features"?
+The kinds of unique features we're interested in include:
 
 1. The sound system of each variety.
 2. Morphology across the board. Morphology is how words change for different grammatical reasons.
-3. The differing treatments of individual words.
+3. Sometimes, the way individual words get treated per variety.
 
 This project explicitly caters to #1 and also allows for #2 if you're clever about it. Unfortunately, it isn't great
 at #3 -- that would require it to be hooked up to a dictionary that attaches metadata to each specific
-word it records. More details below.
+word it records. More details on the three of these below.
 
 ### The sound system of each variety
 A couple examples from Lebanon:
 1. Most people pronounce the Arabic sound ق, originally a
   [uvular plosive](https://en.wikipedia.org/wiki/Voiceless_uvular_stop) /qˤ/, as a
-  [glottal stop](https://en.wikipedia.org/wiki/Glottal_stop) /ʔ/. However, some Druze and even Christian
-  communities are well-known to conserve the /q/ pronunciation of this sound.
-2. The original Arabic sounds *ay* and *aw* are famously retained more commonly in Lebanon than anywhere
-  else in the Arab world. However, the rules governing this retention differ. In my own variety, I turn
-  them to *ē* and *ō* only in the final syllable of a word, nowhere else -- so "house" is *bēt*, but "my
-  house" is *bayte*. Meanwhile, there are other speakers who retain both sounds perfectly: *bayt, bayte*.
-  Still others, especially in regions of the Beqaa, retain them in final syllables by lengthening the
-  vowel: *bāyt, bayte*. There are some speakers for whom it matters how many sounds are after the *ay*
+  [glottal stop](https://en.wikipedia.org/wiki/Glottal_stop) /ʔ/. But some Druze and even Christian
+  communities still conserve the /q/ pronunciation of this sound.
+2. The original Arabic sounds *ay* and *aw* held their ground more commonly in Lebanon than anywhere
+  else in the Arab world. But the rules governing that retention can vary. In my own variety, I turn
+  the two sounds to *ē* and *ō* only in the final syllable of a word, nowhere else -- so "house" is *bēt*,
+  but "my house" is *bayte*. Meanwhile, there are other speakers who retain both sounds perfectly: *bayt, bayte*.
+  Still others, like in regions of the Beqaa, retain them in final syllables by lengthening the
+  vowel: *bāyt, bayte*. And there are some speakers for whom it matters how many sounds are after the *ay*
   or *aw*: *bēt, bayte* are like me, but then "our house" is *bētna* while for me it's *baytna*.
 
-As small as all of these little tidbits seem out of hand, they really contribute in an essential way to
+As small as all of these little tidbits seem, they really contribute heftily to
 the character of somebody's dialect. By trawling through all of the things like this that vary throughout
 Lebanon, we can come up with a checklist to help us create an individual profile of each different dialect
 we come across.
@@ -46,21 +46,21 @@ we come across.
 This is the same idea, just on the level of how different parts of speech behave rather than single sounds.
 
 1. I conjugate the verbs "we relaxed" and "we borrowed" as *rteħna*, *stʕerna*. Other Lebanese people might
-   say *rtaħna*, *stʕarna* (or *staʕarna*). These changes hold across the entire class of verbs that each
+   say *rtaħna*, *stʕarna* (or *staʕarna*). This holds true across the entire class of verbs that each
    one of these two belongs to.
 2. For "I've brushed my teeth", I say *mfarše* for the verb. "I've brushed them" is *mfaršīhon*. Other
    Lebanese people will very commonly say *mfaršíyon* instead, but moreover some people flip the last
-   vowel altogether: *mfarša* and something like *mfaršēhon*. This holds for any verb like this that
+   vowel altogether: *mfarša* and something like *mfaršēhon*. This is true for any verb like this that
    ends in a vowel.
 
 Writing these changes out in prose is pretty tedious, but the fact that they're so regular across entire
-classes of words means they're very likely to be possible to represent programmatically. (Spoiler warning!)
+classes of words means they're super ripe for being represented programmatically... somehow. (Spoiler!)
 
 ### Individual words
-Again, this one is much less easy to cater to in a project like this without having it hooked up to an actual
-dictionary. For example, about half of Lebanon's dialects say "still" as *baʕd*, while the other half uses
-the stem *ʔessa*. Some people say "I mean" as something like *ʔaẓde*, while others will use a *ṣ* sound instead,
-and there basically aren't any other words that alternate between a Z sound and an S sound like this.
+Again, this kind of variation is much less easy to cater to in a project like this without having it hooked up
+to an actual dictionary. For example, about half of Lebanon's dialects say "still" as *baʕd*, while the other
+half uses the stem *ʔessa*. Some people say "I mean" as something like *ʔaẓde*, while others will use a *ṣ* sound
+instead, and there basically aren't any other words that alternate between a Z sound and an S sound like this.
 
 ## How this project tackles that
 
