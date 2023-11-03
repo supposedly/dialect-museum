@@ -21,13 +21,14 @@ import {
   ForceNodeDatum,
   ForceEdgeDatum,
 } from "v-network-graph/lib/force-layout";
+import {withFlags} from 'src/languages/levantine/alphabets/templates/templates';
 window.toRaw = toRaw;
 let waiting: Ref<string | null> = ref(null);
 
-async function awaitStep(time: number = 250, place?: string, ...highlight: ReadonlyArray<number>) {
+async function awaitStep(place?: string, ...highlight: ReadonlyArray<number>) {
   waiting.value = place ?? `Step`;
   highlight.forEach(id => { nodes[`node${id}`].highlight = true; });
-  const timeout = setTimeout(() => { waiting.value = null; }, time);
+  const timeout = setTimeout(() => { waiting.value = null; }, speed.value * multiplier.value);
   while (waiting.value) {
     await new Promise<void>(resolve => setTimeout(resolve, 50));
   }
@@ -67,10 +68,10 @@ const configs = reactive(
           const forceLink = d3.forceLink<ForceNodeDatum, ForceEdgeDatum>(edges).id(d => d.id);
           return d3
             .forceSimulation(nodes)
-            .force(`edge`, forceLink.distance(100).strength(1))
-            .force(`charge`, d3.forceManyBody().strength(-2000))
+            .force(`edge`, forceLink.distance(80).strength(1))
+            .force(`charge`, d3.forceManyBody().strength(-5000))
             .force(`center`, d3.forceCenter().strength(0.05))
-            .force(`collide`, d3.forceCollide(3).strength(5))
+            // .force(`collide`, d3.forceCollide(3).strength(5))
             .alphaMin(0.001);
 
           // * The following are the default parameters for the simulation.
@@ -232,16 +233,29 @@ function orderRules(
 // console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(debug, {})));
 
 const input = <const>[
+  // {
+  //   type: `word`, features: {
+  //     string: [
+  //       letters.affected.consonant.th,
+  //       letters.affected.vowel.i,
+  //       letters.plain.consonant.q,
+  //     ],
+  //   }, context: {affected: false},
+  // },
+  // letters.plain.affix.f,
+  // {type: `boundary`, features: {type: `word`}, context: {affected: false}},
   {
     type: `word`, features: {
       string: [
-        letters.affected.consonant.th,
-        letters.affected.vowel.i,
-        letters.plain.consonant.q,
+        letters.plain.consonant.$,
+        letters.plain.vowel.a,
+        letters.plain.consonant.d,
+        letters.plain.consonant.r,
+        letters.plain.vowel.a,
+        letters.plain.consonant.s,
       ],
     }, context: {affected: false},
   },
-  letters.plain.affix.f,
   {type: `boundary`, features: {type: `word`}, context: {affected: false}},
   {
     type: `verb`,
@@ -251,9 +265,9 @@ const input = <const>[
       door: `fa3al`,
       theme: `u`, // doesn't matter here
       root: [
-        letters.plain.consonant.k.features,
-        letters.plain.consonant.t.features,
-        letters.plain.consonant.b.features,
+        {...letters.plain.consonant.k.features, affected: false, weak: false},
+        {...letters.plain.consonant.t.features, affected: false, weak: false},
+        {...letters.plain.consonant.b.features, affected: false, weak: false},
       ],
     },
     context: {affected: false},
@@ -267,9 +281,9 @@ const input = <const>[
       door: `f3vl`,
       theme: `u`,
       root: [
-        letters.plain.consonant.k.features,
-        letters.plain.consonant.t.features,
-        letters.plain.consonant.b.features,
+        {...letters.plain.consonant.k.features, affected: false, weak: false},
+        {...letters.plain.consonant.t.features, affected: false, weak: false},
+        {...letters.plain.consonant.b.features, affected: false, weak: false},
       ],
     },
     context: {affected: false},
@@ -326,7 +340,7 @@ class Node {
     public layer: Alphabet,
     public type: NodeType,
     public childType: ChildType | null,
-    public value: {type: string, features: object, context: object} | undefined,
+    public _value: {type: string, features: object, context: object} | undefined,
     environment?: {
       mainParent?: Node[`mainParent`],
       mainChild?: Node[`mainChild`],
@@ -351,19 +365,28 @@ class Node {
     //     this.prev = this.mainParent.prevCousinOf(this);
     //   }
     // }
-    if (this.mainChild && this.mainChild.mainParent === null) {
+    if (this.mainChild && (this.mainChild.mainParent === null || this.mainChild.mainParent === this.mainParent)) {
       this.mainChild.mainParent = this;
     }
-    if (this.mainParent && this.mainParent.mainChild === null) {
+    if (this.mainParent && (this.mainParent.mainChild === null || this.mainParent.mainChild === this.mainChild)) {
       this.mainParent.mainChild = this;
     }
+  }
+
+  get value() {
+    return this._value;
+  }
+
+  set value(value) {
+    this._value = value;
+    nodes[`node${this.id}`].name = value?.type ? `${value.type}\n${this.id}` : `${this.id}`;
   }
 
   get mainChild() {
     return this._mainChild;
   }
 
-  set mainChild(node: Node | null) {
+  set mainChild(node) {
     if (this._mainChild !== null) {
       delete edges[`edge${this.id}-${this._mainChild.id}`];
     }
@@ -377,7 +400,7 @@ class Node {
     return this._mainParent;
   }
 
-  set mainParent(node: Node | null) {
+  set mainParent(node) {
     if (this._mainParent !== null) {
       delete edges[`edge${this.id}-${this._mainParent.id}`];
     }
@@ -391,7 +414,7 @@ class Node {
     return this._prev;
   }
 
-  set prev(node: Node | null) {
+  set prev(node) {
     if (this._prev !== null) {
       delete edges[`edge${this.id}-${this._prev.id}`];
     }
@@ -612,34 +635,43 @@ class Node {
     }
   }
 
-  _connectLeaders() {
-    if (this.mainChild !== null && this.mainChild.layer === this.layer) {
-      this.mainChild.lastSibling()._connectLeaders();
-    }
-    const lastSibling = this.lastSibling();
-    if (lastSibling.mainParent === null) {
-      const niece = lastSibling.next?.firstChild() ?? null;
-      lastSibling.next = niece === null || niece.layer !== lastSibling.layer ? lastSibling.next : niece;
-      if (lastSibling.next) {
-        lastSibling.next.prev = lastSibling;
+  async _connectLeaders(last?: Node | null): Promise<[Node | null, Node | null]> {
+    await awaitStep(`last: ${last?.id}`, this.id);
+    if (this.mainChild === null || this.mainChild.layer !== this.layer) {
+      await awaitStep(`leaf`, this.id);
+      const firstSibling = this.mainParent === null || this.mainParent.layer !== this.layer ? this : this.firstSibling();
+      if (last) {
+        last.next = firstSibling;
+        firstSibling.prev = last;
       }
-      return;
+      return [firstSibling, this.mainParent === null || this.mainParent.layer !== this.layer ? this : this.lastSibling()];
     }
-    if (lastSibling.mainParent.mainChild === null) {
-      console.error(`how did you get a child with no parent`, this);
+    let veryFirstLeader: Node | null = null;
+    let firstLeader: Node | null = null;
+    let lastLeader: Node | null = null;
+    let previousLastLeader = last;
+    for (const child of this.children()) {
+      await awaitStep(`child`, child.id);
+      [firstLeader, lastLeader] = await child._connectLeaders(previousLastLeader);
+      if (veryFirstLeader === null) {
+        veryFirstLeader = firstLeader;
+      }
+      if (previousLastLeader) {
+        previousLastLeader.next = firstLeader;
+      }
+      previousLastLeader = lastLeader;
     }
-    const cousin = lastSibling.mainParent.nextCousinOf(lastSibling.mainParent.mainChild!);
-    lastSibling.next = cousin === null || cousin.layer !== lastSibling.layer ? lastSibling.next : cousin;
-    if (cousin !== null) {
-      cousin.prev = lastSibling;
+    if (veryFirstLeader) {
+      veryFirstLeader.prev = last ?? null;
     }
+    return [veryFirstLeader, lastLeader];
   }
 
-  connectLeaders() {
+  async connectLeaders(last?: Node | null) {
     // staving off some recursion depth
     // (i'll have to bite the bullet and replace all recursion with while loops eventually rip)
-    this._connectLeaders();
-    this.lastSibling().next?.connectLeaders();
+    const [firstLeader, lastLeader] = await this._connectLeaders(last);
+    await (this.mainParent === null || this.mainParent.layer !== this.layer ? this : this.lastSibling()).next?.connectLeaders(lastLeader);
   }
 
   seekLeader(): Node {
@@ -679,12 +711,11 @@ class Node {
   }
 
   async wipeChildren() {
-    await awaitStep(100, `wiping starting from ${this.id}`, this.id);
     while (this.mainChild !== null && this.mainChild.layer === this.layer) {
       this.mainChild.orphanSiblings();
       this.mainChild = this.mainChild.mainChild;
     }
-    await awaitStep(100, `wiping again starting from ${this.id}`, this.id);
+    await awaitStep(`wiping starting from ${this.id}`, this.id);
     if (this.mainChild === null) {
       return;
     }
@@ -995,7 +1026,7 @@ class Node {
     }
     firstMainSibling.prev = end;
     end.next = firstMainSibling;
-    await awaitStep(100, `Finish preject`);
+    await awaitStep(`Finish preject`);
   }
 
   postject(start: Node, end: Node) {
@@ -1009,21 +1040,21 @@ class Node {
   }
 
   async split(start: Node, end: Node) {
-    await awaitStep(250, `SPLIT`, this.id);
+    await awaitStep(`SPLIT`, this.id);
     end.next = this.next;
     if (this.next) {
-      await awaitStep(250, `NEXT`, this.id);
+      await awaitStep(`NEXT`, this.id);
       this.next.prev = end;
     }
     if (this.type === NodeType.blank) {
-      await awaitStep(250, `COPY`, this.id);
+      await awaitStep(`COPY`, this.id);
       this.copy(start, {mainChild: this.mainChild});
     } else {
-      await awaitStep(250, `NEIGHBOR`, this.id);
+      await awaitStep(`NEIGHBOR`, this.id);
       this.next = start;
       start.prev = this;
     }
-    await awaitStep(250, `DONE`, this.id);
+    await awaitStep(`DONE`, this.id);
   }
 
   async makeChildren(
@@ -1065,6 +1096,7 @@ class Node {
       firstNode,
     );
     if (this.mainChild === null || this.mainChild.layer !== target) {
+      await awaitStep(`-1 finding mock.was`);
       this.mainChild = new Node(
         this.rules,
         target,
@@ -1073,14 +1105,16 @@ class Node {
         undefined,
         {mainParent: this, mainChild: this.mainChild},
       );
+      await awaitStep(`0 finding mock.was`);
       this.mainChild.createdBy = rule;
     }
     // coalesce was handled at the top of this function
+    await awaitStep(`1 finding mock.was`);
     switch (operation) {
       case `preject`:
         changed = true;
         await this.mainChild.preject(firstNode, lastNode);
-        // await awaitStep(`After preject`);
+        // await awaitStep(ter preject`);
         break;
       case `postject`:
         changed = true;
@@ -1089,6 +1123,7 @@ class Node {
       default:
         await this.mainChild.split(firstNode, lastNode);
     }
+    await awaitStep(`done splitting`);
     return changed || this.mainChild.type !== NodeType.blank;
     // this.mainChild.split(firstNode, lastNode);
   }
@@ -1112,6 +1147,9 @@ class Node {
     if (!transforming && (operation.operation === `mock` || operation.mock)) {
       return false;
     }
+    if ((operation.operation === `mock` || operation.operation === `main` || operation.operation === `coalesce`) && this.mainChild?.type !== NodeType.blank) {
+      return false;
+    } 
     if (operation.operation === `coalesce`) {
       this.mainChild = new Node(
         this.rules,
@@ -1141,7 +1179,8 @@ class Node {
       operation.mock,
       rule
     );
-    // await awaitStep(`After makeChildren`);
+    await awaitStep(`done making children`);
+    // await awaitStep(ter makeChildren`);
     return changed;
   }
 
@@ -1165,7 +1204,9 @@ class Node {
       null,
       ...(this.rules[this.layer.name]?.[this.mainChild.layer.name] ?? []),
     ];
+    console.log(`RULES`, rules);
     this.waitingOnTarget = false;
+    await this.wipeChildren();
     for (const rule of rules) {
       if (rule === null) {
         inTransformRules = false;
@@ -1200,8 +1241,7 @@ class Node {
 
       // finally if we're here it means we're really running this rule
       changed = false;
-
-      await this.wipeChildren();
+      // await awaitStep(`begin running transform`, this.id);
 
       const into: ReadonlyArray<object> = (
         rule.into instanceof Function
@@ -1234,6 +1274,7 @@ class Node {
             }
           }
           specs.length = 0;
+          // await awaitStep(`i think this is the mock.was`, this.id);
           if (await this.applyOperation(
               {
                 ...v,
@@ -1245,6 +1286,7 @@ class Node {
               envCache.get(rule.for)!,
               rule
           )) {
+            await awaitStep(`done applying operation`);
             changed = true;
           }
         } else {
@@ -1291,6 +1333,7 @@ class Node {
     let changed = false;
     const rules = this.rules[this.layer.name]?.[this.mainChild.layer.name] ?? [];
     this.waitingOnTarget = false;
+    await this.wipeChildren();
     for (const rule of rules) {
       // console.log(`before`, rule);
       if (!specsCache.has(rule.for)) {
@@ -1303,7 +1346,7 @@ class Node {
         continue;
       }
 
-      // await awaitStep(`Sanity`);
+      // await awaitStep(nity`);
 
       // if we're here it means specs match!
       // so... bam just do the transformation
@@ -1327,8 +1370,6 @@ class Node {
 
       // console.log(rule);
 
-      await this.wipeChildren();
-
       const into: ReadonlyArray<object> = (
         rule.into instanceof Function
           ? rule.into(this.value)
@@ -1339,11 +1380,11 @@ class Node {
         envCache.set(rule.for, this.collectEnv(rule.for));
       }
 
-      await awaitStep(300, `Starting to promote`);
+      await awaitStep(`Starting to promote`);
 
       const specs: object[] = [];
       for (const v of into) {
-        // await awaitStep(`Starting iteration over promote into`);
+        // await awaitStep(arting iteration over promote into`);
         // console.log(`????`, v);
         if (`operation` in v && `argument` in v && `mock` in v) {
           if (specs.length) {
@@ -1358,7 +1399,7 @@ class Node {
               changed = true;
             }
           }
-          // await awaitStep(`After the thing was applied?`);
+          // await awaitStep(ter the thing was applied?`);
           if (await this.applyOperation(
             v as never,
             this.layer,
@@ -1369,7 +1410,7 @@ class Node {
           )) {
             changed = true;
           }
-          // await awaitStep(`Loop end?`);
+          // await awaitStep(op end?`);
         } else {
           specs.push(v);
         }
@@ -1456,14 +1497,16 @@ async function run(grid: Node | null) {
   const nodesToChange = new Set<Node>();
 
   let rip = 0;
-  await awaitStep(500, `Starting`);
+  await awaitStep(`Starting`);
   while (grid && rip++ < 20) {
     // populate nodesToChange for transform rules
-    // debugger;
-    nodesToChange.clear();
     let node: Node | null = grid;
+    while (node) {
+      nodesToChange.add(node);
+      node = node.next;
+    }
 
-    await awaitStep(300, `Step 1`);
+    await awaitStep(`Step 1`);
     console.log(`step 1`);
     while (nodesToChange.size > 0) {
       const nodesChanged = new Set<Node>();
@@ -1474,12 +1517,12 @@ async function run(grid: Node | null) {
       }
       nodesToChange.clear();
 
-      await awaitStep(300, `Step 2`);
+      await awaitStep(`Step 2`);
       console.log(`step 2`);
-      grid.connectLeaders();
+      await grid.connectLeaders();
 
 
-      await awaitStep(300, `Step 3`);
+      await awaitStep(`Step 3`);
       console.log(`step 3`, nodesChanged);
       nodesChanged.forEach(n => {
         n.subscribers.forEach(
@@ -1492,7 +1535,7 @@ async function run(grid: Node | null) {
       });
     }
 
-    await awaitStep(300, `Step 5`);
+    await awaitStep(`Step 5`);
     grid = grid.seekLeader() ?? null;
     // populate nodesToChange for promote rules
     nodesToChange.clear();
@@ -1510,8 +1553,8 @@ async function run(grid: Node | null) {
       node = node.next;
     }
 
-    await awaitStep(300, `Step 6`);
-    grid.mainChild?.connectLeaders();
+    await awaitStep(`Step 6`);
+    await grid.mainChild?.connectLeaders();
 
     while (nodesToChange.size > 0) {
       console.log(`step 6`);
@@ -1527,7 +1570,7 @@ async function run(grid: Node | null) {
       }
     }
 
-    await awaitStep(300, `Step 8`);
+    await awaitStep(`Step 8`);
     grid = grid.mainChild;
     console.log(`step 8 i think`, rip);
   }
@@ -1574,12 +1617,21 @@ let running = false;
   rassi: rassiProfile,
 };
 
+// console.log(withFlags(underlying.types.consonant, `affected`, `weak`));
 
+
+const speed = ref(250);
+const multiplier = ref(1);
 </script>
 
 <template>
   <button @click="() => run(grid)">Run</button>
   <button @click="() => { waiting = null; }" :style="waiting ? {backgroundColor: `lightpink`} : {}">Step: {{ waiting }}</button>
+  <p><input type="range" id="speed" name="speed" min="1" max="1000" v-model="speed" />
+</p><p>
+  <input type="range" id="multiplier" name="multiplier" min="0" max="10" v-model="multiplier" />
+</p>
+  <p>{{ speed * multiplier }}</p>
   <v-network-graph class="graph" :nodes="nodes" :edges="edges" :configs="configs"></v-network-graph>
 </template>
 

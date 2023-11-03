@@ -1,6 +1,7 @@
 import ruleset from './ruleset';
 import {withFlags} from 'src/languages/levantine/alphabets/templates/templates';
 import {letters, underlying} from 'src/languages/levantine/alphabets/underlying';
+import {fixRoot} from '../../../number/ordinal/ruleset';
 
 export default ruleset(
   {
@@ -9,23 +10,23 @@ export default ruleset(
         string: [
           letters.plain.consonant.$,
           letters.plain.vowel.a,
-          {type: `consonant`, features: withFlags(underlying.types.consonant, `affected`, `weak`)},
+          {type: `consonant`, features: underlying.types.consonant, context: underlying.context},
           letters.plain.vowel.a,
-          {type: `consonant`, features: withFlags(underlying.types.consonant, `affected`, `weak`)},
-          {type: `consonant`, features: withFlags(underlying.types.consonant, `affected`, `weak`)},
+          {type: `consonant`, features: underlying.types.consonant, context: underlying.context},
+          {type: `consonant`, features: underlying.types.consonant, context: underlying.context},
           letters.plain.vowel.a,
-          {type: `consonant`, features: withFlags(underlying.types.consonant, `affected`, `weak`)},
+          {type: `consonant`, features: underlying.types.consonant, context: underlying.context},
         ],
       }},
-    env: ({before}) => before(letters.plain.affix.f),
+    env: {},
   },
   operations => ({
     default: ({features: {string: $}}) => [
       operations.mock.was.templates({
         type: `special`,
         features: {
-          shape: `maf3ale`,
-          root: [$[2].features, $[4].features, $[5].features, $[7].features],
+          shape: `af3al`,
+          root: fixRoot([$[2], $[4], $[5], $[7]]),
         },
       }),
     ],

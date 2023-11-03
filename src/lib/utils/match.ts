@@ -280,7 +280,7 @@ export const matchers = {
       if (!Array.isArray(other)) {
         return false;
       }
-      return self.every((item, idx) => item === other[idx]);
+      return self.every((item, idx) => matchers.single(item, other[idx]));
     }
     if (isLiteral(self)) {
       if (typeof other !== `object` || other === null) {

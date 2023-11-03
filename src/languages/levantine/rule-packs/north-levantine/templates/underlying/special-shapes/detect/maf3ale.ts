@@ -1,6 +1,7 @@
 import ruleset from './ruleset';
 import {withFlags} from 'src/languages/levantine/alphabets/templates/templates';
 import {letters, underlying} from 'src/languages/levantine/alphabets/underlying';
+import {fixRoot} from '../../number/ordinal/ruleset';
 
 export default ruleset(
   {
@@ -9,10 +10,10 @@ export default ruleset(
         string: [
           letters.plain.consonant.m,
           letters.plain.vowel.a,
-          {type: `consonant`, features: withFlags(underlying.types.consonant, `affected`, `weak`)},
-          {type: `consonant`, features: withFlags(underlying.types.consonant, `affected`, `weak`)},
+          {type: `consonant`, features: underlying.types.consonant, context: underlying.context},
+          {type: `consonant`, features: underlying.types.consonant, context: underlying.context},
           letters.plain.vowel.a,
-          {type: `consonant`, features: withFlags(underlying.types.consonant, `affected`, `weak`)},
+          {type: `consonant`, features: underlying.types.consonant, context: underlying.context},
         ],
       }},
     env: ({before}) => before(letters.plain.affix.f),
@@ -23,7 +24,7 @@ export default ruleset(
         type: `special`,
         features: {
           shape: `maf3ale`,
-          root: [$[2].features, $[3].features, $[5].features],
+          root: fixRoot([$[2], $[3], $[5]]),
         },
       }),
     ],
