@@ -283,13 +283,13 @@ export const matchers = {
       return self.every((item, idx) => item === other[idx]);
     }
     if (isLiteral(self)) {
-      if (!isLiteral(other)) {
-        return false;
+      if (typeof other !== `object` || other === null) {
+        return self === other;
       }
       return Object.keys(self).every(
         k => k in other && matchers.single(
           (self as Record<string, MatchSchema>)[k],
-          other[k]
+          other[k as never]
         )
       );
     }
@@ -320,7 +320,7 @@ export const matchers = {
     return false;
   },
   array<const Self extends ValueOfMatch<`array`>>({length, fill}: Self, other: unknown): boolean {
-    return Array.isArray(other) && this.single({length}, other) && other.every(item => item === fill);
+    return Array.isArray(other) && this.single({length}, other) && other.every(item => this.single(fill, item));
   },
   custom<const Self extends ValueOfMatch<`custom`>>(self: Self, other: unknown): boolean {
     // XXX: more elegant way to make the compiler happy here?

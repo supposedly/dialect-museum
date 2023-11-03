@@ -6,6 +6,6 @@ export default ruleset(
     env: {},
   },
   {
-    default: c => [{type: `literal`, features: {value: JSON.stringify(c)}}],
+    wat: c => [{type: `literal`, features: {value: JSON.stringify(c)}}],
   }
 );

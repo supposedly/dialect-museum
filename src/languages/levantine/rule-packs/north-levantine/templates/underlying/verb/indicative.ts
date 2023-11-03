@@ -10,6 +10,6 @@ export default ruleset(
     env: {},
   },
   operations => ({
-    default: [operations.preject(letters.plain.affix.indicative)],
+    indicative: [operations.preject(letters.plain.affix.indicative)],
   })
 );

@@ -159,7 +159,6 @@ function _unfuncSpec<Specs>(
   if (specs === undefined || specs === null || typeof specs !== `object`) {
     return specs as UnfuncSpec<Specs>;
   }
-  // console.log(specs, funcs, target, dependencies, useDependencies);
   if (`match` in specs && `value` in specs && Array.isArray(specs[`value`])) {
     return {
       match: specs[`match`],
@@ -170,8 +169,8 @@ function _unfuncSpec<Specs>(
   }
   if (`spec` in specs || `env` in specs) {
     return {
-      ...(`spec` in specs ? callSpecFunc(specs.spec as object, funcs) : {}),
-      ...(`env` in specs ? callEnvFunc(specs.env as object, funcs) : {}),
+      ...(`spec` in specs ? {spec: callSpecFunc(specs.spec as object, funcs)} : {}),
+      ...(`env` in specs ? {env: callEnvFunc(specs.env as object, funcs)} : {}),
     } as UnfuncSpec<Specs>;
   }
   return Object.fromEntries(
@@ -204,13 +203,13 @@ export function unfuncSpec<
   target: Target,
   dependencies: Dependencies,
 ): UnfuncSpec<Specs> {
-  return _unfuncSpec(
+  return {..._unfuncSpec(
     specs,
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     generateSpecFuncs(source, target, dependencies) as never,
     target,
     Object.fromEntries([source, ...dependencies].map(abc => [abc.name, abc]))
-  );
+  ), ORIGINAL: specs};
 }
 
 function generateSpecFuncs<

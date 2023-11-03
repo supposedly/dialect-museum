@@ -12,6 +12,105 @@ import {matchers} from 'src/lib/utils/match';
 
 import {templates, underlying, phonic} from 'src/languages/levantine/alphabets';
 import sharedOdds from 'src/lib/rules/odds';
+import {unfuncSpec} from 'src/lib/rules/funcs';
+import {type KeysNotMatching} from 'src/lib/utils/typetools';
+import {reactive, ref} from 'vue';
+import * as vNG from 'v-network-graph';
+import {
+  ForceLayout,
+  ForceNodeDatum,
+  ForceEdgeDatum,
+} from "v-network-graph/lib/force-layout";
+
+interface vNode extends vNG.Node {
+  // size: number
+  color: string
+  label?: boolean
+}
+
+interface vEdge extends vNG.Edge {
+  // width: number
+  color: string
+  dashed?: boolean
+}
+
+
+const nodes: Record<string, vNode> = reactive({});
+const edges: Record<string, vEdge> = reactive({});
+window.nodes = nodes;
+window.edges = edges;
+const configs = reactive(
+  vNG.defineConfigs<vNode, vEdge>({
+    view: {
+      scalingObjects: true,
+      layoutHandler: new ForceLayout({
+        positionFixedByDrag: false,
+        positionFixedByClickWithAltKey: true,
+        createSimulation: (d3, nodes, edges) => {
+          // d3-force parameters
+          const forceLink = d3.forceLink<ForceNodeDatum, ForceEdgeDatum>(edges).id(d => d.id);
+          return d3
+            .forceSimulation(nodes)
+            .force(`edge`, forceLink.distance(80).strength(1))
+            .force(`charge`, d3.forceManyBody().strength(-1000))
+            .force(`center`, d3.forceCenter().strength(0.05))
+            .force(`collide`, d3.forceCollide().strength(1))
+            .alphaMin(0.001);
+
+          // * The following are the default parameters for the simulation.
+          // const forceLink = d3.forceLink<ForceNodeDatum, ForceEdgeDatum>(edges).id(d => d.id)
+          // return d3
+          //   .forceSimulation(nodes)
+          //   .force("edge", forceLink.distance(100))
+          //   .force("charge", d3.forceManyBody())
+          //   .force("collide", d3.forceCollide(50).strength(0.2))
+          //   .force("center", d3.forceCenter().strength(0.05))
+          //   .alphaMin(0.001)
+        },
+      }),
+    },
+    node: {
+      normal: {
+        type: `circle`,
+        radius: 32,
+        // radius: node => node.size, // Use the value of each node object
+        color: node => node.color,
+      },
+      hover: {
+        // radius: node => node.size + 2,
+        color: node => node.color,
+      },
+      selectable: true,
+      label: {
+        // visible: node => !!node.label,
+        direction: `center`,
+        color: `#fff`,
+      },
+      focusring: {
+        color: `darkgray`,
+      },
+    },
+    edge: {
+      normal: {
+        // width: edge => edge.width, // Use the value of each edge object
+        color: edge => edge.color,
+        // dasharray: edge => (edge.dashed ? `4` : `0`),
+      },
+      marker: {
+        target: {
+          type: `arrow`,
+          width: 4,
+          height: 4,
+          margin: -1,
+          offset: 0,
+          units: `strokeWidth`,
+          color: null,
+        },
+      },
+    },
+  })
+);
+let nodeID = 0;
 
 Object.values(rulePacks).forEach(v => Object.values(v.rulePacks).forEach(v => console.log((v))));
 
@@ -51,6 +150,9 @@ function mapToSource(profile: object, defaults: object) {
   });
   lastRule = null;
   processDefaults(defaults).forEach(rule => {
+    if (matchers.single(rule.for, {spec: input[5], env: {}})) {
+      console.log(rule);
+    }
     if (!map.has(rule.source)) {
       map.set(rule.source, [{rule, after: null}]);
     } else {
@@ -75,6 +177,9 @@ function orderRules(
     if (rules !== undefined) {
       rules.forEach(rule => {
         if (rule.after === null) {
+          if (matchers.single(rule.rule.for, {spec: input[5], env: {}})) {
+            console.log(rule.rule);
+          }
           array.push(rule.rule);
         } else {
           if (delayQueue.has(rule.after)) {
@@ -84,6 +189,9 @@ function orderRules(
           }
         }
         if (delayQueue.has(rule.rule)) {
+          delayQueue.get(rule.rule)!.filter(r => matchers.single(r.for, {spec: input[5], env: {}})).forEach(r => {
+            console.log(r);
+          });
           array.push(...delayQueue.get(rule.rule)!);
           delayQueue.delete(rule.rule);
         }
@@ -106,18 +214,18 @@ function orderRules(
 // console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults)));
 // console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(debug, {})));
 
-const input = [
+const input = <const>[
   {
     type: `word`, features: {
       string: [
         letters.affected.consonant.th,
         letters.affected.vowel.i,
         letters.plain.consonant.q,
-        letters.plain.affix.f,
       ],
     }, context: {affected: false},
   },
-  {type: `boundary`, features: {type: `word`}},
+  letters.plain.affix.f,
+  {type: `boundary`, features: {type: `word`}, context: {affected: false}},
   {
     type: `verb`,
     features: {
@@ -131,8 +239,9 @@ const input = [
         letters.plain.consonant.b.features,
       ],
     },
+    context: {affected: false},
   },
-  {type: `boundary`, features: {type: `word`}},
+  {type: `boundary`, features: {type: `word`}, context: {affected: false}},
   {
     type: `verb`,
     features: {
@@ -146,6 +255,7 @@ const input = [
         letters.plain.consonant.b.features,
       ],
     },
+    context: {affected: false},
   },
 ];
 
@@ -182,15 +292,17 @@ function update(a: object, b: object): object {
 }
 
 class Node {
-  public mainParent: Node | null = null;
-  public mainChild: Node | null = null;
-  public prev: Node | null = null;
-  public next: Node | null = null;
+  public _mainParent: Node | null = null;
+  public _mainChild: Node | null = null;
+  public _prev: Node | null = null;
+  public _next: Node | null = null;
 
   public subscribers: Set<Node> = new Set();
   public createdBy: {for: unknown, into: unknown, odds: unknown} | null = null;
 
   public waitingOnTarget: boolean = false;
+
+  public id;
 
   constructor(
     public rules: Record<string, Record<string, ReadonlyArray<{for: object, into: object, odds: ReturnType<ReturnType<typeof sharedOdds>>}>>>,
@@ -205,6 +317,9 @@ class Node {
       next?: Node[`next`],
     }
   ) {
+    this.id = nodeID++;
+    nodes[`node${this.id}`] = {name: `${this.value?.type ?? this.id}`, color: this.layer.name === `templates` ? `blue` : this.layer.name === `underlying` ? `maroon` : this.layer.name === `phonic` ? `#a17f1a` : `black`};
+    console.log(nodes);
     if (environment) {
       Object.entries(environment).forEach(([k, v]) => {
         // @ts-expect-error Assigning to properties (mainParent, mainChild, prev, next) dynamically
@@ -228,18 +343,74 @@ class Node {
     }
   }
 
-  copy(node: Node) {
-    this.mainParent = node.mainParent;
-    this.mainChild = node.mainChild;
-    this.prev = node.prev;
-    this.next = node.next;
+  get mainChild() {
+    return this._mainChild;
+  }
+
+  set mainChild(node: Node | null) {
+    if (this._mainChild !== null) {
+      delete edges[`edge${this.id}-${this._mainChild.id}`];
+    }
+    if (node !== null) {
+      edges[`edge${this.id}-${node.id}`] = {source: `node${this.id}`, target: `node${node.id}`, color: `blue`};
+    }
+    this._mainChild = node;
+  }
+  
+  get mainParent() {
+    return this._mainParent;
+  }
+
+  set mainParent(node: Node | null) {
+    if (this._mainParent !== null) {
+      delete edges[`edge${this.id}-${this._mainParent.id}`];
+    }
+    if (node !== null) {
+      edges[`edge${this.id}-${node.id}`] = {source: `node${this.id}`, target: `node${node.id}`, color: `black`};
+    }
+    this._mainParent = node;
+  }
+
+  get prev() {
+    return this._prev;
+  }
+
+  set prev(node: Node | null) {
+    if (this._prev !== null) {
+      delete edges[`edge${this.id}-${this._prev.id}`];
+    }
+    if (node !== null) {
+      edges[`edge${this.id}-${node.id}`] = {source: `node${this.id}`, target: `node${node.id}`, color: `red`};
+    }
+    this._prev = node;
+  }
+
+  get next() {
+    return this._next;
+  }
+
+  set next(node: Node | null) {
+    if (this._next !== null) {
+      delete edges[`edge${this.id}-${this._next.id}`];
+    }
+    if (node !== null) {
+      edges[`edge${this.id}-${node.id}`] = {source: `node${this.id}`, target: `node${node.id}`, color: `green`};
+    }
+    this._next = node;
+  }
+
+  copy(node: Node, fix: {[K in KeysNotMatching<Node, (...args: never) => unknown>]?: Node[K]} = {}) {
+    this.mainParent = `mainParent` in fix ? fix[`mainParent`] : node.mainParent;
+    this.mainChild = `mainChild` in fix ? fix[`mainChild`] : node.mainChild;
+    this.prev = `prev` in fix ? fix[`prev`] : node.prev;
+    this.next = `next` in fix ? fix[`next`] : node.next;
     // this.subscribers = node.subscribers;
-    this.createdBy = node.createdBy;
-    this.rules = node.rules;
-    this.layer = node.layer;
-    this.type = node.type;
-    this.childType = node.childType;
-    this.value = node.value;
+    this.createdBy = `createdBy` in fix ? fix[`createdBy`] : node.createdBy;
+    this.rules = `rules` in fix ? fix[`rules`] : node.rules;
+    this.layer = `layer` in fix ? fix[`layer`] : node.layer;
+    this.type = `type` in fix ? fix[`type`] : node.type;
+    this.childType = `childType` in fix ? fix[`childType`] : node.childType;
+    this.value = `value` in fix ? fix[`value`] : node.value;
     // this.waitingOnTarget = node.waitingOnTarget;  // should just be false tbh
   }
 
@@ -345,76 +516,76 @@ class Node {
   }
 
   /* initialization */
-  populateList(
-    rules: typeof this.rules,
-    layer: typeof this.layer,
-    type: typeof this.type,
-    childType: typeof this.childType,
-    value: typeof this.value
-  ) {
-    if (this.next === null) {
-      this.next = new Node(rules, layer, type, childType, value, {prev: this});
+  populateListChildren(targets: ReadonlyArray<Alphabet>) {
+    if (!targets.length) {
+      return;
     }
-    return this.next;
-  }
-
-  populateListChildren(target: Alphabet) {
-    if (this.next !== null) {
-      this.next.populateListChildren(target);
-    }
+    const [target, ...rest] = targets;
     if (this.mainChild === null) {
+      // propagates boundaries and other shared stuff
+      // (this will also get consonants and vowels i think...
+      // and because match lib doesn't care about missing properties it
+      // may just work out fine for ones that don't end up getting properly transformed??)
+      const value = (
+        this.value !== undefined
+          && this.value.type in target.types
+          && matchers.single(target.types[this.value.type], this.value.features)
+      ) ? this.value
+        : undefined;
       this.mainChild = new Node(
         this.rules,
         target,
         NodeType.blank,
         ChildType.main,
-        (
-        // propagates boundaries and other shared stuff
-        // (this will also get consonants and vowels i think...
-        // and because match lib doesn't care about missing properties it
-        // may just work out fine for ones that don't end up getting properly transformed??)
-          this.value !== undefined
-            && this.value.type in target.types
-            && matchers.single(target.types[this.value.type], this.value.features)
-            ? this.value
-            : undefined
-        ),
+        value,
         {mainParent: this},
       );
-      return this.mainChild;
     }
-    return undefined;
+    if (this.next !== null) {
+      this.next.populateListChildren(targets);
+      this.mainChild.next = this.next.mainChild;
+      if (this.next.mainChild) {
+        this.next.mainChild.prev = this.mainChild;
+      }
+    }
+    if (this.prev === null) {
+      this.mainChild.populateListChildren(rest);
+    }
   }
 
   _connectLeaders() {
     if (this.mainChild !== null && this.mainChild.layer === this.layer) {
       this.mainChild.lastSibling()._connectLeaders();
     }
-    if (this.mainParent === null) {
-      console.error(`no node is an island???`, this);
+    const lastSibling = this.lastSibling();
+    if (lastSibling.mainParent === null) {
+      const niece = lastSibling.next?.firstChild() ?? null;
+      lastSibling.next = niece === null || niece.layer !== lastSibling.layer ? lastSibling.next : niece;
+      if (lastSibling.next) {
+        lastSibling.next.prev = lastSibling;
+      }
       return;
     }
-    if (this.mainParent.mainChild === null) {
+    if (lastSibling.mainParent.mainChild === null) {
       console.error(`how did you get a child with no parent`, this);
     }
-    const cousin = this.mainParent.nextCousinOf(this.mainParent.mainChild!);
-    this.next = cousin;
-    if (cousin === null) {
-      return;
+    const cousin = lastSibling.mainParent.nextCousinOf(lastSibling.mainParent.mainChild!);
+    lastSibling.next = cousin === null || cousin.layer !== lastSibling.layer ? lastSibling.next : cousin;
+    if (cousin !== null) {
+      cousin.prev = lastSibling;
     }
-    cousin.prev = this;
   }
 
   connectLeaders() {
     // staving off some recursion depth
     // (i'll have to bite the bullet and replace all recursion with while loops eventually rip)
     this._connectLeaders();
-    this.next?.connectLeaders();
+    this.lastSibling().next?.connectLeaders();
   }
 
-  seekLeader(): Node | null {
+  seekLeader(): Node {
     if (this.mainChild === null || this.mainChild.layer !== this.layer) {
-      return this.mainChild?.firstSibling() ?? null;
+      return this.firstSibling();
     }
     return this.mainChild.firstSibling().seekLeader();
   }
@@ -511,6 +682,7 @@ class Node {
     if (this.type === NodeType.blank && subscriber !== this) {
       return false;
     }
+    // console.log(specs);
     return Object.entries(specs).every(([k, v]) => {
       switch (k) {
         case `spec`:
@@ -522,7 +694,7 @@ class Node {
         case `target`:
           return this.checkTarget(v, subscriber);
         default:
-          throw new Error(`Unimplemented for checkSpecs(): ${k}`);
+          throw new Error(`Unimplemented for checkSpecs(): ${k} from that^`);
       }
     });
   }
@@ -553,12 +725,8 @@ class Node {
       }
     }
     Object.entries(specs).forEach(([k, v]) => {
-      switch (k) {
-        case `env`:
-          this.checkEnv(v, subscriber, collected);
-          break;
-        default:
-          throw new Error(`Unimplemented for collectEnv(): ${k}`);
+      if (k === `env`) {
+        this.checkEnv(v, subscriber, collected);
       }
     });
     return collected;
@@ -792,7 +960,11 @@ class Node {
     }
   }
 
-  makeChildren(args: ReadonlyArray<object>, target: Alphabet, operation: string | null, mock: boolean) {
+  makeChildren(args: ReadonlyArray<object>, target: Alphabet, operation: string | null, mock: boolean): boolean {
+    if (operation === `coalesce`) {
+      return this.mainChild!.makeChildren(args, target, `main`, mock);
+    }
+    let changed = false;
     if (mock || operation === `mock`) {
       args = args.map(arg => update(this.value ?? {}, arg));
     }
@@ -806,14 +978,17 @@ class Node {
       {mainParent: this}
     );
     const lastNode = tail.reduce(
-      (node: Node, arg) => new Node(
-        this.rules,
-        target,
-        mock ? NodeType.mock : NodeType.fixture,
-        (operation ?? `main`) in ChildType ? ChildType[operation as keyof typeof ChildType] as never : ChildType.main,
-        arg as never,
-        {mainParent: this, prev: node}
-      ),
+      (node: Node, arg) => {
+        node.next = new Node(
+          this.rules,
+          target,
+          mock ? NodeType.mock : NodeType.fixture,
+          (operation ?? `main`) in ChildType ? ChildType[operation as keyof typeof ChildType] as never : ChildType.main,
+          arg as never,
+          {mainParent: this, prev: node}
+        );
+        return node.next;
+      },
       firstNode,
     );
     if (this.mainChild === null || this.mainChild.layer !== target) {
@@ -823,23 +998,23 @@ class Node {
         NodeType.blank,
         ChildType.main,
         undefined,
-        {mainParent: this}
+        {mainParent: this, mainChild: this.mainChild},
       );
     }
+    // coalesce was handled at the top of this function
     switch (operation) {
       case `preject`:
+        changed = true;
         this.mainChild.preject(firstNode, lastNode);
         break;
       case `postject`:
+        changed = true;
         this.mainChild.postject(firstNode, lastNode);
-        break;
-      case `coalesce`:
-        this.mainChild.childType = ChildType.coalesce;
-        this.mainChild.makeChildren(args, target, `main`, mock);
         break;
       default:
         this.mainChild.split(firstNode, lastNode);
     }
+    return changed || this.mainChild.type !== NodeType.blank;
     // this.mainChild.split(firstNode, lastNode);
   }
 
@@ -849,14 +1024,14 @@ class Node {
     target: Alphabet,
     transforming: boolean,
     collectedEnv: {next: Node[], prev: Node[]},
-  ) {
+  ): boolean {
     // only run same-layer rules when transforming
     if (transforming && !(operation.operation === `mock` || operation.mock)) {
-      return;
+      return false;
     }
     // only run next-layer rules when promoting
     if (!transforming && (operation.operation === `mock` || operation.mock)) {
-      return;
+      return false;
     }
     if (operation.operation === `coalesce`) {
       this.mainChild = new Node(
@@ -878,8 +1053,9 @@ class Node {
         }
       ));
     }
-    this.makeChildren(
-      operation.argument.specs,
+    console.log(`operation`, operation);
+    return this.makeChildren(
+      Array.isArray(operation.argument) ? operation.argument : operation.argument.specs,
       operation.operation === `mock` || operation.mock ? source : target,
       operation.operation,
       operation.mock
@@ -900,7 +1076,7 @@ class Node {
     const envCache = new Map<object, {next: Node[], prev: Node[]}>();
 
     let changed = false;
-    let transforming = true;
+    let inTransformRules = true;
     const rules = [
       ...(this.rules[this.layer.name]?.[this.layer.name] ?? []),
       null,
@@ -909,7 +1085,7 @@ class Node {
     this.waitingOnTarget = false;
     for (const rule of rules) {
       if (rule === null) {
-        transforming = false;
+        inTransformRules = false;
         continue;
       }
       if (!specsCache.has(rule.for)) {
@@ -940,7 +1116,7 @@ class Node {
       }
 
       // finally if we're here it means we're really running this rule
-      changed = true;
+      changed = false;
 
       this.wipeChildren();
 
@@ -954,17 +1130,59 @@ class Node {
         envCache.set(rule.for, this.collectEnv(rule.for));
       }
 
+      const specs: object[] = [];
       into.forEach(
-        v => this.applyOperation(
-          `operation` in v && `argument` in v && `mock` in v
-            ? {...v, mock: !transforming || v.operation === `mock` ? v.mock : transforming} as never
-            : {operation: transforming ? `mock` : `promote`, argument: v, mock: transforming} as never,
+        v => {
+          if (`operation` in v && `argument` in v && `mock` in v) {
+            if (specs.length) {
+              if (this.applyOperation(
+                {
+                  operation: inTransformRules ? `mock` : `promote`,
+                  argument: {specs: [...specs]},
+                  mock: inTransformRules,
+                } as never,
+                this.layer,
+                this.mainChild!.layer,
+                true,
+                envCache.get(rule.for)!
+              )) {
+                changed = true;
+              }
+            }
+            specs.length = 0;
+            if (this.applyOperation(
+              {
+                ...v,
+                mock: !inTransformRules || v.operation === `mock` ? v.mock : inTransformRules,
+              } as never,
+              this.layer,
+              this.mainChild!.layer,
+              true,
+              envCache.get(rule.for)!
+            )) {
+              changed = true;
+            }
+          } else {
+            specs.push(v);
+          }
+        }
+      );
+
+      if (specs.length) {
+        if (this.applyOperation(
+          {
+            operation: inTransformRules ? `mock` : `promote`,
+            argument: {specs: [...specs]},
+            mock: inTransformRules,
+          } as never,
           this.layer,
           this.mainChild!.layer,
           true,
           envCache.get(rule.for)!
-        )
-      );
+        )) {
+          changed = true;
+        }
+      }
     }
 
     return changed;
@@ -1015,7 +1233,7 @@ class Node {
       }
 
       // finally if we're here it means we're really running this rule
-      changed = true;
+      changed = false;
 
       this.wipeChildren();
 
@@ -1029,17 +1247,45 @@ class Node {
         envCache.set(rule.for, this.collectEnv(rule.for));
       }
 
-      into.forEach(
-        v => this.applyOperation(
-          `operation` in v && `argument` in v && `mock` in v
-            ? v as never
-            : {operation: `promote`, argument: v, mock: false} as never,
+      const specs: object[] = [];
+      into.forEach(v => {
+        if (`operation` in v && `argument` in v && `mock` in v) {
+          if (specs.length) {
+            if (this.applyOperation(
+              {operation: `promote`, argument: {specs: [...specs]}, mock: false} as never,
+              this.layer,
+              this.mainChild!.layer,
+              false,
+              envCache.get(rule.for)!
+            )) {
+              changed = true;
+            }
+          }
+          if (this.applyOperation(
+            v as never,
+            this.layer,
+            this.mainChild!.layer,
+            false,
+            envCache.get(rule.for)!
+          )) {
+            changed = true;
+          }
+        } else {
+          specs.push(v);
+        }
+      });
+
+      if (specs.length) {
+        if (this.applyOperation(
+          {operation: `promote`, argument: {specs: [...specs]}, mock: false} as never,
           this.layer,
           this.mainChild!.layer,
           false,
           envCache.get(rule.for)!
-        )
-      );
+        )) {
+          changed = true;
+        }
+      }
     }
 
     return changed;
@@ -1065,14 +1311,11 @@ function populate(
   const feeder = new Node(rules, startAlphabet, NodeType.fixture, null, initial);
   // populate first layer horizontally
   neighbors.reduce(
-    (node, value) => node.populateList(rules, startAlphabet, NodeType.fixture, null, value),
+    (node, value) => node.next = new Node(rules, startAlphabet, NodeType.fixture, null, value, {prev: node}),
     feeder,
   );
   // extend all first-layer nodes vertically
-  downstreamers.reduce(
-    (list, alphabet) => list.populateListChildren(alphabet)!,
-    feeder,
-  );
+  feeder.populateListChildren(downstreamers);
   return feeder;
   // debug
   // const layers = [];
@@ -1089,7 +1332,23 @@ function populate(
   // return layers;
 }
 
-function run(grid: Node | null) {
+// import {nextTick} from 'vue';
+// const settle = (callback = () => {}) =>
+//   new Promise(res =>
+//     nextTick(() =>
+//       requestAnimationFrame(() => 
+//         requestAnimationFrame(() => res(callback())))));
+
+let waiting = ref(false);
+
+async function awaitStep() {
+  waiting.value = true;
+  while (waiting.value) {
+    await new Promise<void>(resolve => setTimeout(resolve, 50));
+  }
+}
+
+async function run(grid: Node | null) {
   // 1. run all transform rules on entire top row of grid
   // -
   // 2. connect leading nodes to one another to form a new generation
@@ -1103,16 +1362,16 @@ function run(grid: Node | null) {
   // 8. repeat steps 1-7 with the new layer as the 'top row'
 
   const nodesToChange = new Set<Node>();
-    
-  while (grid) {
+
+  let rip = 0;
+  await awaitStep();
+  while (grid && rip++ < 20) {
     // populate nodesToChange for transform rules
+    debugger;
     nodesToChange.clear();
     let node: Node | null = grid;
-    while (node) {
-      nodesToChange.add(node);
-      node = node.next;
-    }
 
+    await awaitStep();
     console.log(`step 1`);
     while (nodesToChange.size > 0) {
       const nodesChanged = new Set<Node>();
@@ -1123,32 +1382,44 @@ function run(grid: Node | null) {
       });
       nodesToChange.clear();
 
-      console.log(`step 3`);
-      nodesChanged.forEach(n => {
-        n.subscribers.forEach(
-          subscriber => subscriber.leaders().forEach(leader => nodesToChange.add(leader))
-        );
-      });
-
+      await awaitStep();
       console.log(`step 2`);
       grid.connectLeaders();
+
+
+      await awaitStep();
+      console.log(`step 3`, nodesChanged);
+      nodesChanged.forEach(n => {
+        n.subscribers.forEach(
+          subscriber => subscriber.leaders().forEach(leader => {
+            if (leader.type !== NodeType.blank) {
+              nodesToChange.add(leader);
+            }
+          })
+        );
+      });
     }
 
-    grid = grid.seekLeader()?.firstChild() ?? null;
+    await awaitStep();
+    grid = grid.seekLeader() ?? null;
     // populate nodesToChange for promote rules
     nodesToChange.clear();
     node = grid;
+    console.log(`step 5`);
     while (node) {
-      nodesToChange.add(node);
+      if (
+        !node.applyPromoteRules()
+        && node.mainChild !== null
+        && node.mainChild.type === NodeType.blank
+        && node.mainChild.value !== node.value
+      ) {
+        nodesToChange.add(node.mainChild);
+      }
       node = node.next;
     }
 
-    console.log(`step 5`);
-    nodesToChange.forEach(node => {
-      if (node.applyPromoteRules()) {
-        nodesToChange.delete(node);
-      }
-    });
+    await awaitStep();
+    grid.mainChild?.connectLeaders();
 
     while (nodesToChange.size > 0) {
       console.log(`step 6`);
@@ -1163,7 +1434,10 @@ function run(grid: Node | null) {
         }
       });
     }
-    console.log(`step 8 i think`);
+
+    await awaitStep();
+    grid = grid.mainChild;
+    console.log(`step 8 i think`, rip);
   }
 }
 
@@ -1175,12 +1449,28 @@ const grid = populate(
       orderRules(vv, mapToSource(selfProfile, vv.defaults)),
     ])),
   ])) as never,
-  // @ts-expect-error The boundaries I put in the test input don't have context
   input,
   [templates, underlying, phonic]
 );
 
-run(grid);
+let running = false;
+// const test = input[0];
+// console.log(`wat`);
+// console.log(matchers.single({type: `word`, features: templates.types.word}, {type: `word`, features: {string: [3]}}));
+
+// debug;
+// const layers = [];
+// let leader = grid;
+// while (leader !== undefined) {
+//   layers.push([leader.layer.name]);
+//   const original = leader;
+//   while (leader.next) {
+//     layers[layers.length - 1].push(leader as never);
+//     leader = leader.next;
+//   }
+//   leader = original.children()[0];
+// }
+// console.log(layers);
 
 
 (window as any).abc = rulePacks;
@@ -1193,8 +1483,19 @@ run(grid);
 
 </script>
 
+<template>
+  <button @click="() => run(grid)">Run</button>
+  <button @click="() => { waiting = false; }" :style="waiting ? {backgroundColor: `lightpink`} : {}">Step</button>
+  <v-network-graph class="graph" :nodes="nodes" :edges="edges" :configs="configs"></v-network-graph>
+</template>
+
 <style scoped>
 .err {
   color: red;
+}
+
+.graph {
+  width: 100vw;
+  height: 100vh;
 }
 </style>

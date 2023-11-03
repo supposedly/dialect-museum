@@ -7,7 +7,7 @@ export default ruleset(
     was: {templates: {spec: {type: `verb`}}},   // filter out participles mocking verb shapes
   },
   operations => ({
-    default: ({features: {subject: features}, context}) => [
+    conjugation: ({features: {subject: features}, context}) => console.log(`conjugating`) || [
       operations.preject({type: `pronoun`, features, context}),
       operations.postject({type: `pronoun`, features, context}),
     ],
