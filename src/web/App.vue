@@ -14,18 +14,34 @@ import {templates, underlying, phonic} from 'src/languages/levantine/alphabets';
 import sharedOdds from 'src/lib/rules/odds';
 import {unfuncSpec} from 'src/lib/rules/funcs';
 import {type KeysNotMatching} from 'src/lib/utils/typetools';
-import {reactive, ref} from 'vue';
+import {type Ref, reactive, ref, toRaw} from 'vue';
 import * as vNG from 'v-network-graph';
 import {
   ForceLayout,
   ForceNodeDatum,
   ForceEdgeDatum,
 } from "v-network-graph/lib/force-layout";
+window.toRaw = toRaw;
+let waiting: Ref<string | null> = ref(null);
+
+async function awaitStep(time: number = 250, place?: string, ...highlight: ReadonlyArray<number>) {
+  waiting.value = place ?? `Step`;
+  highlight.forEach(id => { nodes[`node${id}`].highlight = true; });
+  const timeout = setTimeout(() => { waiting.value = null; }, time);
+  while (waiting.value) {
+    await new Promise<void>(resolve => setTimeout(resolve, 50));
+  }
+  clearTimeout(timeout);
+  highlight.forEach(id => { nodes[`node${id}`].highlight = false; });
+  waiting.value = null;
+}
 
 interface vNode extends vNG.Node {
   // size: number
   color: string
   label?: boolean
+  self: object
+  highlight?: boolean
 }
 
 interface vEdge extends vNG.Edge {
@@ -51,10 +67,10 @@ const configs = reactive(
           const forceLink = d3.forceLink<ForceNodeDatum, ForceEdgeDatum>(edges).id(d => d.id);
           return d3
             .forceSimulation(nodes)
-            .force(`edge`, forceLink.distance(80).strength(1))
-            .force(`charge`, d3.forceManyBody().strength(-1000))
+            .force(`edge`, forceLink.distance(100).strength(1))
+            .force(`charge`, d3.forceManyBody().strength(-2000))
             .force(`center`, d3.forceCenter().strength(0.05))
-            .force(`collide`, d3.forceCollide().strength(1))
+            .force(`collide`, d3.forceCollide(3).strength(5))
             .alphaMin(0.001);
 
           // * The following are the default parameters for the simulation.
@@ -72,19 +88,20 @@ const configs = reactive(
     node: {
       normal: {
         type: `circle`,
-        radius: 32,
+        radius: node => 32 + 5 * +(node.highlight ?? 0),
         // radius: node => node.size, // Use the value of each node object
-        color: node => node.color,
+        color: node => node.highlight ? `#eee` : node.color,
+        strokeWidth: node => 10 * +(node.highlight ?? 0),
+        strokeColor: node => node.color,
       },
       hover: {
-        // radius: node => node.size + 2,
-        color: node => node.color,
       },
       selectable: true,
       label: {
         // visible: node => !!node.label,
         direction: `center`,
-        color: `#fff`,
+        color: node => node.highlight ? node.color : `#fff`,
+        
       },
       focusring: {
         color: `darkgray`,
@@ -318,8 +335,7 @@ class Node {
     }
   ) {
     this.id = nodeID++;
-    nodes[`node${this.id}`] = {name: `${this.value?.type ?? this.id}`, color: this.layer.name === `templates` ? `blue` : this.layer.name === `underlying` ? `maroon` : this.layer.name === `phonic` ? `#a17f1a` : `black`};
-    console.log(nodes);
+    nodes[`node${this.id}`] = {self: this, name: this.value?.type ? `${this.value.type}\n${this.id}` : `${this.id}`, color: this.layer.name === `templates` ? `blue` : this.layer.name === `underlying` ? `maroon` : this.layer.name === `phonic` ? `#a17f1a` : `black`};
     if (environment) {
       Object.entries(environment).forEach(([k, v]) => {
         // @ts-expect-error Assigning to properties (mainParent, mainChild, prev, next) dynamically
@@ -352,7 +368,7 @@ class Node {
       delete edges[`edge${this.id}-${this._mainChild.id}`];
     }
     if (node !== null) {
-      edges[`edge${this.id}-${node.id}`] = {source: `node${this.id}`, target: `node${node.id}`, color: `blue`};
+      edges[`edge${this.id}-${node.id}`] = {source: `node${this.id}`, target: `node${node.id}`, color: `dodgerblue`};
     }
     this._mainChild = node;
   }
@@ -400,11 +416,25 @@ class Node {
   }
 
   copy(node: Node, fix: {[K in KeysNotMatching<Node, (...args: never) => unknown>]?: Node[K]} = {}) {
+
+    if (node.next) {
+      node.next.prev = this;
+    }
+    if (node.prev) {
+      node.prev.next = this;
+    }
+    if (node.mainParent?.mainChild === node) {
+      node.mainParent.mainChild = this;
+    }
+    if (node.mainChild?.mainParent === node) {
+      node.mainChild.mainParent = this;
+    }
+    node.subscribers.forEach(this.subscribers.add);
+
     this.mainParent = `mainParent` in fix ? fix[`mainParent`] : node.mainParent;
     this.mainChild = `mainChild` in fix ? fix[`mainChild`] : node.mainChild;
     this.prev = `prev` in fix ? fix[`prev`] : node.prev;
     this.next = `next` in fix ? fix[`next`] : node.next;
-    // this.subscribers = node.subscribers;
     this.createdBy = `createdBy` in fix ? fix[`createdBy`] : node.createdBy;
     this.rules = `rules` in fix ? fix[`rules`] : node.rules;
     this.layer = `layer` in fix ? fix[`layer`] : node.layer;
@@ -412,6 +442,35 @@ class Node {
     this.childType = `childType` in fix ? fix[`childType`] : node.childType;
     this.value = `value` in fix ? fix[`value`] : node.value;
     // this.waitingOnTarget = node.waitingOnTarget;  // should just be false tbh
+
+    node.next = null;
+    node.prev = null;
+    node.mainParent = null;
+    node.mainChild = null;
+
+    // update the debug graph
+    delete nodes[`node${this.id}`];
+    this.id = node.id;
+    // eslint-disable-next-line no-self-assign
+    this.next = this.next;
+    // eslint-disable-next-line no-self-assign
+    this.prev = this.prev;
+    // eslint-disable-next-line no-self-assign
+    this.mainParent = this.mainParent;
+    // eslint-disable-next-line no-self-assign
+    this.mainChild = this.mainChild;
+    if (this.next) {
+      this.next.prev = this;
+    }
+    if (this.prev) {
+      this.prev.next = this;
+    }
+    if (this.mainParent?.mainChild === this) {
+      this.mainParent.mainChild = this;
+    }
+    if (this.mainChild?.mainParent === this) {
+      this.mainChild.mainParent = this;
+    }
   }
 
   blank() {
@@ -619,17 +678,18 @@ class Node {
     }
   }
 
-  wipeChildren() {
+  async wipeChildren() {
+    await awaitStep(100, `wiping starting from ${this.id}`, this.id);
     while (this.mainChild !== null && this.mainChild.layer === this.layer) {
       this.mainChild.orphanSiblings();
       this.mainChild = this.mainChild.mainChild;
     }
+    await awaitStep(100, `wiping again starting from ${this.id}`, this.id);
     if (this.mainChild === null) {
       return;
     }
-    this.mainChild.orphanSiblings();
     this.mainChild.type = NodeType.blank;
-    this.mainChild.wipeChildren();
+    await this.mainChild.wipeChildren();
   }
 
   /* list ops */
@@ -927,7 +987,7 @@ class Node {
   }
 
   /* transformation stuff */
-  preject(start: Node, end: Node) {
+  async preject(start: Node, end: Node) {
     const firstMainSibling = this.prejectBoundary();
     if (firstMainSibling.prev) {
       start.prev = firstMainSibling.prev;
@@ -935,6 +995,7 @@ class Node {
     }
     firstMainSibling.prev = end;
     end.next = firstMainSibling;
+    await awaitStep(100, `Finish preject`);
   }
 
   postject(start: Node, end: Node) {
@@ -947,22 +1008,32 @@ class Node {
     end.prev = lastMainSibling;
   }
 
-  split(start: Node, end: Node) {
+  async split(start: Node, end: Node) {
+    await awaitStep(250, `SPLIT`, this.id);
     end.next = this.next;
     if (this.next) {
+      await awaitStep(250, `NEXT`, this.id);
       this.next.prev = end;
     }
     if (this.type === NodeType.blank) {
-      this.copy(start);
+      await awaitStep(250, `COPY`, this.id);
+      this.copy(start, {mainChild: this.mainChild});
     } else {
+      await awaitStep(250, `NEIGHBOR`, this.id);
       this.next = start;
       start.prev = this;
     }
+    await awaitStep(250, `DONE`, this.id);
   }
 
-  makeChildren(args: ReadonlyArray<object>, target: Alphabet, operation: string | null, mock: boolean): boolean {
+  async makeChildren(
+    args: ReadonlyArray<object>,
+    target: Alphabet,
+    operation: string | null, mock: boolean,
+    rule: typeof this.createdBy
+  ): Promise<boolean> {
     if (operation === `coalesce`) {
-      return this.mainChild!.makeChildren(args, target, `main`, mock);
+      return await this.mainChild!.makeChildren(args, target, `main`, mock, rule);
     }
     let changed = false;
     if (mock || operation === `mock`) {
@@ -977,6 +1048,7 @@ class Node {
       head as never,
       {mainParent: this}
     );
+    firstNode.createdBy = rule;
     const lastNode = tail.reduce(
       (node: Node, arg) => {
         node.next = new Node(
@@ -987,6 +1059,7 @@ class Node {
           arg as never,
           {mainParent: this, prev: node}
         );
+        node.next.createdBy = rule;
         return node.next;
       },
       firstNode,
@@ -1000,31 +1073,37 @@ class Node {
         undefined,
         {mainParent: this, mainChild: this.mainChild},
       );
+      this.mainChild.createdBy = rule;
     }
     // coalesce was handled at the top of this function
     switch (operation) {
       case `preject`:
         changed = true;
-        this.mainChild.preject(firstNode, lastNode);
+        await this.mainChild.preject(firstNode, lastNode);
+        // await awaitStep(`After preject`);
         break;
       case `postject`:
         changed = true;
         this.mainChild.postject(firstNode, lastNode);
         break;
       default:
-        this.mainChild.split(firstNode, lastNode);
+        await this.mainChild.split(firstNode, lastNode);
     }
     return changed || this.mainChild.type !== NodeType.blank;
     // this.mainChild.split(firstNode, lastNode);
   }
 
-  applyOperation(
+  async applyOperation(
     operation: {operation: string, argument: {specs: never, env: never, layer: never}, mock: boolean},
     source: Alphabet,
     target: Alphabet,
     transforming: boolean,
     collectedEnv: {next: Node[], prev: Node[]},
-  ): boolean {
+    rule: typeof this.createdBy,
+  ): Promise<boolean> {
+    // if (operation.operation === `preject` && operation.argument?.[0]?.type !== `affix` || operation.operation === `postject`) {
+    //   return false;
+    // }
     // only run same-layer rules when transforming
     if (transforming && !(operation.operation === `mock` || operation.mock)) {
       return false;
@@ -1042,6 +1121,7 @@ class Node {
         undefined,
         {mainParent: this, mainChild: this.mainChild}
       );
+      this.mainChild.createdBy = rule;
       collectedEnv = operation.argument.env
         ? this.collectEnv(operation.argument.env)
         : collectedEnv;
@@ -1053,16 +1133,19 @@ class Node {
         }
       ));
     }
-    console.log(`operation`, operation);
-    return this.makeChildren(
+    // console.log(`operation`, operation);
+    const changed = await this.makeChildren(
       Array.isArray(operation.argument) ? operation.argument : operation.argument.specs,
       operation.operation === `mock` || operation.mock ? source : target,
       operation.operation,
-      operation.mock
+      operation.mock,
+      rule
     );
+    // await awaitStep(`After makeChildren`);
+    return changed;
   }
 
-  applyTransformRules(): boolean {
+  async applyTransformRules(): Promise<boolean> {
     if (this.mainChild === null) {
       return false;
     }
@@ -1118,7 +1201,7 @@ class Node {
       // finally if we're here it means we're really running this rule
       changed = false;
 
-      this.wipeChildren();
+      await this.wipeChildren();
 
       const into: ReadonlyArray<object> = (
         rule.into instanceof Function
@@ -1131,11 +1214,11 @@ class Node {
       }
 
       const specs: object[] = [];
-      into.forEach(
-        v => {
-          if (`operation` in v && `argument` in v && `mock` in v) {
-            if (specs.length) {
-              if (this.applyOperation(
+      for (const v of into) {
+        // console.log(`????`, v);
+        if (`operation` in v && `argument` in v && `mock` in v) {
+          if (specs.length) {
+            if (await this.applyOperation(
                 {
                   operation: inTransformRules ? `mock` : `promote`,
                   argument: {specs: [...specs]},
@@ -1144,13 +1227,14 @@ class Node {
                 this.layer,
                 this.mainChild!.layer,
                 true,
-                envCache.get(rule.for)!
-              )) {
-                changed = true;
-              }
+                envCache.get(rule.for)!,
+                rule
+            )) {
+              changed = true;
             }
-            specs.length = 0;
-            if (this.applyOperation(
+          }
+          specs.length = 0;
+          if (await this.applyOperation(
               {
                 ...v,
                 mock: !inTransformRules || v.operation === `mock` ? v.mock : inTransformRules,
@@ -1158,18 +1242,18 @@ class Node {
               this.layer,
               this.mainChild!.layer,
               true,
-              envCache.get(rule.for)!
-            )) {
-              changed = true;
-            }
-          } else {
-            specs.push(v);
+              envCache.get(rule.for)!,
+              rule
+          )) {
+            changed = true;
           }
+        } else {
+          specs.push(v);
         }
-      );
+      }
 
       if (specs.length) {
-        if (this.applyOperation(
+        if (await this.applyOperation(
           {
             operation: inTransformRules ? `mock` : `promote`,
             argument: {specs: [...specs]},
@@ -1178,7 +1262,8 @@ class Node {
           this.layer,
           this.mainChild!.layer,
           true,
-          envCache.get(rule.for)!
+          envCache.get(rule.for)!,
+          rule
         )) {
           changed = true;
         }
@@ -1188,7 +1273,7 @@ class Node {
     return changed;
   }
 
-  applyPromoteRules(): boolean {
+  async applyPromoteRules(): Promise<boolean> {
     if (this.mainChild === null) {
       return false;
     }
@@ -1196,6 +1281,8 @@ class Node {
     if (this.mainChild.type !== NodeType.blank) {
       console.error(`not blank bro`, this.mainChild);
     }
+
+    // console.log(`PROMOTING`);
 
     const oddsMap = new Map<Record<string, never>, number>();
     const specsCache = new Map<object, boolean>();
@@ -1205,6 +1292,7 @@ class Node {
     const rules = this.rules[this.layer.name]?.[this.mainChild.layer.name] ?? [];
     this.waitingOnTarget = false;
     for (const rule of rules) {
+      // console.log(`before`, rule);
       if (!specsCache.has(rule.for)) {
         specsCache.set(rule.for, this.checkSpecs(rule.for));
       }
@@ -1214,6 +1302,8 @@ class Node {
         }
         continue;
       }
+
+      // await awaitStep(`Sanity`);
 
       // if we're here it means specs match!
       // so... bam just do the transformation
@@ -1235,7 +1325,9 @@ class Node {
       // finally if we're here it means we're really running this rule
       changed = false;
 
-      this.wipeChildren();
+      // console.log(rule);
+
+      await this.wipeChildren();
 
       const into: ReadonlyArray<object> = (
         rule.into instanceof Function
@@ -1247,41 +1339,50 @@ class Node {
         envCache.set(rule.for, this.collectEnv(rule.for));
       }
 
+      await awaitStep(300, `Starting to promote`);
+
       const specs: object[] = [];
-      into.forEach(v => {
+      for (const v of into) {
+        // await awaitStep(`Starting iteration over promote into`);
+        // console.log(`????`, v);
         if (`operation` in v && `argument` in v && `mock` in v) {
           if (specs.length) {
-            if (this.applyOperation(
+            if (await this.applyOperation(
               {operation: `promote`, argument: {specs: [...specs]}, mock: false} as never,
               this.layer,
               this.mainChild!.layer,
               false,
-              envCache.get(rule.for)!
+              envCache.get(rule.for)!,
+              rule
             )) {
               changed = true;
             }
           }
-          if (this.applyOperation(
+          // await awaitStep(`After the thing was applied?`);
+          if (await this.applyOperation(
             v as never,
             this.layer,
             this.mainChild!.layer,
             false,
-            envCache.get(rule.for)!
+            envCache.get(rule.for)!,
+            rule
           )) {
             changed = true;
           }
+          // await awaitStep(`Loop end?`);
         } else {
           specs.push(v);
         }
-      });
+      }
 
       if (specs.length) {
-        if (this.applyOperation(
+        if (await this.applyOperation(
           {operation: `promote`, argument: {specs: [...specs]}, mock: false} as never,
           this.layer,
           this.mainChild!.layer,
           false,
-          envCache.get(rule.for)!
+          envCache.get(rule.for)!,
+          rule
         )) {
           changed = true;
         }
@@ -1339,15 +1440,6 @@ function populate(
 //       requestAnimationFrame(() => 
 //         requestAnimationFrame(() => res(callback())))));
 
-let waiting = ref(false);
-
-async function awaitStep() {
-  waiting.value = true;
-  while (waiting.value) {
-    await new Promise<void>(resolve => setTimeout(resolve, 50));
-  }
-}
-
 async function run(grid: Node | null) {
   // 1. run all transform rules on entire top row of grid
   // -
@@ -1364,30 +1456,30 @@ async function run(grid: Node | null) {
   const nodesToChange = new Set<Node>();
 
   let rip = 0;
-  await awaitStep();
+  await awaitStep(500, `Starting`);
   while (grid && rip++ < 20) {
     // populate nodesToChange for transform rules
-    debugger;
+    // debugger;
     nodesToChange.clear();
     let node: Node | null = grid;
 
-    await awaitStep();
+    await awaitStep(300, `Step 1`);
     console.log(`step 1`);
     while (nodesToChange.size > 0) {
       const nodesChanged = new Set<Node>();
-      nodesToChange.forEach(node => {
-        if (node.applyTransformRules()) {
+      for (const node of nodesToChange) {
+        if (await node.applyTransformRules()) {
           nodesChanged.add(node);
         }
-      });
+      }
       nodesToChange.clear();
 
-      await awaitStep();
+      await awaitStep(300, `Step 2`);
       console.log(`step 2`);
       grid.connectLeaders();
 
 
-      await awaitStep();
+      await awaitStep(300, `Step 3`);
       console.log(`step 3`, nodesChanged);
       nodesChanged.forEach(n => {
         n.subscribers.forEach(
@@ -1400,7 +1492,7 @@ async function run(grid: Node | null) {
       });
     }
 
-    await awaitStep();
+    await awaitStep(300, `Step 5`);
     grid = grid.seekLeader() ?? null;
     // populate nodesToChange for promote rules
     nodesToChange.clear();
@@ -1408,7 +1500,7 @@ async function run(grid: Node | null) {
     console.log(`step 5`);
     while (node) {
       if (
-        !node.applyPromoteRules()
+        !(await node.applyPromoteRules())
         && node.mainChild !== null
         && node.mainChild.type === NodeType.blank
         && node.mainChild.value !== node.value
@@ -1418,35 +1510,37 @@ async function run(grid: Node | null) {
       node = node.next;
     }
 
-    await awaitStep();
+    await awaitStep(300, `Step 6`);
     grid.mainChild?.connectLeaders();
 
     while (nodesToChange.size > 0) {
       console.log(`step 6`);
-      nodesToChange.forEach(node => {
+      for (const node of nodesToChange) {
         if (!node.waitingOnTarget) {
           console.error(`not waiting on target!`, node);
           nodesToChange.delete(node);
           return;
         }
-        if (node.applyPromoteRules()) {
+        if (await node.applyPromoteRules()) {
           nodesToChange.delete(node);
         }
-      });
+      }
     }
 
-    await awaitStep();
+    await awaitStep(300, `Step 8`);
     grid = grid.mainChild;
     console.log(`step 8 i think`, rip);
   }
 }
+
+window.rules = {};
 
 const grid = populate(
   Object.fromEntries(Object.entries(rulePacks).map(([k, v]) => [
     k,
     Object.fromEntries(Object.entries(v.rulePacks).map(([kk, vv]) => [
       kk,
-      orderRules(vv, mapToSource(selfProfile, vv.defaults)),
+      window.rules[`${k}-${kk}`] = orderRules(vv, mapToSource(selfProfile, vv.defaults)),
     ])),
   ])) as never,
   input,
@@ -1485,7 +1579,7 @@ let running = false;
 
 <template>
   <button @click="() => run(grid)">Run</button>
-  <button @click="() => { waiting = false; }" :style="waiting ? {backgroundColor: `lightpink`} : {}">Step</button>
+  <button @click="() => { waiting = null; }" :style="waiting ? {backgroundColor: `lightpink`} : {}">Step: {{ waiting }}</button>
   <v-network-graph class="graph" :nodes="nodes" :edges="edges" :configs="configs"></v-network-graph>
 </template>
 
