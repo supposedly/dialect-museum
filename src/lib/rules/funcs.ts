@@ -167,29 +167,29 @@ function _unfuncSpec<Specs>(
       },
     } as UnfuncSpec<Specs>;
   }
-  if (`spec` in specs || `env` in specs) {
-    return {
-      ...(`spec` in specs ? {spec: callSpecFunc(specs.spec as object, funcs)} : {}),
-      ...(`env` in specs ? {env: callEnvFunc(specs.env as object, funcs)} : {}),
-    } as UnfuncSpec<Specs>;
+  const obj: Record<string, object> = {};
+  for (const [k, v] of Object.entries(specs)) {
+    if (k === `spec`) {
+      obj.spec = callSpecFunc(v as object, funcs);
+      continue;
+    }
+    if (k === `env`) {
+      obj.env = callEnvFunc(v as object, funcs);
+      continue;
+    }
+    obj[k] = _unfuncSpec(
+      v,
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      k === `target` ? generateSpecFuncs(target, target, Object.values(dependencies)) as never
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        : useDependencies ? generateSpecFuncs(dependencies[k], null as never, Object.values(dependencies)) as never
+          : funcs,
+      target,
+      dependencies,
+      k === `was` ? true : false
+    );
   }
-  return Object.fromEntries(
-    Object.entries(specs).map(
-      ([k, v]) => [
-        k, _unfuncSpec(
-          v,
-          // eslint-disable-next-line @typescript-eslint/no-use-before-define
-          k === `target` ? generateSpecFuncs(target, target, Object.values(dependencies)) as never
-          // eslint-disable-next-line @typescript-eslint/no-use-before-define
-            : useDependencies ? generateSpecFuncs(dependencies[k], null as never, Object.values(dependencies)) as never
-              : funcs,
-          target,
-          dependencies,
-          k === `was` ? true : false
-        ),
-      ]
-    )
-  ) as UnfuncSpec<Specs>;
+  return obj as UnfuncSpec<Specs>;
 }
 
 export function unfuncSpec<
@@ -203,13 +203,13 @@ export function unfuncSpec<
   target: Target,
   dependencies: Dependencies,
 ): UnfuncSpec<Specs> {
-  return {..._unfuncSpec(
+  return _unfuncSpec(
     specs,
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     generateSpecFuncs(source, target, dependencies) as never,
     target,
     Object.fromEntries([source, ...dependencies].map(abc => [abc.name, abc]))
-  ), ORIGINAL: specs};
+  );
 }
 
 function generateSpecFuncs<

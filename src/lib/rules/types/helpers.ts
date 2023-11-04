@@ -48,7 +48,7 @@ export type Unfunc<
 export type UnfuncSpec<Spec> = Spec extends {match: `custom`, value: unknown}
   ? Spec
   : Spec extends ({spec: unknown, env?: unknown} | {env: unknown})
-  ? {spec: Get<Unfunc<Spec, `spec`>, `spec`>, env: Get<Unfunc<Spec, `env`>, `env`>}
+  ? {spec: Get<Unfunc<Spec, `spec`>, `spec`>, env: Get<Unfunc<Spec, `env`>, `env`>} & UnfuncSpec<Omit<Spec, `spec` | `env`>>
   : Spec extends {match: unknown, value: readonly unknown[]}
   ? {match: Spec[`match`], value: {[Index in keyof Spec[`value`]]: UnfuncSpec<Spec[`value`][Index]>}}
   : Spec extends object

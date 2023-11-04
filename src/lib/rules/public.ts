@@ -36,19 +36,19 @@ export function rulePack<
       return {
         rules: Object.fromEntries(
           // avoiding an excessively deep etc error
+          // I think it doesn't want it to be double-unfuncked in the type system
+          // just messy
+          // but if i'm wrong i'll find out at runtime lol
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           Object.entries(evaluatedTargets as any).map(([name, v]) => [
             name,
             {
-              // I think it doesn't want it to be double-unfuncked in the type system
-              // just messy
-              // but if i'm wrong i'll find out at runtime lol
               for: combinedSpecs,  // unknown as JoinSpecs<[UnfuncSpec<Spec>, typeof extraSpec]>
               into: v,
             },
+          ])
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ]) as any  // idk why
-        ) as Rules<typeof targets, Source, Target, JoinSpecs<[UnfuncSpec<Spec>, typeof extraSpec]>, Dependencies>,
+        ) as any,
         constraints,
       };
     }) as CreateRuleset<Source, Target, Dependencies, UnfuncSpec<Spec>>,
@@ -97,10 +97,13 @@ export function separateContext<
   const Item extends Record<string, unknown>,
   const ContextKeys extends ReadonlyArray<keyof Item>
 >(item: Item, ...contextKeys: ContextKeys): {
+  type: `consonant`,
   features: Omit<Item, ContextKeys[number]>,
   context: Pick<Item, ContextKeys[number]>
 } {
   return {
+    // XXX: hardcode bad
+    type: `consonant`,
     // so efficient
     features: Object.fromEntries(
       Object.entries(item).filter(
