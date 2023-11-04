@@ -28,25 +28,25 @@ let waiting: Ref<string | null> = ref(null);
 
 async function debugStep(place?: string, ...highlight: ReadonlyArray<number>) {
   waiting.value = place ?? `Step`;
-  highlight.forEach(id => { nodes[`node${id}`].highlight = true; });
+  highlight.filter(n => n > 0).forEach(id => { nodes[`node${id}`].highlight = true; });
   // const timeout = setTimeout(() => { waiting.value = null; }, speed.value * multiplier.value);
   while (waiting.value) {
     await new Promise<void>(resolve => setTimeout(resolve, 50));
   }
   // clearTimeout(timeout);
-  highlight.forEach(id => { nodes[`node${id}`].highlight = false; });
+  highlight.filter(n => n > 0).forEach(id => { nodes[`node${id}`].highlight = false; });
   waiting.value = null;
 }
 
 async function awaitStep(place?: string, ...highlight: ReadonlyArray<number>) {
   waiting.value = place ?? `Step`;
-  highlight.forEach(id => { nodes[`node${id}`].highlight = true; });
+  highlight.filter(n => n > 0).forEach(id => { nodes[`node${id}`].highlight = true; });
   const timeout = setTimeout(() => { waiting.value = null; }, speed.value * multiplier.value);
   while (waiting.value) {
     await new Promise<void>(resolve => setTimeout(resolve, 50));
   }
   clearTimeout(timeout);
-  highlight.forEach(id => { nodes[`node${id}`].highlight = false; });
+  highlight.filter(n => n > 0).forEach(id => { nodes[`node${id}`].highlight = false; });
   waiting.value = null;
 }
 
@@ -1234,15 +1234,15 @@ class Node {
   }
 
   async split(start: Node, end: Node) {
-    end.next = this.next;
     await awaitStep(`SPLIT`, this.id);
+    end.next = this.next;
     if (this.next) {
-      this.next.prev = end;
       await awaitStep(`NEXT`, this.id);
+      this.next.prev = end;
     }
     if (this.type === NodeType.blank) {
-      this.copy(start, {mainChild: this.mainChild, prev: this.prev});
       await awaitStep(`COPY`, this.id);
+      this.copy(start, {mainChild: this.mainChild, prev: this.prev});
     } else {
       await awaitStep(`NEIGHBOR`, this.id);
       this.next = start;
@@ -1435,7 +1435,7 @@ class Node {
 
     this.waitingOnTarget = false;
     await this.wipeChildren();
-    
+
     for (const rule of rules) {
       if (rule === null) {
         inTransformRules = false;
@@ -1602,16 +1602,16 @@ async function run(grid: Node | null) {
   // 8. repeat steps 1-7 with the new layer as the 'top row'
 
   const nodesToChange = new Set<Node>();
-  let node: Node | null = grid;
-  while (node) {
-    nodesToChange.add(node);
-    node = node.next;
-  }
 
   let rip = 0;
   await awaitStep(`Starting`);
   while (grid && rip++ < 20) {
     // populate nodesToChange for transform rules
+    let node: Node | null = grid;
+    while (node) {
+      nodesToChange.add(node);
+      node = node.next;
+    }
     await awaitStep(`Step 1`);
     console.log(`step 1`);
     do {
@@ -1659,7 +1659,9 @@ async function run(grid: Node | null) {
     } while (nodesToChange.size > 0);
 
     await awaitStep(`Step 8`);
+    await debugStep(`${grid.layer.name} -> ${grid.seekLeader().layer.name}`, grid.id, grid.seekLeader().id);
     grid = grid.seekLeader().mainChild;
+    await debugStep(grid?.layer.name, grid?.id ?? -1);
     console.log(`step 8 i think`, rip);
   }
 }
