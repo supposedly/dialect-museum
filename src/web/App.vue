@@ -500,12 +500,6 @@ class Node {
     if (this.prev) {
       this.prev.next = this;
     }
-    // if (this.mainParent?.mainChild === this) {
-    //   this.mainParent.mainChild = this;
-    // }
-    // if (this.mainChild?.mainParent === this) {
-    //   this.mainChild.mainParent = this;
-    // }
     for (const parent of this.parents()) {
       parent.mainChild = this;
     }
@@ -1138,7 +1132,7 @@ class Node {
     }
     if (this.type === NodeType.blank) {
       await awaitStep(`COPY`, this.id);
-      this.copy(start, {mainChild: this.mainChild});
+      this.copy(start, {mainChild: this.mainChild, prev: this.prev});
     } else {
       await awaitStep(`NEIGHBOR`, this.id);
       this.next = start;
