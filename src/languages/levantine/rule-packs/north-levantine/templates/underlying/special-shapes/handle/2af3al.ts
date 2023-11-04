@@ -17,7 +17,7 @@ export default ruleset(
         features: {
           door: length === 3 ? `f3vl` : `fa3la2`,
           theme: `a`,
-          tam: `past`,
+          tam: length === 3 ? `subjunctive` : `past`,
         },
       }),
     ],

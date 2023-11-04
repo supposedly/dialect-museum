@@ -8,7 +8,7 @@ export default ruleset(
     env: {},
   },
   {
-    F3VL_VERB_DEFAULT: ({features: {root: $, theme}}) => console.log(`verb :(`) || [
+    F3VL_VERB_DEFAULT: ({features: {root: $, theme}}) => [
       separateContext($[0], `affected`),
       separateContext($[1], `affected`),
       letters.plain.vowel[theme],

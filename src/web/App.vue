@@ -404,7 +404,7 @@ class Node {
       delete edges[`edge${this.id}-${this._mainChild.id}`];
     }
     if (node !== null) {
-      edges[`edge${this.id}-${node.id}`] = {source: `node${this.id}`, target: `node${node.id}`, color: `dodgerblue`};
+      edges[`edge${this.id}-${node.id}`] = {source: `node${this.id}`, target: `node${node.id}`, color: `black`};
     }
     this._mainChild = node;
   }
@@ -418,7 +418,7 @@ class Node {
       delete edges[`edge${this.id}-${this._mainParent.id}`];
     }
     if (node !== null) {
-      edges[`edge${this.id}-${node.id}`] = {source: `node${this.id}`, target: `node${node.id}`, color: `black`};
+      edges[`edge${this.id}-${node.id}`] = {source: `node${this.id}`, target: `node${node.id}`, color: `dodgerblue`};
     }
     this._mainParent = node;
   }
@@ -1234,15 +1234,15 @@ class Node {
   }
 
   async split(start: Node, end: Node) {
-    await awaitStep(`SPLIT`, this.id);
     end.next = this.next;
+    await awaitStep(`SPLIT`, this.id);
     if (this.next) {
-      await awaitStep(`NEXT`, this.id);
       this.next.prev = end;
+      await awaitStep(`NEXT`, this.id);
     }
     if (this.type === NodeType.blank) {
-      await awaitStep(`COPY`, this.id);
       this.copy(start, {mainChild: this.mainChild, prev: this.prev});
+      await awaitStep(`COPY`, this.id);
     } else {
       await awaitStep(`NEIGHBOR`, this.id);
       this.next = start;
@@ -1442,7 +1442,6 @@ class Node {
         continue;
       }
       if (!specsCache.has(rule.for)) {
-        console.log(`:)`);
         specsCache.set(rule.for, await this.checkSpecs(rule.for));
       }
       if (!specsCache.get(rule.for)!) {
