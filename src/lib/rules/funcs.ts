@@ -38,7 +38,7 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
       (segment => ({
         context: segment instanceof Function
           ? segment(qualifiedPathsOf(alphabet.context))
-          : segment,
+          : segment ?? {},
       })) as ContextFuncWithoutSeek<ABC>,
       {
         seek: (segment, filter?, length?) => [
@@ -52,7 +52,7 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
           {
             context: segment instanceof Function
               ? segment(qualifiedPathsOf(alphabet.context))
-              : segment,
+              : segment ?? {},
           },
         ],
       } as ContextFuncSeek<ABC>
@@ -70,10 +70,10 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
               )
               : Object.keys(v).length === 1
                 ? {[Object.keys(v)[0]]: features}
-                : features,
+                : features ?? {},
             context: context instanceof Function
               ? context(qualifiedPathsOf(alphabet.context))
-              : context,
+              : context ?? {},
           })) as TypesFuncWithoutSeek<ABC, keyof ABC[`types`]>,
           {
             seek: (features, context, filter?, length?) => [
@@ -93,10 +93,10 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
                   )
                   : Object.keys(v).length === 1
                     ? {[Object.keys(v)[0]]: features}
-                    : features,
+                    : features ?? {},
                 context: context instanceof Function
                   ? context(qualifiedPathsOf(alphabet.context))
-                  : context,
+                  : context ?? {},
               },
             ],
           } as TypesFuncSeek<ABC, keyof ABC[`types`]>
