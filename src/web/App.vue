@@ -26,6 +26,18 @@ import {create} from 'domain';
 window.toRaw = toRaw;
 let waiting: Ref<string | null> = ref(null);
 
+async function debugStep(place?: string, ...highlight: ReadonlyArray<number>) {
+  waiting.value = place ?? `Step`;
+  highlight.forEach(id => { nodes[`node${id}`].highlight = true; });
+  // const timeout = setTimeout(() => { waiting.value = null; }, speed.value * multiplier.value);
+  while (waiting.value) {
+    await new Promise<void>(resolve => setTimeout(resolve, 50));
+  }
+  // clearTimeout(timeout);
+  highlight.forEach(id => { nodes[`node${id}`].highlight = false; });
+  waiting.value = null;
+}
+
 async function awaitStep(place?: string, ...highlight: ReadonlyArray<number>) {
   waiting.value = place ?? `Step`;
   highlight.forEach(id => { nodes[`node${id}`].highlight = true; });
@@ -732,8 +744,6 @@ class Node {
         if (oldNext) {
           oldNext.prev = connection.next;
         }
-      } else {
-        console.error(`wat`, this);
       }
     }
     if (recurse) {
@@ -832,13 +842,25 @@ class Node {
   }
 
   /* specs stuff */
-  checkSpecs(specs: object, subscriber: Node = this): boolean {
+  async checkSpecs(specs: object, subscriber: Node = this): Promise<boolean> {
     if (`match` in specs && `value` in specs) {
       switch (specs.match) {
         case `all`:
-          return (specs.value as ReadonlyArray<object>).every(v => this.checkSpecs(v, subscriber));
+          for (const v of specs.value as ReadonlyArray<object>) {
+            if (!await this.checkSpecs(v, subscriber)) {
+              return false;
+            }
+          }
+          return true;
+          // return (specs.value as ReadonlyArray<object>).every(v => this.checkSpecs(v, subscriber));
         case `any`:
-          return (specs.value as ReadonlyArray<object>).some(v => this.checkSpecs(v, subscriber));
+          for (const v of specs.value as ReadonlyArray<object>) {
+            if (await this.checkSpecs(v, subscriber)) {
+              return true;
+            }
+          }
+          return false;
+          // return (specs.value as ReadonlyArray<object>).some(v => this.checkSpecs(v, subscriber));
         // does a custom match even make sense up at this level?
         // don't think others do at any rate
         default:
@@ -849,23 +871,48 @@ class Node {
       return false;
     }
     // console.log(specs);
-    return Object.entries(specs).every(([k, v]) => {
+    for (const [k, v] of Object.entries(specs)) {
       switch (k) {
         case `spec`:
-          return this.checkSpec(v, subscriber);
+          if (!await this.checkSpec(v, subscriber)) {
+            return false;
+          }
+          continue;
         case `env`:
-          return this.checkEnv(v, subscriber);
+          if (!await this.checkEnv(v, subscriber)) {
+            return false;
+          }
+          continue;
         case `was`:
-          return this.checkWas(v, subscriber);
+          if (!await this.checkWas(v, subscriber)) {
+            return false;
+          }
+          continue;
         case `target`:
-          return this.checkTarget(v, subscriber);
-        default:
-          throw new Error(`Unimplemented for checkSpecs(): ${k} from that^`);
+          if (!await this.checkTarget(v, subscriber)) {
+            return false;
+          }
+          continue;
       }
-    });
+    }
+    return true;
+    // return Object.entries(specs).every(([k, v]) => {
+    //   switch (k) {
+    //     case `spec`:
+    //       return this.checkSpec(v, subscriber);
+    //     case `env`:
+    //       return this.checkEnv(v, subscriber);
+    //     case `was`:
+    //       return await this.checkWas(v, subscriber);
+    //     case `target`:
+    //       return this.checkTarget(v, subscriber);
+    //     default:
+    //       throw new Error(`Unimplemented for checkSpecs(): ${k} from that^`);
+    //   }
+    // });
   }
 
-  checkSpec(spec: object, subscriber: Node): boolean {
+  async checkSpec(spec: object, subscriber: Node): Promise<boolean> {
     if (subscriber) {
       this.subscribe(subscriber);
     }
@@ -873,16 +920,19 @@ class Node {
   }
 
   // this is so ugly
-  collectEnv(
+  async collectEnv(
     specs: object,
     subscriber: Node = this,
     collected: {next: Node[], prev: Node[]} = {next: [], prev: []}
-  ): typeof collected {
+  ): Promise<typeof collected> {
     if (`match` in specs && `value` in specs) {
       switch (specs.match) {
         case `all`:
         case `any`:
-          (specs.value as ReadonlyArray<object>).forEach(v => this.collectEnv(v, subscriber, collected));
+          for (const v of specs.value as ReadonlyArray<object>) {
+            await this.collectEnv(v, subscriber, collected);
+          }
+          // (specs.value as ReadonlyArray<object>).forEach(v => this.collectEnv(v, subscriber, collected));
           return collected;
         // does a custom match even make sense up at this level?
         // don't think others do at any rate
@@ -890,19 +940,24 @@ class Node {
           throw new Error(`Unimplemented match for collectEnv(): ${specs}`);
       }
     }
-    Object.entries(specs).forEach(([k, v]) => {
+    for (const [k, v] of Object.entries(specs)) {
       if (k === `env`) {
-        this.checkEnv(v, subscriber, collected);
+        await this.checkEnv(v, subscriber, collected);
       }
-    });
+    }
+    // Object.entries(specs).forEach(([k, v]) => {
+    //   if (k === `env`) {
+    //     this.checkEnv(v, subscriber, collected);
+    //   }
+    // });
     return collected;
   }
 
-  _checkEnvPrev(
+  async _checkEnvPrev(
     env: ReadonlyArray<object>,
     subscriber: Node,
     collectedEnv: Record<`next` | `prev`, Array<Node | null>>
-  ): boolean {
+  ): Promise<boolean> {
     let node = this.prev;
     let index = -1;
 
@@ -914,7 +969,7 @@ class Node {
 
     for (const specs of env) {
       while (checkingArray) {
-        if (!node?.checkSpecs(arrayCheckForValue!, subscriber)) {
+        if (!await node?.checkSpecs(arrayCheckForValue!, subscriber)) {
           checkingArray = false;
           if (checkArrayEndAt !== -1 && !(arrayLengthSoFar in checkArrayEndAt)) {
             return false;
@@ -946,7 +1001,7 @@ class Node {
         continue;
       }
 
-      if (!node?.checkSpecs(specs, subscriber)) {
+      if (!await node?.checkSpecs(specs, subscriber)) {
         return false;
       }
 
@@ -958,11 +1013,11 @@ class Node {
     return true;
   }
 
-  _checkEnvNext(
+  async _checkEnvNext(
     env: ReadonlyArray<object>,
     subscriber: Node,
     collectedEnv: Record<`next` | `prev`, Array<Node | null>>
-  ): boolean {
+  ): Promise<boolean> {
     let node = this.next;
     let index = -1;
 
@@ -974,7 +1029,7 @@ class Node {
 
     for (const specs of env) {
       while (checkingArray) {
-        if (!node?.checkSpecs(arrayCheckForValue!, subscriber)) {
+        if (!await node?.checkSpecs(arrayCheckForValue!, subscriber)) {
           checkingArray = false;
           if (checkArrayEndAt !== -1 && !(arrayLengthSoFar in checkArrayEndAt)) {
             return false;
@@ -1006,7 +1061,7 @@ class Node {
         continue;
       }
 
-      if (!node?.checkSpecs(specs, subscriber)) {
+      if (!await node?.checkSpecs(specs, subscriber)) {
         return false;
       }
 
@@ -1018,17 +1073,29 @@ class Node {
     return true;
   }
 
-  checkEnv(
+  async checkEnv(
     env: object,
     subscriber: Node,
     collectedEnv: Record<`next` | `prev`, Array<Node | null>> = {next: [], prev: []}
-  ): boolean {
+  ): Promise<boolean> {
     if (`match` in env && `value` in env) {
       switch (env.match) {
         case `all`:
-          return (env.value as ReadonlyArray<object>).every(v => this.checkEnv(v, subscriber, collectedEnv));
+          for (const v of env.value as ReadonlyArray<object>) {
+            if (!await this.checkEnv(v, subscriber, collectedEnv)) {
+              return false;
+            }
+          }
+          return true;
+          // return (env.value as ReadonlyArray<object>).every(v => this.checkEnv(v, subscriber, collectedEnv));
         case `any`:
-          return (env.value as ReadonlyArray<object>).some(v => this.checkEnv(v, subscriber, collectedEnv));
+          for (const v of env.value as ReadonlyArray<object>) {
+            if (await this.checkEnv(v, subscriber, collectedEnv)) {
+              return true;
+            }
+          }
+          return false;
+          // return (env.value as ReadonlyArray<object>).some(v => this.checkEnv(v, subscriber, collectedEnv));
         case `custom`:
           // `all` from custom() will have been done already by this point if i'm not wrong
           // which means collectedEnv will be populated fingers crossed
@@ -1037,48 +1104,91 @@ class Node {
           throw new Error(`Unimplemented match for checkEnv(): ${env}`);
       }
     }
-    return Object.entries(env).every(([k ,v]) => {
+    for (const [k, v] of Object.entries(env)) {
       switch (k) {
         case `next`:
-          return this._checkEnvNext(v.flat(Infinity), subscriber, collectedEnv);
+          if (!await this._checkEnvNext(v.flat(Infinity), subscriber, collectedEnv)) {
+            return false;
+          }
+          continue;
         case `prev`:
-          return this._checkEnvPrev(v.flat(Infinity), subscriber, collectedEnv);
+          if (!await this._checkEnvPrev(v.flat(Infinity), subscriber, collectedEnv)) {
+            return false;
+          }
+          continue;
       }
-    });
+    }
+    return true;
+    // return Object.entries(env).every(([k ,v]) => {
+    //   switch (k) {
+    //     case `next`:
+    //       return this._checkEnvNext(v.flat(Infinity), subscriber, collectedEnv);
+    //     case `prev`:
+    //       return this._checkEnvPrev(v.flat(Infinity), subscriber, collectedEnv);
+    //   }
+    // });
   }
 
   // TODO: check against the actual alphabet reference (ie layer: Alphabet, not layerName: string)
   async _checkWas(layerName: string, specs: object, subscriber: Node): Promise<boolean> {
     if (this.layer.name === layerName) {
-      if (this.type === NodeType.fixture && this.checkSpecs(specs, subscriber)) {
+      if (this.type !== NodeType.mock && await this.checkSpecs(specs, subscriber)) {
+        await awaitStep(`found`, this.id);
+        console.log(`rip`, this.type, this);
         return true;
       }
       if (this.mainParent === null || this.mainParent.layer.name !== layerName) {
+        await awaitStep(`rejected`, this.id);
         return false;
       }
     }
     await awaitStep(`checking was`, this.id);
-    return this.parents().some(parent => parent._checkWas(layerName, specs, subscriber));
+    for (const parent of this.parents()) {
+      if (await parent._checkWas(layerName, specs, subscriber)) {
+        return true;
+      }
+    }
+    return false;
+    // return this.parents().some(parent => parent._checkWas(layerName, specs, subscriber));
   }
 
-  checkWas(specs: object, subscriber: Node): boolean {
+  async checkWas(specs: object, subscriber: Node): Promise<boolean> {
     if (`match` in specs && `value` in specs) {
       switch (specs.match) {
         case `all`:
-          return (specs.value as ReadonlyArray<object>).every(v => this.checkWas(v, subscriber));
+          for (const v of specs.value as ReadonlyArray<object>) {
+            if (!await this.checkWas(v, subscriber)) {
+              return false;
+            }
+          }
+          return true;
+          // return (specs.value as ReadonlyArray<object>).every(v => await this.checkWas(v, subscriber));
         case `any`:
-          return (specs.value as ReadonlyArray<object>).some(v => this.checkWas(v, subscriber));
+          for (const v of specs.value as ReadonlyArray<object>) {
+            if (await this.checkWas(v, subscriber)) {
+              return true;
+            }
+          }
+          return false;
+          // return (specs.value as ReadonlyArray<object>).some(v => await this.checkWas(v, subscriber));
         default:
           throw new Error(`Unimplemented match for checkWas(): ${specs}`);
       }
     }
-    return Object.entries(specs).every(([k, v]) => this._checkWas(k, v, subscriber));
+    await awaitStep(`about to check was`, this.id);
+    for (const [k, v] of Object.entries(specs)) {
+      if (!await this._checkWas(k, v, subscriber)) {
+        return false;
+      }
+    }
+    return true;
+    // return Object.entries(specs).every(([k, v]) => await this._checkWas(k, v, subscriber));
   }
 
   // this should only ever be called on the leading node
   // so i think .mainChild should always be the next layer's first node
   // and you don't need to seek for it or anything
-  checkTarget(specs: object, subscriber: Node): boolean {
+  async checkTarget(specs: object, subscriber: Node): Promise<boolean> {
     if (this.mainChild === null) {
       // i think the type system ensures that you can't (type-safely) use target on the bottom layer
       console.error(
@@ -1087,7 +1197,7 @@ class Node {
       );
       return false;
     }
-    const env = this.mainChild.collectEnv(specs, subscriber);
+    const env = await this.mainChild.collectEnv(specs, subscriber);
     subscriber.waitingOnTarget = (
       env.next.every(node => node.type !== NodeType.blank)
       && env.prev.every(node => node.type !== NodeType.blank)
@@ -1098,7 +1208,7 @@ class Node {
     // this subscribes to mainChild and/or its neighbors in the process
     // i don't even think it needs a special case for mainChild.type === NodeType.blank vs otherwise,
     // this should just work lol
-    return this.mainChild.checkSpecs(specs, subscriber);
+    return await this.mainChild.checkSpecs(specs, subscriber);
   }
 
   /* transformation stuff */
@@ -1279,7 +1389,7 @@ class Node {
       );
       this.mainChild.createdBy = rule;
       collectedEnv = operation.argument.env
-        ? this.collectEnv(operation.argument.env)
+        ? await this.collectEnv(operation.argument.env)
         : collectedEnv;
       // values of collectedEnv is collectedEnv.next, collectedEnv.prev
       Object.values(collectedEnv).forEach(nodes => nodes.forEach(
@@ -1332,7 +1442,8 @@ class Node {
         continue;
       }
       if (!specsCache.has(rule.for)) {
-        specsCache.set(rule.for, this.checkSpecs(rule.for));
+        console.log(`:)`);
+        specsCache.set(rule.for, await this.checkSpecs(rule.for));
       }
       if (!specsCache.get(rule.for)!) {
         if (this.waitingOnTarget) {
@@ -1371,7 +1482,7 @@ class Node {
       }
 
       if (!envCache.has(rule.for)) {
-        envCache.set(rule.for, this.collectEnv(rule.for));
+        envCache.set(rule.for, await this.collectEnv(rule.for));
       }
 
       const specs: object[] = [];
