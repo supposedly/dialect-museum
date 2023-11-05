@@ -383,15 +383,26 @@ export function processPack<
                   })
                 ),
                 {
+                  // negated: (...args: ReadonlyArray<Record<`for` | `into` | `odds` | `source`, unknown>>) => args.map(
+                  //   arg => ({
+                  //     for: {match: `custom`, value: (obj: unknown) => !matchers.all(
+                  //       [
+                  //         arg.for as MatchSchema,
+                  //         unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
+                  //       ],
+                  //       obj
+                  //     )},
+                  //     into: arg.into,
+                  //     odds: arg.odds,
+                  //     source: arg.source,
+                  //   })
+                  // ),
                   negated: (...args: ReadonlyArray<Record<`for` | `into` | `odds` | `source`, unknown>>) => args.map(
                     arg => ({
-                      for: {match: `custom`, value: (obj: unknown) => !matchers.all(
-                        [
-                          arg.for as MatchSchema,
-                          unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
-                        ],
-                        obj
-                      )},
+                      for: {match: `all`, value: [
+                        arg.for,
+                        unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
+                      ], __NEGATED: true},  // lol cheat
                       into: arg.into,
                       odds: arg.odds,
                       source: arg.source,

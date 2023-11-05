@@ -23,6 +23,7 @@ import {
 } from "v-network-graph/lib/force-layout";
 import {withFlags} from 'src/languages/levantine/alphabets/templates/templates';
 import {create} from 'domain';
+import {spec} from 'node:test/reporters';
 window.toRaw = toRaw;
 let waiting: Ref<string | null> = ref(null);
 
@@ -704,6 +705,18 @@ class Node {
             {mainParent: this, next: connection},
           ).usable();
           connection.prev.createdBy = `extrusion` as never;
+          await awaitStep(`created a node`, connection.prev.id);
+        } else {
+          this.mainChild = new Node(
+            this.rules,
+            this.layer,
+            NodeType.blank,
+            ChildType.main,
+            this.value,
+            {mainParent: this}
+          );
+          this.mainChild.createdBy = `extrusion` as never;
+          await awaitStep(`created a node`, this.mainChild.id);
         }
       } else if (this.prev.mainChild !== null) {
         const connection = this.prev.mainChild;
@@ -724,6 +737,7 @@ class Node {
           {mainParent: this, prev: connection, next: connection.next}
         ).usable();
         connection.next.createdBy = `extrusion` as never;
+        await awaitStep(`created a node`, connection.next.id);
         if (oldNext) {
           oldNext.prev = connection.next;
         }
@@ -775,7 +789,7 @@ class Node {
   }
 
   async wipeChildren() {
-    while (this.mainChild !== null && this.mainChild.layer === this.layer) {
+    while (this.mainChild !== null && this.mainChild.layer === this.layer && this.mainChild.type !== NodeType.blank) {
       this.mainChild.orphanSiblings();
       this.mainChild = this.mainChild.mainChild;
     }
@@ -825,8 +839,12 @@ class Node {
 
   /* specs stuff */
   async checkSpecs(specs: object, subscriber: Node = this): Promise<boolean> {
-    if (subscriber.id !== this.id) {
-      await awaitStep(`checking specs of ${this.id} for ${subscriber.id}`, this.id, subscriber.id);
+    // if (subscriber.id !== this.id) {
+    //   await awaitStep(`checking specs of ${this.id} for ${subscriber.id}`, this.id, subscriber.id);
+    // }
+    if (`__NEGATED` in specs) {
+      const {__NEGATED: _, ...obj} = specs;
+      return !await this.checkSpecs(obj);
     }
     if (`match` in specs && `value` in specs) {
       switch (specs.match) {
@@ -845,11 +863,12 @@ class Node {
             }
           }
           return false;
-          // return (specs.value as ReadonlyArray<object>).some(v => this.checkSpecs(v, subscriber));
+        // return (specs.value as ReadonlyArray<object>).some(v => this.checkSpecs(v, subscriber));
         // does a custom match even make sense up at this level?
         // don't think others do at any rate
         default:
-          throw new Error(`Unimplemented match for checkSpecs(): ${specs}`);
+          console.error(specs);
+          throw new Error(`Unimplemented match for checkSpecs(): ${specs.match}`);
       }
     }
     if (this.type === NodeType.blank && subscriber !== this) {
