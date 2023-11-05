@@ -659,43 +659,16 @@ class Node {
     }
   }
 
-  async _connectLeaders(last?: Node | null): Promise<[Node | null, Node | null]> {
-    await awaitStep(`last: ${last?.id}`, this.id);
-    if (this.mainChild === null || this.mainChild.layer !== this.layer) {
-      await awaitStep(`leaf`, this.id);
-      const firstSibling = this.mainParent === null || this.mainParent.layer !== this.layer ? this : this.firstSibling();
-      if (last) {
-        last.next = firstSibling;
-        firstSibling.prev = last;
-      }
-      return [firstSibling, this.mainParent === null || this.mainParent.layer !== this.layer ? this : this.lastSibling()];
+  async connectLeaders(last: Node | null = null): Promise<Node> {
+    await awaitStep(`connecting leaders`, this.id);
+    this.prev = last ?? this.prev;
+    if (this.prev) {
+      this.prev.next = this;
     }
-    let veryFirstLeader: Node | null = null;
-    let firstLeader: Node | null = null;
-    let lastLeader: Node | null = null;
-    let previousLastLeader = last;
-    for (const child of this.children()) {
-      await awaitStep(`child`, child.id);
-      [firstLeader, lastLeader] = await child._connectLeaders(previousLastLeader);
-      if (veryFirstLeader === null) {
-        veryFirstLeader = firstLeader;
-      }
-      if (previousLastLeader) {
-        previousLastLeader.next = firstLeader;
-      }
-      previousLastLeader = lastLeader;
-    }
-    if (veryFirstLeader) {
-      veryFirstLeader.prev = last ?? null;
-    }
-    return [veryFirstLeader, lastLeader];
-  }
-
-  async connectLeaders(last?: Node | null) {
-    // staving off some recursion depth
-    // (i'll have to bite the bullet and replace all recursion with while loops eventually rip)
-    const [firstLeader, lastLeader] = await this._connectLeaders(last);
-    await (this.mainParent === null || this.mainParent.layer !== this.layer ? this : this.lastSibling()).next?.connectLeaders(lastLeader);
+    const passForward = this.mainChild === null || this.mainChild.layer !== this.layer
+      ? this
+      : await this.mainChild.connectLeaders(last);
+    return this.next === null ? this : await this.next.connectLeaders(passForward);
   }
 
   async extrudeLeaders(recurse = true) {
@@ -1615,7 +1588,9 @@ async function run(grid: Node | null) {
     await awaitStep(`Step 1`);
     console.log(`step 1`);
     do {
-      await grid.connectLeaders();
+      // await awaitStep(`connecting leaders`, grid.seekLeader());
+      await grid.seekLeader().connectLeaders();
+      await awaitStep(`done connecting leaders`, grid.seekLeader().id);
       await grid.seekLeader().extrudeLeaders();
       // let node: Node | null = grid.seekLeader();
       // while (node) {
@@ -1659,9 +1634,9 @@ async function run(grid: Node | null) {
     } while (nodesToChange.size > 0);
 
     await awaitStep(`Step 8`);
-    await debugStep(`${grid.layer.name} -> ${grid.seekLeader().layer.name}`, grid.id, grid.seekLeader().id);
+    await awaitStep(`${grid.layer.name} -> ${grid.seekLeader().layer.name}`, grid.id, grid.seekLeader().id);
     grid = grid.seekLeader().mainChild;
-    await debugStep(grid?.layer.name, grid?.id ?? -1);
+    await awaitStep(grid?.layer.name, grid?.id ?? -1);
     console.log(`step 8 i think`, rip);
   }
 }
