@@ -28,13 +28,13 @@ let waiting: Ref<string | null> = ref(null);
 
 async function debugStep(place?: string, ...highlight: ReadonlyArray<number>) {
   waiting.value = place ?? `Step`;
-  highlight.filter(n => n > 0).forEach(id => { nodes[`node${id}`].highlight = true; });
+  highlight.filter(n => n >= 0).forEach(id => { nodes[`node${id}`].highlight = true; });
   // const timeout = setTimeout(() => { waiting.value = null; }, speed.value * multiplier.value);
   while (waiting.value) {
     await new Promise<void>(resolve => setTimeout(resolve, 50));
   }
   // clearTimeout(timeout);
-  highlight.filter(n => n > 0).forEach(id => { nodes[`node${id}`].highlight = false; });
+  highlight.filter(n => n >= 0).forEach(id => { nodes[`node${id}`].highlight = false; });
   waiting.value = null;
 }
 
@@ -498,6 +498,7 @@ class Node {
     // update the debug graph
     delete nodes[`node${this.id}`];
     this.id = node.id;
+    nodes[`node${this.id}`] = {self: this, name: this.value?.type ? `${this.value.type}\n${this.id}` : `${this.id}`, color: this.layer.name === `templates` ? `blue` : this.layer.name === `underlying` ? `maroon` : this.layer.name === `phonic` ? `#a17f1a` : `black`};
     // eslint-disable-next-line no-self-assign
     this.next = this.next;
     // eslint-disable-next-line no-self-assign
@@ -517,6 +518,9 @@ class Node {
     }
     for (const child of this.children()) {
       child.mainParent = this;
+    }
+    for (const subscriber of this.subscribers) {
+      this.subscribe(subscriber);
     }
   }
 
@@ -646,6 +650,7 @@ class Node {
         value,
         {mainParent: this},
       ).usable();
+      // this.subscribe(this.mainChild);
     }
     if (this.next !== null) {
       this.next.populateListChildren(targets);
@@ -660,21 +665,24 @@ class Node {
   }
 
   async connectLeaders(last: Node | null = null): Promise<Node> {
-    await awaitStep(`connecting leaders`, this.id);
-    this.prev = last ?? this.prev;
-    if (this.prev) {
-      this.prev.next = this;
+    // await debugStep(`starting connectleaders from ${this.id}`, this.id, last?.id ?? -1);
+    if (last !== null) {
+      last.next = this;
+      this.prev = last;
     }
+    // await debugStep(`handled last`);
     const passForward = this.mainChild === null || this.mainChild.layer !== this.layer
       ? this
       : await this.mainChild.connectLeaders(last);
-    return this.next === null ? this : await this.next.connectLeaders(passForward);
+    // await debugStep(`retrieved passForward for ${this.id}`, this.id, passForward.id);
+    return this.next === null || this.next === this.mainChild?.next ? this : await this.next.connectLeaders(passForward);
   }
 
   async extrudeLeaders(recurse = true) {
     await awaitStep(`uhhhh extruding from ${this.id}`, this.id);
     if (recurse && this !== this.seekLeader()) {
-      throw new Error(`wth`);
+      await this.seekLeader().extrudeLeaders();
+      return;
     }
     if (this.mainChild === null) {
       if (this.prev === null) {
@@ -695,6 +703,7 @@ class Node {
             value,
             {mainParent: this, next: connection},
           ).usable();
+          connection.prev.createdBy = `extrusion` as never;
         }
       } else if (this.prev.mainChild !== null) {
         const connection = this.prev.mainChild;
@@ -714,6 +723,7 @@ class Node {
           value,
           {mainParent: this, prev: connection, next: connection.next}
         ).usable();
+        connection.next.createdBy = `extrusion` as never;
         if (oldNext) {
           oldNext.prev = connection.next;
         }
@@ -765,12 +775,10 @@ class Node {
   }
 
   async wipeChildren() {
-    await awaitStep(`wiping starting from ${this.id}`, this.id);
     while (this.mainChild !== null && this.mainChild.layer === this.layer) {
       this.mainChild.orphanSiblings();
       this.mainChild = this.mainChild.mainChild;
     }
-    await awaitStep(`wiping again starting from ${this.id}`, this.id);
     if (this.mainChild === null) {
       return;
     }
@@ -804,6 +812,7 @@ class Node {
     if (node === this) {
       return;
     }
+    edges[`subscription${node.id}-${this.id}`] = {source: `node${node.id}`, target: `node${this.id}`, color: `lavender`};
     this.subscribers.add(node);
   }
 
@@ -816,6 +825,9 @@ class Node {
 
   /* specs stuff */
   async checkSpecs(specs: object, subscriber: Node = this): Promise<boolean> {
+    if (subscriber.id !== this.id) {
+      await awaitStep(`checking specs of ${this.id} for ${subscriber.id}`, this.id, subscriber.id);
+    }
     if (`match` in specs && `value` in specs) {
       switch (specs.match) {
         case `all`:
@@ -1106,16 +1118,16 @@ class Node {
   async _checkWas(layerName: string, specs: object, subscriber: Node): Promise<boolean> {
     if (this.layer.name === layerName) {
       if (this.type !== NodeType.mock && await this.checkSpecs(specs, subscriber)) {
-        await awaitStep(`found`, this.id);
-        console.log(`rip`, this.type, this);
+        // await awaitStep(`found`, this.id);
+        // console.log(`rip`, this.type, this);
         return true;
       }
       if (this.mainParent === null || this.mainParent.layer.name !== layerName) {
-        await awaitStep(`rejected`, this.id);
+        // await awaitStep(`rejected`, this.id);
         return false;
       }
     }
-    await awaitStep(`checking was`, this.id);
+    // await awaitStep(`checking was`, this.id);
     for (const parent of this.parents()) {
       if (await parent._checkWas(layerName, specs, subscriber)) {
         return true;
@@ -1148,7 +1160,7 @@ class Node {
           throw new Error(`Unimplemented match for checkWas(): ${specs}`);
       }
     }
-    await awaitStep(`about to check was`, this.id);
+    // await awaitStep(`about to check was`, this.id);
     for (const [k, v] of Object.entries(specs)) {
       if (!await this._checkWas(k, v, subscriber)) {
         return false;
@@ -1206,32 +1218,35 @@ class Node {
     end.prev = lastMainSibling;
   }
 
-  async split(start: Node, end: Node) {
-    await awaitStep(`SPLIT`, this.id);
+  async split(start: Node, end: Node): Promise<boolean> {
+    // await awaitStep(`SPLIT`, this.id);
     end.next = this.next;
     if (this.next) {
-      await awaitStep(`NEXT`, this.id);
+      // await awaitStep(`NEXT`, this.id);
       this.next.prev = end;
     }
     if (this.type === NodeType.blank) {
-      await awaitStep(`COPY`, this.id);
+      // await awaitStep(`COPY`, this.id);
+      // await debugStep(`starting copy`);
       this.copy(start, {mainChild: this.mainChild, prev: this.prev});
+      return true;
+      // await debugStep(`finished copy`);
     } else {
-      await awaitStep(`NEIGHBOR`, this.id);
+      // await awaitStep(`NEIGHBOR`, this.id);
       this.next = start;
       start.prev = this;
     }
-    await awaitStep(`DONE`, this.id);
+    return false;
+    // await awaitStep(`DONE`, this.id);
   }
 
   async makeChildren(
     args: ReadonlyArray<object>,
     target: Alphabet,
     operation: string | null, mock: boolean,
-    rule: typeof this.createdBy
   ): Promise<Array<Node>> {
     if (operation === `coalesce`) {
-      return await this.mainChild!.makeChildren(args, target, `main`, mock, rule);
+      return await this.mainChild!.makeChildren(args, target, `main`, mock);
     }
     const created: Array<Node> = [];
     if (mock || operation === `mock`) {
@@ -1247,8 +1262,11 @@ class Node {
       head as never,
       {mainParent: this}
     );
-    firstNode.createdBy = rule;
-    created.push(firstNode);
+    await awaitStep(`created a node`, firstNode.id);
+    created.push(undefined as never);  // filled in at end of function
+    // (technically order doesn't matter so end of function could just created.push())
+    // (and even if it did matter end of function could just created.shift())
+    // (but im happy with this)
     const lastNode = tail.reduce(
       (node: Node, arg) => {
         node.next = new Node(
@@ -1259,18 +1277,16 @@ class Node {
           arg as never,
           {mainParent: this, prev: node}
         );
-        node.next.createdBy = rule;
         created.push(node.next);
         return node.next;
       },
       firstNode,
     );
+    await awaitStep(`created nodes`, lastNode.id);
     if (this.mainChild === null || this.mainChild.layer !== target) {
-      await awaitStep(`creating child`);
       const oldFirstChild = this.firstChild();
       const oldLastChild = oldFirstChild?.lastSibling();
       console.log(oldFirstChild, oldLastChild);
-      await awaitStep(`children check again????`);
       this.mainChild = new Node(
         this.rules,
         target,
@@ -1279,14 +1295,12 @@ class Node {
         undefined,
         {mainParent: this, mainChild: this.mainChild},
       );
-      await awaitStep(`reassigning children`);
+      await awaitStep(`created node`, this.mainChild.id);
       let oldChild = oldFirstChild;
       while (oldChild && oldChild !== oldLastChild?.next) {
         oldChild.mainParent = this.mainChild;
         oldChild = oldChild.next;
       }
-      await awaitStep(`reassigned children`);
-      this.mainChild.createdBy = rule;
       created.push(this.mainChild);
     }
     // coalesce was handled at the top of this function
@@ -1299,9 +1313,13 @@ class Node {
         this.mainChild.postject(firstNode, lastNode);
         break;
       default:
-        await this.mainChild.split(firstNode, lastNode);
+        if (await this.mainChild.split(firstNode, lastNode)) {
+          created[0] = this.mainChild;
+          return created;
+        }
     }
-    await awaitStep(`done splitting`);
+    // await awaitStep(`done splitting`);
+    created[0] = firstNode;
     return created;
     // this.mainChild.split(firstNode, lastNode);
   }
@@ -1360,7 +1378,7 @@ class Node {
         undefined,
         {mainParent: this, mainChild: this.mainChild}
       );
-      this.mainChild.createdBy = rule;
+      await awaitStep(`created a node`, this.mainChild.id);
       collectedEnv = operation.argument.env
         ? await this.collectEnv(operation.argument.env)
         : collectedEnv;
@@ -1379,9 +1397,9 @@ class Node {
       operation.operation === `mock` || operation.mock ? source : target,
       operation.operation,
       operation.mock,
-      rule
     ));
-    await awaitStep(`done making children`);
+    created.forEach(node => {node.createdBy = rule;});
+    await awaitStep(`done making children`, ...created.map(x => x.id));
     return created;
   }
 
@@ -1476,7 +1494,6 @@ class Node {
             ));
           }
           specs.length = 0;
-          // await awaitStep(`i think this is the mock.was`, this.id);
           created.push(...await this.applyOperation(
             inTransformRules ? {
               ...v,
@@ -1488,7 +1505,6 @@ class Node {
             envCache.get(rule.for)!,
             rule
           ));
-          await awaitStep(`done applying operation`);
         } else {
           specs.push(v);
         }
@@ -1560,7 +1576,6 @@ function populate(
 //     nextTick(() =>
 //       requestAnimationFrame(() => 
 //         requestAnimationFrame(() => res(callback())))));
-
 async function run(grid: Node | null) {
   // 1. run all transform rules on entire top row of grid
   // -
@@ -1589,20 +1604,25 @@ async function run(grid: Node | null) {
     console.log(`step 1`);
     do {
       // await awaitStep(`connecting leaders`, grid.seekLeader());
-      await grid.seekLeader().connectLeaders();
-      await awaitStep(`done connecting leaders`, grid.seekLeader().id);
-      await grid.seekLeader().extrudeLeaders();
-      // let node: Node | null = grid.seekLeader();
-      // while (node) {
-      //   nodesToChange.add(node);
-      //   node = node.next;
-      // }
+      // await debugStep(`connecting leaders from`, grid.id);
+      await grid.connectLeaders();
+      // await debugStep(`done connecting leaders`, grid.id);
+      await grid.extrudeLeaders();
+      let node: Node | null = grid.seekLeader();
+      while (node) {
+        if (node.mainChild?.type === NodeType.blank) {
+          // await debugStep(`adding child ${node.id} for child ${node.mainChild.id}`, node.id, node.mainChild.id);
+          nodesToChange.add(node);
+        }
+        node = node.next;
+      }
 
       const nodesChanged = new Set<Node>();
       for (const node of nodesToChange) {
         // nodesTouched.add(node);
         const results = await node.applyRules();
         if (results.length > 0) {
+          // await debugStep(`adding`, node.id);
           nodesChanged.add(node);
         }
         for (const created of results) {
@@ -1635,11 +1655,13 @@ async function run(grid: Node | null) {
 
     await awaitStep(`Step 8`);
     await awaitStep(`${grid.layer.name} -> ${grid.seekLeader().layer.name}`, grid.id, grid.seekLeader().id);
-    grid = grid.seekLeader().mainChild;
-    await awaitStep(grid?.layer.name, grid?.id ?? -1);
+    grid = grid.seekLeader().firstChild();
+    // await debugStep(`moving on to ${grid?.layer.name}`, grid?.id ?? -1);
     console.log(`step 8 i think`, rip);
   }
 }
+
+window.match = matchers.single.bind(matchers);
 
 window.rules = {};
 
