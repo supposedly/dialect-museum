@@ -284,7 +284,8 @@ export const matchers = {
     }
     if (isLiteral(self)) {
       if (typeof other !== `object` || other === null) {
-        return self === other;
+        // hack to handle epenthesis...
+        return self === other || Object.keys(self).length === 0 && other === null;
       }
       return Object.keys(self).every(
         k => k in other && matchers.single(

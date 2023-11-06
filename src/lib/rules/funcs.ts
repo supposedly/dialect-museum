@@ -65,11 +65,11 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
             type,
             features: features instanceof Function
               ? features(
-              qualifiedPathsOf(v) as never,
-              alphabet.traits[type] as never
+                qualifiedPathsOf(v) as never,
+                alphabet.traits[type] as never
               )
               : Object.keys(v).length === 1
-                ? {[Object.keys(v)[0]]: features}
+                ? features ? {[Object.keys(v)[0]]: features} : {}
                 : features ?? {},
             context: context instanceof Function
               ? context(qualifiedPathsOf(alphabet.context))
@@ -88,11 +88,11 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
                 type,
                 features: features instanceof Function
                   ? features(
-                  qualifiedPathsOf(v) as never,
-                  alphabet.traits[type] as never
+                    qualifiedPathsOf(v) as never,
+                    alphabet.traits[type] as never
                   )
                   : Object.keys(v).length === 1
-                    ? {[Object.keys(v)[0]]: features}
+                    ? features ? {[Object.keys(v)[0]]: features} : {}
                     : features ?? {},
                 context: context instanceof Function
                   ? context(qualifiedPathsOf(alphabet.context))
@@ -401,8 +401,9 @@ export function processPack<
                     arg => ({
                       for: {match: `all`, value: [
                         arg.for,
-                        unfuncSpec(constraint, pack.source, pack.target, pack.dependencies),
-                      ], __NEGATED: true},  // lol cheat
+                        // lol cheat
+                        {match: `not`, value: unfuncSpec(constraint, pack.source, pack.target, pack.dependencies)},
+                      ]},
                       into: arg.into,
                       odds: arg.odds,
                       source: arg.source,

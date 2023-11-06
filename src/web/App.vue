@@ -238,6 +238,7 @@ function orderRules(
 // console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(debug, {})));
 
 const input = <const>[
+  {type: `boundary`, features: {type: `pause`}, context: {affected: false}},
   // {
   //   type: `word`, features: {
   //     string: [
@@ -249,19 +250,19 @@ const input = <const>[
   // },
   // letters.plain.affix.f,
   // {type: `boundary`, features: {type: `word`}, context: {affected: false}},
-  {
-    type: `word`, features: {
-      string: [
-        letters.plain.consonant.$,
-        letters.plain.vowel.a,
-        letters.plain.consonant.d,
-        letters.plain.consonant.r,
-        letters.plain.vowel.a,
-        letters.plain.consonant.s,
-      ],
-    }, context: {affected: false},
-  },
-  {type: `boundary`, features: {type: `word`}, context: {affected: false}},
+  // {
+  //   type: `word`, features: {
+  //     string: [
+  //       letters.plain.consonant.$,
+  //       letters.plain.vowel.a,
+  //       letters.plain.consonant.x,
+  //       letters.plain.consonant.s,
+  //       letters.plain.vowel.a,
+  //       letters.plain.consonant.n,
+  //     ],
+  //   }, context: {affected: false},
+  // },
+  // {type: `boundary`, features: {type: `word`}, context: {affected: false}},
   {
     type: `verb`,
     features: {
@@ -277,23 +278,26 @@ const input = <const>[
     },
     context: {affected: false},
   },
-  {type: `boundary`, features: {type: `word`}, context: {affected: false}},
-  {
-    type: `verb`,
-    features: {
-      subject: letters.plain.pronoun.mp3.features,
-      tam: `indicative`,
-      door: `f3vl`,
-      theme: `u`,
-      root: [
-        {...letters.plain.consonant.k.features, affected: false, weak: false},
-        {...letters.plain.consonant.t.features, affected: false, weak: false},
-        {...letters.plain.consonant.b.features, affected: false, weak: false},
-      ],
-    },
-    context: {affected: false},
-  },
+  // {type: `boundary`, features: {type: `word`}, context: {affected: false}},
+  // {
+  //   type: `verb`,
+  //   features: {
+  //     subject: letters.plain.pronoun.mp3.features,
+  //     tam: `indicative`,
+  //     door: `f3vl`,
+  //     theme: `u`,
+  //     root: [
+  //       {...letters.plain.consonant.k.features, affected: false, weak: false},
+  //       {...letters.plain.consonant.t.features, affected: false, weak: false},
+  //       {...letters.plain.consonant.b.features, affected: false, weak: false},
+  //     ],
+  //   },
+  //   context: {affected: false},
+  // },
+  {type: `boundary`, features: {type: `pause`}, context: {affected: false}},
 ];
+
+window.letters = letters;
 
 enum NodeType {
   /** Uninitialized */
@@ -349,7 +353,7 @@ class Node {
     public layer: Alphabet,
     public type: NodeType,
     public childType: ChildType | null,
-    public _value: {type: string, features: object, context: object} | undefined,
+    public _value: {type: string, features: object, context: object} | undefined | null,
     environment?: {
       mainParent?: Node[`mainParent`],
       mainChild?: Node[`mainChild`],
@@ -637,7 +641,7 @@ class Node {
       // (this will also get consonants and vowels i think...
       // and because match lib doesn't care about missing properties it
       // may just work out fine for ones that don't end up getting properly transformed??)
-      const value = (
+      const value = this.value === null ? this.value : (
         this.value !== undefined
           && this.value.type in target.types
           && matchers.single(target.types[this.value.type], this.value.features)
@@ -665,7 +669,10 @@ class Node {
     }
   }
 
-  async connectLeaders(last: Node | null = null): Promise<Node> {
+  async connectLeaders(last: Node | null = null): Promise<Node | null> {
+    // if (this.type === NodeType.blank && this.value !== undefined && this.value === this.mainParent?.value) {
+    //   this.type = NodeType.fixture;
+    // }
     // await debugStep(`starting connectleaders from ${this.id}`, this.id, last?.id ?? -1);
     if (last !== null) {
       last.next = this;
@@ -675,7 +682,12 @@ class Node {
     const passForward = this.mainChild === null || this.mainChild.layer !== this.layer
       ? this
       : await this.mainChild.connectLeaders(last);
-    // await debugStep(`retrieved passForward for ${this.id}`, this.id, passForward.id);
+    // await debugStep(`retrieved passForward for ${this.id}`, this.id, passForward?.id ?? -1);
+    if (this.next !== null && this.next.mainParent !== null && this.next.mainParent.layer === this.layer && this.next.mainParent !== this.mainParent) {
+      // await debugStep(`returning null from ${this.id} because of ${this.next.id}`, this.next.id);
+      return null;
+    }
+    // await debugStep(`checking ${this.next?.id ?? `nothing much`} for ${this.id}`, this.id, this.next?.id ?? -1);
     return this.next === null || this.next === this.mainChild?.next ? this : await this.next.connectLeaders(passForward);
   }
 
@@ -690,7 +702,7 @@ class Node {
         const connection = this.foreseek(node => node.mainChild !== null)?.mainChild;
         if (connection) {
           // see above comment (ctrl+F consonants)
-          const value = (
+          const value = this.value === null ? this.value : (
             this.value !== undefined
               && this.value.type in connection.layer.types
               && matchers.single(connection.layer.types[this.value.type], this.value.features)
@@ -705,7 +717,7 @@ class Node {
             {mainParent: this, next: connection},
           ).usable();
           connection.prev.createdBy = `extrusion` as never;
-          await awaitStep(`created a node`, connection.prev.id);
+          // await awaitStep(`created a node`, connection.prev.id);
         } else {
           this.mainChild = new Node(
             this.rules,
@@ -716,12 +728,12 @@ class Node {
             {mainParent: this}
           );
           this.mainChild.createdBy = `extrusion` as never;
-          await awaitStep(`created a node`, this.mainChild.id);
+          // await awaitStep(`created a node`, this.mainChild.id);
         }
       } else if (this.prev.mainChild !== null) {
         const connection = this.prev.mainChild;
         // see above comment (ctrl+F consonants)
-        const value = (
+        const value = this.value === null ? this.value : (
           this.value !== undefined
             && this.value.type in connection.layer.types
             && matchers.single(connection.layer.types[this.value.type], this.value.features)
@@ -737,7 +749,7 @@ class Node {
           {mainParent: this, prev: connection, next: connection.next}
         ).usable();
         connection.next.createdBy = `extrusion` as never;
-        await awaitStep(`created a node`, connection.next.id);
+        // await awaitStep(`created a node`, connection.next.id);
         if (oldNext) {
           oldNext.prev = connection.next;
         }
@@ -750,6 +762,20 @@ class Node {
         node = node.next;
       }
     }
+  }
+
+  async fillInTheBlanks() {
+    // if (this.mainChild !== null && this.mainChild.layer === this.layer) {
+    //   await this.seekLeader().fillInTheBlanks();
+    //   return;
+    // }
+    if (this.next === null) {
+      return;
+    }
+    if (this.value === undefined && this.type === NodeType.blank) {
+      this.value = this.mainParent?.value;
+    }
+    this.next.fillInTheBlanks();
   }
 
   seekLeader(): Node {
@@ -796,7 +822,8 @@ class Node {
     if (this.mainChild === null) {
       return;
     }
-    this.mainChild.type = NodeType.blank;
+    // this.mainChild.type = NodeType.blank;
+    // this.mainChild.value = undefined;
     await this.mainChild.wipeChildren();
   }
 
@@ -837,17 +864,42 @@ class Node {
     this.subscribers.clear();
   }
 
+  async isEpenthesis(specs: object): Promise<boolean> {
+    if (`match` in specs && `value` in specs) {
+      switch (specs.match) {
+        case `not`:
+          return !await this.isEpenthesis(specs.value as object);
+        case `all`:
+        case `any`:
+          for (const v of specs.value as ReadonlyArray<object>) {
+            if (await this.isEpenthesis(v)) {
+              return true;
+            }
+          }
+          return false;
+        // return (specs.value as ReadonlyArray<object>).some(v => this.checkSpecs(v, subscriber));
+        // does a custom match even make sense up at this level?
+        // don't think others do at any rate
+        default:
+          throw new Error(`Unimplemented match for checkSpecs(): ${specs.match}`);
+      }
+    }
+    return `spec` in specs && specs.spec === null;
+  }
+
   /* specs stuff */
-  async checkSpecs(specs: object, subscriber: Node = this): Promise<boolean> {
+  async checkSpecs(specs: object, subscriber: Node | null = this): Promise<boolean> {
     // if (subscriber.id !== this.id) {
     //   await awaitStep(`checking specs of ${this.id} for ${subscriber.id}`, this.id, subscriber.id);
     // }
-    if (`__NEGATED` in specs) {
-      const {__NEGATED: _, ...obj} = specs;
-      return !await this.checkSpecs(obj);
+    if (specs === null && this.value === null) {
+      // it'd probably be handled correctly below but just in case lmao
+      return true;
     }
     if (`match` in specs && `value` in specs) {
       switch (specs.match) {
+        case `not`:
+          return !await this.checkSpecs(specs.value as object, subscriber);
         case `all`:
           for (const v of specs.value as ReadonlyArray<object>) {
             if (!await this.checkSpecs(v, subscriber)) {
@@ -867,7 +919,6 @@ class Node {
         // does a custom match even make sense up at this level?
         // don't think others do at any rate
         default:
-          console.error(specs);
           throw new Error(`Unimplemented match for checkSpecs(): ${specs.match}`);
       }
     }
@@ -916,7 +967,7 @@ class Node {
     // });
   }
 
-  async checkSpec(spec: object, subscriber: Node): Promise<boolean> {
+  async checkSpec(spec: object, subscriber: Node | null): Promise<boolean> {
     if (subscriber) {
       this.subscribe(subscriber);
     }
@@ -926,15 +977,16 @@ class Node {
   // this is so ugly
   async collectEnv(
     specs: object,
-    subscriber: Node = this,
-    collected: {next: Node[], prev: Node[]} = {next: [], prev: []}
+    subscriber: Node | null = this,
+    only: `next` | `prev` | null = null,
+    collected: {next: Node[], prev: Node[]} = {next: [], prev: []},
   ): Promise<typeof collected> {
     if (`match` in specs && `value` in specs) {
       switch (specs.match) {
         case `all`:
         case `any`:
           for (const v of specs.value as ReadonlyArray<object>) {
-            await this.collectEnv(v, subscriber, collected);
+            await this.collectEnv(v, subscriber, only, collected);
           }
           // (specs.value as ReadonlyArray<object>).forEach(v => this.collectEnv(v, subscriber, collected));
           return collected;
@@ -946,7 +998,7 @@ class Node {
     }
     for (const [k, v] of Object.entries(specs)) {
       if (k === `env`) {
-        await this.checkEnv(v, subscriber, collected);
+        await this.checkEnv(v, subscriber, collected, only);
       }
     }
     // Object.entries(specs).forEach(([k, v]) => {
@@ -959,7 +1011,7 @@ class Node {
 
   async _checkEnvPrev(
     env: ReadonlyArray<object>,
-    subscriber: Node,
+    subscriber: Node | null,
     collectedEnv: Record<`next` | `prev`, Array<Node | null>>
   ): Promise<boolean> {
     let node = this.prev;
@@ -1019,7 +1071,7 @@ class Node {
 
   async _checkEnvNext(
     env: ReadonlyArray<object>,
-    subscriber: Node,
+    subscriber: Node | null,
     collectedEnv: Record<`next` | `prev`, Array<Node | null>>
   ): Promise<boolean> {
     let node = this.next;
@@ -1079,14 +1131,15 @@ class Node {
 
   async checkEnv(
     env: object,
-    subscriber: Node,
-    collectedEnv: Record<`next` | `prev`, Array<Node | null>> = {next: [], prev: []}
+    subscriber: Node | null,
+    collectedEnv: Record<`next` | `prev`, Array<Node | null>> = {next: [], prev: []},
+    only: `next` | `prev` | null = null,
   ): Promise<boolean> {
     if (`match` in env && `value` in env) {
       switch (env.match) {
         case `all`:
           for (const v of env.value as ReadonlyArray<object>) {
-            if (!await this.checkEnv(v, subscriber, collectedEnv)) {
+            if (!await this.checkEnv(v, subscriber, collectedEnv, only)) {
               return false;
             }
           }
@@ -1094,7 +1147,7 @@ class Node {
           // return (env.value as ReadonlyArray<object>).every(v => this.checkEnv(v, subscriber, collectedEnv));
         case `any`:
           for (const v of env.value as ReadonlyArray<object>) {
-            if (await this.checkEnv(v, subscriber, collectedEnv)) {
+            if (await this.checkEnv(v, subscriber, collectedEnv, only)) {
               return true;
             }
           }
@@ -1111,15 +1164,20 @@ class Node {
     for (const [k, v] of Object.entries(env)) {
       switch (k) {
         case `next`:
-          if (!await this._checkEnvNext(v.flat(Infinity), subscriber, collectedEnv)) {
-            return false;
+          if (!only || only === `next`) {
+            if (!await this._checkEnvNext(v.flat(Infinity), subscriber, collectedEnv)) {
+              return false;
+            }
+            continue;
           }
-          continue;
+        // fall through
         case `prev`:
-          if (!await this._checkEnvPrev(v.flat(Infinity), subscriber, collectedEnv)) {
-            return false;
+          if (!only || only === `prev`) {
+            if (!await this._checkEnvPrev(v.flat(Infinity), subscriber, collectedEnv)) {
+              return false;
+            }
+            continue;
           }
-          continue;
       }
     }
     return true;
@@ -1134,7 +1192,7 @@ class Node {
   }
 
   // TODO: check against the actual alphabet reference (ie layer: Alphabet, not layerName: string)
-  async _checkWas(layerName: string, specs: object, subscriber: Node): Promise<boolean> {
+  async _checkWas(layerName: string, specs: object, subscriber: Node | null): Promise<boolean> {
     if (this.layer.name === layerName) {
       if (this.type !== NodeType.mock && await this.checkSpecs(specs, subscriber)) {
         // await awaitStep(`found`, this.id);
@@ -1156,7 +1214,7 @@ class Node {
     // return this.parents().some(parent => parent._checkWas(layerName, specs, subscriber));
   }
 
-  async checkWas(specs: object, subscriber: Node): Promise<boolean> {
+  async checkWas(specs: object, subscriber: Node | null): Promise<boolean> {
     if (`match` in specs && `value` in specs) {
       switch (specs.match) {
         case `all`:
@@ -1192,7 +1250,7 @@ class Node {
   // this should only ever be called on the leading node
   // so i think .mainChild should always be the next layer's first node
   // and you don't need to seek for it or anything
-  async checkTarget(specs: object, subscriber: Node): Promise<boolean> {
+  async checkTarget(specs: object, subscriber: Node | null): Promise<boolean> {
     if (this.mainChild === null) {
       // i think the type system ensures that you can't (type-safely) use target on the bottom layer
       console.error(
@@ -1202,13 +1260,15 @@ class Node {
       return false;
     }
     const env = await this.mainChild.collectEnv(specs, subscriber);
-    subscriber.waitingOnTarget = (
-      env.next.every(node => node.type !== NodeType.blank)
-      && env.prev.every(node => node.type !== NodeType.blank)
-    );
-    if (subscriber.waitingOnTarget) {
-      return false;
+    if (subscriber) {
+      subscriber.waitingOnTarget = (
+        env.next.some(node => node.type !== NodeType.blank)
+        || env.prev.some(node => node.type !== NodeType.blank)
+      );
     }
+    // if (subscriber.waitingOnTarget) {
+    //   return false;
+    // }
     // this subscribes to mainChild and/or its neighbors in the process
     // i don't even think it needs a special case for mainChild.type === NodeType.blank vs otherwise,
     // this should just work lol
@@ -1451,6 +1511,41 @@ class Node {
         inTransformRules = false;
         continue;
       }
+
+      // epenthesis lmao
+      if (await this.isEpenthesis(rule.for) && this.value !== null) {
+        console.log(`epenthesis time`);
+        if (this.next === null || this.prev === null) {
+          // banking on texts always having a boundary appended at the beginning and (crucially) end
+          continue;
+        }
+        const next = (await this.collectEnv(rule, null, `next`)).next;
+        const prev = (await this.next.collectEnv(rule, null, `prev`)).prev;
+        if (await this.checkEnv({next}, null) && await this.next.checkEnv({prev}, null)) {
+          console.log(rule);
+          await debugStep(`epenthesizing`, this.id);
+          const oldNext = this.mainChild.next;
+          this.mainChild.next = new Node(
+            this.rules,
+            this.layer,
+            NodeType.blank,
+            ChildType.main,
+            null,
+            {next: this.mainChild.next, prev: this.mainChild, mainParent: null}
+          );
+          if (oldNext) {
+            oldNext.prev = this.mainChild.next;
+          }
+          this.mainChild.next.createdBy = rule;
+          created.push(this.mainChild.next);
+          await debugStep(`created epenthetic node`, this.mainChild.next.id);
+          // specsCache.set(rule.for, false);
+        }
+        continue;
+      } else if (rule.for === null) {
+        await debugStep(`running epenthesis rule!!!`, this.id);
+      }
+
       if (!specsCache.has(rule.for)) {
         specsCache.set(rule.for, await this.checkSpecs(rule.for));
       }
@@ -1506,7 +1601,7 @@ class Node {
                 mock: inTransformRules,
               } as never : {operation: `promote`, argument: {specs: [...specs]}, mock: false} as never,
               this.layer,
-              this.mainChild!.layer,
+              this.mainChild?.layer ?? this.layer,
               true,
               envCache.get(rule.for)!,
               rule
@@ -1519,7 +1614,7 @@ class Node {
               mock: v.operation === `mock` ? v.mock : true,
             } as never : v as never,
             this.layer,
-            this.mainChild!.layer,
+            this.mainChild?.layer ?? this.layer,
             true,
             envCache.get(rule.for)!,
             rule
@@ -1537,7 +1632,7 @@ class Node {
             mock: inTransformRules,
           } as never,
           this.layer,
-          this.mainChild!.layer,
+          this.mainChild?.layer ?? this.layer,
           true,
           envCache.get(rule.for)!,
           rule
@@ -1627,6 +1722,7 @@ async function run(grid: Node | null) {
       await grid.connectLeaders();
       // await debugStep(`done connecting leaders`, grid.id);
       await grid.extrudeLeaders();
+      await grid.seekLeader().fillInTheBlanks();
       let node: Node | null = grid.seekLeader();
       while (node) {
         if (node.mainChild?.type === NodeType.blank) {
@@ -1650,11 +1746,7 @@ async function run(grid: Node | null) {
       }
       nodesToChange.clear();
 
-      await awaitStep(`Step 2`);
-      console.log(`step 2`);
-
-
-      await awaitStep(`Step 3`);
+      // await debugStep(`Step 3`);
       console.log(`step 3`, nodesChanged);
       for (const n of nodesChanged) {
         for (const leader of n.leaders()) {
