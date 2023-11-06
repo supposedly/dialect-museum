@@ -6,6 +6,7 @@ import delimiter from './delimiter';
 import affix from './affix';
 import vowel from './vowel';
 import consonant from './consonant';
+import boundaryLiteral from './boundary-literal';
 
 export default finalize(
   // consonant & vowel coming last is crucial
@@ -14,5 +15,6 @@ export default finalize(
     affix,
     vowel,
     consonant,
+    boundaryLiteral,
   }),
 );

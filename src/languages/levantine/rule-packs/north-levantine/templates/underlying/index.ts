@@ -7,6 +7,7 @@ import masdar from './masdar';
 import number from './number';
 import participle from './participle';
 import verb from './verb';
+import boundaryLiteral from './boundary-literal';
 import word from './word';
 
 export default finalize(
@@ -16,6 +17,7 @@ export default finalize(
     number,
     participle,
     verb,
+    boundaryLiteral,
     word,
   }),
 );
