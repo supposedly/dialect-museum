@@ -17,6 +17,6 @@ export default rulePack(
         ],
       })
     ),
-    was: {templates: {spec: {type: `verb`}}},
+    was: {templates: {spec: ({verb}) => verb((features, traits) => traits.nonpast)}},
   }
 );

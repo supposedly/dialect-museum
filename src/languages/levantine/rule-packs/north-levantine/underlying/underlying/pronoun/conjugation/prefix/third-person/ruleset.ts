@@ -15,6 +15,6 @@ export default rulePack(
         affix(features => features.symbol.indicative),
       ],
     }),
-    was: {templates: {spec: {type: `verb`}}},
+    was: {templates: {spec: ({verb}) => verb((features, traits) => traits.nonpast)}},
   }
 );
