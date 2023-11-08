@@ -978,28 +978,27 @@ class Node {
   async collectEnv(
     specs: object,
     subscriber: Node | null = this,
-    only: `next` | `prev` | null = null,
     collected: {next: Node[], prev: Node[]} = {next: [], prev: []},
   ): Promise<typeof collected> {
     if (`match` in specs && `value` in specs) {
       switch (specs.match) {
+        case `not`:
+          return await this.collectEnv(specs.value as object, subscriber, collected);
         case `all`:
         case `any`:
           for (const v of specs.value as ReadonlyArray<object>) {
-            await this.collectEnv(v, subscriber, only, collected);
+            await this.collectEnv(v, subscriber, collected);
           }
           // (specs.value as ReadonlyArray<object>).forEach(v => this.collectEnv(v, subscriber, collected));
           return collected;
         // does a custom match even make sense up at this level?
         // don't think others do at any rate
         default:
-          throw new Error(`Unimplemented match for collectEnv(): ${specs}`);
+          throw new Error(`Unimplemented match for collectEnv(): ${specs.match}`);
       }
     }
-    for (const [k, v] of Object.entries(specs)) {
-      if (k === `env`) {
-        await this.checkEnv(v, subscriber, collected, only);
-      }
+    if (`env` in specs) {
+      await this.checkEnv(specs.env as object, subscriber, collected);
     }
     // Object.entries(specs).forEach(([k, v]) => {
     //   if (k === `env`) {
@@ -1009,13 +1008,75 @@ class Node {
     return collected;
   }
 
+  // this is even uglier lmfao
+  async collectEnvSeparate(
+    specs: object,
+    subscriber: Node | null = this,
+    collected: {next: Node[], prev: Node[]} = {next: [], prev: []},
+  ): Promise<{next: boolean, prev: boolean}> {
+    // await debugStep(`checking for epenthetic env`, this.id);
+    if (`match` in specs && `value` in specs) {
+      switch (specs.match) {
+        case `not`: {
+          const {next, prev} = await this.collectEnvSeparate(specs.value as object, subscriber, collected);
+          return {next: !next, prev: !prev};
+        }
+        case `all`: {
+          let valid = {next: true, prev: true};
+          for (const v of specs.value as ReadonlyArray<object>) {
+            const {next, prev} = await this.collectEnvSeparate(v, subscriber, collected);
+            if (!next) {
+              valid.next = false;
+            }
+            if (!prev) {
+              valid.prev = false;
+            }
+          }
+          // (specs.value as ReadonlyArray<object>).forEach(v => this.collectEnv(v, subscriber, collected));
+          return valid;
+        }
+        case `any`: {
+          let valid = {next: false, prev: false};
+          for (const v of specs.value as ReadonlyArray<object>) {
+            const {next, prev} = await this.collectEnvSeparate(v, subscriber, collected);
+            if (next) {
+              valid.next = true;
+            }
+            if (prev) {
+              valid.prev = true;
+            }
+          }
+          // (specs.value as ReadonlyArray<object>).forEach(v => this.collectEnv(v, subscriber, collected));
+          return valid;
+        }
+        // does a custom match even make sense up at this level?
+        // don't think others do at any rate
+        default:
+          throw new Error(`Unimplemented match for collectEnvSeparate(): ${specs.match}`);
+      }
+    }
+    if (`env` in specs) {
+      // console.log(specs);
+      return await this.checkEnvSeparate(specs.env as object, subscriber, collected);
+      // await debugStep(`it literally dun work`, this.id);
+    }
+    // Object.entries(specs).forEach(([k, v]) => {
+    //   if (k === `env`) {
+    //     this.checkEnv(v, subscriber, collected);
+    //   }
+    // });
+    // console.log(specs, collected);
+    // await debugStep(`it literally do work`, this.id);
+    return {next: false, prev: false};
+  }
+
   async _checkEnvPrev(
     env: ReadonlyArray<object>,
     subscriber: Node | null,
     collectedEnv: Record<`next` | `prev`, Array<Node | null>>
   ): Promise<boolean> {
     let node = this.prev;
-    let index = -1;
+    let index = 0;
 
     let checkingArray = false;
     let arrayLengthSoFar = -1;
@@ -1043,6 +1104,7 @@ class Node {
       }
 
       if (`match` in specs && specs.match === `array` && `value` in specs) {
+        checkingArray = true;
         const {length, fill} = specs.value as ({length: number | object, fill: object});
         arrayCheckForValue = fill;
         if (typeof length === `number`) {
@@ -1075,7 +1137,7 @@ class Node {
     collectedEnv: Record<`next` | `prev`, Array<Node | null>>
   ): Promise<boolean> {
     let node = this.next;
-    let index = -1;
+    let index = 0;
 
     let checkingArray = false;
     let arrayLengthSoFar = -1;
@@ -1103,6 +1165,7 @@ class Node {
       }
 
       if (`match` in specs && specs.match === `array` && `value` in specs) {
+        checkingArray = true;
         const {length, fill} = specs.value as ({length: number | object, fill: object});
         arrayCheckForValue = fill;
         if (typeof length === `number`) {
@@ -1133,13 +1196,12 @@ class Node {
     env: object,
     subscriber: Node | null,
     collectedEnv: Record<`next` | `prev`, Array<Node | null>> = {next: [], prev: []},
-    only: `next` | `prev` | null = null,
   ): Promise<boolean> {
     if (`match` in env && `value` in env) {
       switch (env.match) {
         case `all`:
           for (const v of env.value as ReadonlyArray<object>) {
-            if (!await this.checkEnv(v, subscriber, collectedEnv, only)) {
+            if (!await this.checkEnv(v, subscriber, collectedEnv)) {
               return false;
             }
           }
@@ -1147,7 +1209,7 @@ class Node {
           // return (env.value as ReadonlyArray<object>).every(v => this.checkEnv(v, subscriber, collectedEnv));
         case `any`:
           for (const v of env.value as ReadonlyArray<object>) {
-            if (await this.checkEnv(v, subscriber, collectedEnv, only)) {
+            if (await this.checkEnv(v, subscriber, collectedEnv)) {
               return true;
             }
           }
@@ -1158,26 +1220,21 @@ class Node {
           // which means collectedEnv will be populated fingers crossed
           return (env.value as (arg: unknown) => boolean)(collectedEnv);
         default:
-          throw new Error(`Unimplemented match for checkEnv(): ${env}`);
+          throw new Error(`Unimplemented match for checkEnv(): ${env.match}`);
       }
     }
     for (const [k, v] of Object.entries(env)) {
       switch (k) {
         case `next`:
-          if (!only || only === `next`) {
-            if (!await this._checkEnvNext(v.flat(Infinity), subscriber, collectedEnv)) {
-              return false;
-            }
-            continue;
+          if (!await this._checkEnvNext(v.flat(Infinity), subscriber, collectedEnv)) {
+            return false;
           }
-        // fall through
+          continue;
         case `prev`:
-          if (!only || only === `prev`) {
-            if (!await this._checkEnvPrev(v.flat(Infinity), subscriber, collectedEnv)) {
-              return false;
-            }
-            continue;
+          if (!await this._checkEnvPrev(v.flat(Infinity), subscriber, collectedEnv)) {
+            return false;
           }
+          continue;
       }
     }
     return true;
@@ -1189,6 +1246,87 @@ class Node {
     //       return this._checkEnvPrev(v.flat(Infinity), subscriber, collectedEnv);
     //   }
     // });
+  }
+
+  async checkEnvSeparate(
+    env: object,
+    subscriber: Node | null,
+    collectedEnv: Record<`next` | `prev`, Array<Node | null>> = {next: [], prev: []},
+  ): Promise<{next: boolean, prev: boolean}> {
+    // debugger;
+    // await debugStep(`checking env man idk`, this.id);
+    if (`match` in env && `value` in env) {
+      switch (env.match) {
+        case `not`: {
+          const {next, prev} = await this.checkEnvSeparate(env.value as object, subscriber, collectedEnv);
+          return {next: !next, prev: !prev};
+        }
+        case `all`: {
+          let valid = {next: true, prev: true};
+          for (const v of env.value as ReadonlyArray<object>) {
+            const {next, prev} = await this.checkEnvSeparate(v, subscriber, collectedEnv);
+            if (!next) {
+              valid.next = false;
+            }
+            if (!prev) {
+              valid.prev = false;
+            }
+          }
+          // console.log(valid);
+          return valid;
+        }
+        // return (env.value as ReadonlyArray<object>).every(v => this.checkEnv(v, subscriber, collectedEnv));
+        case `any`: {
+          let valid = {next: false, prev: false};
+          for (const v of env.value as ReadonlyArray<object>) {
+            const {next, prev} = await this.checkEnvSeparate(v, subscriber, collectedEnv);
+            if (next) {
+              valid.next = true;
+            }
+            if (prev) {
+              valid.prev = true;
+            }
+          }
+          // console.log(valid);
+          return valid;
+        }
+        // return (env.value as ReadonlyArray<object>).some(v => this.checkEnv(v, subscriber, collectedEnv));
+        case `custom`: {
+        // `all` from custom() will have been done already by this point if i'm not wrong
+        // which means collectedEnv will be populated fingers crossed
+          const both = (env.value as (arg: unknown) => boolean)(collectedEnv);
+          return {next: both, prev: both};
+        }
+        default:
+          throw new Error(`Unimplemented match for checkEnv(): ${env.match}`);
+      }
+    }
+    let valid = {next: true, prev: true};
+    for (const [k, v] of Object.entries(env)) {
+      switch (k) {
+        case `next`:
+          if (!await this._checkEnvNext(v.flat(Infinity), subscriber, collectedEnv)) {
+            valid.next = false;
+          }
+          continue;
+        case `prev`:
+          if (!await this._checkEnvPrev(v.flat(Infinity), subscriber, collectedEnv)) {
+            valid.prev = false;
+          }
+          continue;
+      }
+    }
+    // console.log(valid, env);
+    // await debugStep(`what did we learn`, this.id);
+    return valid;
+  // return Object.entries(env).every(([k ,v]) => {
+  //   switch (k) {
+  //     case `next`:
+  //       return this._checkEnvNext(v.flat(Infinity), subscriber, collectedEnv);
+  //     case `prev`:
+  //       return this._checkEnvPrev(v.flat(Infinity), subscriber, collectedEnv);
+  //   }
+  // });
   }
 
   // TODO: check against the actual alphabet reference (ie layer: Alphabet, not layerName: string)
@@ -1234,7 +1372,7 @@ class Node {
           return false;
           // return (specs.value as ReadonlyArray<object>).some(v => await this.checkWas(v, subscriber));
         default:
-          throw new Error(`Unimplemented match for checkWas(): ${specs}`);
+          throw new Error(`Unimplemented match for checkWas(): ${specs.match}`);
       }
     }
     // await awaitStep(`about to check was`, this.id);
@@ -1329,7 +1467,6 @@ class Node {
     }
     const created: Array<Node> = [];
     if (mock || operation === `mock`) {
-      console.log(`mock`, args);
       args = args.map(arg => update(this.value ?? {}, arg));
     }
     const [head, ...tail] = args;
@@ -1365,7 +1502,6 @@ class Node {
     if (this.mainChild === null || this.mainChild.layer !== target) {
       const oldFirstChild = this.firstChild();
       const oldLastChild = oldFirstChild?.lastSibling();
-      console.log(oldFirstChild, oldLastChild);
       this.mainChild = new Node(
         this.rules,
         target,
@@ -1482,6 +1618,97 @@ class Node {
     return created;
   }
 
+  async applyOneRule(
+    rule: typeof this.rules[string][string][number],
+    inTransformRules: boolean,
+    oddsMap: Map<object, number>,
+    envCache: Map<object, {next: Node[], prev: Node[]}>,
+    created: Node[],
+  ) {
+    // if we're here it means specs match!
+    // so... bam just do the transformation
+    // first skip this rule if the stars aren't aligned
+    // (but leave it open for rules that share its odds)
+    if (rule.odds.value < 100) {
+      if (!oddsMap.has(rule.odds.id)) {
+        oddsMap.set(rule.odds.id, Math.random() * 100);
+      }
+      const result = oddsMap.get(rule.odds.id)!;
+      oddsMap.set(rule.odds.id, result - rule.odds.value);
+      if (result >= rule.odds.value) {
+        // less than means we run the rule so geq means skip
+        // but oddsMap guarantees that as long as the diff values add up to 100 then one variant of this rule WILL run
+        return;
+      }
+    }
+
+    // finally if we're here it means we're really running this rule
+    const into: ReadonlyArray<object> = (
+      rule.into instanceof Function
+        ? rule.into(this.value)
+        : rule.into
+    ).flat(Infinity);
+
+    if (into.length === 0) {
+      await this.erase();
+      return;
+    }
+
+    if (!envCache.has(rule.for)) {
+      envCache.set(rule.for, await this.collectEnv(rule.for));
+    }
+
+    const specs: object[] = [];
+    for (const v of into) {
+      // console.log(`????`, v);
+      if (`operation` in v && `argument` in v && `mock` in v) {
+        if (specs.length) {
+          created.push(...await this.applyOperation(
+            inTransformRules ? {
+              operation: inTransformRules ? `mock` : `promote`,
+              argument: {specs: [...specs]},
+              mock: inTransformRules,
+            } as never : {operation: `promote`, argument: {specs: [...specs]}, mock: false} as never,
+            this.layer,
+            this.mainChild?.layer ?? this.layer,
+            true,
+              envCache.get(rule.for)!,
+              rule
+          ));
+        }
+        specs.length = 0;
+        created.push(...await this.applyOperation(
+          inTransformRules ? {
+            ...v,
+            mock: v.operation === `mock` ? v.mock : true,
+          } as never : v as never,
+          this.layer,
+          this.mainChild?.layer ?? this.layer,
+          true,
+            envCache.get(rule.for)!,
+            rule
+        ));
+      } else {
+        specs.push(v);
+      }
+    }
+
+    if (specs.length) {
+      created.push(...await this.applyOperation(
+          {
+            operation: inTransformRules ? `mock` : `promote`,
+            argument: {specs: [...specs]},
+            mock: inTransformRules,
+          } as never,
+          this.layer,
+          this.mainChild?.layer ?? this.layer,
+          true,
+          envCache.get(rule.for)!,
+          rule
+      ));
+    }
+  }
+
   async applyRules(): Promise<Array<Node>> {
     const created: Array<Node> = [];
     if (this.mainChild === null) {
@@ -1513,37 +1740,44 @@ class Node {
       }
 
       // epenthesis lmao
-      if (await this.isEpenthesis(rule.for) && this.value !== null) {
-        console.log(`epenthesis time`);
+      const env = await this.isEpenthesis(rule.for);
+      if (env) {
         if (this.next === null || this.prev === null) {
           // banking on texts always having a boundary appended at the beginning and (crucially) end
           continue;
         }
-        const next = (await this.collectEnv(rule, null, `next`)).next;
-        const prev = (await this.next.collectEnv(rule, null, `prev`)).prev;
-        if (await this.checkEnv({next}, null) && await this.next.checkEnv({prev}, null)) {
-          console.log(rule);
-          await debugStep(`epenthesizing`, this.id);
-          const oldNext = this.mainChild.next;
-          this.mainChild.next = new Node(
-            this.rules,
-            this.layer,
-            NodeType.blank,
-            ChildType.main,
-            null,
-            {next: this.mainChild.next, prev: this.mainChild, mainParent: null}
-          );
-          if (oldNext) {
-            oldNext.prev = this.mainChild.next;
-          }
-          this.mainChild.next.createdBy = rule;
-          created.push(this.mainChild.next);
-          await debugStep(`created epenthetic node`, this.mainChild.next.id);
-          // specsCache.set(rule.for, false);
+        const collectedNext = {next: [], prev: []};
+        const collectedPrev = {next: [], prev: []};
+        if (
+          !(await this.collectEnvSeparate(rule.for, null, collectedNext)).prev
+          || !(await this.prev.collectEnvSeparate(rule.for, null, collectedPrev)).next
+        ) {
+          continue;
         }
+        // if (await this.checkEnv({next: collectedNext.next}, null) && await this.next.checkEnv({prev: collectedPrev.prev}, null)) {
+        await awaitStep(`epenthesizing`, this.id);
+        const oldPrev = this.prev;
+        this.prev = new Node(
+          this.rules,
+          this.layer,
+          NodeType.blank,
+          ChildType.main,
+          null,
+          {prev: this.prev, next: this, mainParent: null}
+        );
+        if (oldPrev) {
+          oldPrev.next = this.prev;
+        }
+        this.prev.createdBy = rule;
+        await this.prev.extrudeLeaders(false);
+        if (this.prev.mainChild) {
+          created.push(this.prev.mainChild);
+        }
+        await this.prev.applyOneRule(rule, inTransformRules, oddsMap, envCache, created);
+        // await debugStep(`created epenthetic node`, this.prev.id);
+        // specsCache.set(rule.for, false);
+        // }
         continue;
-      } else if (rule.for === null) {
-        await debugStep(`running epenthesis rule!!!`, this.id);
       }
 
       if (!specsCache.has(rule.for)) {
@@ -1556,88 +1790,7 @@ class Node {
         continue;
       }
 
-      // if we're here it means specs match!
-      // so... bam just do the transformation
-      // first skip this rule if the stars aren't aligned
-      // (but leave it open for rules that share its odds)
-      if (rule.odds.value < 100) {
-        if (!oddsMap.has(rule.odds.id)) {
-          oddsMap.set(rule.odds.id, Math.random() * 100);
-        }
-        const result = oddsMap.get(rule.odds.id)!;
-        oddsMap.set(rule.odds.id, result - rule.odds.value);
-        if (result >= rule.odds.value) {
-        // less than means we run the rule so geq means skip
-        // but oddsMap guarantees that as long as the diff values add up to 100 then one variant of this rule WILL run
-          continue;
-        }
-      }
-
-      // finally if we're here it means we're really running this rule
-      const into: ReadonlyArray<object> = (
-        rule.into instanceof Function
-          ? rule.into(this.value)
-          : rule.into
-      ).flat(Infinity);
-
-      if (into.length === 0) {
-        await this.erase();
-        continue;
-      }
-
-      if (!envCache.has(rule.for)) {
-        envCache.set(rule.for, await this.collectEnv(rule.for));
-      }
-
-      const specs: object[] = [];
-      for (const v of into) {
-        // console.log(`????`, v);
-        if (`operation` in v && `argument` in v && `mock` in v) {
-          if (specs.length) {
-            created.push(...await this.applyOperation(
-              inTransformRules ? {
-                operation: inTransformRules ? `mock` : `promote`,
-                argument: {specs: [...specs]},
-                mock: inTransformRules,
-              } as never : {operation: `promote`, argument: {specs: [...specs]}, mock: false} as never,
-              this.layer,
-              this.mainChild?.layer ?? this.layer,
-              true,
-              envCache.get(rule.for)!,
-              rule
-            ));
-          }
-          specs.length = 0;
-          created.push(...await this.applyOperation(
-            inTransformRules ? {
-              ...v,
-              mock: v.operation === `mock` ? v.mock : true,
-            } as never : v as never,
-            this.layer,
-            this.mainChild?.layer ?? this.layer,
-            true,
-            envCache.get(rule.for)!,
-            rule
-          ));
-        } else {
-          specs.push(v);
-        }
-      }
-
-      if (specs.length) {
-        created.push(...await this.applyOperation(
-          {
-            operation: inTransformRules ? `mock` : `promote`,
-            argument: {specs: [...specs]},
-            mock: inTransformRules,
-          } as never,
-          this.layer,
-          this.mainChild?.layer ?? this.layer,
-          true,
-          envCache.get(rule.for)!,
-          rule
-        ));
-      }
+      await this.applyOneRule(rule, inTransformRules, oddsMap, envCache, created);
     }
 
     return created;
