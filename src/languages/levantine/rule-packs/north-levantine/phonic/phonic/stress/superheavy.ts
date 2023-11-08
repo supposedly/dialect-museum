@@ -11,7 +11,8 @@ export default ruleset(
             boundary.seek(
               (features, traits) => traits.suprasyllabic,
               {},
-              consonant()
+              consonant(),
+              [1, 2, 3]  // don't think we can hit 3 but just in case lol
             ),
           )
         ),

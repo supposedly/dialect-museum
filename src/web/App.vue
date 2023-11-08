@@ -1088,7 +1088,7 @@ class Node {
       while (checkingArray) {
         if (!await node?.checkSpecs(arrayCheckForValue!, subscriber)) {
           checkingArray = false;
-          if (checkArrayEndAt !== -1 && !(arrayLengthSoFar in checkArrayEndAt)) {
+          if (checkArrayEndAt !== -1 && !checkArrayEndAt.includes(arrayLengthSoFar)) {
             return false;
           }
         } else {
@@ -1149,7 +1149,7 @@ class Node {
       while (checkingArray) {
         if (!await node?.checkSpecs(arrayCheckForValue!, subscriber)) {
           checkingArray = false;
-          if (checkArrayEndAt !== -1 && !(arrayLengthSoFar in checkArrayEndAt)) {
+          if (checkArrayEndAt !== -1 && !checkArrayEndAt.includes(arrayLengthSoFar)) {
             return false;
           }
         } else {
