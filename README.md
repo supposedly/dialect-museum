@@ -26,7 +26,7 @@ But what if we could outsource it to a computer instead?
 - **Step 1.** Obtain computer.
 - **Step 2.** Devise magic representation of our language that encodes **every** variety in one go. That way we don't have to type a bunch of different ones out ourselves.
 - **Step 3.** Devise rules we can apply to transform magic representation into any variety we want.
-- **Step 3.** Politely ask computer to do it for us.
+- **Step 4.** Politely ask computer to do it for us.
 
 In broad strokes, steps 2 and 3 are the idea behind [comparative reconstruction](https://en.wikipedia.org/wiki/Comparative_method).
 Language change tends to be regular enough that, for any 2+ language varieties that used to be one single language in the past,
@@ -34,8 +34,8 @@ you can often suss out the changes they each must've undergone to get to where t
 step 2, and you can unrewind them as in step 3 to get from there to any variety you want to check out.
 
 <details>
-<summary>Shortcuts</summary>
-The fun part is that you can cut corners here! You don't have to replay diachronic changes
+<summary><b>But you can take shortcuts!</b></summary>
+The fun part is that corners can be cut here! You don't have to replay diachronic changes
 step-by-step if you don't need to be 100% faithful to the exact chronology in order to produce the same
 synchronic result. For example, these are four steps that likely happened on the way to my dialect of Lebanese Arabic:
 
@@ -59,16 +59,15 @@ reconstructions for before step 1), I have two options:
 
 While it's absolutely possible (and absolutely really cool) to use this project to model historical sound changes, that's not a
 must if your real concern is to document a language's varieties as they exist today. You can instead focus on devising a model that's
-easy to represent within the constraints of this framework and also achieves the correct end result.
+easy to represent within the constraints of this framework as long as it achieves the correct end result.
 </details>
 
 ### History and prior art
 One way to conceive of this project is as a kind of [sound change applier](https://linguifex.com/wiki/Guide:Conlanging_tools#Sound_change_appliers).
-It spent a long time not knowing it was one, but I think any kind of linguisticsy tool that tries to transform things into other things
-will carcinize soon enough into an advanced, featural SCA. Personally, from casual brush-ins with conlanging, my image of SCAs was just simple web tools
-that operate on raw text, so I was really surprised to do a proper review of the space and find how much depth people have put into these things.
-A couple particular giants I think I should pay respects to are [Phonix](https://gitlab.com/jaspax/phonix) and
-[Lexurgy](https://www.meamoria.com/lexurgy/html/sc-tutorial.html).
+It spent a long time not knowing it was one, but I think any kind of linguistics-y tool that tries to transform things into other things
+will carcinize soon enough into an advanced, featural SCA. Personally I was really surprised to do a proper review of the SCA toolspace and find how
+much depth people have put into these things. A couple particular giants I think I should pay respects to are [Phonix](https://gitlab.com/jaspax/phonix)
+and [Lexurgy](https://www.meamoria.com/lexurgy/html/sc-tutorial.html). You'll notice lots of convergences between their design and what's below!
 
 ### Why are there like 600 commits?
 Between school and the horrors of life, it took me a long time to hit on a workable design for this project. The current architecture
@@ -97,7 +96,7 @@ and is weirdly slow in at least one other case, and the part where you actually 
 to copy/paste your entire setup to create another one with minor variations, and (2) missing some big quality-of-life features that make working with it a
 little bit demotivating. See tracking issues [#6](https://github.com/supposedly/dialect-museum/issues/6) and [#7](https://github.com/supposedly/dialect-museum/issues/7).
 
-### How to add your own language if you really, really want to and just can't wait to file a ton of bug reports
+### How to add your own language if you really, really want to and also want to file a boatload of bug reports
 
 <!-- CC0 :) -->
 ![Picture of a bug captioned "FEATURE"](https://user-images.githubusercontent.com/32081933/281660206-60f819eb-3dbf-4adc-9250-452a5af6c262.png)
