@@ -106,22 +106,58 @@ Promise? In that case, you should fork this repository and follow the instructio
 ## The documentation
 
 This project is written in [TypeScript](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html). It uses TypeScript's type system
-to make sure, as much as possible, that you're writing exactly what you mean to write. Everything below assumes that you're using
-[Visual Studio Code](https://code.visualstudio.com/). If you're comfortable enough with programming that you're set on using another IDE or editor,
-I'll be assuming that that means you know enough to translate any VSCodeisms (e.g. `Ctrl+.` for autocomplete) into their equivalents in your own toolchain.
+to make sure, as much as possible, that you're writing exactly what you mean to write. The instructions below are mostly tailored to the editor
+[Visual Studio Code](https://code.visualstudio.com/), but if you're comfortable enough with programming that you're set on using another IDE or editor,
+I'll be assuming that that means you're comfortable translating any VSCodeisms (e.g. `Ctrl+.` for autocomplete) into their equivalents in your own toolchain.
 
-The real goal here is to give you as much of a **domain-specific language** sort of playground as possible within TypeScript, which will mean that you'll
-be able to work with this project without knowing how to program in a broader sense. As of writing, it does not achieve that goal. There are cases where
-you'll have to write your own JavaScript functions and cases where you'll have to force TypeScript to realize that you're writing something correct when it
-thinks it's wrong. That means this documentation also assumes programming knowledge, at least for now. :(
+One ideal for this project is for it not to require you to know any programming beyond what's required for it itself -- a **domain-specific-language**
+sort of walled garden. As of writing, though, it does not achieve that goal :( That means the documentation below also assumes programming knowledge for now.
 
 ### Overarching model
 
-This project works by taking an input and applying transformation rules to it until there aren't any changes left to make. Your job is to define how the
-input needs to be structured and what those rules exactly are. For example, you might have two rules: one that turns `z` into `gl` and another that turns
-`ee` into `or`. Feeding `zeep` into the **engine**, the part of the program that runs your rules, results in the transformations `zeep` -> `gleep` -> `glorp`.
+This project works by taking **input** and applying **transformation rules** to it until there aren't any changes left to make. Your one big job is
+to write those rules.
 
-Under the hood, 
+Each rule itself takes in an input and defines what output it needs to turn into. For example, a simple rule might be one that turns `z` into `gl`
+and `ee` into `or`. Feeding the input `zeep` into these rules will give you the transformations: `zeep` -> `gleep` -> `glorp`.
+
+Nice and simple. But language is complicated, and it's really hard to model complex things using raw text and simple substitution-y transformations.
+To approach that complexity, our rules are going to need to be able to make their decision based on a lot of different factors. For example:
+
+1. What's the current value of our input? This is what our two `z` -> `gl` and `ee` -> `or` rules are based on: they take
+   an input with the value `z` or `ee` and transform it into something else based on that info alone.
+2. What other stuff is **around** our input? This is called its "environment".
+3. Our input is probably the product of other rules that have applied in the past. What did it used to look like?
+4. Lastly, and this is the toughest one to reason about: what will our input's environment look like **in the future**, after other rules have run?
+   - This info isn't needed for every rule. I've found two solid usecases for it so far, one hacky and one actually valid. The valid one is when
+     you need to write a rule with **directionality**, i.e. one that applies iteratively from right to left or left to right, which I'll sell you harder
+     on below.
+
+![Graph of nodes with different colors. On the top is a layer of three nodes, each of which is linked to each of its two neighbors by an arrow. This layer is connected to another layer of the same sort, except this one has a lot more nodes branching out from the original middle one. Lastly, this second layer connects to an even-larger third layer.](https://user-images.githubusercontent.com/32081933/281906398-229ec8cf-65c6-4f15-8b62-39eaccaa72c8.png)
+
+This is a screenshot of this project's visual debugger to help you (and me, I'm not gonna lie) understand how the actual process of transforming inputs into outputs works
+under the hood.
+
+The input here is the middle node at the very top, which is an object of type "verb". That means that any rules that operate on verbs will apply to it. Between you and me,
+that node also carries info inside it that doesn't show up in the debugger -- specifically, `verb` nodes also store the subject they conjugate for, their
+[TAM](https://en.wikipedia.org/wiki/TAM) combo (tense, aspect, and mood), and their [root](https://en.wikipedia.org/wiki/Semitic_root) and [measure](https://en.wiktionary.org/wiki/Appendix:Arabic_verbs#Derived_stems). For this verb here, that's:
+
+- **Subject:** They (third-person plural)
+- **TAM:** Past
+- **Root:** `K-T-B`
+- **Measure:** `CaCaC`
+
+The rule system's job is to conjugate this verb into its form in my dialect, `katabo`. With the model I chose for Levantine Arabic specifically, a simplified
+rundown of the way my rules go about that is:
+
+1. First, generate the verb's stem. Because it's a `CaCaC` verb with the root `K-T-B`, its past-tense stem is `katab`.
+2. Then, pop out an attached pronoun on each side of that stem. These nodes will literally be of type `pronoun` and match the subject of the verb, so they won't yet store any
+   information about how they're actually pronounced.
+3. Transform those pronouns into the appropriate conjugation prefix and suffix. Past-tense verbs don't have prefixes in Arabic, but the other pronoun will turn into `uu`
+   because that's the best underlying form we can devise for the third-person plural's suffix conjugation.
+4. Finally, perform all the necessary sound shifts in whatever dialect all these rules belong to. In my case, we just need to shorten and lax the final vowel: `uu` -> `u` -> `o`.
+
+Every single time one of these changes applies, it leaves its mark on history.
 
 ### Match library
 
