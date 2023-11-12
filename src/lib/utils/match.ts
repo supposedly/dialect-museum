@@ -272,6 +272,9 @@ export const matchers = {
       if (typeof self.match === `string` && self.match in matchers) {
         return (matchers[self.match as keyof typeof matchers] as CallableFunction)(self.value, other);
       }
+      if (self.match === `not`) {
+        return !matchers.single(self.value, other);
+      }
     }
     return matchers.literal(self, other);
   },

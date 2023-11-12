@@ -41,20 +41,29 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
           : segment ?? {},
       })) as ContextFuncWithoutSeek<ABC>,
       {
-        seek: (segment, filter?, length?) => [
-          {
-            match: `array`,
-            value: {
-              length: length ? {match: `any`, value: length} : {match: `type`, value: `number`},
-              fill: filter ?? {},
-            },
-          },
-          {
+        seek: (segment, filter?, length?) => {
+          const object = {
             context: segment instanceof Function
               ? segment(qualifiedPathsOf(alphabet.context))
               : segment ?? {},
-          },
-        ],
+          };
+          return [
+            Array.isArray(filter) ? filter : {
+              match: `array`,
+              value: {
+                length: length ? {match: `any`, value: length} : {match: `type`, value: `number`},
+                fill: {
+                  match: `all`,
+                  value: [
+                    filter ?? {},
+                    {match: `not`, value: object},
+                  ],
+                },
+              },
+            },
+            object,
+          ].flat();
+        },
       } as ContextFuncSeek<ABC>
     ),
     Object.fromEntries(Object.entries(alphabet.types).map(([type, v]) => {
@@ -76,20 +85,13 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
               : context ?? {},
           })) as TypesFuncWithoutSeek<ABC, keyof ABC[`types`]>,
           {
-            seek: (features, context, filter?, length?) => [
-              {
-                match: `array`,
-                value: {
-                  length: length ? {match: `any`, value: length} : {match: `type`, value: `number`},
-                  fill: filter ?? {},
-                },
-              },
-              {
+            seek: (features, context, filter?, length?) => {
+              const object = {
                 type,
                 features: features instanceof Function
                   ? features(
-                    qualifiedPathsOf(v) as never,
-                    alphabet.traits[type] as never
+                  qualifiedPathsOf(v) as never,
+                  alphabet.traits[type] as never
                   )
                   : Object.keys(v).length === 1
                     ? features ? {[Object.keys(v)[0]]: features} : {}
@@ -97,8 +99,24 @@ function typesFuncs<ABC extends Alphabet>(alphabet: ABC): TypesFuncs<ABC> {
                 context: context instanceof Function
                   ? context(qualifiedPathsOf(alphabet.context))
                   : context ?? {},
-              },
-            ],
+              };
+              return [
+                Array.isArray(filter) ? filter : {
+                  match: `array`,
+                  value: {
+                    length: length ? {match: `any`, value: length} : {match: `type`, value: `number`},
+                    fill: {
+                      match: `all`,
+                      value: [
+                        filter ?? {},
+                        {match: `not`, value: object},
+                      ],
+                    },
+                  },
+                },
+                object,
+              ].flat();
+            },
           } as TypesFuncSeek<ABC, keyof ABC[`types`]>
         ),
       ];

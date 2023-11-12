@@ -268,7 +268,7 @@ const input = <const>[
     features: {
       subject: letters.plain.pronoun.mp3.features,
       tam: `past`,
-      door: `fa3al`,
+      door: `fa33al`,
       theme: `u`, // doesn't matter here
       root: [
         {...letters.plain.consonant.k.features, affected: false, weak: false},
