@@ -8,9 +8,9 @@ import * as selfProfile from 'src/languages/levantine/profiles/self';
 import * as rassiProfile from 'src/languages/levantine/profiles/salam-el-rassi';
 import * as debug from 'src/languages/levantine/profiles/test.debugwhen';
 import {type Alphabet} from 'src/lib/alphabet';
-import {matchers} from 'src/lib/utils/match';
+import {MatchAsType, matchers} from 'src/lib/utils/match';
 
-import {templates, underlying, phonic} from 'src/languages/levantine/alphabets';
+import {templates, underlying, phonic, display} from 'src/languages/levantine/alphabets';
 import sharedOdds from 'src/lib/rules/odds';
 import {unfuncSpec} from 'src/lib/rules/funcs';
 import {type KeysNotMatching} from 'src/lib/utils/typetools';
@@ -144,7 +144,7 @@ const configs = reactive(
 );
 let nodeID = 0;
 
-// Object.values(rulePacks).forEach(v => Object.values(v.rulePacks).forEach(v => console.log((v))));
+// Object.values(rulePacks).forEach(v => Object.values(v.rulePacks).forEach(v => //console.log((v))));
 
 function _flattenProfile(profile: object): ReadonlyArray<object> {
   if (Array.isArray(profile)) {
@@ -230,14 +230,14 @@ function orderRules(
 
 // Object.values(selfProfile).map(v => v.map(x => x));
 
-// console.log(flattenProfile(selfProfile));
+// //console.log(flattenProfile(selfProfile));
 
-// console.log(flattenProfile(debug));
-// console.log(mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults));
-// console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults)));
-// console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(debug, {})));
+// //console.log(flattenProfile(debug));
+// //console.log(mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults));
+// //console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults)));
+// //console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(debug, {})));
 
-const input = <const>[
+const input = reactive(<const>[
   {type: `boundary`, features: {type: `pause`}, context: {affected: false}},
   // {
   //   type: `word`, features: {
@@ -272,8 +272,8 @@ const input = <const>[
       theme: `u`, // doesn't matter here
       root: [
         {...letters.plain.consonant.k.features, affected: false, weak: false},
-        {...letters.plain.consonant.t.features, affected: false, weak: false},
-        {...letters.plain.consonant.b.features, affected: false, weak: false},
+        {...letters.plain.consonant.th.features, affected: false, weak: false},
+        {...letters.plain.consonant.r.features, affected: false, weak: false},
       ],
     },
     context: {affected: false},
@@ -295,7 +295,16 @@ const input = <const>[
   //   context: {affected: false},
   // },
   {type: `boundary`, features: {type: `pause`}, context: {affected: false}},
-];
+]);
+
+let profile: object = selfProfile;
+
+window.setSubject = (subject: keyof typeof letters.plain.pronoun) => { input[1].features.subject = letters.plain.pronoun[subject].features; };
+window.setRoot = (radicals: string) => { input[1].features.root = radicals.split(` `).map(c => ({...letters.plain.consonant[c.slice(+(c[0] === `!`)) as keyof typeof letters.plain.consonant].features, affected: false, weak: c[0] === `!`})); };
+window.setTam = (tam: MatchAsType<typeof templates.types.verb.tam>) => { input[1].features.tam = tam; };
+window.setTemplate = (door: MatchAsType<typeof templates.types.verb.door>) => { input[1].features.door = door; };
+window.setDialect = (p: `mine` | `the other dialect im testing with`) => { profile = (p === `mine` ? selfProfile : rassiProfile); };
+
 
 window.letters = letters;
 
@@ -925,7 +934,7 @@ class Node {
     if (this.type === NodeType.blank && subscriber !== this) {
       return false;
     }
-    // console.log(specs);
+    // //console.log(specs);
     for (const [k, v] of Object.entries(specs)) {
       switch (k) {
         case `spec`:
@@ -1056,7 +1065,7 @@ class Node {
       }
     }
     if (`env` in specs) {
-      // console.log(specs);
+      // //console.log(specs);
       return await this.checkEnvSeparate(specs.env as object, subscriber, collected);
       // await debugStep(`it literally dun work`, this.id);
     }
@@ -1065,7 +1074,7 @@ class Node {
     //     this.checkEnv(v, subscriber, collected);
     //   }
     // });
-    // console.log(specs, collected);
+    // //console.log(specs, collected);
     // await debugStep(`it literally do work`, this.id);
     return {next: false, prev: false};
   }
@@ -1272,7 +1281,7 @@ class Node {
               valid.prev = false;
             }
           }
-          // console.log(valid);
+          // //console.log(valid);
           return valid;
         }
         // return (env.value as ReadonlyArray<object>).every(v => this.checkEnv(v, subscriber, collectedEnv));
@@ -1287,7 +1296,7 @@ class Node {
               valid.prev = true;
             }
           }
-          // console.log(valid);
+          // //console.log(valid);
           return valid;
         }
         // return (env.value as ReadonlyArray<object>).some(v => this.checkEnv(v, subscriber, collectedEnv));
@@ -1316,7 +1325,7 @@ class Node {
           continue;
       }
     }
-    // console.log(valid, env);
+    // //console.log(valid, env);
     // await debugStep(`what did we learn`, this.id);
     return valid;
   // return Object.entries(env).every(([k ,v]) => {
@@ -1334,7 +1343,7 @@ class Node {
     if (this.layer.name === layerName) {
       if (this.type !== NodeType.mock && await this.checkSpecs(specs, subscriber)) {
         // await awaitStep(`found`, this.id);
-        // console.log(`rip`, this.type, this);
+        // //console.log(`rip`, this.type, this);
         return true;
       }
       if (this.mainParent === null || this.mainParent.layer.name !== layerName) {
@@ -1395,13 +1404,13 @@ class Node {
         `i was wrong about the type system ensuring that you can't (type-safely) use target on the bottom layer`,
         specs,
       );
-      return false;
+      throw new Error(`^`);
     }
     const env = await this.mainChild.collectEnv(specs, subscriber);
     if (subscriber) {
       subscriber.waitingOnTarget = (
-        env.next.some(node => node.type !== NodeType.blank)
-        || env.prev.some(node => node.type !== NodeType.blank)
+        env.next.some(node => node.type === NodeType.blank)
+        || env.prev.some(node => node.type === NodeType.blank)
       );
     }
     // if (subscriber.waitingOnTarget) {
@@ -1606,7 +1615,7 @@ class Node {
       ));
       created.push(this.mainChild);
     }
-    // console.log(`operation`, operation);
+    // //console.log(`operation`, operation);
     created.push(...await this.makeChildren(
       Array.isArray(operation.argument) ? operation.argument : operation.argument.specs,
       operation.operation === `mock` || operation.mock ? source : target,
@@ -1660,7 +1669,7 @@ class Node {
 
     const specs: object[] = [];
     for (const v of into) {
-      // console.log(`????`, v);
+      // //console.log(`????`, v);
       if (`operation` in v && `argument` in v && `mock` in v) {
         if (specs.length) {
           created.push(...await this.applyOperation(
@@ -1716,7 +1725,7 @@ class Node {
     }
 
     if (this.mainChild.type !== NodeType.blank) {
-      console.error(`not blank bro`, this.mainChild);
+      //console.error(`not blank bro`, this.mainChild);
     }
 
     const oddsMap = new Map<Record<string, never>, number>();
@@ -1811,6 +1820,13 @@ function populate(
     {type: `boundary`, features: {type: `pause`}}
   ];
   */
+  nodeID = 0;
+  for (const node of Object.getOwnPropertyNames(nodes)) {
+    delete nodes[node];
+  }
+  for (const edge of Object.getOwnPropertyNames(edges)) {
+    delete edges[edge];
+  }
   const [startAlphabet, ...downstreamers] = alphabets;
   const [initial, ...neighbors] = input;
   const feeder = new Node(rules, startAlphabet, NodeType.fixture, null, initial).usable();
@@ -1859,7 +1875,7 @@ async function run(grid: Node | null) {
   const nodesToChange = new Set<Node>();
 
   let rip = 0;
-  await awaitStep(`Starting`);
+  await debugStep(`Starting`);
   while (grid && rip++ < 20) {
     // populate nodesToChange for transform rules
     let node: Node | null = grid;
@@ -1868,7 +1884,7 @@ async function run(grid: Node | null) {
       node = node.next;
     }
     await awaitStep(`Step 1`);
-    console.log(`step 1`);
+    //console.log(`step 1`);
     do {
       // await awaitStep(`connecting leaders`, grid.seekLeader());
       // await debugStep(`connecting leaders from`, grid.id);
@@ -1886,21 +1902,29 @@ async function run(grid: Node | null) {
       }
 
       const nodesChanged = new Set<Node>();
-      for (const node of nodesToChange) {
+      do {
+        for (const node of nodesToChange) {
         // nodesTouched.add(node);
-        const results = await node.applyRules();
-        if (results.length > 0) {
+          const results = await node.applyRules();
+          if (results.length > 0) {
           // await debugStep(`adding`, node.id);
-          nodesChanged.add(node);
+            nodesChanged.add(node);
+          }
+          for (const created of results) {
+            created.usableYet = true;
+          }
         }
-        for (const created of results) {
-          created.usableYet = true;
+
+        for (const node of nodesToChange) {
+          if (!node.waitingOnTarget) {
+            nodesToChange.delete(node);
+          }
         }
-      }
-      nodesToChange.clear();
+        // nodesToChange.clear();
+      } while (nodesToChange.size > 0);
 
       // await debugStep(`Step 3`);
-      console.log(`step 3`, nodesChanged);
+      //console.log(`step 3`, nodesChanged);
       for (const n of nodesChanged) {
         for (const leader of n.leaders()) {
           if (leader !== n) {
@@ -1921,7 +1945,7 @@ async function run(grid: Node | null) {
     await awaitStep(`${grid.layer.name} -> ${grid.seekLeader().layer.name}`, grid.id, grid.seekLeader().id);
     grid = grid.seekLeader().firstChild();
     // await debugStep(`moving on to ${grid?.layer.name}`, grid?.id ?? -1);
-    console.log(`step 8 i think`, rip);
+    //console.log(`step 8 i think`, rip);
   }
 }
 
@@ -1929,22 +1953,10 @@ window.match = matchers.single.bind(matchers);
 
 window.rules = {};
 
-const grid = populate(
-  Object.fromEntries(Object.entries(rulePacks).map(([k, v]) => [
-    k,
-    Object.fromEntries(Object.entries(v.rulePacks).map(([kk, vv]) => [
-      kk,
-      window.rules[`${k}-${kk}`] = orderRules(vv, mapToSource(selfProfile, vv.defaults)),
-    ])),
-  ])) as never,
-  input,
-  [templates, underlying, phonic]
-);
-
 let running = false;
 // const test = input[0];
-// console.log(`wat`);
-// console.log(matchers.single({type: `word`, features: templates.types.word}, {type: `word`, features: {string: [3]}}));
+// //console.log(`wat`);
+// //console.log(matchers.single({type: `word`, features: templates.types.word}, {type: `word`, features: {string: [3]}}));
 
 // debug;
 // const layers = [];
@@ -1958,7 +1970,7 @@ let running = false;
 //   }
 //   leader = original.children()[0];
 // }
-// console.log(layers);
+// //console.log(layers);
 
 
 (window as any).abc = rulePacks;
@@ -1968,23 +1980,53 @@ let running = false;
   rassi: rassiProfile,
 };
 
-// console.log(withFlags(underlying.types.consonant, `affected`, `weak`));
+// //console.log(withFlags(underlying.types.consonant, `affected`, `weak`));
 
 
 const speed = ref(250);
 const multiplier = ref(1);
+
+function displayToString(head: Node) {
+  let node: Node | null = head;
+  const arr = [];
+  while (node) {
+    const features = node.value?.features as {value: string} | undefined;
+    if (features !== undefined) {
+      arr.push(features.value);
+    }
+    node = node.next;
+  }
+  return arr.join(``) || `loading!`;
+}
+
+const WINDOW = window;
 </script>
 
 <template>
   <div id="controls">
-  <button @click="() => run(grid)">Run</button>
-  <button @click="() => { waiting = null; }" :style="waiting ? {backgroundColor: `lightpink`} : {}">Step: {{ waiting }}</button>
-  <p><input type="range" id="speed" name="speed" min="1" max="10000" v-model="speed" />
-</p><p>
-  <input type="range" id="multiplier" name="multiplier" min="0" max="60" v-model="multiplier" />
-</p>
-  <p>{{ speed * multiplier }}</p>
-</div>
+    <button @click="() => run(populate(
+  Object.fromEntries(Object.entries(rulePacks).map(([k, v]) => [
+    k,
+    Object.fromEntries(Object.entries(v.rulePacks).map(([kk, vv]) => [
+      kk,
+      WINDOW.rules[`${k}-${kk}`] = orderRules(vv, mapToSource(profile, vv.defaults)),
+    ])),
+  ])) as never,
+  input,
+  [templates, underlying, phonic, display]
+))">Run</button>
+    <button @click="() => { waiting = null; }" :style="waiting ? {backgroundColor: `lightpink`} : {}">Step</button>
+    <p>
+      <input type="range" id="speed" name="speed" min="1" max="250" v-model="speed" />
+    </p>
+    <!-- <p>
+      <input type="range" id="multiplier" name="multiplier" min="0" max="60" v-model="multiplier" />
+    </p> -->
+    <p>Delay between steps: {{ speed * multiplier }}</p>
+  </div>
+  <div id="display">
+    {{ nodes.node9 !== undefined ? displayToString(toRaw(nodes.node9).self.seekLeader() as Node) : 'loading!' }}
+  </div>
   <v-network-graph class="graph" :nodes="nodes" :edges="edges" :configs="configs"></v-network-graph>
 </template>
 
@@ -1999,7 +2041,15 @@ const multiplier = ref(1);
 }
 
 #controls {
+  right: 1em;
   position: absolute;
   z-index: 100;
+}
+
+#display {
+  position: absolute;
+  z-index: 100;
+  left: 1em;
+  font-size: 3em;
 }
 </style>
