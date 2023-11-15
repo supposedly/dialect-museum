@@ -12,6 +12,7 @@ export default ruleset(
           door: `f3vl`,
           // this is ofc hacky and would more-idiomatically be handled w diff rulesets + diff specs
           theme: tam === `past` ? `a` : `i`,
+          tam: `subjunctive`,
         },
       }),
     ],
