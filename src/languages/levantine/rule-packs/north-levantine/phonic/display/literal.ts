@@ -2,10 +2,10 @@ import ruleset from './ruleset';
 
 export default ruleset(
   {
-    spec: {},
+    spec: {type: `literal`},
     env: {},
   },
   {
-    wat: c => [{type: `literal`, features: {value: JSON.stringify(c)}}],
+    default: c => [c],
   }
 );
