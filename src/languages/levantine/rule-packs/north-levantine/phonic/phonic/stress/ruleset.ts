@@ -5,5 +5,5 @@ export default rulePack(
   phonic,
   phonic,
   [templates, underlying],
-  {spec: ({vowel}) => vowel({stressed: false}), env: {}},
+  {spec: ({vowel}) => vowel({stressed: null}), env: {}},
 );

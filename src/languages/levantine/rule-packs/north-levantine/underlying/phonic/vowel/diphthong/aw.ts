@@ -12,8 +12,8 @@ export default ruleset(
         {
           type: `diphthong`,
           features: {
-            first: {...first, tense: false, color: null, stressed: false},
-            second: {...letters.plain.vowel.u.features, tense: true, color: null, stressed: false},
+            first: {...first, tense: false, color: null, stressed: null},
+            second: {...letters.plain.vowel.u.features, tense: true, color: null, stressed: null},
           },
         }
       ),

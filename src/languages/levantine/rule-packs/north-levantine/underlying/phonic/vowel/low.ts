@@ -10,7 +10,7 @@ export default ruleset(
   },
   {
     default: ({features, context}) => [
-      {type: `vowel`, features: {...features, color: null, tense: false, stressed: false}, context},
+      {type: `vowel`, features: {...features, color: null, tense: false, stressed: null}, context},
     ],
   }
 );

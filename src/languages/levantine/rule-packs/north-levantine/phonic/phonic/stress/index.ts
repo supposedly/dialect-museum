@@ -5,11 +5,13 @@ import superheavy from './superheavy';
 import heavyPenult from './heavy-penult';
 import antepenult from './antepenult';
 import lightAntepenultCleanup from './light-antepenult-cleanup';
+import unstressed from './unstressed';
 
 export default stress.pack({
-  morphology,
   superheavy,
   heavyPenult,
   antepenult,
+  unstressed,
   lightAntepenultCleanup,
+  morphology,
 });
