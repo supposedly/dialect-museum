@@ -1,8 +1,11 @@
 # [Dialect museum](https://write.lebn.xyz)
 
-This project isn't finished yet, but it's in the very last stages of development before it becomes usable from the web.
-I am currently procrastinating finding out whether the last fix I need to implement is going to be broken or not,
-so I'll take the opportunity to actually document this thing in the meantime :)
+This project is **on hiatus** until I get a job :) In its current state it's also incomplete in that (1) there's no UI and (2)
+there are still a couple breaking bugs left to resolve, but I'm going to save my energy for now because what it's really hankering
+for is a full, ground-up redesign. My estimate's that it's 4&ndash;6 months away (in other words my estimate is 4 but really
+it'll probably hit 6) from reaching the point where it works and is presentable, but its actual finish date depends on when I
+can start those 4&ndash;6 months and how much time I can devote to the project during them. This README documents the current
+state of things!
 
 ## What is this?
 
@@ -18,7 +21,7 @@ give or take, plus an unexpected challenger for good measure:
 2. it also allows you to represent morphology, the way words change for grammatical purposes (e.g. verb conjugations),
 3. and it even lets you explore different writing systems using the exact same tools.
 
-This project stems from a desire to give dictionaries a run for their money. Historically, dictionaries haven't documented
+This mostly stems from a desire to give dictionaries a run for their money. Historically, dictionaries haven't documented
 much more than a couple standard or standard-ish accents of whatever language they're for, and I'd bet it's because manually
 punching in all of the different pronunciation variants you can think of is really time-consuming and super msitake-prone.
 But what if we could outsource it to a computer instead?
@@ -90,20 +93,21 @@ Don't.
 > [!IMPORTANT]  
 > Don't!
 
-The beast just isn't ready yet in its current state. This is the very first draft of a working design, and because it's a first draft there are a lot of
-pain points you'll run into. I'll go into more detail below, but the main ones are that the type system randomly breaks in at least two (fortunately avoidable) cases
-and is weirdly slow in at least one other case, and the part where you actually define your language is (1) kind of disappointingly inflexible, so you have
-to copy/paste your entire setup to create another one with minor variations, and (2) missing some big quality-of-life features that make working with it a
-little bit demotivating. See tracking issues [#6](https://github.com/supposedly/dialect-museum/issues/6) and [#7](https://github.com/supposedly/dialect-museum/issues/7).
+The beast just isn't ready yet in its current state, like I said at the top of this README. This is the very first draft of a working design, and
+because it's a first draft there are a lot of pain points you'll run into. I'll go into more detail below, but the main ones are that the type system
+randomly breaks in at least two (fortunately avoidable) cases and is weirdly slow in at least one other (`(un-) × (fortunately avoidable)`) case, and the
+part where you actually define your language is (1) kind of disappointingly inflexible, so you have to copy/paste your entire setup to create another one
+with minor variations, and (2) missing some big quality-of-life features that make working with it a little bit demotivating. See tracking issues
+[#6](https://github.com/supposedly/dialect-museum/issues/6) and [#7](https://github.com/supposedly/dialect-museum/issues/7).
 
 ### How to add your own language if you really, really want to and also want to file a boatload of bug reports
 
 <!-- CC0 :) -->
-![Picture of a bug captioned "FEATURE"](https://user-images.githubusercontent.com/32081933/281660206-60f819eb-3dbf-4adc-9250-452a5af6c262.png)
+![Picture of a bug, namely a weevil, that's captioned "FEATURE"](https://user-images.githubusercontent.com/32081933/281660206-60f819eb-3dbf-4adc-9250-452a5af6c262.png)
 
 Promise? In that case, you should fork this repository and follow the instructions below to add your language to the `src/languages` folder.
 
-## The documentation
+## Under-the-hood documentation
 
 This project is written in [TypeScript](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html). It uses TypeScript's type system
 to make sure, as much as possible, that you're writing exactly what you mean to write. The instructions below are mostly tailored to the editor
@@ -121,19 +125,21 @@ to write those rules.
 Each rule itself takes in an input and defines what output it needs to turn into. For example, a simple rule might be one that turns `z` into `gl`
 and `ee` into `or`. Feeding the input `zeep` into these rules will give you the transformations: `zeep` -> `gleep` -> `glorp`.
 
-Nice and simple. But language is complicated, and it's really hard to model complex things using raw text and simple substitution-y transformations.
-To approach that complexity, our rules are going to need to be able to make their decision based on a lot of different factors. For example:
+Nice and simple. But language is complicated, and it's really hard to model complex things using raw text and simple substitution-y transformations
+like those. To approach complexity, our rules are going to need to be able to make their decision based on a lot of other factors. For example:
 
-1. What's the current value of our input? This is what our two `z` -> `gl` and `ee` -> `or` rules are based on: they take
+1. *What's the current value of our input?* &mdash; This is what our two `z` -> `gl` and `ee` -> `or` rules are based on: they take
    an input with the value `z` or `ee` and transform it into something else based on that info alone.
-2. What other stuff is **around** our input? This is called its "environment".
-3. Our input is probably the product of other rules that have applied in the past. What did it used to look like?
+2. *What other stuff is **around** our input?* &mdash; This is called its "environment".
+3. Our input is probably the product of other rules that have applied in the past. *What did it used to look like?*
 4. Lastly, and this is the toughest one to reason about: what will our input's environment look like **in the future**, after other rules have run?
    - This info isn't needed for every rule. I've found two solid usecases for it so far, one hacky and one actually valid. The valid one is when
      you need to write a rule with **directionality**, i.e. one that applies iteratively from right to left or left to right, which I'll sell you harder
      on below.
+   - As it happens, this feature is also broken in the project's current implementation! That means that iterative stress rules are impossible to write
+     efficiently for now &mdash; you have to duplicate the environment of, like, the entire word for every single stress location. Again, more later.
 
-![Graph of nodes with different colors. On the top is a layer of three nodes, each of which is linked to each of its two neighbors by an arrow. This layer is connected to another layer of the same sort, except this one has a lot more nodes branching out from the original middle one. Lastly, this second layer connects to an even-larger third layer.](https://user-images.githubusercontent.com/32081933/281906398-229ec8cf-65c6-4f15-8b62-39eaccaa72c8.png)
+![Graph of nodes with different colors. On the top is a group of three nodes, each of which is linked to each of its two neighbors by an arrow. This group is connected to another group of the same sort, except this one has a lot more nodes branching out from the original middle one. Lastly, this second group connects to an even-larger third group. Going forward, these groups will be called "stages".](https://user-images.githubusercontent.com/32081933/281906398-229ec8cf-65c6-4f15-8b62-39eaccaa72c8.png)
 
 This is a screenshot of this project's visual debugger to help you (and me, I'm not gonna lie) understand how the actual process of transforming inputs into outputs works
 under the hood.
@@ -157,7 +163,28 @@ rundown of the way my rules go about that is:
    because that's the best underlying form we can devise for the third-person plural's suffix conjugation.
 4. Finally, perform all the necessary sound shifts in whatever dialect all these rules belong to. In my case, we just need to shorten and lax the final vowel: `uu` -> `u` -> `o`.
 
-Every single time one of these changes applies, it leaves its mark on history.
+Every single time one of these changes applies, it leaves its mark on history. That's what the vertical dimension is for: whenever a rule applies to a node,
+it pops its result out as a child node and stops being available to have rules run on it &mdash; that's its child's job now.
+
+Notice how the nodes are organized into distinct rows (connected by red and green arrows)? Here's how applying the rules works with that in mind:
+
+1. Find the bottommost row of nodes. Let's call this the "leading" row. Load up the first node in it.
+2. Have it check **all** the rules available, one by one, until one finds that this node is a match (i.e. the node's value and environment and everything
+   else match what's needed for this rule to run). Then have it run that rule and eject its output on a new row below. If no rule matches,
+   continue to step 3 without doing anything.
+4. Go to the very next node, i.e. the one right after that one. Repeat step 2 on it.
+5. When there are no nodes left in the row, you'll have made a brand-new leading row right below it. Jump to the first node in that row and repeat step 1.
+6. When no more changes are made (i.e. no more new nodes created), you're done.
+
+There's one last catch: rules are organized by **stages**. Each stage is color-coded differently in the graph above. Different stages have different types
+of nodes associated with them, and accordingly they have their own groups of rules that deal in those specific types of nodes. Rules have the option to
+either eject children within the same stage or to jump ahead to the next stage, so what you really have to do when you start step 1 above is find the leading
+row **for each stage** and run that stage's rules starting from there.
+
+#### Mocks and fixtures
+
+(Summary in advance of actually writing this section: there are two types of nodes a rule can eject, either a "fixture" or a "mock" -- a fixture can be searched
+backwards for by the `was` condition of a rule, a mock will be ignored)
 
 ### Match library
 
@@ -167,4 +194,9 @@ Every single time one of these changes applies, it leaves its mark on history.
 
 ### Rule packs
 
-### 
+### Finally: Profiles
+
+## Web interface documentation
+
+There's no web interface for now! At some point it'll be a repository of texts that you can choose to display in different accents and writing systems, and there'll
+also be a page where you can explore morphology stuff like verb conjugation. But currently all that's there is the graph-visualization debugger.
