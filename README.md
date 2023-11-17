@@ -2,10 +2,12 @@
 
 This project is **on hiatus** until I get a job :) In its current state it's also incomplete in that (1) there's no UI and (2)
 there are still a couple breaking bugs left to resolve, but I'm going to save my energy for now because what it's really hankering
-for is a full, ground-up redesign. My estimate's that it's 4&ndash;6 months away (in other words my estimate is 4 but really
-it'll probably hit 6) from reaching the point where it works and is presentable, but its actual finish date depends on when I
-can start those 4&ndash;6 months and how much time I can devote to the project during them. This README documents the current
-state of things!
+for is a full, ground-up redesign.
+
+My estimate's that it's 4&ndash;6 months away from reaching the point where it works and is
+more presentable than resentable (read: my estimate is 4 and reality will probably hit me with 6), but its actual
+finish date depends on when I can start those 4&ndash;6 months and whether I have enough work time to ensure they
+go forth and do not multiply. This README documents the current state of things!
 
 ## What is this?
 
@@ -244,7 +246,7 @@ a node's value at some previous stage.
 #### Target
 This feature is broken right now. Don't read this section.
 <details>
-<summary>Details</summary>
+<summary>Don't read this section</summary>
 I said don't read. Anyway, another piece of info rules can check for when deciding whether to run is what a node's
 <b>future</b> environment will look like. A node that checking for a rule like this will wait
 until that future environment gets filled in (by rules running on other nodes) before it decides whether it can
@@ -264,6 +266,322 @@ apply in **discrete generations,** covering all nodes in the leading row before 
 > to rule-ordering, especially bleeding/counterbleeding. I'll flesh out this part later.
 
 ### Match library
+
+Now that we understand how this all works on paper, we need to start talking about how to code it out. No matter
+how you slice it, you're going to need to need some way to express boolean operations: what if you want
+to run a rule on a node whose value is either something **or** something else, or a node that matches some condition
+**and** another? This project includes a "match library" that you're going to rely on a lot in those contexts.
+
+Let's say you want to write the number 1.
+
+```ts
+1
+```
+
+Good job! I knew you could do it.
+
+Now let's say that you're writing the number 1 as part of the conditions a rule matches on to decide whether
+it should run. In this project, **any** time you want to write any value whatsoever (any!) like that, you
+can write it as is if you want &mdash; but you also have the option to shove it inside a **match** object.
+
+```ts
+{match: 'single', value: 1}
+```
+
+That's the exact same thing. You're telling the rule to match on the number 1. Congratulations again!
+
+```ts
+{match: 'any', value: [1, 2]}
+```
+
+This is new. It says that the rule can match either the number 1 **or** the number 2.
+
+You don't always want to match a whole literal/primitive like that. Usually what you'll want to match on
+is certain fields of an object. For example, say you're checking a node with a `{length: number}` field and you
+want to make sure the length is either 1 or 2.
+
+```ts
+{match: 'any', value: [{length: 1}, {length: 2}]}
+```
+```ts
+{length: {match: 'any', value: [1, 2]}}
+```
+
+Make sense?
+
+Lastly, matching on an object only enforces that it matches the properties you **do** specify, and it doesn't care about
+what the rest of the object looks like. For example, the above two schemas will consider `{length: 1}` to be as much of
+a match as the object `{length: 1, foo: 'bar'}`, but they will **not** consider the objects `{foo: 'bar'}` or `{length: 3}`
+to be a match.
+
+> [!NOTE]
+> One consequence of this is that the "spec" `{}` (or `{match: 'single', value: {}}`) matches everything, since there isn't
+> anything in JavaScript whose properties aren't a superset of... nothing.
+
+#### Types of matches
+
+There are six different types of matches you can use, plus a forbidden seventh match only to be wielded by the high elders.
+
+> [!IMPORTANT]
+> The first time you reach this point in the document, you should just skim these without putting too much effort into
+> internalizing everything. When you read further on and run into real usecases for this tool, that's when you should come back
+> up here and put too much effort into internalizing everything.
+
+##### Single
+```ts
+{match: 'single', value: schema}
+```
+
+This matches one single thing. You mostly don't have to use this because it's usually the same thing as just writing the
+value directly (e.g. `1` is the same thing as `{match: 'single', value: 1}`).
+
+
+##### Any
+```ts
+{match: 'any', value: [schema, schema, ...]}
+```
+
+This matches anything inside the `value` array.
+
+##### All
+```ts
+{match: 'all', value: [schema, schema, ...]}
+```
+
+This only matches objects that match everything inside
+the `value` array. I mostly use `all` in two cases:
+1. To avoid using JavaScript's `...spread` syntax. For example, later in this document, I'll introduce two functions
+   `before()` and `after()` that return objects to use as match schemas. You can **technically** just join them
+   together like `{...before(foo), ...after(bar)}`, but that requires you to have secret internal knowledge that
+   that's safe to do on their return values. It's better form to join them like this:
+   ```ts
+   {
+     match: 'all',
+     value: [
+        before(foo),
+        after(bar),
+     ]
+   }
+   ```
+2. To combine matches that absolutely can't be combined in any other way, like [`custom`](#Custom) below.
+
+##### Type
+```ts
+{match: 'type', value: (see below)}
+```
+The value here can be any of:
+- `'string'`
+- `'number'`
+- `'bigint'`
+- `'boolean'`
+- `'symbol'`
+- `'undefined'`
+- `'null'`
+
+##### Array
+```ts
+{
+  match: 'array',
+  value: {
+    length: numerical schema,
+    fill: schema,
+  }
+}
+```
+
+This matches an array with the properties specified. `numerical schema` means any schema that resolves to a number.
+Some examples:
+
+```ts
+{
+  length: 1,
+  fill: schema,
+}
+```
+```ts
+{
+  length: {match: 'any', value: [1, 2]},
+  fill: schema,
+}
+```
+```ts
+{
+  length: {match: 'type', value: 'number'},
+  fill: schema,
+}
+```
+
+> [!IMPORTANT]
+> This isn't the only way to match on an array! But there's no other way to match an array of unspecified
+> length that has all of its elements matching a certain schema. If you want to match a tuple, or you
+> only care about a specific few elements of your array, you can try match schemas like these instead:
+> ```ts
+> [0, 1, 2]  // matches a tuple that's literally [0, 1, 2]
+> ```
+> ```ts
+> [0, {match: 'any', value: [1, 2]}]  // matches either the tuple [0, 1] or the tuple [0, 2]
+> ```
+> ```ts
+> {length: {match: 'any', value: [3, 4]}}  // matches any array whose length is 3 or 4
+> ```
+> ```ts
+> {2: {match: 'type', value: 'number'}}  // matches any array that has a third element whose value is a number
+> ```
+
+##### Custom
+This lets you write a function to run your own match. Your function will automatically get passed
+the object it needs to match on. For example, if you're writing a schema for something that you
+know will be an array and you want to make sure that its first element equals its third element,
+you can do:
+
+```ts
+{
+ match: 'custom',
+ value: arr => arr[0] === arr[2],
+}
+```
+
+There's no other way to express this constraint with the match library.
+
+That example does rest on the array actually having a first and third element. You can add an additional constraint
+to ensure this by coding it into the `custom` function itself, **or** you can drop the custom match inside a `{match: 'all'}`
+to enforce any additional constraints.
+
+##### The forbidden match
+
+You thought I'd give it up? Just like that? You really thought you could just have it?
+
+No. You're not worthy. Keep reading.
+
+#### What's the point of all this?
+
+The really cool (and really fatally blocking) part of this match library is that it's actually enforced
+**within TypeScript's type system itself**.
+
+```ts
+import {type MatchAsType, matchers} from '/lib/utils/match';
+
+const schema = {
+  match: 'array',
+  value: {
+    length: 3,
+    fill: {match: 'type', value: 'number'},
+  }
+};
+
+type Schema = MatchAsType<typeof schema>;
+```
+```ts
+const test1: Schema = [];  // error
+
+const test2: Schema = [1, 2];  // error!
+
+const test3: Schema = [1, 2, 3];  // all good!!
+
+const test4: Schema = [1, 2, 3, 4];  // all bad!!!
+
+const test5: Schema = [1, 2, 'a']  // error!!!!
+```
+```ts
+// using matchers.single() is basically like pretending the schema was {match: 'single', value: {match: 'array', value: ...}}
+// it will eventually route this request to matchers.array({length: 3, fill: {match: 'type', value: 'number'}}, test1)
+matchers.single(schema, test1);  // => false (at runtime)
+
+matchers.single(schema, test2);  // => false
+
+matchers.single(schema, test3);  // => true!
+
+matchers.single(schema, test4);  // => false
+
+matchers.single(schema, test5);  // => false
+```
+
+This means we get parity between the type system and the runtime here, which turns out to be super duper handy.
+
+The other piece of this puzzle is that you can create matches that are subsets of other ones:
+
+```ts
+import {type MatchesExtending, matchers} from '/lib/utils/match';
+
+const schema = {
+  match: 'array',
+  value: {
+    length: 3,
+    fill: {match: 'type', value: 'number'},
+  }
+};
+
+// this isn't MatchAsType anymore
+type Schema = MatchesExtending<typeof schema>;
+```
+```ts
+const test1: Schema = {
+  match: 'array',
+  value: {
+    length: 3,
+    fill: {match: 'type', value: 'number'},  // all good!
+  }
+};
+
+const test2: Schema = {
+  match: 'array',
+  value: {
+    length: 3,
+    fill: 1,  // all good!!
+  }
+};
+
+const test3: Schema = {
+  match: 'array',
+  value: {
+    length: 3,
+    fill: {match: 'any', value: [1, 2]}  // all good!!
+  }
+};
+
+const test3: Schema = {  // all good!!
+  match: 'any',
+  value: [
+    [1, 2, 3],
+    [4, 5, 6],
+    {match: 'array', value: {length: 3, fill: {match: 'any', value: [3, 4]}}}
+  ]
+};
+```
+
+This is honestly what makes half this project tick. Remember for [`array`](#Array) when I said that
+its value's `length` takes a "numeric schema"? That's enforced in the type system, to the point where
+it won't even let you write something that doesn't eventually resolve to something numeric in there.
+You can emulate the idea yourself:
+
+```ts
+import {type MatchSchemaOf, matchers} from '/lib/utils/match';
+
+const lengthSchema = {match: 'type', value: 'number'};
+
+// MatchSchemaOf basically combines MatchAsType and MatchesExtending
+type LengthSchema = MatchSchemaOf<typeof schema>;
+```
+```ts
+const test1: LengthSchema = 1; // all good!
+const test2: LengthSchema = {match: 'any', value: [1, 2]};  // all good!
+const test2: LengthSchema = {match: 'type', value: `number`};  // all good!
+```
+
+(TODO: mention `{match: 'literal'}` to match a literal object that could be mistaken for a special match object)
+
+##### The forbidden matches
+
+You understand now. Open your eyes. A new dawn breaks. The veil of ignorance veils no more. The reason these
+two get to be called Forbidden is that they ruin the match library's type-soundness! `custom` kind of does
+this too, but in my opinion it's indispensable, while these are less so. They're handy to have sometimes,
+especially at runtime, but I'm not sure how to go about implementing them in the type system &mdash; especially when
+[negated types](https://github.com/microsoft/TypeScript/issues/4196) is half Peter Pan's age and is probably also going
+to (ahem) Neverland.
+
+###### **Not**
+
+###### **Danger**
 
 ### Layers and alphabets
 
