@@ -169,22 +169,99 @@ it pops its result out as a child node and stops being available to have rules r
 Notice how the nodes are organized into distinct rows (connected by red and green arrows)? Here's how applying the rules works with that in mind:
 
 1. Find the bottommost row of nodes. Let's call this the "leading" row. Load up the first node in it.
-2. Have it check **all** the rules available, one by one, until one finds that this node is a match (i.e. the node's value and environment and everything
-   else match what's needed for this rule to run). Then have it run that rule and eject its output on a new row below. If no rule matches,
+2. Have it check **all** the rules that could apply to it, one by one, until one finds that this node is an actual match (i.e. the node's value and environment and everything
+   else match what the rule is looking for). Then run that rule on the node's value and eject its output into a new row below. If no rule matches, though,
    continue to step 3 without doing anything.
-4. Go to the very next node, i.e. the one right after that one. Repeat step 2 on it.
-5. When there are no nodes left in the row, you'll have made a brand-new leading row right below it. Jump to the first node in that row and repeat step 1.
-6. When no more changes are made (i.e. no more new nodes created), you're done.
+3. Discard this node and load up the very next one, i.e. the one right after ours. Repeat step 2 on it.
+4. When you've finished checking all the nodes in the row, all of the outputs you ejected will join together to form a new leading row below. Jump to the first node in this new row and repeat step 1.
+5. When no more changes can be made (i.e. no more new nodes created from running all the rules), you're done.
 
-There's one last catch: rules are organized by **stages**. Each stage is color-coded differently in the graph above. Different stages have different types
-of nodes associated with them, and accordingly they have their own groups of rules that deal in those specific types of nodes. Rules have the option to
+There's one last catch: rules are organized into **stages**. Different stages have different types of nodes associated with them, color-coded respectively
+on the graph above, and accordingly they have their own groups of rules that deal in those specific types of nodes. Rules have the option to
 either eject children within the same stage or to jump ahead to the next stage, so what you really have to do when you start step 1 above is find the leading
 row **for each stage** and run that stage's rules starting from there.
 
+For Levantine Arabic, my model has four stages:
+
+1. **Word templates**. This stage encodes morphology, namely part of speech and word form, as best it can. I have a morphology
+   stage for two reasons: first, different varieties of the language differ as predictably in their morphology (e.g. verb
+   conjugations, participle forms, stuff like that) as they do in their phonology, and second, there are certain sound-change
+   rules that only apply in certain word classes, so it'll be useful in later stages to be able to check if some node `was` a
+   verb/participle/what-have-you. All node types:
+     - **Verb.** Stores root, TAM, subject, and measure.
+     - **Participle.** Same!
+     - **Masdar,** the Arabic name for verbal nouns/gerunds. Stores root and measure.
+     - **'Special' word class,** which covers some of those classes that have specific sound shifts apply to them. The ones
+       I've chosen to handle are elatives, CaCāCīC and CaCāCiC words, and CaCaCe and maCCaCe nouns where the -e is the feminine
+       suffix.
+     - **Affix**, **pronoun**, and **morpheme boundary**, for which see below.
+2. **'Underlying' sounds and morphemes**. The "sounds" aren't too important here, but they're just consonants and vowels in some
+   reconstructed form that can later be used to generate different dialects' sound systems. The morphemes are really the important
+   part, and the full list of those is:
+     - **Affix**, namely suffixes (like the feminine suffix or the [nisba](http://allthearabicyouneverlearnedthefirsttimearound.com/p1/p1-ch3/the-nisba-adjective/) suffix) and the b- prefix used on indicative verbs. These often are the subject or
+     catalyst of morpheme-specific sound shifts &mdash; for example, that b- prefix becomes m- before the first-person-plural
+     prefix n- in many Levantine varieties (e.g. mnektob 'we write'), but no sequence bn- from any other source gets the same regular treatment.
+     - **Pronoun**. Stores the pronoun's person, gender, and number.
+     - **Morpheme boundary**. This is specifically only for the boundary between a word and some enclitic pronoun, so it store
+       the type of connection it joins the two with: either it's linking the base to an object pronoun, a possessive pronoun, or
+       being used with the dative *l*.
+3. **Sounds.** This stage only has consonants and vowels.
+4. **Display.** This **should** really be a ton of different end-stages corresponding to different writing systems,
+   but all I had time to implement was this one that outputs to
+   [IPA](https://en.wikipedia.org/wiki/International_Phonetic_Alphabet). The only node type in this stage is **literal**,
+   which see below.
+
+There are also two node types shared by most stages:
+1. **Boundary,** found in all stages except display. It stores a flag that indicates what type of boundary it is.
+   On **sounds**, the types of boundaries available include **morpheme**, **syllable**, **word**, **pause**, and **sentence**,
+   while the other stages only have the last three types (morpheme boundaries are represented by a different node on
+   earlier stages for either technical reasons or technical debt reasons... don't ask me which.)
+2. **Literal,** which just stores a string of literal text. Punctuation can usually be implemented by using two nodes,
+   one literal with the actual punctuation followed by one boundary that indicates what kind of boundary that punctuation
+   represents.
+
+> [!NOTE]  
+> This isn't some perfect model! It feels pretty clunky, actually, both in terms of the distinctions I've chosen to make
+> here and in terms of the linear procession of stages that this project requires all languages to stick to.
+> 
+> For this specific language, I think a
+> smart design under the project's constraints could actually cut this down to just three stages and remove
+> the difference between the "word templates" stage and the "underlying" stage. On top of that, a smart design in terms
+> of project internals might actually ditch 'stages' altogether and allow different node types to coexist in the same
+> row no matter what stage of rule-application they're at (albeit with the eventual goal of getting all neighboring
+> nodes to be of the same type). Much redesign work to do!
+
+A different set of rules has to be defined for the nodes of each stage, like mentioned earlier.
+
 #### Mocks and fixtures
 
-(Summary in advance of actually writing this section: there are two types of nodes a rule can eject, either a "fixture" or a "mock" -- a fixture can be searched
-backwards for by the `was` condition of a rule, a mock will be ignored)
+I've mentioned a couple times that you sometimes want to look at what a node's value or environment looked like during
+a previous stage. To help keep this practical, all rules can choose to output one of two types of nodes: a **fixture**,
+which is a permanent member of the historical record, and a **mock** node, which just pretends it never existed after
+it's done what it needs to in terms of outputting rules. **Fixtures** are what shows up when you search back for
+a node's value at some previous stage.
+
+#### Target
+This feature is broken right now. Don't read this section.
+<details>
+<summary>Details</summary>
+I said don't read. Anyway, another piece of info rules can check for when deciding whether to run is what a node's
+<b>future</b> environment will look like. A node that checking for a rule like this will wait
+until that future environment gets filled in (by rules running on other nodes) before it decides whether it can
+run the rule or not. This is really useful for writing rules that run iteratively in one direction or the other,
+like assigning stress in languages where the position of stress depends on factors like position and syllable
+weight: you can start from the first stressable syllable, then have subsequent syllables check whether the one
+before them <b>will end up</b> stressed or not before deciding whether to run their own stress rules.
+</details>
+
+#### One last thing about how rules are run
+
+We've nearly understood the overall model in full now. The last thing I want to point out is pretty important: rules
+apply in **discrete generations,** covering all nodes in the leading row before starting the next generation.
+
+> [!NOTE]
+> While this makes for a good model of applying rules to each other, it makes it tricky to formalize concepts relating
+> to rule-ordering, especially bleeding/counterbleeding. I'll flesh out this part later.
 
 ### Match library
 
