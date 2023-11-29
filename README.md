@@ -611,7 +611,7 @@ to (ahem) Neverland.
 
 ###### **Not**
 
-Don't do h6, kids. These poor headings are crying for help at this point.
+Don't do h6, kids. These poor headings.
 
 This just negates whatever its `value` is. You can use it anywhere at runtime, but the type system will yell at you on the
 TypeScript side of things because `'not'` isn't officially a sanctioned type of `match:`. You can write
@@ -651,7 +651,7 @@ and now it's more or less a different flavor of `{match: 'type'}`. Debt! Cruft! 
 
 I think you can use `{}` instead of `{match: 'danger', value: 'object'}`, come to think of it. This entire thing is probably redundant.
 
-#### And now: the resident elephant
+#### And now: the elephant in the room
 
 Okay! I'm sorry! I know! The syntax is ugly. I know. It's horrendous. I didn't mean to make you think I thought it was normal. I'm sorry. I blew it.
 I apologize.
@@ -701,7 +701,110 @@ stopping you in the moment from writing `match.type('number')` or `match.type.nu
 is too much of a blow for me personally to consider implementing something like this.) TypeScript can't "see through" that function call to realize it
 should be able to guide what you're writing there.
 
-### Layers and alphabets
+> [!WARNING]
+> I need to add that the match library isn't 100% stable or sound yet on the typing side. There are some bugs below that arise purely from weird holes
+> in the match library that I will only eventually get around to figuring out. Sorry! It's stable enough for normal use, though.
+
+### Stages and alphabets
+
+Now! Let's get started on what we came here for. I mentioned that the whole transformation shtick proceeds in stages and that each stage has a different
+"type of data" that its rules operate on. I was right. Let's see how to define one of these stages.
+
+```ts
+import {alphabet} from 'src/lib/alphabet';
+
+export default alphabet({
+  name: 'can-i-buy-a-vowel',
+  types: {
+    vowel: {
+      height: {match: 'any', value: ['high', 'mid', 'low']},
+      backness: {match: 'any', value: ['front', 'mid', 'back']},
+      tense: {match: 'type', value: 'boolean'},
+      round: {match: 'type', value: 'boolean'},
+    },
+  },
+  // ignore everything new below this line for now 👍
+  context: {},
+}, {});
+```
+
+You use this `alphabet()` function to define the format of a particular stage's data, i.e. the "alphabet" that its rules transform from and to. The function takes an object with your alphabet's **name** and any **types** that
+you want to define.
+
+The `types` are a bunch of match schemas [TBC]
+
+```ts
+import {alphabet} from 'src/lib/alphabet';
+
+export default alphabet({
+  name: 'can-i-buy-a-less-mid-vowel',
+  types: {
+    vowel: {
+      high: {match: 'type', value: 'boolean'},
+      low: {match: 'type', value: 'boolean'},
+      back: {match: 'type', value: 'boolean'},
+      front: {match: 'type', value: 'boolean'},
+      tense: {match: 'type', value: 'boolean'},
+      round: {match: 'type', value: 'boolean'},
+    },
+  },
+  // ignore everything new below this line for now 👍
+  context: {},
+}, {});
+```
+
+```ts
+import {alphabet} from 'src/lib/alphabet';
+
+export default alphabet({
+  name: 'demo',
+  context: {},  // you ignore this for now 👍
+  types: {
+    consonant: {
+      voiced: {match: 'type', value: 'boolean'},
+      nasal: {match: 'type', value: 'boolean'},
+      lateral: {match: 'type', value: 'boolean'},
+      articulator: ['throat', 'tongue', 'lips'],
+      location: [
+        'glottis',
+        'pharynx',
+        'uvula',
+        'velum',
+        'palate',
+        'bridge',
+        'ridge',
+        'teeth',
+        'lips',
+      ],
+      manner: [
+        'approximant',
+        'flap',
+        'fricative',
+        'affricate',
+        'stop',
+      ],
+    },
+    vowel: {
+      height: ['high', 'mid', 'low'],
+      backness: ['front', 'mid', 'back'],
+      tense: {match: 'type', value: 'boolean'},
+      round: {match: 'type', value: 'boolean'},
+    },
+    boundary: {
+      type: [
+        'syllable',
+        'morpheme',
+        'word',
+        'pause',  // 'petite pause'
+        'sentence',  // 'grande pause'
+      ],
+    },
+    literal: {
+      value: {match: 'type', value: 'string'},
+    },
+  },
+}, {});  // ignore this {} too
+```
 
 #### Letters
 
