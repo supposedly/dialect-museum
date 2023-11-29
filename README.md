@@ -121,8 +121,8 @@ sort of walled garden. As of writing, though, it does not achieve that goal :( T
 
 ### Overarching model
 
-This project works by taking **input** and applying **transformation rules** to it until there aren't any changes left to make. Your one big job is
-to write those rules.
+This project works by taking **input** and applying **transformation rules** to it, over and over again, until it's been transformed into something
+that no rules can apply to anymore. Your one big job is to write those rules.
 
 Each rule itself takes in an input and defines what output it needs to turn into. For example, a simple rule might be one that turns `z` into `gl`
 and `ee` into `or`. Feeding the input `zeep` into these rules will give you the transformations: `zeep` -> `gleep` -> `glorp`.
@@ -134,9 +134,9 @@ like those. To approach complexity, our rules are going to need to be able to ma
    an input with the value `z` or `ee` and transform it into something else based on that info alone.
 2. *What other stuff is **around** our input?* &mdash; This is called its "environment".
 3. Our input is probably the product of other rules that have applied in the past. *What did it used to look like?*
-4. Lastly, and this is the toughest one to reason about: what will our input's environment look like **in the future**, after other rules have run?
+4. Lastly, and this is the toughest one to reason about: *what will our input's environment look like **in the future**, after other rules have run?*
    - This info isn't needed for every rule. I've found two solid usecases for it so far, one hacky and one actually valid. The valid one is when
-     you need to write a rule with **directionality**, i.e. one that applies iteratively from right to left or left to right, which I'll sell you harder
+     you need to write a rule with **directionality**, i.e. one that applies iteratively from right to left or left to right, which I'll sell you more
      on below.
    - As it happens, this feature is also broken in the project's current implementation! That means that iterative stress rules are impossible to write
      efficiently for now &mdash; you have to duplicate the environment of, like, the entire word for every single stress location. Again, more later.
@@ -233,7 +233,7 @@ There are also two node types shared by most stages:
 > row no matter what stage of rule-application they're at (albeit with the eventual goal of getting all neighboring
 > nodes to be of the same type). Much redesign work to do!
 
-A different set of rules has to be defined for the nodes of each stage, like mentioned earlier.
+A different set of rules applies to the nodes of each stage, as mentioned earlier.
 
 #### Mocks and fixtures
 
@@ -246,7 +246,7 @@ a node's value at some previous stage.
 #### Target
 This feature is broken right now. Don't read this section.
 <details>
-<summary>Don't read this section</summary>
+<summary>Don't read this section!</summary>
 I said don't read. Anyway, another piece of info rules can check for when deciding whether to run is what a node's
 <b>future</b> environment will look like. A node that checking for a rule like this will wait
 until that future environment gets filled in (by rules running on other nodes) before it decides whether it can
@@ -259,7 +259,7 @@ before them <b>will end up</b> stressed or not before deciding whether to run th
 #### One last thing about how rules are run
 
 We've nearly understood the overall model in full now. The last thing I want to point out is pretty important: rules
-apply in **discrete generations,** covering all nodes in the leading row before starting the next generation.
+apply in **discrete generations,** covering all nodes in the leading row before starting on the next generation.
 
 > [!NOTE]
 > While this makes for a good model of applying rules to each other, it makes it tricky to formalize concepts relating
@@ -294,7 +294,7 @@ That's the exact same thing. You're telling the rule to match on the number 1. C
 {match: 'any', value: [1, 2]}
 ```
 
-This is new. It says that the rule can match either the number 1 **or** the number 2.
+This is new, though. It says that the rule can match either the number 1 **or** the number 2.
 
 You don't always want to match a whole literal/primitive like that. Usually what you'll want to match on
 is certain fields of an object. For example, say you're checking a node with a `{length: number}` field and you
@@ -310,21 +310,22 @@ want to make sure the length is either 1 or 2.
 Make sense?
 
 Lastly, matching on an object only enforces that it matches the properties you **do** specify, and it doesn't care about
-what the rest of the object looks like. For example, the above two schemas will consider `{length: 1}` to be as much of
-a match as the object `{length: 1, foo: 'bar'}`, but they will **not** consider the objects `{foo: 'bar'}` or `{length: 3}`
+what the rest of the object looks like. For example, the above two schemas will match `{length: 1, foo: 'bar'}` just as easily
+as they'll match `{length: 1, foo: 'bar'}`, but they will **not** consider the objects `{foo: 'bar'}` or `{length: 3}`
 to be a match.
 
 > [!NOTE]
-> One consequence of this is that the "spec" `{}` (or `{match: 'single', value: {}}`) matches everything, since there isn't
-> anything in JavaScript whose properties aren't a superset of... nothing.
+> One consequence of this is that the "spec" `{}` (or `{match: 'single', value: {}}`) matches everything that
+> isn't null or undefined, since there isn't anything e,se in JavaScript whose properties aren't a superset of...
+> nothing.
 
 #### Types of matches
 
-There are six different types of matches you can use, plus a forbidden seventh match only to be wielded by the high elders.
+There are six different types of matches you can use, plus a seventh forbidden match only to be wielded by the high elders.
 
 > [!IMPORTANT]
 > The first time you reach this point in the document, you should just skim these without putting too much effort into
-> internalizing everything. When you read further on and run into real usecases for this tool, that's when you should come back
+> internalizing everything. When you read further on and run into real usecases for this, that's when you should come back
 > up here and put too much effort into internalizing everything.
 
 ##### Single
@@ -332,16 +333,15 @@ There are six different types of matches you can use, plus a forbidden seventh m
 {match: 'single', value: schema}
 ```
 
-This matches one single thing. You mostly don't have to use this because it's usually the same thing as just writing the
-value directly (e.g. `1` is the same thing as `{match: 'single', value: 1}`).
-
+This matches on one single value. You mostly don't have to use this because it's usually the same thing as just writing the
+value directly (e.g. matching on `{match: 'single', value: 1}` is usually the same thing as matching on `1`).
 
 ##### Any
 ```ts
 {match: 'any', value: [schema, schema, ...]}
 ```
 
-This matches anything inside the `value` array.
+This matches on any of the objects inside the `value` array.
 
 ##### All
 ```ts
@@ -353,7 +353,7 @@ the `value` array. I mostly use `all` in two cases:
 1. To avoid using JavaScript's `...spread` syntax. For example, later in this document, I'll introduce two functions
    `before()` and `after()` that return objects to use as match schemas. You can **technically** just join them
    together like `{...before(foo), ...after(bar)}`, but that requires you to have secret internal knowledge that
-   that's safe to do on their return values. It's better form to join them like this:
+   that's safe to do on their return values. Playing by the rules instead, it's better form to join them like this:
    ```ts
    {
      match: 'all',
@@ -378,6 +378,9 @@ The value here can be any of:
 - `'undefined'`
 - `'null'`
 
+These are all JavaScript types (except for `null`, which is a value type of its own in TypeScript's type system but not in the JS runtime).
+`'string'` will match any string, `'number'` any number, etc.
+
 ##### Array
 ```ts
 {
@@ -390,7 +393,7 @@ The value here can be any of:
 ```
 
 This matches an array with the properties specified. `numerical schema` means any schema that resolves to a number.
-Some examples:
+Some examples of valid `value`s:
 
 ```ts
 {
@@ -412,7 +415,7 @@ Some examples:
 ```
 
 > [!IMPORTANT]
-> This isn't the only way to match on an array! But there's no other way to match an array of unspecified
+> `array` isn't the only way to match on an array! But there's no other way to match an array of unspecified
 > length that has all of its elements matching a certain schema. If you want to match a tuple, or you
 > only care about a specific few elements of your array, you can try match schemas like these instead:
 > ```ts
@@ -431,8 +434,8 @@ Some examples:
 ##### Custom
 This lets you write a function to run your own match. Your function will automatically get passed
 the object it needs to match on. For example, if you're writing a schema for something that you
-know will be an array and you want to make sure that its first element equals its third element,
-you can do:
+know will be an array and you want to make sure that its first element equals (`===`) its third
+element, you can do:
 
 ```ts
 {
@@ -443,15 +446,34 @@ you can do:
 
 There's no other way to express this constraint with the match library.
 
-That example does rest on the array actually having a first and third element. You can add an additional constraint
+That example does assume the array actually has a first and third element. You can add an additional constraint
 to ensure this by coding it into the `custom` function itself, **or** you can drop the custom match inside a `{match: 'all'}`
-to enforce any additional constraints.
+to enforce any additional constraints:
+
+```ts
+{
+ match: 'custom',
+ value: arr => arr[0] && arr[2] && arr[0] === arr[2],
+}
+```
+```ts
+{
+  match: 'all',
+  value: [
+    {0: {}, 2: {}},  // or {length: 3} or whatever
+    {match: 'custom', value: arr => arr[0] === arr[2]}
+  ]
+}
+```
+
+We've gone over the six main matches. I also mentioned that there was a "seventh, forbidden match only to be wielded by the high elders".
+You may now learn its secrets. Proceed in earnest.
 
 ##### The forbidden match
 
-You thought I'd give it up? Just like that? You really thought you could just have it?
+Fool! You really thought I was going to give it up? Just like that? You thought you could just have it?
 
-No. You're not worthy. Keep reading.
+You're not worthy yet. Keep reading.
 
 #### What's the point of all this?
 
@@ -459,7 +481,7 @@ The really cool (and really fatally blocking) part of this match library is that
 **within TypeScript's type system itself**.
 
 ```ts
-import {type MatchAsType, matchers} from '/lib/utils/match';
+import {type MatchAsType, matchers} from 'src/lib/utils/match';
 
 const schema = {
   match: 'array',
@@ -472,19 +494,22 @@ const schema = {
 type Schema = MatchAsType<typeof schema>;
 ```
 ```ts
-const test1: Schema = [];  // error
+const test1: Schema = [];  // compile error
 
-const test2: Schema = [1, 2];  // error!
+const test2: Schema = [1, 2];  // compile error!
 
 const test3: Schema = [1, 2, 3];  // all good!!
 
 const test4: Schema = [1, 2, 3, 4];  // all bad!!!
 
-const test5: Schema = [1, 2, 'a']  // error!!!!
+const test5: Schema = [1, 2, 'a']  // compile error!!!!
 ```
+
+This gives 1:1 parity with the library's runtime component:
+
 ```ts
 // using matchers.single() is basically like pretending the schema was {match: 'single', value: {match: 'array', value: ...}}
-// it will eventually route this request to matchers.array({length: 3, fill: {match: 'type', value: 'number'}}, test1)
+// as in, it will eventually route this request to matchers.array({length: 3, fill: {match: 'type', value: 'number'}}, test1)
 matchers.single(schema, test1);  // => false (at runtime)
 
 matchers.single(schema, test2);  // => false
@@ -496,12 +521,10 @@ matchers.single(schema, test4);  // => false
 matchers.single(schema, test5);  // => false
 ```
 
-This means we get parity between the type system and the runtime here, which turns out to be super duper handy.
-
-The other piece of this puzzle is that you can create matches that are subsets of other ones:
+What's more is that, in the type system, you can create matches that are subsets of other ones:
 
 ```ts
-import {type MatchesExtending, matchers} from '/lib/utils/match';
+import {type MatchesExtending, matchers} from 'src/lib/utils/match';
 
 const schema = {
   match: 'array',
@@ -511,7 +534,7 @@ const schema = {
   }
 };
 
-// this isn't MatchAsType anymore
+// we're using a new type called MatchesExtending, not MatchAsType like previously
 type Schema = MatchesExtending<typeof schema>;
 ```
 ```ts
@@ -572,16 +595,111 @@ const test2: LengthSchema = {match: 'type', value: `number`};  // all good!
 
 ##### The forbidden matches
 
-You understand now. Open your eyes. A new dawn breaks. The veil of ignorance veils no more. The reason these
-two get to be called Forbidden is that they ruin the match library's type-soundness! `custom` kind of does
-this too, but in my opinion it's indispensable, while these are less so. They're handy to have sometimes,
+Open your eyes. A new dawn breaks. The veil of ignorance veils no more. You have not only passed but *sur*passed:
+you are to be bestowed the sacred ken of not one but **two** forbidden matches. You attain enlightenment. Welcome to the new world.
+
+The reason these two get to be called *forbidden* should make sense now: they ruin the match library's type-soundness!
+`custom` kind of does too, but in my opinion it's indispensable, while these are less so. They're handy to have sometimes,
 especially at runtime, but I'm not sure how to go about implementing them in the type system &mdash; especially when
 [negated types](https://github.com/microsoft/TypeScript/issues/4196) is half Peter Pan's age and is probably also going
 to (ahem) Neverland.
 
+> [!NOTE]
+> In fact, this is the main reason the match library is a little bit bare-bones. I'd love to be able to match numbers better
+> without resorting to `custom` (e.g. some way to express `{length: (greater than 3)}`), but my hands are tied as long as
+> I'm trying for feature parity between the runtime and compile-time parts of the match library.
+
 ###### **Not**
 
+Don't do h6, kids. These poor headings are crying for help at this point.
+
+This just negates whatever its `value` is. You can use it anywhere at runtime, but the type system will yell at you on the
+TypeScript side of things because `'not'` isn't officially a sanctioned type of `match:`. You can write
+`{match: 'not' as never, value: ...}` to shut it up.
+
+```ts
+{
+  match: 'not',
+  value: 3,  // matches anything except the number 3
+}
+```
+```ts
+{
+  match: 'not',
+  value: {
+    match: 'any',
+    value: [1, 2, 3],  // matches anything except the numbers 1, 2, 3
+  },
+}
+```
+
 ###### **Danger**
+
+```ts
+{match: 'danger', value: (see below)}
+```
+
+`value` can be any of:
+- `object`
+- `array`
+- `primitive`
+
+Okay, after cooking up all that forbiddenness drama, I actually can't remember why this one was so much more dangerous than any of the
+other matches that it had to be shunned into its own little corner. It might've been that I originally wanted this to be equivalent to
+TypeScript's `any` and `unknown`, but that the correspondence kept contaminating my otherwise-tight types to the point where I gave up
+and now it's more or less a different flavor of `{match: 'type'}`. Debt! Cruft! Yay!
+
+I think you can use `{}` instead of `{match: 'danger', value: 'object'}`, come to think of it. This entire thing is probably redundant.
+
+#### And now: the resident elephant
+
+Okay! I'm sorry! I know! The syntax is ugly. I know. It's horrendous. I didn't mean to make you think I thought it was normal. I'm sorry. I blew it.
+I apologize.
+
+I really would've liked for it to look more fluid, e.g. `match.array(3, match.type('string'))` or `match.array(3, match.type.string())` to match
+a length-3 array of strings. Ideally those two functions together would just return `{match: 'array', value: {length: 3, fill: {match: 'type', value: 'string'}}}`
+anyway, so it'd work the same under the hood with just some sweeter syntactic sugar for writing and reading it. But the problem is again with the type system.
+
+Right now, the type system won't actually let you write a match that couldn't possibly resolve to the value expected. For example, if "the value expected" is an array of
+strings and you're trying to write a match for it, it'll be a compiler error for you to write something completely unrelated like `{match: 'type', value: 'number'}`.
+Try it yourself:
+
+```ts
+import {MatchSchemaOf} from 'src/lib/utils/match';
+
+const expected = {
+  match: 'array',
+  value: {
+    length: {
+      match: 'type',
+      value: 'number',
+    },
+    fill: {
+      match: 'type',
+      value: 'string',
+    }
+  },
+} as const;
+
+// remember, MatchSchemaOf is like a combo of MatchesExtending and MatchAsType
+type Expected = MatchSchemaOf<typeof expected>;
+
+const strings = ['a', 'b', 'c'] as const satisfies Expected;  // ok
+const numbers = [1] as const satisfies Expected;  // wrong ofc
+const arrayMatch = {match: 'array', value: {length: 1, fill: 'a'}} as const satisfies Expected;  // ok
+const numMatch = {match: 'type', value: 'number'} as const satisfies Expected;  // wrong!
+```
+
+`'type'` won't even turn up as an autocomplete suggestion when you go to write that match:
+![list of autocomplete suggestions for the string value of `match` in numMatch: all, any, array, custom, danger, and single](https://user-images.githubusercontent.com/32081933/286491585-386cfa7b-d0b2-49fe-a1c4-e491ec2ac6d9.png)
+
+TypeScript can only do this when you're writing the object literal out yourself. Unfortunately, if I were to instead provide some helper functions that would
+let you write e.g. `const expected = match.array(match.type('number'), match.type('string'))` or
+`const expected = match.array(match.type.number(), match.type.string())` or something, you'd lose all of that in-situ compiler help and there'd be nothing
+stopping you in the moment from writing `match.type('number')` or `match.type.number()` where you were supposed to write something satisfying `Expected`.
+(It'd still be a compiler error, just a more-cryptic one that'd be more removed from the actual site of your error, and that plus losing autocomplete
+is too much of a blow for me personally to consider implementing something like this.) TypeScript can't "see through" that function call to realize it
+should be able to guide what you're writing there.
 
 ### Layers and alphabets
 
