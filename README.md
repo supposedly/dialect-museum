@@ -1,11 +1,10 @@
 # [Dialect museum](https://write.lebn.xyz)
 
-This project is **on hiatus** until I get a job :) In its current state it's also incomplete in that (1) there's no UI and (2)
+First things first: this project is **on hiatus** until I get a job :) In its current state it's also incomplete in that (1) there's no UI yet and (2)
 there are still a couple breaking bugs left to resolve, but I'm going to save my energy for now because what it's really hankering
 for is a full, ground-up redesign.
 
-My estimate's that it's 4&ndash;6 months away from reaching the point where it works and is
-more presentable than resentable (read: my estimate is 4 and reality will probably hit me with 6), but its actual
+My estimate's that it's 4&ndash;6 months away from reaching the point where it works and is presentable (read: my estimate is 4 and reality will probably hit me with 6), but its actual
 finish date depends on when I can start those 4&ndash;6 months and whether I have enough work time to ensure they
 go forth and do not multiply. This README documents the current state of things!
 
@@ -28,10 +27,10 @@ much more than a couple standard or standard-ish accents of whatever language th
 punching in all of the different pronunciation variants you can think of is really time-consuming and super msitake-prone.
 But what if we could outsource it to a computer instead?
 
-- **Step 1.** Obtain computer.
-- **Step 2.** Devise magic representation of our language that encodes **every** variety in one go. That way we don't have to type a bunch of different ones out ourselves.
-- **Step 3.** Devise rules we can apply to transform magic representation into any variety we want.
-- **Step 4.** Politely ask computer to do it for us.
+- **Step 1.** Grab a computer.
+- **Step 2.** Devise a magic representation of our language that encodes **every** variety in one go. That way we don't have to type a bunch of different ones out ourselves.
+- **Step 3.** Devise rules we can apply to transform said magic representation into any variety we want.
+- **Step 4.** Make the computer do that for us.
 
 In broad strokes, steps 2 and 3 are the idea behind [comparative reconstruction](https://en.wikipedia.org/wiki/Comparative_method).
 Language change tends to be regular enough that, for any 2+ language varieties that used to be one single language in the past,
@@ -70,14 +69,14 @@ easy to represent within the constraints of this framework as long as it achieve
 ### History and prior art
 One way to conceive of this project is as a kind of [sound change applier](https://linguifex.com/wiki/Guide:Conlanging_tools#Sound_change_appliers).
 It spent a long time not knowing it was one, but I think any kind of linguistics-y tool that tries to transform things into other things
-will carcinize soon enough into an advanced, featural SCA. Personally I was really surprised to do a proper review of the SCA toolspace and find how
-much depth people have put into these things. A couple particular giants I think I should pay respects to are [Phonix](https://gitlab.com/jaspax/phonix)
+will carcinize soon enough into an advanced, featural SCA. Personally, I was really surprised to do a proper review of the SCA toolspace and find how
+much depth people have put into these things, and a couple particular giants I think I should pay respects to are [Phonix](https://gitlab.com/jaspax/phonix)
 and [Lexurgy](https://www.meamoria.com/lexurgy/html/sc-tutorial.html). You'll notice lots of convergences between their design and what's below!
 
 ### Why are there like 600 commits?
 Between school and the horrors of life, it took me a long time to hit on a workable design for this project. The current architecture
 is the result of two months of thinking and coding and thinking and coding, but it's built atop a good couple years of intermittently
-messing around and crash-landing. Glad to finally be here! There's only more work ahead.
+messing around and crash-landing. Glad to finally be here!
 
 ## What's in a language
 
@@ -141,13 +140,12 @@ like those. To approach complexity, our rules are going to need to be able to ma
    - As it happens, this feature is also broken in the project's current implementation! That means that iterative stress rules are impossible to write
      efficiently for now &mdash; you have to duplicate the environment of, like, the entire word for every single stress location. Again, more later.
 
-![Graph of nodes with different colors. On the top is a group of three nodes, each of which is linked to each of its two neighbors by an arrow. This group is connected to another group of the same sort, except this one has a lot more nodes branching out from the original middle one. Lastly, this second group connects to an even-larger third group. Going forward, these groups will be called "stages".](https://user-images.githubusercontent.com/32081933/281906398-229ec8cf-65c6-4f15-8b62-39eaccaa72c8.png)
-
 This is a screenshot of this project's visual debugger to help you (and me, I'm not gonna lie) understand how the actual process of transforming inputs into outputs works
 under the hood.
 
-The input here is the middle node at the very top, which is an object of type "verb". That means that any rules that operate on verbs will apply to it. Between you and me,
-that node also carries info inside it that doesn't show up in the debugger -- specifically, `verb` nodes also store the subject they conjugate for, their
+![Graph of nodes with different colors. On the top is a group of three nodes, each of which is linked to each of its two neighbors by an arrow. This group is connected to another group of the same sort, except this one has a lot more nodes branching out from the original middle one. Lastly, this second group connects to an even-larger third group. Going forward, these groups will be called "stages".](https://user-images.githubusercontent.com/32081933/281906398-229ec8cf-65c6-4f15-8b62-39eaccaa72c8.png)
+
+The input here is the middle node at the very top, which is an object of type "verb". That means that any rules that operate on verbs will apply to it. Internslly, `verb` nodes also store some important info about themselves: the subject they conjugate for, their
 [TAM](https://en.wikipedia.org/wiki/TAM) combo (tense, aspect, and mood), and their [root](https://en.wikipedia.org/wiki/Semitic_root) and [measure](https://en.wiktionary.org/wiki/Appendix:Arabic_verbs#Derived_stems). For this verb here, that's:
 
 - **Subject:** They (third-person plural)
@@ -155,7 +153,7 @@ that node also carries info inside it that doesn't show up in the debugger -- sp
 - **Root:** `K-T-B`
 - **Measure:** `CaCaC`
 
-The rule system's job is to conjugate this verb into its form in my dialect, `katabo`. With the model I chose for Levantine Arabic specifically, a simplified
+The rule system's job is to conjugate this verb into its form in my dialect, `katabo`, by turning it into a bunch of nodes that each store one of those sounds (a node for `k`, one for `a`, etc). With the model I chose for Levantine Arabic specifically, a simplified
 rundown of the way my rules go about that is:
 
 1. First, generate the verb's stem. Because it's a `CaCaC` verb with the root `K-T-B`, its past-tense stem is `katab`.
@@ -229,7 +227,7 @@ There are also two node types shared by most stages:
 > For this specific language, I think a
 > smart design under the project's constraints could actually cut this down to just three stages and remove
 > the difference between the "word templates" stage and the "underlying" stage. On top of that, a smart design in terms
-> of project internals might actually ditch 'stages' altogether and allow different node types to coexist in the same
+> of project internals might actually tear down that wall between discrete 'stages' altogether and allow different node types to coexist in the same
 > row no matter what stage of rule-application they're at (albeit with the eventual goal of getting all neighboring
 > nodes to be of the same type). Much redesign work to do!
 
@@ -316,7 +314,7 @@ to be a match.
 
 > [!NOTE]
 > One consequence of this is that the "spec" `{}` (or `{match: 'single', value: {}}`) matches everything that
-> isn't null or undefined, since there isn't anything e,se in JavaScript whose properties aren't a superset of...
+> isn't null or undefined, since there isn't anything else in JavaScript whose properties aren't a superset of...
 > nothing.
 
 #### Types of matches
@@ -471,9 +469,7 @@ You may now learn its secrets. Proceed in earnest.
 
 ##### The forbidden match
 
-Fool! You really thought I was going to give it up? Just like that? You thought you could just have it?
-
-You're not worthy yet. Keep reading.
+Kidding. You're not worthy yet. It's in the next section, though.
 
 #### What's the point of all this?
 
