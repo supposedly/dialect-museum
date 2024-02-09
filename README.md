@@ -1,6 +1,6 @@
 # Dialect museum
 
-<sup>(Current status: see [debugger](https://orthography-walkthrough-theta.vercel.app/), [demo video](https://www.youtube.com/watch?v=gwm67_UTD0k), and README)</sup>
+<sup>(Current status: see [verb-conjugation debugger](https://orthography-walkthrough-theta.vercel.app/), [demo video](https://www.youtube.com/watch?v=gwm67_UTD0k), and README)</sup>
 
 First things first: this project is **on hiatus** until I get a job :) In its current state it's also incomplete in that (1) there's no UI yet and (2)
 there are still a couple breaking bugs left to resolve, but I'm going to save my energy for now because what it's really hankering
