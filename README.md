@@ -16,9 +16,23 @@ The short answer: I set out to make a tool to help you explore the unique featur
 dialects of Lebanese Arabic, which is helpful for learners and for native speakers who are curious about that heritage.
 Along the way, the project turned into a way-more-general tool that can be used to give that treatment to any language at all.
 
+What this will eventually be:
+- A website that displays a map with dots on it.
+- The map is an atlas of different dialects of the language you're exploring.
+  The dots represent the locations of different speaker communities, e.g. different
+  cities or settlements.
+- You click on one of those dots. To the side of the map, a text will appear, ideally
+  a story originally recorded in that community's dialect. It'll be transcribed in
+  some standard writing system at first.
+- You can then click on any one of the other dots to see how the text might be read by
+  someone from those other communities.
+- Lastly, you can also change the writing system used to display the text, e.g. by swapping
+  it out for a different alphabet or transcription system.
+
 There are a lot of dimensions that language varieties can vary in, like the sentence structures they use, their sound systems,
 the way they change words for different grammatical reasons, and their vocabulary. This project is good at two of those,
-give or take, plus an unexpected challenger for good measure:
+plus an unexpected challenger for good measure, and these are the things you'll be able to explore by clicking
+around on the map:
 
 1. it's mostly about sounds, aka phonology and phonetics,
 2. it also allows you to represent morphology, the way words change for grammatical purposes (e.g. verb conjugations),
