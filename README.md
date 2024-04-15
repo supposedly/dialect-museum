@@ -161,7 +161,7 @@ under the hood.
 
 ![Graph of nodes with different colors. On the top is a group of three nodes, each of which is linked to each of its two neighbors by an arrow. This group is connected to another group of the same sort, except this one has a lot more nodes branching out from the original middle one. Lastly, this second group connects to an even-larger third group. Going forward, these groups will be called "stages".](https://user-images.githubusercontent.com/32081933/281906398-229ec8cf-65c6-4f15-8b62-39eaccaa72c8.png)
 
-The input here is the middle node at the very top, which is an object of type "verb". That means that any rules that operate on verbs will apply to it. Internslly, `verb` nodes also store some important info about themselves: the subject they conjugate for, their
+The input here is the middle node at the very top, which is an object of type "verb". That means that any rules that operate on verbs will apply to it. Internally, `verb` nodes also store some important info about themselves: the subject they conjugate for, their
 [TAM](https://en.wikipedia.org/wiki/TAM) combo (tense, aspect, and mood), and their [root](https://en.wikipedia.org/wiki/Semitic_root) and [measure](https://en.wiktionary.org/wiki/Appendix:Arabic_verbs#Derived_stems). For this verb here, that's:
 
 - **Subject:** They (third-person plural)
@@ -325,7 +325,7 @@ Make sense?
 
 Lastly, matching on an object only enforces that it matches the properties you **do** specify, and it doesn't care about
 what the rest of the object looks like. For example, the above two schemas will match `{length: 1, foo: 'bar'}` just as easily
-as they'll match `{length: 1, foo: 'bar'}`, but they will **not** consider the objects `{foo: 'bar'}` or `{length: 3}`
+as they'll match `{length: 1}`, but they will **not** consider the objects `{foo: 'bar'}` or `{length: 3}`
 to be a match.
 
 > [!NOTE]
@@ -428,7 +428,7 @@ Some examples of valid `value`s:
 }
 ```
 
-> [!IMPORTANT]
+> [!NOTE]
 > `array` isn't the only way to match on an array! But there's no other way to match an array of unspecified
 > length that has all of its elements matching a certain schema. If you want to match a tuple, or you
 > only care about a specific few elements of your array, you can try match schemas like these instead:
@@ -608,13 +608,13 @@ const test2: LengthSchema = {match: 'type', value: `number`};  // all good!
 ##### The forbidden matches
 
 Open your eyes. A new dawn breaks. The veil of ignorance veils no more. You have not only passed but *sur*passed:
-you are to be bestowed the sacred ken of not one but **two** forbidden matches. You attain enlightenment. Welcome to the new world.
+you are to be bestowed the sacred ken of not one but **two** forbidden matches. You attain enlightenment. Welcome to a new world.
 
 The reason these two get to be called *forbidden* should make sense now: they ruin the match library's type-soundness!
 `custom` kind of does too, but in my opinion it's indispensable, while these are less so. They're handy to have sometimes,
 especially at runtime, but I'm not sure how to go about implementing them in the type system &mdash; especially when
 [negated types](https://github.com/microsoft/TypeScript/issues/4196) is half Peter Pan's age and is probably also going
-to (ahem) Neverland.
+to (ahem) Never Land.
 
 > [!NOTE]
 > In fact, this is the main reason the match library is a little bit bare-bones. I'd love to be able to match numbers better
