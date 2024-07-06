@@ -42,11 +42,11 @@ async function debugStep(place?: string, ...highlight: ReadonlyArray<number>) {
 async function awaitStep(place?: string, ...highlight: ReadonlyArray<number>) {
   waiting.value = place ?? `Step`;
   highlight.filter(n => n > 0).forEach(id => { nodes[`node${id}`].highlight = true; });
-  const timeout = setTimeout(() => { waiting.value = null; }, speed.value * multiplier.value);
+  // const timeout = setTimeout(() => { waiting.value = null; }, speed.value * multiplier.value);
   while (waiting.value) {
     await new Promise<void>(resolve => setTimeout(resolve, 50));
   }
-  clearTimeout(timeout);
+  // clearTimeout(timeout);
   highlight.filter(n => n > 0).forEach(id => { nodes[`node${id}`].highlight = false; });
   waiting.value = null;
 }
@@ -268,7 +268,7 @@ const input = reactive(<const>[
     features: {
       subject: letters.plain.pronoun.mp3.features,
       tam: `past`,
-      door: `fa33al`,
+      door: `staf3al`,
       theme: `u`, // doesn't matter here
       root: [
         {...letters.plain.consonant.k.features, affected: false, weak: false},
@@ -2000,6 +2000,157 @@ function displayToString(head: Node) {
 }
 
 const WINDOW = window;
+
+var JSONE = {};
+JSONE.to = {};
+JSONE.to.removeCycle = function(obj,already = [],lvl = 1,path=`PATH#obj`){
+  if(typeof obj === `object`)
+  {
+    for(var i in already)
+    {
+      if(already[i].obj===obj && (already[i].lvl<lvl-1||already[i].lvl==0))
+      {
+        return already[i].loc;
+      }
+    }
+		
+    if(lvl===1)
+    {
+      already.push({obj:obj,loc:path,lvl:0});
+    }
+    for(var i in obj)
+    {
+      already.push({obj:obj[i],loc:path + `.` + i,lvl:lvl});
+    }
+    for(var i in obj)
+    {
+      obj[i] = JSONE.to.removeCycle(obj[i],already,lvl+1,path + `.` + i);
+    }
+  }
+  return obj;
+};
+JSONE.to.changeFuncs = function(obj)
+{
+  if(typeof obj === `function`)
+  {
+    return `FUNCTION#` + obj.toString();
+  }
+  else if(typeof obj === `object`)
+  {
+    var cl = clone(obj);
+    for(var i in cl)
+    {
+      cl[i] = JSONE.to.changeFuncs(cl[i]);
+    }
+    return cl;
+  }
+  return obj;
+};
+JSONE.stringify = function(obj)
+{
+  if(typeof obj === `object`)
+  {
+    for(var i in JSONE.to)
+    {
+      obj = JSONE.to[i](obj);
+    }
+  }
+  return JSON.stringify(obj);
+};
+JSONE.from = {};
+JSONE.from.addFuncs = function(obj)
+{
+  if(typeof obj === `string` && obj.substr(0,9)===`FUNCTION#`)
+  {
+    var ret;
+    try
+    {
+      eval(`ret = ` + obj.substr(9));
+      return ret;
+    }
+    catch(e)
+    {
+      return obj;
+    }
+  }
+  else if(typeof obj === `object`)
+  {
+    for(var i in obj)
+    {
+      obj[i] = JSONE.from.addFuncs(obj[i]);
+    }
+    return obj;
+  }
+  return obj;
+};
+JSONE.from.addCycle = function(obj,paths = [],already = [],path=`PATH#obj`)
+{
+  for(var i in already)
+  {
+    if(already[i]===obj)
+    {
+      return obj;
+    }
+  }
+  for(var i in paths)
+  {
+    if(paths[i].path===obj)
+    {
+      obj = paths[i].obj;
+    }
+  }
+  for(var i in already)
+  {
+    if(already[i]===obj)
+    {
+      return obj;
+    }
+  }
+  paths.push({path:path,obj:obj});
+  already.push(obj);
+	
+  for(var i in obj)
+  {
+    obj[i] = JSONE.from.addCycle(obj[i],paths,already,path + `.` + i);
+  }
+  return obj;
+};
+JSONE.parse = function(txt)
+{
+  var obj = JSON.parse(txt);
+  if(typeof obj === `object`)
+  {
+    for(var i in JSONE.from)
+    {
+      obj = JSONE.from[i](obj);
+    }
+  }
+  return obj;
+};
+
+//Funktion, die auch Objekte klont, die sich selbst enthalten
+function clone(obj,already = [])
+{
+  if(typeof obj === `object`)
+  {
+    for(var i in already)
+    {
+      if(already[i].obj === obj)
+      {
+        return already[i].cl;
+      }
+    }
+	
+    var cl = {};
+    already.push({obj:obj,cl:cl});
+    for(var i in obj)
+    {
+      cl[i] = clone(obj[i],already);
+    }
+    return cl;
+  }
+  return obj;
+}
 </script>
 
 <template>
@@ -2027,7 +2178,38 @@ const WINDOW = window;
   <div id="display">
     {{ nodes.node9 !== undefined ? displayToString(toRaw(nodes.node9).self.seekLeader() as Node) : 'loading!' }}
   </div>
-  <v-network-graph class="graph" :nodes="nodes" :edges="edges" :configs="configs"></v-network-graph>
+  <v-network-graph class="graph" :nodes="nodes" :edges="edges" :configs="configs">
+    <template #override-node="{nodeId, scale, config, ...slotProps}">
+      <svg:style type="text/css">
+        .e {
+          --visibility: hidden;
+
+          &:hover, &:active {
+            --visibility: visible;
+          }
+        }
+
+        .bruh {
+          visibility: var(--visibility);
+        }
+      </svg:style>
+      <g class="e">
+        <circle
+          :r="config.radius * scale"
+          :fill="config.color"
+          :stroke-width="config.strokeWidth"
+          :stroke="config.strokeColor"
+          v-bind="slotProps"
+          style="transition-duration: 100ms;"
+        />
+        <g class="bruh">
+          <foreignObject x="0" width="100%" y="0" height="100%">
+            <pre style="background-color: white; width: fit-content; padding: 1em; font-size: large; border-radius: 5px; border: 1px solid black; overflow: wrap;">{{JSON.stringify(toRaw(nodes[nodeId].self._value), null, 2)}}</pre>
+          </foreignObject>
+        </g>
+      </g>
+    </template>
+  </v-network-graph>
 </template>
 
 <style scoped>
