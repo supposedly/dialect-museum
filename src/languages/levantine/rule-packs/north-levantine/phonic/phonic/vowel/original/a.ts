@@ -40,6 +40,20 @@ export default ruleset(
     afterPharyngeal: {
       env: ({after}, {consonant}) => after(consonant({location: `pharynx`})),
     },
+    beforePharyngeal: {
+      env: ({before}, {consonant}) => before(consonant({location: `pharynx`})),
+    },
+    afterBackA: {
+      env: ({after}, {vowel}) => after(vowel({
+        tense: false,
+        round: false,
+        height: `low`,
+        backness: {match: `any`, value: [`mid`, `back`]},
+        long: false,
+        stressed: null,
+        color: null,
+      })),
+    },
     // xvnaa2, bvzaa2, dvhaan
     inDisyllable: {
       env: ({before, after}, {boundary, consonant, vowel}) => ({

@@ -6,6 +6,7 @@ import aaii from './aaii';
 import aauu from './aauu';
 import iiii from './iiii';
 import iiuu from './iiuu';
+import pronoun from './pronoun';
 
 export default cleanup.pack({
   aav,
@@ -14,4 +15,5 @@ export default cleanup.pack({
   aauu,
   iiii,
   iiuu,
+  pronoun,
 });

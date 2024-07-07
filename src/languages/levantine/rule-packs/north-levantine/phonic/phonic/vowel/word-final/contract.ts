@@ -4,9 +4,10 @@ export default ruleset(
   {
     spec: {features: {long: true}},
     // nsaa, shii, shuu, etc!
-    env: ({after}, {boundary, consonant}) => (
+    // env: {match: `custom`, value: v => console.log(v)! ?? true},
+    env: {match: `all`, value: [{match: `custom`, value: v => !console.log(v)!}, ({after}, {boundary, consonant}) => (
       after(boundary.seek(`syllable`, {}, {match: `any`, value: [boundary(`morpheme`), consonant()]}))
-    ),
+    )]},
   },
   {
     // default: operations.mock({features: {long: false}}),

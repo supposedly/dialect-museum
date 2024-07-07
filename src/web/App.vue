@@ -14,7 +14,7 @@ import {templates, underlying, phonic, display} from 'src/languages/levantine/al
 import sharedOdds from 'src/lib/rules/odds';
 import {unfuncSpec} from 'src/lib/rules/funcs';
 import {type KeysNotMatching} from 'src/lib/utils/typetools';
-import {type Ref, reactive, ref, toRaw} from 'vue';
+import {type Ref, reactive, ref, toRaw, computed, watchEffect} from 'vue';
 import * as vNG from 'v-network-graph';
 import {
   ForceLayout,
@@ -26,12 +26,15 @@ import {create} from 'domain';
 import {spec} from 'node:test/reporters';
 window.toRaw = toRaw;
 let waiting: Ref<string | null> = ref(null);
+let paused: Ref<boolean> = ref(null);
+
+let debuggedOnce = false;
 
 async function debugStep(place?: string, ...highlight: ReadonlyArray<number>) {
   waiting.value = place ?? `Step`;
   highlight.filter(n => n >= 0).forEach(id => { nodes[`node${id}`].highlight = true; });
   // const timeout = setTimeout(() => { waiting.value = null; }, speed.value * multiplier.value);
-  while (waiting.value) {
+  while (waiting.value || paused.value) {
     await new Promise<void>(resolve => setTimeout(resolve, 50));
   }
   // clearTimeout(timeout);
@@ -42,11 +45,11 @@ async function debugStep(place?: string, ...highlight: ReadonlyArray<number>) {
 async function awaitStep(place?: string, ...highlight: ReadonlyArray<number>) {
   waiting.value = place ?? `Step`;
   highlight.filter(n => n > 0).forEach(id => { nodes[`node${id}`].highlight = true; });
-  // const timeout = setTimeout(() => { waiting.value = null; }, speed.value * multiplier.value);
-  while (waiting.value) {
+  const timeout = debuggedOnce ? null : setTimeout(() => { waiting.value = null; }, speed.value * multiplier.value);
+  while (waiting.value || paused.value) {
     await new Promise<void>(resolve => setTimeout(resolve, 50));
   }
-  // clearTimeout(timeout);
+  if (!debuggedOnce) clearTimeout(timeout!);
   highlight.filter(n => n > 0).forEach(id => { nodes[`node${id}`].highlight = false; });
   waiting.value = null;
 }
@@ -237,7 +240,56 @@ function orderRules(
 // //console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(selfProfile, rulePacks.templates.rulePacks.underlying.defaults)));
 // //console.log(orderRules(rulePacks.templates.rulePacks.underlying, mapToSource(debug, {})));
 
-const input = reactive(<const>[
+const demoLetters = ref(`b.u.s.s`);
+const demoRoot = ref(`k.th.r`);
+
+const demoChoices = computed(() => reactive(<const>{
+  verb: {
+    type: `verb`,
+    features: {
+      subject: letters.plain.pronoun.mp3.features,
+      tam: `past`,
+      door: `staf3al`,
+      theme: `u`, // doesn't matter here
+      root: demoRoot.value.split(`.`).map(
+        letter => Object.values(letters.plain)
+          .map(
+            abc => Object.prototype.hasOwnProperty.call(abc, letter.replace(/\^|~/, ``))
+              ? {...abc[letter.slice(+(letter[0] === `^`))].features, affected: letter.includes(`^`), weak: letter.includes(`~`)}
+              : null
+          ).filter(
+            Boolean
+          )[0]
+      ),
+    },
+    context: {affected: false},
+  },
+  word: {
+    type: `word`, features: {
+      string: demoLetters.value.split(`.`).map(
+        letter => Object.values(
+          letter.includes(`^`)
+            ? letters.affected
+            : letters.plain
+        ).map(
+          abc => Object.prototype.hasOwnProperty.call(abc, letter.replace(`^`, ``))
+            ? abc[letter.replace(`^`, ``)]
+            : null
+        ).filter(
+          Boolean
+        )[0]
+      ),
+    }, context: {affected: false},
+  },
+}));
+
+const chosenDemo = ref<`verb` | `word`>(`verb`);
+
+const chosenDemoObj = computed(() => demoChoices.value[chosenDemo.value]);
+
+watchEffect(() => console.log(chosenDemo.value, toRaw(chosenDemoObj.value), demoLetters.value, demoChoices.value));
+
+const input = computed(() => <const>[
   {type: `boundary`, features: {type: `pause`}, context: {affected: false}},
   // {
   //   type: `word`, features: {
@@ -250,34 +302,23 @@ const input = reactive(<const>[
   // },
   // letters.plain.affix.f,
   // {type: `boundary`, features: {type: `word`}, context: {affected: false}},
-  // {
-  //   type: `word`, features: {
-  //     string: [
-  //       letters.plain.consonant.$,
-  //       letters.plain.vowel.a,
-  //       letters.plain.consonant.x,
-  //       letters.plain.consonant.s,
-  //       letters.plain.vowel.a,
-  //       letters.plain.consonant.n,
-  //     ],
-  //   }, context: {affected: false},
-  // },
+  chosenDemoObj.value,
   // {type: `boundary`, features: {type: `word`}, context: {affected: false}},
-  {
-    type: `verb`,
-    features: {
-      subject: letters.plain.pronoun.mp3.features,
-      tam: `past`,
-      door: `staf3al`,
-      theme: `u`, // doesn't matter here
-      root: [
-        {...letters.plain.consonant.k.features, affected: false, weak: false},
-        {...letters.plain.consonant.th.features, affected: false, weak: false},
-        {...letters.plain.consonant.r.features, affected: false, weak: false},
-      ],
-    },
-    context: {affected: false},
-  },
+  // {
+  //   type: `verb`,
+  //   features: {
+  //     subject: letters.plain.pronoun.mp3.features,
+  //     tam: `past`,
+  //     door: `staf3al`,
+  //     theme: `u`, // doesn't matter here
+  //     root: [
+  //       {...letters.plain.consonant.k.features, affected: false, weak: false},
+  //       {...letters.plain.consonant.th.features, affected: false, weak: false},
+  //       {...letters.plain.consonant.r.features, affected: false, weak: false},
+  //     ],
+  //   },
+  //   context: {affected: false},
+  // },
   // {type: `boundary`, features: {type: `word`}, context: {affected: false}},
   // {
   //   type: `verb`,
@@ -299,10 +340,10 @@ const input = reactive(<const>[
 
 let profile: object = selfProfile;
 
-window.setSubject = (subject: keyof typeof letters.plain.pronoun) => { input[1].features.subject = letters.plain.pronoun[subject].features; };
-window.setRoot = (radicals: string) => { input[1].features.root = radicals.split(` `).map(c => ({...letters.plain.consonant[c.slice(+(c[0] === `!`)) as keyof typeof letters.plain.consonant].features, affected: false, weak: c[0] === `!`})); };
-window.setTam = (tam: MatchAsType<typeof templates.types.verb.tam>) => { input[1].features.tam = tam; };
-window.setTemplate = (door: MatchAsType<typeof templates.types.verb.door>) => { input[1].features.door = door; };
+window.setSubject = (subject: keyof typeof letters.plain.pronoun) => { input.value[1].features.subject = letters.plain.pronoun[subject].features; };
+window.setRoot = (radicals: string) => { input.value[1].features.root = radicals.split(` `).map(c => ({...letters.plain.consonant[c.slice(+(c[0] === `!`)) as keyof typeof letters.plain.consonant].features, affected: false, weak: c[0] === `!`})); };
+window.setTam = (tam: MatchAsType<typeof templates.types.verb.tam>) => { input.value[1].features.tam = tam; };
+window.setTemplate = (door: MatchAsType<typeof templates.types.verb.door>) => { input.value[1].features.door = door; };
 window.setDialect = (p: `mine` | `the other dialect im testing with`) => { profile = (p === `mine` ? selfProfile : rassiProfile); };
 
 
@@ -393,6 +434,14 @@ class Node {
     if (this.mainParent && (this.mainParent.mainChild === null || this.mainParent.mainChild === this.mainChild)) {
       this.mainParent.mainChild = this;
     }
+  }
+
+  status(): string {
+    return [
+      this.usableYet ? `usable` : null,
+      this.waitingOnTarget ? `waiting` : null,
+      this.erased ? `erased` : null,
+    ].filter(Boolean).join(`, `) || `❌`;
   }
 
   usable(): this {
@@ -678,7 +727,7 @@ class Node {
     }
   }
 
-  async connectLeaders(last: Node | null = null): Promise<Node | null> {
+  async connectLeaders(last: Node | null = null, nodes: Set<Node> = new Set()): Promise<Node | null> {
     // if (this.type === NodeType.blank && this.value !== undefined && this.value === this.mainParent?.value) {
     //   this.type = NodeType.fixture;
     // }
@@ -686,18 +735,19 @@ class Node {
     if (last !== null) {
       last.next = this;
       this.prev = last;
+      // (this.mainParent?.subscribers ?? []).forEach(node => nodes.add(node));
     }
     // await debugStep(`handled last`);
     const passForward = this.mainChild === null || this.mainChild.layer !== this.layer
       ? this
-      : await this.mainChild.connectLeaders(last);
+      : await this.mainChild.connectLeaders(last, nodes);
     // await debugStep(`retrieved passForward for ${this.id}`, this.id, passForward?.id ?? -1);
     if (this.next !== null && this.next.mainParent !== null && this.next.mainParent.layer === this.layer && this.next.mainParent !== this.mainParent) {
       // await debugStep(`returning null from ${this.id} because of ${this.next.id}`, this.next.id);
       return null;
     }
     // await debugStep(`checking ${this.next?.id ?? `nothing much`} for ${this.id}`, this.id, this.next?.id ?? -1);
-    return this.next === null || this.next === this.mainChild?.next ? this : await this.next.connectLeaders(passForward);
+    return this.next === null || this.next === this.mainChild?.next ? this : await this.next.connectLeaders(passForward, nodes);
   }
 
   async extrudeLeaders(recurse = true) {
@@ -932,6 +982,9 @@ class Node {
       }
     }
     if (this.type === NodeType.blank && subscriber !== this) {
+      if (subscriber && subscriber.layer === this.layer) {
+        // this.subscribe(subscriber);
+      }
       return false;
     }
     // //console.log(specs);
@@ -978,6 +1031,7 @@ class Node {
 
   async checkSpec(spec: object, subscriber: Node | null): Promise<boolean> {
     if (subscriber) {
+      // console.log(`subscribing ${subscriber.id} to ${this.id}`);
       this.subscribe(subscriber);
     }
     return this.usableYet && matchers.single(spec as never, this.value);
@@ -1085,6 +1139,9 @@ class Node {
     collectedEnv: Record<`next` | `prev`, Array<Node | null>>
   ): Promise<boolean> {
     let node = this.prev;
+    while (node && node.erased) {
+      node = node?.prev ?? null;
+    }
     let index = 0;
 
     let checkingArray = false;
@@ -1146,6 +1203,9 @@ class Node {
     collectedEnv: Record<`next` | `prev`, Array<Node | null>>
   ): Promise<boolean> {
     let node = this.next;
+    while (node && node.erased) {
+      node = node?.next ?? null;
+    }
     let index = 0;
 
     let checkingArray = false;
@@ -1225,6 +1285,9 @@ class Node {
           return false;
           // return (env.value as ReadonlyArray<object>).some(v => this.checkEnv(v, subscriber, collectedEnv));
         case `custom`:
+          // alert(`man`);
+          // alert(`waow`);
+          // await debugStep(`bruh`);
           // `all` from custom() will have been done already by this point if i'm not wrong
           // which means collectedEnv will be populated fingers crossed
           return (env.value as (arg: unknown) => boolean)(collectedEnv);
@@ -1303,6 +1366,7 @@ class Node {
         case `custom`: {
         // `all` from custom() will have been done already by this point if i'm not wrong
         // which means collectedEnv will be populated fingers crossed
+          console.log(`bruhhhhh`);
           const both = (env.value as (arg: unknown) => boolean)(collectedEnv);
           return {next: both, prev: both};
         }
@@ -1812,6 +1876,7 @@ function populate(
   input: ReadonlyArray<{type: string, features: object, context: object}>,
   alphabets: ReadonlyArray<Alphabet>
 ) {
+  console.log(`input`, input);
   /*
   // ugly, either do this outside of this function or at least define this operation more rigorously
   input = [
@@ -1876,6 +1941,7 @@ async function run(grid: Node | null) {
 
   let rip = 0;
   await debugStep(`Starting`);
+  debuggedOnce = false;
   while (grid && rip++ < 20) {
     // populate nodesToChange for transform rules
     let node: Node | null = grid;
@@ -1888,7 +1954,7 @@ async function run(grid: Node | null) {
     do {
       // await awaitStep(`connecting leaders`, grid.seekLeader());
       // await debugStep(`connecting leaders from`, grid.id);
-      await grid.connectLeaders();
+      await grid.connectLeaders(null, nodesToChange);
       // await debugStep(`done connecting leaders`, grid.id);
       await grid.extrudeLeaders();
       await grid.seekLeader().fillInTheBlanks();
@@ -1910,9 +1976,19 @@ async function run(grid: Node | null) {
           // await debugStep(`adding`, node.id);
             nodesChanged.add(node);
           }
+          let needToConnect = false;
           for (const created of results) {
+            if (created.mainParent?.value ?? null === null) {
+              needToConnect = true;
+            }
             created.usableYet = true;
           }
+          // if (needToConnect) {
+          //   await grid.connectLeaders();
+          //   // await debugStep(`done connecting leaders`, grid.id);
+          //   await grid.extrudeLeaders();
+          //   await grid.seekLeader().fillInTheBlanks();
+          // }
         }
 
         for (const node of nodesToChange) {
@@ -2000,157 +2076,6 @@ function displayToString(head: Node) {
 }
 
 const WINDOW = window;
-
-var JSONE = {};
-JSONE.to = {};
-JSONE.to.removeCycle = function(obj,already = [],lvl = 1,path=`PATH#obj`){
-  if(typeof obj === `object`)
-  {
-    for(var i in already)
-    {
-      if(already[i].obj===obj && (already[i].lvl<lvl-1||already[i].lvl==0))
-      {
-        return already[i].loc;
-      }
-    }
-		
-    if(lvl===1)
-    {
-      already.push({obj:obj,loc:path,lvl:0});
-    }
-    for(var i in obj)
-    {
-      already.push({obj:obj[i],loc:path + `.` + i,lvl:lvl});
-    }
-    for(var i in obj)
-    {
-      obj[i] = JSONE.to.removeCycle(obj[i],already,lvl+1,path + `.` + i);
-    }
-  }
-  return obj;
-};
-JSONE.to.changeFuncs = function(obj)
-{
-  if(typeof obj === `function`)
-  {
-    return `FUNCTION#` + obj.toString();
-  }
-  else if(typeof obj === `object`)
-  {
-    var cl = clone(obj);
-    for(var i in cl)
-    {
-      cl[i] = JSONE.to.changeFuncs(cl[i]);
-    }
-    return cl;
-  }
-  return obj;
-};
-JSONE.stringify = function(obj)
-{
-  if(typeof obj === `object`)
-  {
-    for(var i in JSONE.to)
-    {
-      obj = JSONE.to[i](obj);
-    }
-  }
-  return JSON.stringify(obj);
-};
-JSONE.from = {};
-JSONE.from.addFuncs = function(obj)
-{
-  if(typeof obj === `string` && obj.substr(0,9)===`FUNCTION#`)
-  {
-    var ret;
-    try
-    {
-      eval(`ret = ` + obj.substr(9));
-      return ret;
-    }
-    catch(e)
-    {
-      return obj;
-    }
-  }
-  else if(typeof obj === `object`)
-  {
-    for(var i in obj)
-    {
-      obj[i] = JSONE.from.addFuncs(obj[i]);
-    }
-    return obj;
-  }
-  return obj;
-};
-JSONE.from.addCycle = function(obj,paths = [],already = [],path=`PATH#obj`)
-{
-  for(var i in already)
-  {
-    if(already[i]===obj)
-    {
-      return obj;
-    }
-  }
-  for(var i in paths)
-  {
-    if(paths[i].path===obj)
-    {
-      obj = paths[i].obj;
-    }
-  }
-  for(var i in already)
-  {
-    if(already[i]===obj)
-    {
-      return obj;
-    }
-  }
-  paths.push({path:path,obj:obj});
-  already.push(obj);
-	
-  for(var i in obj)
-  {
-    obj[i] = JSONE.from.addCycle(obj[i],paths,already,path + `.` + i);
-  }
-  return obj;
-};
-JSONE.parse = function(txt)
-{
-  var obj = JSON.parse(txt);
-  if(typeof obj === `object`)
-  {
-    for(var i in JSONE.from)
-    {
-      obj = JSONE.from[i](obj);
-    }
-  }
-  return obj;
-};
-
-//Funktion, die auch Objekte klont, die sich selbst enthalten
-function clone(obj,already = [])
-{
-  if(typeof obj === `object`)
-  {
-    for(var i in already)
-    {
-      if(already[i].obj === obj)
-      {
-        return already[i].cl;
-      }
-    }
-	
-    var cl = {};
-    already.push({obj:obj,cl:cl});
-    for(var i in obj)
-    {
-      cl[i] = clone(obj[i],already);
-    }
-    return cl;
-  }
-  return obj;
-}
 </script>
 
 <template>
@@ -2165,8 +2090,9 @@ function clone(obj,already = [])
   ])) as never,
   input,
   [templates, underlying, phonic, display]
-))">Run</button>
-    <button @click="() => { waiting = null; }" :style="waiting ? {backgroundColor: `lightpink`} : {}">Step</button>
+))">New</button>
+    <button @click="() => { waiting = null; paused = false; }" :style="waiting ? {backgroundColor: `lightpink`} : {}">Go</button>
+    <button @click="() => { paused = true; }">Pause</button>
     <p>
       <input type="range" id="speed" name="speed" min="1" max="250" v-model="speed" />
     </p>
@@ -2174,9 +2100,24 @@ function clone(obj,already = [])
       <input type="range" id="multiplier" name="multiplier" min="0" max="60" v-model="multiplier" />
     </p> -->
     <p>Delay between steps: {{ speed * multiplier }}</p>
+    <select v-model="chosenDemo">
+      <option>verb</option>
+      <option>word</option>
+    </select>
+    <br>
+    <template v-if="chosenDemo === 'verb'">
+      <select v-model="chosenDemoObj.features.door">
+        <option v-for="door in templates.types.verb.door.value" :key="door" :value="door">{{door}}</option>
+      </select>
+      <br>
+      <input v-model="demoRoot" style="width:fit-content;"/>
+    </template>
+    <template v-if="chosenDemo === 'word'">
+      <input v-model="demoLetters"/>
+    </template>
   </div>
   <div id="display">
-    {{ nodes.node9 !== undefined ? displayToString(toRaw(nodes.node9).self.seekLeader() as Node) : 'loading!' }}
+    {{ nodes.node9 !== undefined ? displayToString(toRaw(nodes.node9).self.seekLeader() as Node) : 'Press "New", then "Go"' }}
   </div>
   <v-network-graph class="graph" :nodes="nodes" :edges="edges" :configs="configs">
     <template #override-node="{nodeId, scale, config, ...slotProps}">
@@ -2184,7 +2125,7 @@ function clone(obj,already = [])
         .e {
           --visibility: hidden;
 
-          &:hover, &:active {
+          &:hover, &:active, &:has(:first-child:hover) {
             --visibility: visible;
           }
         }
@@ -2204,7 +2145,11 @@ function clone(obj,already = [])
         />
         <g class="bruh">
           <foreignObject x="0" width="100%" y="0" height="100%">
-            <pre style="background-color: white; width: fit-content; padding: 1em; font-size: large; border-radius: 5px; border: 1px solid black; overflow: wrap;">{{JSON.stringify(toRaw(nodes[nodeId].self._value), null, 2)}}</pre>
+            <pre style="background-color: white; width: fit-content; padding: 1em; font-size: large; border-radius: 5px; border: 1px solid black; overflow: wrap;"><!--
+              --><b>{{nodes[nodeId].self.layer.name}}:</b> {{nodes[nodeId].self.status()}}<!--
+              --><br><!--
+              -->{{JSON.stringify(toRaw(nodes[nodeId].self._value), null, 2)}}<!--
+            --></pre>
           </foreignObject>
         </g>
       </g>
